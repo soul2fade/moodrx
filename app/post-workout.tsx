@@ -1,0 +1,272 @@
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Animated,
+  BackHandler,
+  Alert,
+} from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import Slider from '@react-native-community/slider';
+import * as Haptics from 'expo-haptics';
+import type { MoodKey } from '@/lib/storage';
+import { addSession, getNotifPromptShown } from '@/lib/storage';
+import { MOODS } from '@/lib/moods';
+import { getWorkoutById } from '@/lib/workouts';
+import { type as t, fonts } from '../lib/typography';
+import { NotificationPrompt } from '@/components/NotificationPrompt';
+
+function getScoreContext(score: number): string {
+  if (score <= 3) return 'Rough. But you moved.';
+  if (score <= 5) return 'Improvement.';
+  if (score <= 7) return 'Getting there.';
+  return "That's what I'm talking about.";
+}
+
+export default function PostWorkoutScreen() {
+  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string }>();
+  const mood = (params.mood as MoodKey) in MOODS
+    ? (params.mood as MoodKey)
+    : (Object.keys(MOODS)[0] as MoodKey);
+  const workoutId = params.workoutId || '';
+  const intensity = parseInt(params.intensity || '5', 10);
+
+  const [postScore, setPostScore] = useState(5);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const workout = getWorkoutById(workoutId);
+  const moodData = MOODS[mood];
+  const accentColor = moodData.color;
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
+  // Prevent Android back button from going back to workout mid-flow
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      router.replace('/home');
+      return true;
+    });
+    return () => backHandler.remove();
+  }, []);
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
+    ]).start();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onPressIn = () => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start();
+  const onPressOut = () => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+
+  const handleLog = async () => {
+    if (isSubmitting) return; // prevent double-tap
+    setIsSubmitting(true);
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await addSession({
+        id: Date.now().toString(),
+        mood,
+        intensity,
+        postScore,
+        workoutName: workout?.name ?? workoutId,
+        duration: workout?.duration ?? 0,
+        timestamp: Date.now(),
+      });
+      const promptShown = await getNotifPromptShown();
+      if (!promptShown) {
+        setShowNotifPrompt(true);
+      } else {
+        router.replace('/home');
+      }
+    } catch {
+      setIsSubmitting(false);
+      Alert.alert('Save failed', 'Your session could not be saved. Please try again.');
+    }
+  };
+
+  return (
+    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.headline}>You absolute legend.</Text>
+        <Text style={styles.subtext}>
+          You showed up when your brain said don&apos;t. That takes guts.
+        </Text>
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.scoreSection}>
+          <Text style={styles.howLabel}>HOW DO YOU FEEL NOW?</Text>
+
+          <View style={styles.scoreDisplay}>
+            <Text style={{ fontSize: 64, fontWeight: '700', color: accentColor }}>{postScore}</Text>
+            <Text style={styles.scoreDenom}>/10</Text>
+          </View>
+
+          <Text style={styles.scoreContext}>{getScoreContext(postScore)}</Text>
+
+          <Slider
+            style={styles.slider}
+            minimumValue={1}
+            maximumValue={10}
+            step={1}
+            value={postScore}
+            onValueChange={setPostScore}
+            minimumTrackTintColor={accentColor}
+            maximumTrackTintColor="#1a1a1a"
+            thumbTintColor={accentColor}
+            accessibilityLabel={`Post-workout feeling: ${postScore} out of 10`}
+            accessibilityRole="adjustable"
+          />
+
+          <View style={styles.startedAtBox}>
+            <Text style={styles.startedAt}>STARTED AT {intensity}/10</Text>
+          </View>
+        </View>
+
+        {workout && (
+          <View style={styles.workoutInfo}>
+            <Text style={styles.completedLabel}>COMPLETED</Text>
+            <Text style={styles.workoutName}>{workout.name}</Text>
+          </View>
+        )}
+
+        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+          <TouchableOpacity
+            style={styles.logButton}
+            onPress={handleLog}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Log session"
+            disabled={isSubmitting}
+          >
+            <Text style={styles.logButtonText}>{isSubmitting ? 'SAVING...' : 'LOG IT →'}</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </ScrollView>
+      <NotificationPrompt
+        visible={showNotifPrompt}
+        onClose={() => {
+          setShowNotifPrompt(false);
+          router.replace('/home');
+        }}
+      />
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: 32,
+    paddingTop: 80,
+    paddingBottom: 48,
+  },
+  headline: {
+    ...t.headline,
+    fontSize: 30,
+    textAlign: 'center',
+  },
+  subtext: {
+    ...t.soft,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#1a1a1a',
+    marginTop: 32,
+  },
+  scoreSection: {
+    marginTop: 32,
+    alignItems: 'center',
+  },
+  howLabel: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 3,
+    textAlign: 'center',
+  },
+  scoreDisplay: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 16,
+  },
+  scoreDenom: {
+    ...t.dataValue,
+    color: '#737373',
+    fontSize: 24,
+    fontFamily: fonts.primary.regular,
+    marginLeft: 4,
+  },
+  scoreContext: {
+    ...t.bodyMuted,
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+    marginVertical: 16,
+  },
+  startedAtBox: {
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  startedAt: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 3,
+    textAlign: 'center',
+  },
+  workoutInfo: {
+    marginTop: 32,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingTop: 20,
+    alignItems: 'center',
+  },
+  completedLabel: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 3,
+  },
+  workoutName: {
+    ...t.headlineSm,
+    fontSize: 16,
+    marginTop: 4,
+  },
+  logButton: {
+    marginTop: 40,
+    backgroundColor: '#059669',
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderRadius: 0,
+  },
+  logButtonText: {
+    ...t.button,
+    letterSpacing: 4,
+  },
+});

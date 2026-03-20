@@ -1,0 +1,1 @@
+{\"cli\":{\"version\":\">= 16.3.1\",\"appVersionSource\":\"remote\"},\"build\":{\"development\":{\"developmentClient\":true,\"distribution\":\"internal\"},\"preview\":{\"distribution\":\"internal\",\"ios\":{\"buildType\":\"simulator\"}},\"production\":{\"autoIncrement\":true,\"node\":\"20.18.0\"}},\"submit\":{\"production\":{}}}

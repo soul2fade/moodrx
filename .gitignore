@@ -1,3 +1,19 @@
-
-# CatDoes metadata (managed automatically)
-.catdoes/
+node_modules/
+.expo/
+temp-package/
+fix-package/
+fix-package-json-prefix.js
+fix-package-json.js
+fix-package.js
+fix-package.sh
+fix.js
+generate-package-json.js
+update-package-name.js
+js-to-json.js
+test-write.txt
+ios-build-status.txt
+ios-build-result.txt
+build-status.txt
+github-debug.txt
+*.log
+.DS_Store

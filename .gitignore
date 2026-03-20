@@ -17,3 +17,5 @@ build-status.txt
 github-debug.txt
 *.log
 .DS_Store
+# CatDoes metadata (managed automatically)
+.catdoes/

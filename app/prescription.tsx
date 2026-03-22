@@ -93,29 +93,22 @@ export default function PrescriptionScreen() {
         <View style={styles.tabBar} accessibilityRole="tablist">
           {tabs.map((tab) => {
             const isSelected = activeTab === tab.key;
-            const isLockedTab = !isPremium && (tab.key === 'science' || tab.key === 'stack');
             return (
               <TouchableOpacity
                 key={tab.key}
                 style={isSelected
                   ? flattenStyle([styles.tab, { borderBottomWidth: 2, borderBottomColor: accentColor }])
                   : styles.tab}
-                onPress={() => {
-                  if (isLockedTab) {
-                    setShowPremiumSheet(true);
-                  } else {
-                    setActiveTab(tab.key);
-                  }
-                }}
+                onPress={() => setActiveTab(tab.key)}
                 activeOpacity={0.7}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={isLockedTab ? `${tab.label} (requires Pro)` : tab.label}
+                accessibilityLabel={tab.label}
               >
                 <Text
                   style={isSelected
                     ? { ...t.labelBright, letterSpacing: 2 }
-                    : { ...styles.tabText, color: isLockedTab ? '#3f3f3f' : '#737373' }}
+                    : { ...styles.tabText, color: '#737373' }}
                 >
                   {tab.label}
                 </Text>
@@ -203,20 +196,46 @@ export default function PrescriptionScreen() {
 
         {activeTab === 'science' && (
           <View>
-            {workouts.map((workout, index) => (
-              <View
-                key={workout.id}
-                style={index < workouts.length - 1
-                  ? flattenStyle([styles.scienceBlock, styles.scienceBorder])
-                  : styles.scienceBlock}
-              >
-                <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
-                  {String(index + 1).padStart(2, '0')}
-                </Text>
-                <Text style={styles.scienceName}>{workout.name}</Text>
-                <Text style={styles.scienceWhy}>{workout.why}</Text>
-              </View>
-            ))}
+            {workouts.map((workout, index) => {
+              const isLocked = !isPremium && index > 0;
+              if (isLocked) {
+                return (
+                  <TouchableOpacity
+                    key={workout.id}
+                    onPress={() => setShowPremiumSheet(true)}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${workout.name} science, locked. Unlock with Pro.`}
+                    style={index < workouts.length - 1
+                      ? flattenStyle([styles.scienceBlock, styles.scienceBorder, { opacity: 0.35 }])
+                      : flattenStyle([styles.scienceBlock, { opacity: 0.35 }])}
+                  >
+                    <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
+                      {String(index + 1).padStart(2, '0')}
+                    </Text>
+                    <Text style={styles.scienceName}>{workout.name}</Text>
+                    <Text style={styles.scienceWhy}>{workout.why}</Text>
+                    <Text style={{ ...t.label, color: '#525252', letterSpacing: 2, marginTop: 12 }}>
+                      UNLOCK PRO →
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }
+              return (
+                <View
+                  key={workout.id}
+                  style={index < workouts.length - 1
+                    ? flattenStyle([styles.scienceBlock, styles.scienceBorder])
+                    : styles.scienceBlock}
+                >
+                  <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
+                    {String(index + 1).padStart(2, '0')}
+                  </Text>
+                  <Text style={styles.scienceName}>{workout.name}</Text>
+                  <Text style={styles.scienceWhy}>{workout.why}</Text>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -226,25 +245,56 @@ export default function PrescriptionScreen() {
             <Text style={styles.stackSub}>According to science, not Instagram.</Text>
 
             <View style={styles.supplementList}>
-              {supplements.map((supp, index) => (
-                <View
-                  key={supp.name}
-                  style={index < supplements.length - 1
-                    ? flattenStyle([styles.supplementRow, styles.supplementBorder])
-                    : styles.supplementRow}
-                >
-                  <View style={styles.supplementLeft}>
-                    <View style={styles.supplementNameRow}>
-                      <Text style={styles.supplementName}>{supp.name}</Text>
-                      <Text style={styles.supplementDose}>{supp.dose}</Text>
-                    </View>
-                    <View style={styles.supplementBenefitRow}>
-                      <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
-                      <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
+              {supplements.map((supp, index) => {
+                const isLocked = !isPremium && index > 0;
+                if (isLocked) {
+                  return (
+                    <TouchableOpacity
+                      key={supp.name}
+                      onPress={() => setShowPremiumSheet(true)}
+                      activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${supp.name}, locked. Unlock with Pro.`}
+                      style={index < supplements.length - 1
+                        ? flattenStyle([styles.supplementRow, styles.supplementBorder, { opacity: 0.35 }])
+                        : flattenStyle([styles.supplementRow, { opacity: 0.35 }])}
+                    >
+                      <View style={styles.supplementLeft}>
+                        <View style={styles.supplementNameRow}>
+                          <Text style={styles.supplementName}>{supp.name}</Text>
+                          <Text style={styles.supplementDose}>{supp.dose}</Text>
+                        </View>
+                        <View style={styles.supplementBenefitRow}>
+                          <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
+                          <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
+                        </View>
+                        <Text style={{ ...t.label, color: '#525252', letterSpacing: 2, marginTop: 10 }}>
+                          UNLOCK PRO →
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                }
+                return (
+                  <View
+                    key={supp.name}
+                    style={index < supplements.length - 1
+                      ? flattenStyle([styles.supplementRow, styles.supplementBorder])
+                      : styles.supplementRow}
+                  >
+                    <View style={styles.supplementLeft}>
+                      <View style={styles.supplementNameRow}>
+                        <Text style={styles.supplementName}>{supp.name}</Text>
+                        <Text style={styles.supplementDose}>{supp.dose}</Text>
+                      </View>
+                      <View style={styles.supplementBenefitRow}>
+                        <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
+                        <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
 
             <TouchableOpacity

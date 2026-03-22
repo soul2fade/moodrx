@@ -28,7 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: "com.moodrx.app",
     adaptiveIcon: {
       foregroundImage: "./assets/images/adaptive-icon.png",
-      backgroundColor: "#ffffff",
+      backgroundColor: "#0a0a0a",
     },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
@@ -54,7 +54,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
-        imageWidth: 200,
+        imageWidth: 280,
         resizeMode: "contain",
         backgroundColor: "#0a0a0a",
       },

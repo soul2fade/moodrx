@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "4-L1oyXkdU0XdL-m5tyMQ"
+uri = "file://assets/images/splash-icon.png"
+type = "image"
+title = "MoodRx Splash Screen"

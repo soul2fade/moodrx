@@ -357,22 +357,27 @@ export default function WorkoutScreen() {
           <Text style={styles.backBtnText}>← BACK</Text>
         </TouchableOpacity>
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-          <TouchableOpacity
-            onPress={timerReady ? handleNext : undefined}
-            onPressIn={timerReady ? onPressIn : undefined}
-            onPressOut={timerReady ? onPressOut : undefined}
-            activeOpacity={timerReady ? 0.7 : 1}
-            style={flattenStyle([
-              styles.nextBtn,
-              { borderColor: timerReady ? accentColor : '#2a2a2a' },
-            ])}
-            accessibilityRole="button"
-            accessibilityLabel={isLastStep ? 'Complete workout' : 'Next step'}
-          >
-            <Text style={{ ...t.timer, color: timerReady ? accentColor : '#3a3a3a' }}>
-              {isLastStep ? 'DONE. LEGEND. →' : 'NEXT →'}
-            </Text>
-          </TouchableOpacity>
+          {(() => {
+            const canNext = timerReady && timerSeconds === null && countdown === null;
+            return (
+              <TouchableOpacity
+                onPress={canNext ? handleNext : undefined}
+                onPressIn={canNext ? onPressIn : undefined}
+                onPressOut={canNext ? onPressOut : undefined}
+                activeOpacity={canNext ? 0.7 : 1}
+                style={flattenStyle([
+                  styles.nextBtn,
+                  { borderColor: canNext ? accentColor : '#2a2a2a' },
+                ])}
+                accessibilityRole="button"
+                accessibilityLabel={isLastStep ? 'Complete workout' : 'Next step'}
+              >
+                <Text style={{ ...t.timer, color: canNext ? accentColor : '#3a3a3a' }}>
+                  {isLastStep ? 'DONE. LEGEND. →' : 'NEXT →'}
+                </Text>
+              </TouchableOpacity>
+            );
+          })()}
         </Animated.View>
       </View>
     </Animated.View>

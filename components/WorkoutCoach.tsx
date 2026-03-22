@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   coachLabel: { fontSize: 11, color: '#999' },
   moodNote: { fontSize: 10, color: '#555', fontStyle: 'italic', marginBottom: 10 },
   figureWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  bubble: { maxWidth: 300, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, backgroundColor: '#161616', borderWidth: 0.5, borderColor: '#2a2a2a', marginBottom: 6 },
+  bubble: { maxWidth: 300, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 6 },
   phraseText: { fontSize: 13, color: '#e0e0e0', textAlign: 'center', lineHeight: 20 },
   coachName: { fontSize: 11, marginBottom: 10 },
   dotRow: { flexDirection: 'row', gap: 6, marginBottom: 4 },

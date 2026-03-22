@@ -14,6 +14,7 @@ import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { MoodIcon } from '@/components/MoodIcon';
+import { ExerciseStickFigure } from '@/components/ExerciseStickFigure';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
 
@@ -251,6 +252,13 @@ export default function WorkoutScreen() {
 
         {/* Step text box */}
         <View style={styles.stepBox}>
+          <View style={styles.figureRow}>
+            <ExerciseStickFigure
+              stepText={resolvedWorkout.steps[currentStep]}
+              color={accentColor}
+              size={72}
+            />
+          </View>
           <Text style={styles.stepText} accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}: ${resolvedWorkout.steps[currentStep]}`}>
             {resolvedWorkout.steps[currentStep]}
           </Text>
@@ -426,7 +434,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 24,
     minHeight: 80,
-    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  figureRow: {
+    marginBottom: 16,
+    opacity: 0.85,
   },
   stepText: {
     ...t.body,

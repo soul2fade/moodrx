@@ -223,7 +223,7 @@ export default function PrescriptionScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={scienceOpen ? 'Hide science' : 'View the science'}
                     >
-                      <Text style={{ ...t.label, color: '#525252', letterSpacing: 2 }}>
+                      <Text style={{ ...t.label, color: '#a3a3a3', letterSpacing: 2, fontWeight: '600' }}>
                         {scienceOpen ? 'HIDE SCIENCE ↑' : 'THE SCIENCE ↓'}
                       </Text>
                     </TouchableOpacity>

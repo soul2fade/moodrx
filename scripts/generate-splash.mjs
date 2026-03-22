@@ -1,27 +1,43 @@
 import sharp from 'sharp';
-import { readFileSync, mkdirSync } from 'fs';
+import { readFileSync } from 'fs';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Embed Space Grotesk as base64 so librsvg (sharp's SVG renderer) uses it
+const fontRegular = readFileSync(new URL('../assets/fonts/SpaceGrotesk-Regular.ttf', import.meta.url).pathname).toString('base64');
+const fontLight   = readFileSync(new URL('../assets/fonts/SpaceGrotesk-Light.ttf',   import.meta.url).pathname).toString('base64');
+
 // Three-bar logo + MoodRx wordmark as SVG, white on transparent
 // Rendered at 3× (1200×1560) so it stays crisp on high-density screens
 const svgContent = `
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1560" viewBox="0 0 1200 1560">
+  <defs>
+    <style>
+      @font-face {
+        font-family: 'SpaceGrotesk';
+        font-weight: 300;
+        src: url('data:font/truetype;base64,${fontLight}') format('truetype');
+      }
+      @font-face {
+        font-family: 'SpaceGrotesk';
+        font-weight: 400;
+        src: url('data:font/truetype;base64,${fontRegular}') format('truetype');
+      }
+    </style>
+  </defs>
+
   <!-- Three bars logo — white, matching the original proportions -->
-  <!-- Left bar -->
   <rect x="264" y="180" width="186" height="780" fill="white"/>
-  <!-- Middle bar (starts lower, same bottom) -->
   <rect x="507" y="420" width="186" height="540" fill="white"/>
-  <!-- Right bar -->
   <rect x="750" y="180" width="186" height="780" fill="white"/>
 
   <!-- MoodRx wordmark -->
   <text
     x="600"
     y="1185"
-    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-family="SpaceGrotesk"
     font-size="156"
     font-weight="300"
     letter-spacing="24"
@@ -34,7 +50,7 @@ const svgContent = `
   <text
     x="600"
     y="1350"
-    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-family="SpaceGrotesk"
     font-size="42"
     font-weight="300"
     letter-spacing="12"

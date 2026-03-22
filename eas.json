@@ -11,7 +11,7 @@
     "preview": {
       "distribution": "internal",
       "ios": {
-        "buildType": "simulator"
+        "simulator": true
       }
     },
     "production": {

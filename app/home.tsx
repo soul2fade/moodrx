@@ -355,7 +355,8 @@ const styles = StyleSheet.create({
   },
   drLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#d4d4d4',
+    letterSpacing: 2,
   },
   drText: {
     ...t.soft,

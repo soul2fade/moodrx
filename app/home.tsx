@@ -150,7 +150,7 @@ export default function HomeScreen() {
                 />
                 <View style={styles.moodTextBlock}>
                   <Text style={styles.moodName}>{mood.name}</Text>
-                  <Text style={styles.moodDesc}>{mood.description}</Text>
+                  <Text style={[styles.moodDesc, { color: mood.color }]}>{mood.description}</Text>
                 </View>
                 <View style={styles.moodRight}>
                   <Text style={styles.moodCode}>{mood.code}</Text>

@@ -41,9 +41,13 @@ export default function WorkoutScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
+  const [timerReady, setTimerReady] = useState(false);   // unlocks NEXT once a timer is picked
+  const [countdown, setCountdown] = useState<number | null>(null); // 3-2-1 phase
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const timerEndRef = useRef<number | null>(null);
   const isNavigating = useRef(false);
+  const handleNextRef = useRef<() => void>(() => {});
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
@@ -81,9 +85,16 @@ export default function WorkoutScreen() {
     setTimerSeconds(null);
   }, []);
 
+  const clearCountdown = useCallback(() => {
+    countdownRef.current.forEach(clearTimeout);
+    countdownRef.current = [];
+    setCountdown(null);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      countdownRef.current.forEach(clearTimeout);
     };
   }, []);
 
@@ -118,13 +129,30 @@ export default function WorkoutScreen() {
         timerEndRef.current = null;
         setTimerSeconds(null);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Auto-advance to next step after a short breath
+        setTimeout(() => handleNextRef.current(), 700);
       } else {
         setTimerSeconds(remaining);
       }
-    }, 250); // Check 4x/sec for accurate display after backgrounding
+    }, 250);
+  };
+
+  const selectTimer = (seconds: number) => {
+    clearTimer();
+    clearCountdown();
+    setTimerReady(true);
+    setCountdown(3);
+    const t1 = setTimeout(() => setCountdown(2), 1000);
+    const t2 = setTimeout(() => setCountdown(1), 2000);
+    const t3 = setTimeout(() => {
+      setCountdown(null);
+      startTimer(seconds);
+    }, 3000);
+    countdownRef.current = [t1, t2, t3];
   };
 
   const stopTimer = () => {
+    clearCountdown();
     clearTimer();
   };
 
@@ -133,13 +161,14 @@ export default function WorkoutScreen() {
 
   const handleNext = () => {
     if (!resolvedWorkout) return;
-    if (isNavigating.current) return; // prevent double-tap
+    if (isNavigating.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     clearTimer();
+    clearCountdown();
     if (currentStep < totalSteps - 1) {
+      setTimerReady(false);
       setCurrentStep((s) => s + 1);
     } else {
-      // Done — prevent double navigation
       isNavigating.current = true;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.push({
@@ -149,11 +178,16 @@ export default function WorkoutScreen() {
     }
   };
 
+  // Keep ref current so the timer interval closure always calls the latest handleNext
+  handleNextRef.current = handleNext;
+
   const handleBack = () => {
     if (currentStep === 0) {
       setShowQuitConfirm(true);
     } else {
       clearTimer();
+      clearCountdown();
+      setTimerReady(false);
       setCurrentStep((s) => s - 1);
     }
   };
@@ -269,7 +303,14 @@ export default function WorkoutScreen() {
 
         {/* Timer section */}
         <View style={styles.timerSection}>
-          {timerSeconds !== null ? (
+          {countdown !== null ? (
+            /* 3 - 2 - 1 phase */
+            <View style={styles.timerRunning}>
+              <Text style={[styles.timerCount, { color: accentColor }]}>{countdown}</Text>
+              <Text style={styles.timerRemainingLabel}>GET READY</Text>
+            </View>
+          ) : timerSeconds !== null ? (
+            /* Timer running */
             <View style={styles.timerRunning}>
               <Text style={[styles.timerCount, { color: accentColor }]}>{timerSeconds}</Text>
               <Text style={styles.timerRemainingLabel}>SECONDS REMAINING</Text>
@@ -284,11 +325,13 @@ export default function WorkoutScreen() {
               </TouchableOpacity>
             </View>
           ) : (
+            /* Pick a duration */
             <View style={styles.timerButtons}>
+              <Text style={styles.timerPrompt}>SELECT TIME TO CONTINUE</Text>
               {[30, 60, 90].map((sec) => (
                 <TouchableOpacity
                   key={sec}
-                  onPress={() => startTimer(sec)}
+                  onPress={() => selectTimer(sec)}
                   activeOpacity={0.7}
                   style={styles.timerButton}
                   accessibilityRole="button"
@@ -315,15 +358,18 @@ export default function WorkoutScreen() {
         </TouchableOpacity>
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           <TouchableOpacity
-            onPress={handleNext}
-            onPressIn={onPressIn}
-            onPressOut={onPressOut}
-            activeOpacity={0.7}
-            style={flattenStyle([styles.nextBtn, { borderColor: accentColor }])}
+            onPress={timerReady ? handleNext : undefined}
+            onPressIn={timerReady ? onPressIn : undefined}
+            onPressOut={timerReady ? onPressOut : undefined}
+            activeOpacity={timerReady ? 0.7 : 1}
+            style={flattenStyle([
+              styles.nextBtn,
+              { borderColor: timerReady ? accentColor : '#2a2a2a' },
+            ])}
             accessibilityRole="button"
             accessibilityLabel={isLastStep ? 'Complete workout' : 'Next step'}
           >
-            <Text style={{ ...t.timer, color: accentColor }}>
+            <Text style={{ ...t.timer, color: timerReady ? accentColor : '#3a3a3a' }}>
               {isLastStep ? 'DONE. LEGEND. →' : 'NEXT →'}
             </Text>
           </TouchableOpacity>
@@ -453,6 +499,16 @@ const styles = StyleSheet.create({
   timerButtons: {
     flexDirection: 'row',
     alignSelf: 'stretch',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  timerPrompt: {
+    ...t.label,
+    color: '#555',
+    letterSpacing: 2,
+    width: '100%',
+    textAlign: 'center',
+    marginBottom: 12,
   },
   timerButton: {
     flex: 1,

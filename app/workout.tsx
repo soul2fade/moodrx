@@ -256,7 +256,9 @@ export default function WorkoutScreen() {
             <ExerciseStickFigure
               stepText={resolvedWorkout.steps[currentStep]}
               color={accentColor}
-              size={72}
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              size={80}
             />
           </View>
           <Text style={styles.stepText} accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}: ${resolvedWorkout.steps[currentStep]}`}>

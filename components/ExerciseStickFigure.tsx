@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Line } from 'react-native-svg';
 
 type ExerciseType =
@@ -14,152 +15,332 @@ function detectType(text: string): ExerciseType {
   if (/plank|mountain climber/.test(t)) return 'plank';
   if (/jump|burpee|jumping/.test(t)) return 'jump';
   if (/pose|yoga|fold|child|warrior|pigeon|savasana|sphinx|butterfly|dragon|ragdoll|yin/.test(t)) return 'yoga';
-  if (/jab|cross|hook|uppercut|shadow|boxing|round|punch|striking/.test(t)) return 'box';
+  if (/jab|cross|hook|uppercut|shadow|boxing|round|punch/.test(t)) return 'box';
   if (/breath|rest|cool.?down|slow|still|quiet|lie|floor|wall|legs up/.test(t)) return 'rest';
   if (/song|dance|sway|feral|club/.test(t)) return 'dance';
   return 'default';
 }
 
+const SPEEDS: Record<ExerciseType, number> = {
+  walk: 650, run: 300, squat: 900, pushup: 800, plank: 2200,
+  jump: 380, yoga: 1800, box: 280, rest: 2400, dance: 550, default: 750,
+};
+
+const THOUGHTS_BY_PHASE = [
+  ["f#$k it's hard.", "why though.", "who invented this.", "already?", "no."],
+  ["still going??", "this sucks.", "brutal.", "I hate this.", "someone stop me."],
+  ["...ok fine.", "it's working?", "fine FINE.", "maybe though.", "ok sure."],
+  ["wait—", "actually...", "I feel it.", "ok yes.", "almost."],
+];
+const THOUGHT_LAST = "...oh.";
+
+function getThought(currentStep: number, totalSteps: number): string {
+  if (!totalSteps || totalSteps <= 1) return THOUGHTS_BY_PHASE[0][0];
+  if (currentStep >= totalSteps - 1) return THOUGHT_LAST;
+  const progress = currentStep / (totalSteps - 1);
+  const phaseIndex = Math.min(
+    Math.floor(progress * THOUGHTS_BY_PHASE.length),
+    THOUGHTS_BY_PHASE.length - 1
+  );
+  const options = THOUGHTS_BY_PHASE[phaseIndex];
+  return options[currentStep % options.length];
+}
+
+// Linear interpolation helper
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
 interface Props {
   stepText: string;
   color: string;
+  currentStep: number;
+  totalSteps: number;
   size?: number;
 }
 
-export function ExerciseStickFigure({ stepText, color, size = 80 }: Props) {
+export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, size = 80 }: Props) {
   const type = detectType(stepText);
-  const sw = 3;
-  const sc = 'round';
+  const [t, setT] = useState(0); // 0→1 oscillating animation value
+  const animRef = useRef(new Animated.Value(0));
+  const loopRef = useRef<Animated.CompositeAnimation | null>(null);
+  const thoughtText = getThought(currentStep, totalSteps);
+  const isLast = totalSteps > 0 && currentStep >= totalSteps - 1;
 
-  const sharedProps = {
-    stroke: color,
-    strokeWidth: sw,
-    strokeLinecap: sc as 'round',
-  };
+  useEffect(() => {
+    const anim = animRef.current;
+    anim.setValue(0);
+    setT(0);
 
-  const figures: Record<ExerciseType, React.ReactNode> = {
-    walk: (
-      <>
-        <Circle cx="50" cy="14" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="50" y1="23" x2="50" y2="60" {...sharedProps} />
-        <Line x1="50" y1="38" x2="30" y2="54" {...sharedProps} />
-        <Line x1="50" y1="38" x2="70" y2="46" {...sharedProps} />
-        <Line x1="50" y1="60" x2="36" y2="90" {...sharedProps} />
-        <Line x1="50" y1="60" x2="64" y2="82" {...sharedProps} />
-      </>
-    ),
-    run: (
-      <>
-        <Circle cx="56" cy="14" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="56" y1="23" x2="46" y2="58" {...sharedProps} />
-        <Line x1="52" y1="36" x2="72" y2="26" {...sharedProps} />
-        <Line x1="52" y1="36" x2="32" y2="48" {...sharedProps} />
-        <Line x1="46" y1="58" x2="28" y2="80" {...sharedProps} />
-        <Line x1="46" y1="58" x2="64" y2="68" {...sharedProps} />
-        <Line x1="64" y1="68" x2="58" y2="92" {...sharedProps} />
-      </>
-    ),
-    squat: (
-      <>
-        <Circle cx="50" cy="14" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="50" y1="23" x2="50" y2="50" {...sharedProps} />
-        <Line x1="50" y1="36" x2="28" y2="46" {...sharedProps} />
-        <Line x1="50" y1="36" x2="72" y2="46" {...sharedProps} />
-        <Line x1="50" y1="50" x2="34" y2="70" {...sharedProps} />
-        <Line x1="34" y1="70" x2="22" y2="88" {...sharedProps} />
-        <Line x1="50" y1="50" x2="66" y2="70" {...sharedProps} />
-        <Line x1="66" y1="70" x2="78" y2="88" {...sharedProps} />
-      </>
-    ),
-    pushup: (
-      <>
-        <Circle cx="20" cy="52" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="28" y1="56" x2="80" y2="58" {...sharedProps} />
-        <Line x1="42" y1="56" x2="42" y2="80" {...sharedProps} />
-        <Line x1="62" y1="57" x2="62" y2="81" {...sharedProps} />
-        <Line x1="80" y1="58" x2="92" y2="54" {...sharedProps} />
-        <Line x1="80" y1="58" x2="92" y2="64" {...sharedProps} />
-      </>
-    ),
-    plank: (
-      <>
-        <Circle cx="16" cy="46" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="24" y1="52" x2="84" y2="58" {...sharedProps} />
-        <Line x1="38" y1="55" x2="38" y2="78" {...sharedProps} />
-        <Line x1="60" y1="57" x2="60" y2="80" {...sharedProps} />
-        <Line x1="84" y1="58" x2="94" y2="55" {...sharedProps} />
-        <Line x1="84" y1="58" x2="94" y2="65" {...sharedProps} />
-      </>
-    ),
-    jump: (
-      <>
-        <Circle cx="50" cy="14" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="50" y1="23" x2="50" y2="60" {...sharedProps} />
-        <Line x1="50" y1="36" x2="24" y2="20" {...sharedProps} />
-        <Line x1="50" y1="36" x2="76" y2="20" {...sharedProps} />
-        <Line x1="50" y1="60" x2="30" y2="90" {...sharedProps} />
-        <Line x1="50" y1="60" x2="70" y2="90" {...sharedProps} />
-      </>
-    ),
-    yoga: (
-      <>
-        <Circle cx="50" cy="14" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="50" y1="23" x2="50" y2="58" {...sharedProps} />
-        <Line x1="50" y1="36" x2="18" y2="36" {...sharedProps} />
-        <Line x1="50" y1="36" x2="82" y2="36" {...sharedProps} />
-        <Line x1="50" y1="58" x2="28" y2="88" {...sharedProps} />
-        <Line x1="50" y1="58" x2="72" y2="88" {...sharedProps} />
-      </>
-    ),
-    box: (
-      <>
-        <Circle cx="52" cy="14" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="52" y1="23" x2="48" y2="58" {...sharedProps} />
-        <Line x1="50" y1="36" x2="26" y2="28" {...sharedProps} />
-        <Circle cx="24" cy="28" r="4" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="50" y1="36" x2="72" y2="24" {...sharedProps} />
-        <Circle cx="74" cy="22" r="4" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="48" y1="58" x2="32" y2="86" {...sharedProps} />
-        <Line x1="48" y1="58" x2="64" y2="80" {...sharedProps} />
-      </>
-    ),
-    rest: (
-      <>
-        <Circle cx="16" cy="50" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="25" y1="56" x2="86" y2="60" {...sharedProps} />
-        <Line x1="44" y1="57" x2="40" y2="40" {...sharedProps} />
-        <Line x1="66" y1="59" x2="62" y2="42" {...sharedProps} />
-        <Line x1="86" y1="60" x2="96" y2="54" {...sharedProps} />
-        <Line x1="86" y1="60" x2="96" y2="68" {...sharedProps} />
-        <Line x1="8" y1="72" x2="98" y2="72" stroke={color} strokeWidth={1.5} strokeLinecap="round" />
-      </>
-    ),
-    dance: (
-      <>
-        <Circle cx="50" cy="14" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="50" y1="23" x2="50" y2="60" {...sharedProps} />
-        <Line x1="50" y1="36" x2="24" y2="22" {...sharedProps} />
-        <Line x1="50" y1="36" x2="74" y2="50" {...sharedProps} />
-        <Line x1="50" y1="60" x2="32" y2="82" {...sharedProps} />
-        <Line x1="50" y1="60" x2="72" y2="72" {...sharedProps} />
-        <Line x1="72" y1="72" x2="82" y2="58" {...sharedProps} />
-      </>
-    ),
-    default: (
-      <>
-        <Circle cx="50" cy="14" r="9" fill="none" stroke={color} strokeWidth={sw} />
-        <Line x1="50" y1="23" x2="50" y2="62" {...sharedProps} />
-        <Line x1="50" y1="38" x2="28" y2="52" {...sharedProps} />
-        <Line x1="50" y1="38" x2="72" y2="52" {...sharedProps} />
-        <Line x1="50" y1="62" x2="34" y2="90" {...sharedProps} />
-        <Line x1="50" y1="62" x2="66" y2="90" {...sharedProps} />
-      </>
-    ),
-  };
+    const speed = SPEEDS[type];
+    const listenerId = anim.addListener(({ value }) => setT(value));
+
+    loopRef.current = Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration: speed, useNativeDriver: false }),
+        Animated.timing(anim, { toValue: 0, duration: speed, useNativeDriver: false }),
+      ])
+    );
+    loopRef.current.start();
+
+    return () => {
+      loopRef.current?.stop();
+      anim.removeListener(listenerId);
+    };
+  }, [type]);
+
+  const SW = 7;
+  const SC = 'round' as const;
+  const s = { stroke: color, strokeWidth: SW, strokeLinecap: SC };
+
+  function renderFigure() {
+    switch (type) {
+
+      case 'walk': {
+        const lLegX = lerp(34, 66, t);
+        const rLegX = lerp(66, 34, t);
+        const lLegY = lerp(90, 80, t);
+        const rLegY = lerp(80, 90, t);
+        const lArmX = lerp(26, 72, t);
+        const rArmX = lerp(72, 26, t);
+        return (
+          <>
+            <Circle cx={50} cy={14} r={10} fill={color} />
+            <Line x1={50} y1={24} x2={50} y2={64} {...s} />
+            <Line x1={50} y1={40} x2={lArmX} y2={54} {...s} />
+            <Line x1={50} y1={40} x2={rArmX} y2={54} {...s} />
+            <Line x1={50} y1={64} x2={lLegX} y2={lLegY} {...s} />
+            <Line x1={50} y1={64} x2={rLegX} y2={rLegY} {...s} />
+          </>
+        );
+      }
+
+      case 'run': {
+        const lLegX = lerp(22, 70, t);
+        const rLegX = lerp(70, 22, t);
+        const lArmX = lerp(18, 78, t);
+        const rArmX = lerp(78, 18, t);
+        const lArmY = lerp(24, 48, t);
+        const rArmY = lerp(48, 24, t);
+        return (
+          <>
+            <Circle cx={56} cy={12} r={10} fill={color} />
+            <Line x1={56} y1={22} x2={46} y2={60} {...s} />
+            <Line x1={52} y1={36} x2={lArmX} y2={lArmY} {...s} />
+            <Line x1={52} y1={36} x2={rArmX} y2={rArmY} {...s} />
+            <Line x1={46} y1={60} x2={lLegX} y2={92} {...s} />
+            <Line x1={46} y1={60} x2={rLegX} y2={78} {...s} />
+          </>
+        );
+      }
+
+      case 'squat': {
+        const bodyY = lerp(48, 62, t);
+        const headY = lerp(12, 22, t);
+        const lLegX = lerp(20, 32, t);
+        const rLegX = lerp(80, 68, t);
+        const armY = lerp(40, 54, t);
+        return (
+          <>
+            <Circle cx={50} cy={headY} r={10} fill={color} />
+            <Line x1={50} y1={headY + 10} x2={50} y2={bodyY} {...s} />
+            <Line x1={50} y1={headY + 24} x2={28} y2={armY} {...s} />
+            <Line x1={50} y1={headY + 24} x2={72} y2={armY} {...s} />
+            <Line x1={50} y1={bodyY} x2={lLegX} y2={92} {...s} />
+            <Line x1={50} y1={bodyY} x2={rLegX} y2={92} {...s} />
+          </>
+        );
+      }
+
+      case 'pushup': {
+        const bodyY = lerp(56, 66, t);
+        const headY = lerp(48, 58, t);
+        const armY = lerp(82, 72, t);
+        return (
+          <>
+            <Circle cx={20} cy={headY} r={10} fill={color} />
+            <Line x1={28} y1={bodyY} x2={82} y2={bodyY} {...s} />
+            <Line x1={42} y1={bodyY} x2={42} y2={armY} {...s} />
+            <Line x1={64} y1={bodyY} x2={64} y2={armY} {...s} />
+            <Line x1={82} y1={bodyY} x2={94} y2={bodyY - 4} {...s} />
+            <Line x1={82} y1={bodyY} x2={94} y2={bodyY + 4} {...s} />
+          </>
+        );
+      }
+
+      case 'plank': {
+        const armY = lerp(78, 84, t);
+        return (
+          <>
+            <Circle cx={16} cy={48} r={10} fill={color} />
+            <Line x1={26} y1={56} x2={86} y2={60} {...s} />
+            <Line x1={40} y1={57} x2={40} y2={armY} {...s} />
+            <Line x1={62} y1={59} x2={62} y2={armY} {...s} />
+            <Line x1={86} y1={60} x2={96} y2={55} {...s} />
+            <Line x1={86} y1={60} x2={96} y2={67} {...s} />
+          </>
+        );
+      }
+
+      case 'jump': {
+        const offset = lerp(0, -14, t);
+        const legY = lerp(90, 75, t);
+        const lArmX = lerp(26, 10, t);
+        const rArmX = lerp(74, 90, t);
+        const armY = lerp(36, 18, t);
+        return (
+          <>
+            <Circle cx={50} cy={14 + offset} r={10} fill={color} />
+            <Line x1={50} y1={24 + offset} x2={50} y2={62 + offset} {...s} />
+            <Line x1={50} y1={38 + offset} x2={lArmX} y2={armY + offset} {...s} />
+            <Line x1={50} y1={38 + offset} x2={rArmX} y2={armY + offset} {...s} />
+            <Line x1={50} y1={62 + offset} x2={28} y2={legY} {...s} />
+            <Line x1={50} y1={62 + offset} x2={72} y2={legY} {...s} />
+          </>
+        );
+      }
+
+      case 'yoga': {
+        const lArmX = lerp(18, 6, t);
+        const rArmX = lerp(82, 94, t);
+        return (
+          <>
+            <Circle cx={50} cy={14} r={10} fill={color} />
+            <Line x1={50} y1={24} x2={50} y2={62} {...s} />
+            <Line x1={50} y1={38} x2={lArmX} y2={38} {...s} />
+            <Line x1={50} y1={38} x2={rArmX} y2={38} {...s} />
+            <Line x1={50} y1={62} x2={28} y2={92} {...s} />
+            <Line x1={50} y1={62} x2={72} y2={92} {...s} />
+          </>
+        );
+      }
+
+      case 'box': {
+        const punchX = lerp(72, 96, t);
+        const punchY = lerp(28, 24, t);
+        return (
+          <>
+            <Circle cx={52} cy={14} r={10} fill={color} />
+            <Line x1={52} y1={24} x2={48} y2={62} {...s} />
+            <Line x1={50} y1={38} x2={26} y2={30} {...s} />
+            <Circle cx={24} cy={28} r={6} fill={color} />
+            <Line x1={50} y1={38} x2={punchX} y2={punchY} {...s} />
+            <Circle cx={punchX} cy={punchY} r={6} fill={color} />
+            <Line x1={48} y1={62} x2={30} y2={90} {...s} />
+            <Line x1={48} y1={62} x2={66} y2={86} {...s} />
+          </>
+        );
+      }
+
+      case 'rest': {
+        const bodyY = lerp(58, 60, t);
+        return (
+          <>
+            <Circle cx={16} cy={52} r={10} fill={color} />
+            <Line x1={26} y1={bodyY} x2={88} y2={bodyY} {...s} />
+            <Line x1={44} y1={bodyY} x2={40} y2={40} {...s} />
+            <Line x1={68} y1={bodyY} x2={64} y2={42} {...s} />
+            <Line x1={88} y1={bodyY} x2={96} y2={bodyY - 6} {...s} />
+            <Line x1={88} y1={bodyY} x2={96} y2={bodyY + 6} {...s} />
+            <Line x1={8} y1={76} x2={98} y2={76} stroke={color} strokeWidth={2} strokeLinecap="round" />
+          </>
+        );
+      }
+
+      case 'dance': {
+        const lArmX = lerp(22, 76, t);
+        const lArmY = lerp(20, 52, t);
+        const rArmX = lerp(76, 22, t);
+        const rArmY = lerp(52, 20, t);
+        const lLegX = lerp(28, 72, t);
+        const rLegX = lerp(72, 28, t);
+        return (
+          <>
+            <Circle cx={50} cy={14} r={10} fill={color} />
+            <Line x1={50} y1={24} x2={50} y2={62} {...s} />
+            <Line x1={50} y1={38} x2={lArmX} y2={lArmY} {...s} />
+            <Line x1={50} y1={38} x2={rArmX} y2={rArmY} {...s} />
+            <Line x1={50} y1={62} x2={lLegX} y2={92} {...s} />
+            <Line x1={50} y1={62} x2={rLegX} y2={80} {...s} />
+          </>
+        );
+      }
+
+      default: {
+        return (
+          <>
+            <Circle cx={50} cy={14} r={10} fill={color} />
+            <Line x1={50} y1={24} x2={50} y2={64} {...s} />
+            <Line x1={50} y1={40} x2={28} y2={54} {...s} />
+            <Line x1={50} y1={40} x2={72} y2={54} {...s} />
+            <Line x1={50} y1={64} x2={34} y2={92} {...s} />
+            <Line x1={50} y1={64} x2={66} y2={92} {...s} />
+          </>
+        );
+      }
+    }
+  }
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100">
-      {figures[type]}
-    </Svg>
+    <View style={styles.wrapper}>
+      <View style={styles.bubbleArea}>
+        <View style={[styles.bubble, isLast && styles.bubbleLast]}>
+          <Text style={[styles.bubbleText, isLast && styles.bubbleTextLast]}>
+            {thoughtText}
+          </Text>
+        </View>
+        <View style={styles.dots}>
+          <View style={[styles.dot, { width: 6, height: 6, opacity: 0.65 }]} />
+          <View style={[styles.dot, { width: 4, height: 4, opacity: 0.45 }]} />
+          <View style={[styles.dot, { width: 3, height: 3, opacity: 0.25 }]} />
+        </View>
+      </View>
+      <Svg width={size} height={size} viewBox="0 0 100 100">
+        {renderFigure()}
+      </Svg>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrapper: {
+    alignItems: 'center',
+  },
+  bubbleArea: {
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  bubble: {
+    backgroundColor: '#1e1e1e',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2e2e2e',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    maxWidth: 200,
+  },
+  bubbleLast: {
+    borderColor: '#2d5a2d',
+    backgroundColor: '#0f1f0f',
+  },
+  bubbleText: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 12,
+    color: '#a3a3a3',
+    textAlign: 'center',
+  },
+  bubbleTextLast: {
+    color: '#5db85d',
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: 3,
+    marginTop: 4,
+    alignItems: 'flex-end',
+    height: 8,
+  },
+  dot: {
+    borderRadius: 99,
+    backgroundColor: '#2e2e2e',
+  },
+});

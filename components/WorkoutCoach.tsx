@@ -113,7 +113,7 @@ const VeraFigure = ({ step, color, size = 160 }: { step: number; color: string; 
   const by = [0, -2, -6, -3][s];
   return (
     <Svg width={size} height={size * 1.3} viewBox="0 0 200 260">
-      <Rect x={10} y={5} width={180} height={250} rx={10} fill="#1a1a1a" stroke="#333" strokeWidth={1.5} />
+
       <G transform={`translate(100,${128 + by})`}>
         <Line x1={-sw} y1={-4} x2={sw} y2={-4} stroke={color} strokeWidth={10} strokeLinecap="round" />
         <Rect x={-18} y={-6} width={36} height={44} rx={6} fill={color} />
@@ -162,7 +162,7 @@ const RonFigure = ({ step, color, size = 160 }: { step: number; color: string; s
   const by = [0, -2, -6, -3][s];
   return (
     <Svg width={size} height={size * 1.3} viewBox="0 0 200 260">
-      <Rect x={10} y={5} width={180} height={250} rx={10} fill="#1a1a1a" stroke="#333" strokeWidth={1.5} />
+
       <G transform={`translate(100,${128 + by})`}>
         <Path d="M-20,-6 L-22,8 L-18,34 L18,34 L22,8 L20,-6 Z" fill={color} />
         <Path d="M-4,-6 L-12,14 L-4,10 Z" fill="#1a1a1a" opacity={0.25} />
@@ -211,7 +211,7 @@ const BrickFigure = ({ step, color, size = 160 }: { step: number; color: string;
   const by = [0, -2, -6, -3][s];
   return (
     <Svg width={size} height={size * 1.3} viewBox="0 0 200 260">
-      <Rect x={10} y={5} width={180} height={250} rx={10} fill="#1a1a1a" stroke="#333" strokeWidth={1.5} />
+
       <G transform={`translate(100,${132 + by})`}>
         <Rect x={-20} y={-4} width={40} height={42} rx={8} fill={color} />
         <Rect x={-14} y={38} width={12} height={26} rx={5} fill={color} opacity={0.85} />
@@ -260,7 +260,7 @@ const RickyFigure = ({ step, color, size = 160 }: { step: number; color: string;
   const by = [0, -2, -6, -3][s];
   return (
     <Svg width={size} height={size * 1.3} viewBox="0 0 200 260">
-      <Rect x={10} y={5} width={180} height={250} rx={10} fill="#1a1a1a" stroke="#333" strokeWidth={1.5} />
+
       <G transform={`translate(100,${128 + by})`}>
         <Rect x={-16} y={-6} width={32} height={42} rx={6} fill={color} />
         <Rect x={-3} y={-6} width={6} height={42} rx={2} fill="#1a1a1a" opacity={0.3} />
@@ -308,7 +308,7 @@ const DerekFigure = ({ step, color, size = 160 }: { step: number; color: string;
   const by = [0, -2, -6, -3][s];
   return (
     <Svg width={size} height={size * 1.3} viewBox="0 0 200 260">
-      <Rect x={10} y={5} width={180} height={250} rx={10} fill="#1a1a1a" stroke="#333" strokeWidth={1.5} />
+
       <G transform={`translate(100,${126 + by})`}>
         <Path d="M-12,-6 L-10,38 L10,38 L12,-6 Z" fill={color} />
         <Line x1={-18} y1={-4} x2={18} y2={-4} stroke={color} strokeWidth={6} strokeLinecap="round" />

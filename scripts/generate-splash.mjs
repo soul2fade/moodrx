@@ -6,25 +6,25 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Three-bar logo + MoodRx wordmark as SVG, white on transparent
-// Bars: left tall | middle shorter | right tall — matching the uploaded logo geometry
+// Rendered at 3× (1200×1560) so it stays crisp on high-density screens
 const svgContent = `
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="520" viewBox="0 0 400 520">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1560" viewBox="0 0 1200 1560">
   <!-- Three bars logo — white, matching the original proportions -->
   <!-- Left bar -->
-  <rect x="88"  y="60"  width="62" height="260" fill="white"/>
+  <rect x="264" y="180" width="186" height="780" fill="white"/>
   <!-- Middle bar (starts lower, same bottom) -->
-  <rect x="169" y="140" width="62" height="180" fill="white"/>
+  <rect x="507" y="420" width="186" height="540" fill="white"/>
   <!-- Right bar -->
-  <rect x="250" y="60"  width="62" height="260" fill="white"/>
+  <rect x="750" y="180" width="186" height="780" fill="white"/>
 
   <!-- MoodRx wordmark -->
   <text
-    x="200"
-    y="395"
+    x="600"
+    y="1185"
     font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-size="52"
+    font-size="156"
     font-weight="300"
-    letter-spacing="8"
+    letter-spacing="24"
     fill="white"
     text-anchor="middle"
     dominant-baseline="middle"
@@ -32,12 +32,12 @@ const svgContent = `
 
   <!-- Tagline -->
   <text
-    x="200"
-    y="450"
+    x="600"
+    y="1350"
     font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-size="14"
+    font-size="42"
     font-weight="300"
-    letter-spacing="4"
+    letter-spacing="12"
     fill="rgba(255,255,255,0.45)"
     text-anchor="middle"
     dominant-baseline="middle"

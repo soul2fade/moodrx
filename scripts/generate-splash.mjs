@@ -38,13 +38,13 @@ const svgContent = `
     x="600"
     y="1185"
     font-family="SpaceGrotesk"
-    font-size="156"
+    font-size="148"
     font-weight="300"
-    letter-spacing="24"
+    letter-spacing="12"
     fill="white"
     text-anchor="middle"
     dominant-baseline="middle"
-  >MOODRX</text>
+  >MoodRx</text>
 
   <!-- Tagline -->
   <text

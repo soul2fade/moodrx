@@ -19,7 +19,7 @@ import { type as t } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
 
-type Tab = 'workouts' | 'science' | 'stack';
+type Tab = 'workouts' | 'stack';
 
 export default function PrescriptionScreen() {
   const params = useLocalSearchParams<{ mood: string; intensity: string }>();
@@ -28,6 +28,7 @@ export default function PrescriptionScreen() {
     : (Object.keys(MOODS)[0] as MoodKey);
   const intensity = parseInt(params.intensity || '5', 10);
   const [activeTab, setActiveTab] = useState<Tab>('workouts');
+  const [expandedScience, setExpandedScience] = useState<Set<string>>(new Set());
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const { isPremium } = useSubscription();
 
@@ -41,7 +42,6 @@ export default function PrescriptionScreen() {
     ]).start();
   }, []);
 
-  // Android hardware back button
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.back();
@@ -62,14 +62,26 @@ export default function PrescriptionScreen() {
     });
   };
 
+  const toggleScience = (workoutId: string) => {
+    setExpandedScience((prev) => {
+      const next = new Set(prev);
+      if (next.has(workoutId)) {
+        next.delete(workoutId);
+      } else {
+        next.add(workoutId);
+      }
+      return next;
+    });
+  };
+
   const tabs: { key: Tab; label: string }[] = [
     { key: 'workouts', label: 'WORKOUTS' },
-    { key: 'science', label: 'THE SCIENCE' },
     { key: 'stack', label: 'STACK' },
   ];
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>  {/* Fixed header */}
+    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      {/* Fixed header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -128,6 +140,8 @@ export default function PrescriptionScreen() {
           <View>
             {workouts.map((workout, index) => {
               const isLocked = !isPremium && index > 0;
+              const scienceOpen = expandedScience.has(workout.id);
+
               if (isLocked) {
                 return (
                   <TouchableOpacity
@@ -161,14 +175,11 @@ export default function PrescriptionScreen() {
                   </TouchableOpacity>
                 );
               }
+
               return (
-                <TouchableOpacity
+                <View
                   key={workout.id}
                   style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
-                  onPress={() => handleWorkoutTap(workout)}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${workout.name}, ${workout.duration} minutes, ${workout.intensity}`}
                 >
                   <View style={styles.workoutCardTop}>
                     <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
@@ -185,54 +196,38 @@ export default function PrescriptionScreen() {
                   </View>
                   <Text style={styles.workoutName}>{workout.name}</Text>
                   <Text style={styles.workoutVibe}>{workout.vibe}</Text>
-                  <Text style={{ ...t.label, color: accentColor, letterSpacing: 2, marginTop: 12 }}>
-                    VIEW WORKOUT →
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
 
-        {activeTab === 'science' && (
-          <View>
-            {workouts.map((workout, index) => {
-              const isLocked = !isPremium && index > 0;
-              if (isLocked) {
-                return (
-                  <TouchableOpacity
-                    key={workout.id}
-                    onPress={() => setShowPremiumSheet(true)}
-                    activeOpacity={0.8}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${workout.name} science, locked. Unlock with Pro.`}
-                    style={index < workouts.length - 1
-                      ? flattenStyle([styles.scienceBlock, styles.scienceBorder, { opacity: 0.35 }])
-                      : flattenStyle([styles.scienceBlock, { opacity: 0.35 }])}
-                  >
-                    <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
-                      {String(index + 1).padStart(2, '0')}
-                    </Text>
-                    <Text style={styles.scienceName}>{workout.name}</Text>
-                    <Text style={styles.scienceWhy}>{workout.why}</Text>
-                    <Text style={{ ...t.label, color: '#525252', letterSpacing: 2, marginTop: 12 }}>
-                      UNLOCK PRO →
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }
-              return (
-                <View
-                  key={workout.id}
-                  style={index < workouts.length - 1
-                    ? flattenStyle([styles.scienceBlock, styles.scienceBorder])
-                    : styles.scienceBlock}
-                >
-                  <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
-                    {String(index + 1).padStart(2, '0')}
-                  </Text>
-                  <Text style={styles.scienceName}>{workout.name}</Text>
-                  <Text style={styles.scienceWhy}>{workout.why}</Text>
+                  {/* Science expandable */}
+                  {scienceOpen && (
+                    <View style={styles.scienceInline}>
+                      <Text style={styles.scienceInlineLabel}>THE SCIENCE</Text>
+                      <Text style={styles.scienceInlineText}>{workout.why}</Text>
+                    </View>
+                  )}
+
+                  {/* Action row */}
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      onPress={() => handleWorkoutTap(workout)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`View ${workout.name} workout`}
+                    >
+                      <Text style={{ ...t.label, color: accentColor, letterSpacing: 2 }}>
+                        VIEW WORKOUT →
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => toggleScience(workout.id)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={scienceOpen ? 'Hide science' : 'View the science'}
+                    >
+                      <Text style={{ ...t.label, color: '#525252', letterSpacing: 2 }}>
+                        {scienceOpen ? 'HIDE SCIENCE ↑' : 'THE SCIENCE ↓'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               );
             })}
@@ -385,7 +380,6 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 48,
   },
-  // Workouts tab
   workoutCard: {
     backgroundColor: '#111111',
     borderWidth: 1,
@@ -436,25 +430,33 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: 4,
   },
-  // Science tab
-  scienceBlock: {
-    paddingVertical: 20,
+  scienceInline: {
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    marginTop: 14,
+    paddingTop: 14,
   },
-  scienceBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
+  scienceInlineLabel: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 3,
+    fontSize: 10,
   },
-  scienceName: {
-    ...t.headlineSm,
-    fontSize: 16,
-    marginTop: 4,
-  },
-  scienceWhy: {
+  scienceInlineText: {
     ...t.bodyMuted,
-    fontSize: 14,
-    marginTop: 8,
+    fontSize: 13,
+    marginTop: 6,
+    lineHeight: 20,
   },
-  // Stack tab
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingTop: 12,
+  },
   stackTitle: {
     ...t.headlineSm,
   },

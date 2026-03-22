@@ -404,8 +404,9 @@ const styles = StyleSheet.create({
   },
   workoutDuration: {
     ...t.label,
-    color: '#737373',
+    color: '#a3a3a3',
     fontSize: 12,
+    fontWeight: '600',
   },
   intensityBadge: {
     borderWidth: 1,
@@ -415,9 +416,10 @@ const styles = StyleSheet.create({
   },
   intensityBadgeText: {
     ...t.label,
-    color: '#737373',
+    color: '#a3a3a3',
     fontSize: 10,
     letterSpacing: 1,
+    fontWeight: '600',
   },
   workoutName: {
     ...t.headlineSm,

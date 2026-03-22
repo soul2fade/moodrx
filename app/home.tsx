@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   moodDesc: {
     ...t.label,
-    color: '#737373',
+    color: '#a3a3a3',
     marginTop: 2,
   },
   moodRight: {

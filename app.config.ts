@@ -8,7 +8,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
-  scheme: "myapp",
+  scheme: "moodrx",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   extra: {
@@ -21,6 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: "com.moodrx.app",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      NSUserNotificationsUsageDescription: "MoodRx uses notifications to remind you of your daily mood check-in and workouts.",
     },
   },
   android: {
@@ -42,12 +43,20 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-font",
     "expo-web-browser",
     [
+      "expo-notifications",
+      {
+        icon: "./assets/images/icon.png",
+        color: "#0a0a0a",
+        sounds: [],
+      },
+    ],
+    [
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
         imageWidth: 200,
         resizeMode: "contain",
-        backgroundColor: "#ffffff",
+        backgroundColor: "#0a0a0a",
       },
     ],
   ],

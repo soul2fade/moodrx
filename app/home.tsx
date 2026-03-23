@@ -69,7 +69,7 @@ export default function HomeScreen() {
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { flexGrow: 1 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Top row */}
@@ -144,7 +144,7 @@ export default function HomeScreen() {
               >
                 <MoodIcon
                   mood={moodKey}
-                  size={28}
+                  size={32}
                   opacity={isSelected ? 1 : 0.65}
                   color={mood.color}
                 />
@@ -304,14 +304,16 @@ const styles = StyleSheet.create({
   },
   moodList: {
     marginTop: 28,
+    flex: 1,
   },
   moodRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
     paddingLeft: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
+    minHeight: 72,
   },
   moodRowSelected: {
     borderLeftWidth: 2,
@@ -324,7 +326,7 @@ const styles = StyleSheet.create({
   },
   moodName: {
     ...t.headlineSm,
-    fontSize: 15,
+    fontSize: 17,
   },
   moodDesc: {
     ...t.label,

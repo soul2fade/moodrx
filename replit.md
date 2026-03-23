@@ -42,6 +42,20 @@ The app runs on port 5000 via the Expo web bundler (Metro).
 
 **Workflow**: `Start application` — runs `PORT=5000 npx expo start --web --port 5000`
 
+## RevenueCat Setup (Pending)
+
+The app currently uses `expo-in-app-purchases` with AsyncStorage-only client-side trust for premium state (`contexts/SubscriptionContext.tsx`, `lib/subscription.ts`). This is insecure — premium status can be toggled client-side without a real purchase.
+
+**To migrate to RevenueCat (proper receipt validation):**
+1. Connect the RevenueCat integration via the Replit integrations system (connector ID: `ccfg_revenuecat_01KED80FZSMH99H5FHQWSX7D4M`). Alternatively, provide a RevenueCat REST API key as a secret (`REVENUECAT_API_KEY`) — this is needed to run the seed script.
+2. Run `npx tsx scripts/seedRevenueCat.ts` to create products/entitlements/offerings.
+3. Store the output keys: `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY`, `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`, `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`.
+4. Create `lib/revenuecat.tsx` using the SubscriptionProvider pattern from the `revenuecat` skill.
+5. Replace `contexts/SubscriptionContext.tsx` to derive `isPremium` from RevenueCat entitlement (identifier: `pro`) instead of AsyncStorage.
+6. The existing `isPremium` / `purchaseMonthly` / `purchaseYearly` / `restorePurchases` API surface should be preserved — all consumer screens work without changes.
+
+Packages `react-native-purchases` and `@replit/revenuecat-sdk` are already installed.
+
 ## Environment Variables
 
 - `EXPO_PUBLIC_CATDOES_WATCH_KEY` — Error tracking API key (in `.env`)

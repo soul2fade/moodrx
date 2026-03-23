@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
-  BackHandler,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { MoodKey } from '@/lib/storage';
@@ -18,6 +17,8 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 type Tab = 'workouts' | 'stack';
 
@@ -32,23 +33,13 @@ export default function PrescriptionScreen() {
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const { isPremium } = useSubscription();
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
+  const { fadeAnim, slideAnim } = useScreenAnimation();
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
+  const backHandler = useCallback(() => {
+    router.back();
+    return true;
   }, []);
-
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.back();
-      return true;
-    });
-    return () => backHandler.remove();
-  }, []);
+  useHardwareBack(backHandler);
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
-  BackHandler,
   Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -18,6 +17,8 @@ import { MOODS } from '@/lib/moods';
 import { getWorkoutById } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
 import { NotificationPrompt } from '@/components/NotificationPrompt';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 function getScoreContext(score: number): string {
   if (score <= 3) return 'Rough. But you moved.';
@@ -41,26 +42,15 @@ export default function PostWorkoutScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
+  const { fadeAnim, slideAnim } = useScreenAnimation();
 
   // Prevent Android back button from going back to workout mid-flow
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.replace('/home');
-      return true;
-    });
-    return () => backHandler.remove();
+  const backHandler = useCallback(() => {
+    router.replace('/home');
+    return true;
   }, []);
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useHardwareBack(backHandler);
 
   const onPressIn = () => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start();
   const onPressOut = () => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();

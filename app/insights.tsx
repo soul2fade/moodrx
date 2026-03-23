@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
-  BackHandler,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import ViewShot from 'react-native-view-shot';
@@ -26,6 +25,8 @@ import { ShareCard } from '@/components/ShareCard';
 import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const DAY_ABBREVS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -56,35 +57,28 @@ const BAR_WIDTH = 18;
 
 export default function InsightsScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showBurnConfirm, setShowBurnConfirm] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const shareCardRef = useRef<ViewShot>(null);
   const { isPremium } = useSubscription();
+  const { fadeAnim, slideAnim } = useScreenAnimation();
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
+  const backHandler = useCallback(() => {
+    router.back();
+    return true;
+  }, []);
+  useHardwareBack(backHandler);
 
   const loadSessions = useCallback(() => {
-    getSessions().then(setSessions);
+    setIsLoading(true);
+    getSessions().then((data) => {
+      setSessions(data);
+      setIsLoading(false);
+    });
   }, []);
 
   useFocusEffect(loadSessions);
-
-  // Android hardware back button — go home
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.back();
-      return true;
-    });
-    return () => backHandler.remove();
-  }, []);
 
   const streak = useMemo(() => getStreak(sessions), [sessions]);
   const avgChange = useMemo(() => getAverageChange(sessions), [sessions]);
@@ -137,24 +131,30 @@ export default function InsightsScreen() {
         <Text style={styles.subtext}>Data doesn&apos;t lie. Even when your brain does.</Text>
 
         {/* Stats row */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#5EAAB5' }]}>
-            <Text style={{ ...t.dataValue, color: '#5EAAB5' }}>{sessionCount}</Text>
-            <Text style={styles.statLabel}>SESSIONS</Text>
+        {isLoading ? (
+          <View style={styles.statsRow}>
+            <Text style={styles.statsLoading}>Loading your data…</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#059669' }]}>
-            <Text style={{ ...t.dataValue, color: '#059669' }}>
-              {formatChange(avgChange)}
-            </Text>
-            <Text style={styles.statLabel}>AVG CHANGE</Text>
+        ) : (
+          <View style={styles.statsRow}>
+            <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#5EAAB5' }]}>
+              <Text style={{ ...t.dataValue, color: '#5EAAB5' }}>{sessionCount}</Text>
+              <Text style={styles.statLabel}>SESSIONS</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#059669' }]}>
+              <Text style={{ ...t.dataValue, color: '#059669' }}>
+                {sessionCount === 0 ? '—' : formatChange(avgChange)}
+              </Text>
+              <Text style={styles.statLabel}>AVG CHANGE</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#D97706' }]}>
+              <Text style={{ ...t.dataValue, color: '#D97706' }}>{streak}</Text>
+              <Text style={styles.statLabel}>DAY STREAK</Text>
+            </View>
           </View>
-          <View style={styles.statDivider} />
-          <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#D97706' }]}>
-            <Text style={{ ...t.dataValue, color: '#D97706' }}>{streak}</Text>
-            <Text style={styles.statLabel}>DAY STREAK</Text>
-          </View>
-        </View>
+        )}
 
         {/* Supplement Tracker button */}
         <TouchableOpacity
@@ -182,6 +182,8 @@ export default function InsightsScreen() {
                 style={styles.lockedCalendarButton}
                 onPress={() => setShowPremiumSheet(true)}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Start free trial to unlock calendar"
               >
                 <Text style={styles.lockedCalendarButtonText}>START FREE TRIAL</Text>
               </TouchableOpacity>
@@ -201,8 +203,11 @@ export default function InsightsScreen() {
         {/* Chart */}
         <View style={styles.chartSection}>
           <Text style={styles.chartLabel}>LAST {last7.length} SESSIONS</Text>
-          {last7.length === 0 ? (
-            <Text style={styles.noSessions}>No sessions yet. Go do something.</Text>
+          {!isLoading && last7.length === 0 ? (
+            <View style={styles.emptyChart}>
+              <Text style={styles.noSessions}>No sessions yet.</Text>
+              <Text style={styles.noSessionsSub}>Complete a workout to see your data here.</Text>
+            </View>
           ) : (
             <View style={styles.chart}>
               {last7.map((session, index) => {
@@ -210,7 +215,7 @@ export default function InsightsScreen() {
                 const postHeight = Math.max(((session.postScore ?? 0) / 10) * BAR_MAX_HEIGHT, 4);
                 const dayAbbr = DAY_ABBREVS[new Date(session.timestamp).getDay()] ?? '—';
                 return (
-                  <View key={session.id} style={styles.chartGroup}>
+                  <View key={session.id ?? index} style={styles.chartGroup}>
                     <View style={styles.chartBars}>
                       <View
                         style={{ width: BAR_WIDTH, height: preHeight, maxHeight: BAR_MAX_HEIGHT, backgroundColor: '#525252' }}
@@ -256,7 +261,7 @@ export default function InsightsScreen() {
               const change = session.postScore - session.intensity;
               const changeStr = change >= 0 ? `+${change}` : `${change}`;
               const changeColor = change >= 0 ? '#059669' : '#737373';
-              const moodColor = MOODS[session.mood].color;
+              const moodColor = MOODS[session.mood]?.color ?? '#737373';
               const date = new Date(session.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
               return (
@@ -274,15 +279,17 @@ export default function InsightsScreen() {
         )}
 
         {/* Share Progress button */}
-        <TouchableOpacity
-          style={{ borderWidth: 1, borderColor: '#525252', paddingVertical: 16, alignItems: 'center', marginBottom: 12, marginTop: 32 }}
-          onPress={handleShare}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Share your progress"
-        >
-          <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>SHARE PROGRESS →</Text>
-        </TouchableOpacity>
+        {sessionCount > 0 && (
+          <TouchableOpacity
+            style={{ borderWidth: 1, borderColor: '#525252', paddingVertical: 16, alignItems: 'center', marginBottom: 12, marginTop: 32 }}
+            onPress={handleShare}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Share your progress"
+          >
+            <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>SHARE PROGRESS →</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Do it again */}
         <TouchableOpacity
@@ -296,15 +303,17 @@ export default function InsightsScreen() {
         </TouchableOpacity>
 
         {/* Burn it all down */}
-        <TouchableOpacity
-          onPress={() => setShowBurnConfirm(true)}
-          activeOpacity={0.6}
-          style={styles.burnButton}
-          accessibilityRole="button"
-          accessibilityLabel="Delete all session data"
-        >
-          <Text style={styles.burnButtonText}>BURN IT ALL DOWN</Text>
-        </TouchableOpacity>
+        {sessionCount > 0 && (
+          <TouchableOpacity
+            onPress={() => setShowBurnConfirm(true)}
+            activeOpacity={0.6}
+            style={styles.burnButton}
+            accessibilityRole="button"
+            accessibilityLabel="Delete all session data"
+          >
+            <Text style={styles.burnButtonText}>BURN IT ALL DOWN</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Burn confirm */}
         {showBurnConfirm && (
@@ -314,6 +323,8 @@ export default function InsightsScreen() {
               <TouchableOpacity
                 onPress={() => setShowBurnConfirm(false)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
               >
                 <Text style={styles.neverMind}>Never mind</Text>
               </TouchableOpacity>
@@ -321,6 +332,8 @@ export default function InsightsScreen() {
                 onPress={handleBurn}
                 activeOpacity={0.7}
                 style={styles.burnItButton}
+                accessibilityRole="button"
+                accessibilityLabel="Confirm delete all sessions"
               >
                 <Text style={styles.burnItText}>Burn it</Text>
               </TouchableOpacity>
@@ -378,13 +391,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
-  // Stats
   statsRow: {
     flexDirection: 'row',
     marginTop: 32,
     borderWidth: 1,
     borderColor: '#1a1a1a',
     backgroundColor: '#111111',
+    minHeight: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statsLoading: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 2,
   },
   statItem: {
     flex: 1,
@@ -394,6 +414,7 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     backgroundColor: '#1a1a1a',
+    alignSelf: 'stretch',
   },
   statLabel: {
     ...t.dataLabel,
@@ -412,7 +433,6 @@ const styles = StyleSheet.create({
     color: '#D97706',
     letterSpacing: 1,
   },
-  // Chart
   chartSection: {
     marginTop: 32,
   },
@@ -422,12 +442,24 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     marginBottom: 16,
   },
+  emptyChart: {
+    paddingVertical: 32,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+  },
   noSessions: {
+    ...t.headlineSm,
+    color: '#525252',
+    fontSize: 14,
+  },
+  noSessionsSub: {
     ...t.label,
-    color: '#737373',
+    color: '#333333',
+    fontSize: 11,
+    marginTop: 6,
+    letterSpacing: 1,
     textAlign: 'center',
-    marginTop: 16,
-    fontSize: 13,
   },
   chart: {
     flexDirection: 'row',
@@ -468,7 +500,6 @@ const styles = StyleSheet.create({
     color: '#737373',
     letterSpacing: 1,
   },
-  // Pattern
   patternBox: {
     borderLeftWidth: 2,
     borderLeftColor: '#059669',
@@ -486,7 +517,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
   },
-  // Recent sessions
   recentSection: {
     marginTop: 32,
   },
@@ -517,7 +547,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: 2,
   },
-  // Do it again
   doItAgain: {
     borderWidth: 1,
     borderColor: '#ffffff',
@@ -530,11 +559,10 @@ const styles = StyleSheet.create({
     ...t.button,
     letterSpacing: 3,
   },
-  // Burn
   burnButton: {
     marginTop: 48,
     alignItems: 'center',
-    paddingBottom: 48,
+    paddingBottom: 16,
   },
   burnButtonText: {
     ...t.label,

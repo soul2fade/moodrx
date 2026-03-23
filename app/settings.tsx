@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   Animated,
   Platform,
   Linking,
-  BackHandler,
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +15,8 @@ import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
 import { clearAllData } from '@/lib/storage';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const NOTIFICATIONS_KEY = 'notifications_enabled';
 const REMINDER_TIME_KEY = 'reminder_time';
@@ -34,25 +35,13 @@ export default function SettingsScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { restorePurchases } = useSubscription();
   const toggleAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
+  const { fadeAnim, slideAnim } = useScreenAnimation();
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const backHandler = useCallback(() => {
+    router.back();
+    return true;
   }, []);
-
-  // Android hardware back button
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.back();
-      return true;
-    });
-    return () => backHandler.remove();
-  }, []);
+  useHardwareBack(backHandler);
 
   useEffect(() => {
     // Load persisted state

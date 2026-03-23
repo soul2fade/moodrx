@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 import { router } from 'expo-router';
 import { getFirstLaunchDone, setFirstLaunchDone } from '@/lib/storage';
 import { type as t, fonts } from '../lib/typography';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 
 const STEPS = [
   {
@@ -30,16 +31,8 @@ const STEPS = [
 ];
 
 export default function OnboardingScreen() {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
+  const { fadeAnim, slideAnim } = useScreenAnimation();
   const buttonScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -96,6 +89,8 @@ export default function OnboardingScreen() {
             onPressIn={onPressIn}
             onPressOut={onPressOut}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Get started with MoodRx"
           >
             <Text style={styles.buttonText}>LET&apos;S GO →</Text>
           </TouchableOpacity>

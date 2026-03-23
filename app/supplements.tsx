@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
-  BackHandler,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -21,6 +20,8 @@ import {
 import { MOODS } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { type as t, fonts } from '../lib/typography';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 function getTodayString(): string {
   const d = new Date();
@@ -71,31 +72,18 @@ export default function SupplementsScreen() {
   const [expandedSupp, setExpandedSupp] = useState<string | null>(null);
   const today = getTodayString();
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
+  const { fadeAnim, slideAnim } = useScreenAnimation();
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const backHandler = useCallback(() => {
+    router.back();
+    return true;
   }, []);
-
-  // Android hardware back button
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.back();
-      return true;
-    });
-    return () => backHandler.remove();
-  }, []);
+  useHardwareBack(backHandler);
 
   const loadData = useCallback(() => {
     getSupplementLogs().then(setLogs);
     getSessions().then((sessions: Session[]) => {
       if (sessions.length > 0) {
-        // Most recent session
         const sorted = [...sessions].sort((a, b) => b.timestamp - a.timestamp);
         setLastMood(sorted[0].mood as MoodKey);
       } else {
@@ -186,38 +174,42 @@ export default function SupplementsScreen() {
             const isExpanded = expandedSupp === supp.name;
             return (
               <View key={supp.name}>
-                <TouchableOpacity
-                  style={styles.supplementRow}
-                  onPress={() => handleExpand(supp.name)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${supp.name}, ${supp.benefit}. ${isExpanded ? 'Collapse' : 'Expand'} details`}
-                >
+                {/* Flat row: checkbox + expand area side by side, no nesting */}
+                <View style={styles.supplementRow}>
                   <TouchableOpacity
                     onPress={() => handleToggle(supp.name)}
                     activeOpacity={0.7}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                     accessibilityRole="checkbox"
                     accessibilityState={{ checked: isTaken }}
-                    accessibilityLabel={`${supp.name}: ${isTaken ? 'taken' : 'not taken'}`}
+                    accessibilityLabel={`${supp.name}: ${isTaken ? 'taken' : 'not taken'}. Tap to toggle.`}
                   >
                     <View style={[isTaken ? styles.checkboxTaken : styles.checkboxEmpty,
                       isTaken ? { borderColor: accentColor } : {}]}>
                       {isTaken && <View style={[styles.checkboxFill, { backgroundColor: accentColor }]} />}
                     </View>
                   </TouchableOpacity>
-                  <View style={styles.supplementInfo}>
-                    <Text style={styles.supplementName}>{supp.name}</Text>
-                    <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
-                  </View>
-                  <View style={styles.supplementRight}>
-                    <Text style={styles.supplementDose}>{supp.dose}</Text>
-                    <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
-                    <Text style={[styles.expandChevron, { color: accentColor }]}>
-                      {isExpanded ? '▲' : '▼'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.supplementExpandArea}
+                    onPress={() => handleExpand(supp.name)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${supp.name}, ${supp.benefit}. ${isExpanded ? 'Collapse' : 'Expand'} details`}
+                  >
+                    <View style={styles.supplementInfo}>
+                      <Text style={styles.supplementName}>{supp.name}</Text>
+                      <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
+                    </View>
+                    <View style={styles.supplementRight}>
+                      <Text style={styles.supplementDose}>{supp.dose}</Text>
+                      <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
+                      <Text style={[styles.expandChevron, { color: accentColor }]}>
+                        {isExpanded ? '▲' : '▼'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
 
                 {isExpanded && (
                   <View style={[styles.sciencePanel, { borderLeftColor: accentColor }]}>
@@ -348,6 +340,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
+  supplementExpandArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
   checkboxEmpty: {
     width: 24,
     height: 24,
@@ -371,7 +369,6 @@ const styles = StyleSheet.create({
   },
   supplementInfo: {
     flex: 1,
-    marginLeft: 12,
   },
   supplementName: {
     ...t.headlineSm,

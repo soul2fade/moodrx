@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -19,31 +19,28 @@ import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '@/lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
 
 export default function HomeScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
+  const { fadeAnim, slideAnim } = useScreenAnimation();
   const buttonScale = useRef(new Animated.Value(1)).current;
   const panelAnim = useRef(new Animated.Value(PANEL_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   useFocusEffect(
     useCallback(() => {
-      getSessions().then(setSessions);
+      setIsLoading(true);
+      getSessions().then((data) => {
+        setSessions(data);
+        setIsLoading(false);
+      });
       dismissPanel();
     }, [])
   );
@@ -102,10 +99,10 @@ export default function HomeScreen() {
               onPress={() => router.push('/insights')}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel={`${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}, view insights`}
+              accessibilityLabel={isLoading ? 'Loading sessions' : `${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}, view insights`}
             >
               <Text style={styles.sessionCount}>
-                {sessionCount} {sessionCount === 1 ? 'SESSION' : 'SESSIONS'}
+                {isLoading ? '—' : `${sessionCount} ${sessionCount === 1 ? 'SESSION' : 'SESSIONS'}`}
               </Text>
             </TouchableOpacity>
             {streak >= 3 && (

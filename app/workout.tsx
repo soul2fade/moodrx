@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
-  BackHandler,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -17,6 +16,8 @@ import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const MOTIVATIONAL = [
   "Let's go.",
@@ -49,18 +50,9 @@ export default function WorkoutScreen() {
   const isNavigating = useRef(false);
   const handleNextRef = useRef<() => void>(() => {});
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
+  const { fadeAnim, slideAnim } = useScreenAnimation();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
@@ -98,23 +90,20 @@ export default function WorkoutScreen() {
     };
   }, []);
 
-  // Android hardware back button handler
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (showQuitConfirm) {
-        setShowQuitConfirm(false);
-        return true;
-      }
-      if (currentStep > 0) {
-        clearTimer();
-        setCurrentStep((s) => s - 1);
-        return true;
-      }
-      setShowQuitConfirm(true);
-      return true; // prevent default back
-    });
-    return () => backHandler.remove();
+  const hwBackHandler = useCallback(() => {
+    if (showQuitConfirm) {
+      setShowQuitConfirm(false);
+      return true;
+    }
+    if (currentStep > 0) {
+      clearTimer();
+      setCurrentStep((s) => s - 1);
+      return true;
+    }
+    setShowQuitConfirm(true);
+    return true;
   }, [showQuitConfirm, currentStep, clearTimer]);
+  useHardwareBack(hwBackHandler);
 
   const startTimer = (seconds: number) => {
     clearTimer();
@@ -233,14 +222,7 @@ export default function WorkoutScreen() {
         >
           <Text style={styles.quitText}>X QUIT</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.replace('/home')}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go home"
-        >
-          <Text style={styles.homeText}>HOME</Text>
-        </TouchableOpacity>
+        <Text style={styles.stepCounter}>{currentStep + 1} / {totalSteps}</Text>
       </View>
 
       {/* Quit confirmation */}
@@ -416,9 +398,9 @@ const styles = StyleSheet.create({
     color: '#737373',
     letterSpacing: 2,
   },
-  homeText: {
+  stepCounter: {
     ...t.label,
-    color: '#737373',
+    color: '#525252',
     letterSpacing: 2,
   },
   quitConfirm: {

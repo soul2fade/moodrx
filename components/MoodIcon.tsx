@@ -193,19 +193,19 @@ export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps)
       }
 
       case 'good': {
-        // A single calm, smooth bell-curve pulse on a steady baseline.
+        // A tall, confident bell-curve pulse on a baseline near the bottom of the icon.
+        // Baseline sits low, peak reaches high — arc occupies the upper portion of the icon.
         // Visual opposite of Anxious: one clean positive arc vs chaotic spike.
-        // Reads as: stable, one good moment, not noise.
         const w = size;
         const h = size;
-        const base = h * 0.62;
-        const peakY = h * 0.16;
+        const base = h * 0.76;
+        const peakY = h * 0.1;
         const d = [
           `M 0,${base}`,
-          `L ${w * 0.18},${base}`,
-          `Q ${w * 0.32},${base} ${w * 0.38},${peakY * 1.2}`,
-          `Q ${w * 0.5},${peakY} ${w * 0.62},${peakY * 1.2}`,
-          `Q ${w * 0.68},${base} ${w * 0.82},${base}`,
+          `L ${w * 0.15},${base}`,
+          `Q ${w * 0.28},${base} ${w * 0.37},${peakY * 1.18}`,
+          `Q ${w * 0.5},${peakY} ${w * 0.63},${peakY * 1.18}`,
+          `Q ${w * 0.72},${base} ${w * 0.85},${base}`,
           `L ${w},${base}`,
         ].join(' ');
         return (

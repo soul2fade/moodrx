@@ -6,6 +6,8 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  TouchableWithoutFeedback,
+  Dimensions,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
@@ -18,6 +20,8 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '@/lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 
+const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
+
 export default function HomeScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
@@ -26,7 +30,8 @@ export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
-  const scrollViewRef = useRef<ScrollView>(null);
+  const panelAnim = useRef(new Animated.Value(PANEL_HEIGHT)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -39,8 +44,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       getSessions().then(setSessions);
-      setSelectedMood(null);
-      setIntensity(5);
+      dismissPanel();
     }, [])
   );
 
@@ -49,13 +53,26 @@ export default function HomeScreen() {
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const { isPremium } = useSubscription();
 
+  const showPanel = useCallback(() => {
+    Animated.parallel([
+      Animated.spring(panelAnim, { toValue: 0, useNativeDriver: true, speed: 18, bounciness: 2 }),
+      Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+    ]).start();
+  }, [panelAnim, backdropAnim]);
+
+  const dismissPanel = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(panelAnim, { toValue: PANEL_HEIGHT, duration: 220, useNativeDriver: true }),
+      Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => setSelectedMood(null));
+  }, [panelAnim, backdropAnim]);
+
   const handleMoodSelect = useCallback((mood: MoodKey) => {
     setSelectedMood(mood);
+    setIntensity(5);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, []);
+    showPanel();
+  }, [showPanel]);
 
   const onPressIn = useCallback(() => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start(), [buttonScale]);
   const onPressOut = useCallback(() => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start(), [buttonScale]);
@@ -72,10 +89,10 @@ export default function HomeScreen() {
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
-        ref={scrollViewRef}
         style={styles.scroll}
         contentContainerStyle={[styles.content, { flexGrow: 1 }]}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={!selectedMood}
       >
         {/* Top row */}
         <View style={styles.topRow}>
@@ -167,10 +184,32 @@ export default function HomeScreen() {
             );
           })}
         </View>
+      </ScrollView>
 
-        {/* After mood selection */}
+      {/* Backdrop */}
+      <Animated.View
+        style={[styles.backdrop, { opacity: backdropAnim }]}
+        pointerEvents={selectedMood ? 'auto' : 'none'}
+      >
+        <TouchableWithoutFeedback onPress={dismissPanel}>
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
+      </Animated.View>
+
+      {/* Slide-up panel */}
+      <Animated.View style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}>
         {selectedMood && (
-          <View style={styles.selectedSection}>
+          <>
+            {/* Panel handle + mood name */}
+            <View style={styles.panelHeader}>
+              <View style={styles.panelHandle} />
+              <View style={[styles.panelMoodTag, { borderColor: accentColor }]}>
+                <Text style={[styles.panelMoodName, { color: accentColor }]}>
+                  {MOODS[selectedMood].name.toUpperCase()}
+                </Text>
+              </View>
+            </View>
+
             {/* Dr. MoodRx says */}
             <View style={flattenStyle([styles.drBox, { borderLeftColor: accentColor }])}>
               <Text style={styles.drLabel}>DR. MOODRX SAYS</Text>
@@ -178,12 +217,12 @@ export default function HomeScreen() {
             </View>
 
             {/* Intensity */}
-            <Text style={styles.intensityLabel}>INTENSITY</Text>
-            <View style={styles.sliderContainer}>
-              <Text style={flattenStyle([styles.intensityValue, { color: accentColor }])}>
-                {intensity}
-              </Text>
-              <Text style={styles.intensityMax}>/10</Text>
+            <View style={styles.intensityRow}>
+              <Text style={styles.intensityLabel}>INTENSITY</Text>
+              <View style={styles.intensityValueRow}>
+                <Text style={[styles.intensityValue, { color: accentColor }]}>{intensity}</Text>
+                <Text style={styles.intensityMax}>/10</Text>
+              </View>
             </View>
             <Slider
               style={styles.slider}
@@ -215,9 +254,9 @@ export default function HomeScreen() {
                 </Text>
               </TouchableOpacity>
             </Animated.View>
-          </View>
+          </>
         )}
-      </ScrollView>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -233,7 +272,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
     paddingTop: 60,
-    paddingBottom: 48,
+    paddingBottom: 24,
   },
   topRow: {
     flexDirection: 'row',
@@ -351,13 +390,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.primary.bold,
   },
-  selectedSection: {
-    marginTop: 24,
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  panel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: PANEL_HEIGHT,
+    backgroundColor: '#111111',
+    borderTopWidth: 1,
+    borderTopColor: '#222222',
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  panelHeader: {
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 16,
+  },
+  panelHandle: {
+    width: 36,
+    height: 3,
+    backgroundColor: '#333333',
+    borderRadius: 2,
+    marginBottom: 14,
+  },
+  panelMoodTag: {
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  panelMoodName: {
+    ...t.label,
+    letterSpacing: 3,
+    fontSize: 11,
   },
   drBox: {
     borderLeftWidth: 3,
-    backgroundColor: '#111111',
-    paddingVertical: 16,
+    backgroundColor: '#0a0a0a',
+    paddingVertical: 12,
     paddingHorizontal: 16,
   },
   drLabel: {
@@ -368,38 +442,42 @@ const styles = StyleSheet.create({
   drText: {
     ...t.soft,
     color: '#ffffff',
-    marginTop: 8,
+    marginTop: 6,
+  },
+  intensityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
   },
   intensityLabel: {
     ...t.label,
     color: '#737373',
-    marginTop: 20,
   },
-  sliderContainer: {
+  intensityValueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginTop: 8,
   },
   intensityValue: {
     ...t.dataValue,
-    fontSize: 32,
+    fontSize: 24,
   },
   intensityMax: {
     ...t.bodyMuted,
     color: '#737373',
-    fontSize: 20,
-    marginLeft: 4,
+    fontSize: 16,
+    marginLeft: 3,
   },
   slider: {
     width: '100%',
-    height: 40,
-    marginTop: 4,
+    height: 36,
+    marginTop: 2,
   },
   prescribeButton: {
     borderWidth: 1,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 16,
     borderRadius: 0,
   },
   prescribeButtonText: {

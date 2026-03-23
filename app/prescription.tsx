@@ -267,6 +267,8 @@ export default function PrescriptionScreen() {
                     style={index < supplements.length - 1
                       ? flattenStyle([styles.supplementRow, styles.supplementBorder])
                       : styles.supplementRow}
+                    accessible={true}
+                    accessibilityLabel={`${supp.name}, ${supp.dose}, ${supp.benefit}, take ${supp.timing}`}
                   >
                     <View style={styles.supplementLeft}>
                       <View style={styles.supplementNameRow}>

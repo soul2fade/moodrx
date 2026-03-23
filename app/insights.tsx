@@ -137,19 +137,31 @@ export default function InsightsScreen() {
           </View>
         ) : (
           <View style={styles.statsRow}>
-            <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#5EAAB5' }]}>
+            <View
+              style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#5EAAB5' }]}
+              accessible={true}
+              accessibilityLabel={`${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}`}
+            >
               <Text style={{ ...t.dataValue, color: '#5EAAB5' }}>{sessionCount}</Text>
               <Text style={styles.statLabel}>SESSIONS</Text>
             </View>
             <View style={styles.statDivider} />
-            <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#059669' }]}>
+            <View
+              style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#059669' }]}
+              accessible={true}
+              accessibilityLabel={`Average intensity change: ${sessionCount === 0 ? 'no data' : formatChange(avgChange) + ' points'}`}
+            >
               <Text style={{ ...t.dataValue, color: '#059669' }}>
                 {sessionCount === 0 ? '—' : formatChange(avgChange)}
               </Text>
               <Text style={styles.statLabel}>AVG CHANGE</Text>
             </View>
             <View style={styles.statDivider} />
-            <View style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#D97706' }]}>
+            <View
+              style={[styles.statItem, { borderTopWidth: 2, borderTopColor: '#D97706' }]}
+              accessible={true}
+              accessibilityLabel={`${streak} ${streak === 1 ? 'day' : 'days'} streak`}
+            >
               <Text style={{ ...t.dataValue, color: '#D97706' }}>{streak}</Text>
               <Text style={styles.statLabel}>DAY STREAK</Text>
             </View>
@@ -215,13 +227,20 @@ export default function InsightsScreen() {
                 const postHeight = Math.max(((session.postScore ?? 0) / 10) * BAR_MAX_HEIGHT, 4);
                 const dayAbbr = DAY_ABBREVS[new Date(session.timestamp).getDay()] ?? '—';
                 return (
-                  <View key={session.id ?? index} style={styles.chartGroup}>
+                  <View
+                    key={session.id ?? index}
+                    style={styles.chartGroup}
+                    accessible={true}
+                    accessibilityLabel={`${dayAbbr}: intensity ${session.intensity ?? 0} before, ${session.postScore ?? 0} after`}
+                  >
                     <View style={styles.chartBars}>
                       <View
                         style={{ width: BAR_WIDTH, height: preHeight, maxHeight: BAR_MAX_HEIGHT, backgroundColor: '#525252' }}
+                        importantForAccessibility="no"
                       />
                       <View
                         style={{ width: BAR_WIDTH, height: postHeight, maxHeight: BAR_MAX_HEIGHT, backgroundColor: '#059669' }}
+                        importantForAccessibility="no"
                       />
                     </View>
                     <Text style={styles.chartDay}>{dayAbbr}</Text>

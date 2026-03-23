@@ -27,7 +27,12 @@ export function PremiumSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose} />
+      <Pressable
+        style={styles.overlay}
+        onPress={onClose}
+        accessibilityLabel="Dismiss"
+        accessibilityRole="button"
+      />
       <View style={styles.sheet}>
         <View style={styles.handle} />
         <Text style={styles.headline}>{headline}</Text>

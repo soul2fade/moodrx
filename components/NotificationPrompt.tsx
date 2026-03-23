@@ -50,7 +50,12 @@ export function NotificationPrompt({ visible, onClose }: NotificationPromptProps
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleDismiss}>
-      <Pressable style={styles.overlay} onPress={handleDismiss} />
+      <Pressable
+        style={styles.overlay}
+        onPress={handleDismiss}
+        accessibilityLabel="Dismiss"
+        accessibilityRole="button"
+      />
       <View style={styles.sheet}>
         <View style={styles.handle} />
         <Text style={styles.label}>DAILY REMINDERS</Text>

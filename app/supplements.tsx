@@ -159,8 +159,12 @@ export default function SupplementsScreen() {
         )}
 
         {/* Progress summary */}
-        <View style={styles.progressRow}>
-          <View style={styles.progressCountWrapper}>
+        <View
+          style={styles.progressRow}
+          accessible={true}
+          accessibilityLabel={`${takenCount} of ${totalCount} supplements taken today`}
+        >
+          <View style={styles.progressCountWrapper} importantForAccessibility="no-hide-descendants">
             <Text style={[styles.progressCountAccent, { color: accentColor }]}>{takenCount}</Text>
             <Text style={styles.progressCountSlash}> / {totalCount}</Text>
           </View>

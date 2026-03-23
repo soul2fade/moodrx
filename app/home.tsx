@@ -188,7 +188,11 @@ export default function HomeScreen() {
         style={[styles.backdrop, { opacity: backdropAnim }]}
         pointerEvents={selectedMood ? 'auto' : 'none'}
       >
-        <TouchableWithoutFeedback onPress={dismissPanel}>
+        <TouchableWithoutFeedback
+          onPress={dismissPanel}
+          accessibilityLabel="Dismiss mood panel"
+          accessibilityRole="button"
+        >
           <View style={StyleSheet.absoluteFill} />
         </TouchableWithoutFeedback>
       </Animated.View>

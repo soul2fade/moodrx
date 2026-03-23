@@ -429,6 +429,9 @@ export default function WorkoutCoach({
                 key={c.id}
                 style={[styles.coachBtn, selectedCoach === c.id && { borderColor: c.color, backgroundColor: c.color + '18' }]}
                 onPress={() => { setSelectedCoach(c.id as CoachId); if (!isControlled) setInternalStep(0); }}
+                accessibilityRole="button"
+                accessibilityLabel={`${c.name} coach`}
+                accessibilityState={{ selected: selectedCoach === c.id }}
               >
                 <View style={[styles.coachDot, { backgroundColor: c.color }]} />
                 <Text style={[styles.coachLabel, selectedCoach === c.id && { color: c.color }]}>{c.id}</Text>

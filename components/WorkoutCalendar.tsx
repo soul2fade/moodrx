@@ -100,6 +100,14 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
           return (
             <View
               key={cell.dateKey}
+              accessible={true}
+              accessibilityLabel={
+                hasSession
+                  ? `${cell.day} ${MONTH_NAMES[month].toLowerCase()}, ${sessionsForDay.length} ${sessionsForDay.length === 1 ? 'workout' : 'workouts'} completed`
+                  : isToday
+                  ? `${cell.day} ${MONTH_NAMES[month].toLowerCase()}, today`
+                  : `${cell.day} ${MONTH_NAMES[month].toLowerCase()}`
+              }
               style={[
                 styles.cell,
                 hasSession ? { backgroundColor: accentColor ?? 'transparent' } : null,

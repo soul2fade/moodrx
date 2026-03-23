@@ -36,6 +36,7 @@ export default function PostWorkoutScreen() {
   const intensity = parseInt(params.intensity || '5', 10);
 
   const [postScore, setPostScore] = useState(5);
+  const [rating, setRating] = useState<'yes' | 'somewhat' | 'no' | null>(null);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const workout = getWorkoutById(workoutId);
@@ -66,8 +67,10 @@ export default function PostWorkoutScreen() {
         intensity,
         postScore,
         workoutName: workout?.name ?? workoutId,
+        workoutId: workoutId || undefined,
         duration: workout?.duration ?? 0,
         timestamp: Date.now(),
+        rating: rating ?? undefined,
       });
       const promptShown = await getNotifPromptShown();
       if (!promptShown) {
@@ -131,6 +134,31 @@ export default function PostWorkoutScreen() {
           </View>
         )}
 
+        <View style={styles.ratingSection}>
+          <Text style={styles.ratingPrompt}>DID THIS ACTUALLY HELP?</Text>
+          <View style={styles.ratingButtons}>
+            {(['yes', 'somewhat', 'no'] as const).map((r) => {
+              const label = r === 'yes' ? 'YES' : r === 'somewhat' ? 'SOMEWHAT' : 'NOT REALLY';
+              const isSelected = rating === r;
+              return (
+                <TouchableOpacity
+                  key={r}
+                  onPress={() => setRating(r)}
+                  activeOpacity={0.7}
+                  style={[styles.ratingBtn, isSelected && { borderColor: accentColor }]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={label}
+                >
+                  <Text style={[styles.ratingBtnText, isSelected && { color: accentColor }]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           <TouchableOpacity
             style={styles.logButton}
@@ -142,7 +170,7 @@ export default function PostWorkoutScreen() {
             accessibilityLabel="Log session"
             disabled={isSubmitting}
           >
-            <Text style={styles.logButtonText}>{isSubmitting ? 'SAVING...' : 'LOG IT →'}</Text>
+            <Text style={styles.logButtonText}>{isSubmitting ? 'SAVING...' : rating ? 'DONE. LOG IT. →' : 'LOG IT →'}</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -248,8 +276,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 4,
   },
+  ratingSection: {
+    marginTop: 32,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingTop: 24,
+  },
+  ratingPrompt: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 3,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  ratingButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  ratingBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  ratingBtnText: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 1,
+    fontSize: 10,
+  },
   logButton: {
-    marginTop: 40,
+    marginTop: 24,
     backgroundColor: '#059669',
     paddingVertical: 16,
     alignItems: 'center',

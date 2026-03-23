@@ -135,35 +135,38 @@ export default function PrescriptionScreen() {
 
               if (isLocked) {
                 return (
-                  <TouchableOpacity
+                  <View
                     key={workout.id}
-                    style={{ opacity: 0.4 }}
-                    onPress={() => setShowPremiumSheet(true)}
-                    activeOpacity={0.8}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${workout.name}, locked. Unlock with Pro.`}
+                    style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
                   >
-                    <View style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}>
-                      <View style={styles.workoutCardTop}>
-                        <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
-                          {String(index + 1).padStart(2, '0')}
-                        </Text>
-                        <View style={styles.workoutCardRight}>
-                          <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
-                          <View style={styles.intensityBadge}>
-                            <Text style={styles.intensityBadgeText}>
-                              {workout.intensity.toUpperCase()}
-                            </Text>
-                          </View>
+                    <View style={styles.workoutCardTop}>
+                      <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
+                        {String(index + 1).padStart(2, '0')}
+                      </Text>
+                      <View style={styles.workoutCardRight}>
+                        <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
+                        <View style={styles.intensityBadge}>
+                          <Text style={styles.intensityBadgeText}>
+                            {workout.intensity.toUpperCase()}
+                          </Text>
                         </View>
                       </View>
-                      <Text style={styles.workoutName}>{workout.name}</Text>
-                      <Text style={styles.workoutVibe}>{workout.vibe}</Text>
-                      <Text style={{ ...t.label, color: '#525252', letterSpacing: 2, marginTop: 12 }}>
-                        UNLOCK PRO →
-                      </Text>
                     </View>
-                  </TouchableOpacity>
+                    <Text style={styles.workoutName}>{workout.name}</Text>
+                    <Text style={styles.workoutVibe}>{workout.vibe}</Text>
+                    <View style={styles.actionRow}>
+                      <TouchableOpacity
+                        onPress={() => setShowPremiumSheet(true)}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Unlock ${workout.name} with Pro`}
+                      >
+                        <Text style={{ ...t.label, color: '#525252', letterSpacing: 2 }}>
+                          UNLOCK PRO →
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 );
               }
 

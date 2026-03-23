@@ -8,8 +8,10 @@ export interface Session {
   intensity: number;
   postScore: number;
   workoutName: string;
+  workoutId?: string;
   duration: number;
   timestamp: number;
+  rating?: 'yes' | 'somewhat' | 'no';
 }
 
 export interface SupplementLog {

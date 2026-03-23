@@ -322,6 +322,15 @@ export default function WorkoutScreen() {
                   <Text style={styles.timerButtonText}>{sec}S</Text>
                 </TouchableOpacity>
               ))}
+              <TouchableOpacity
+                onPress={() => setTimerReady(true)}
+                activeOpacity={0.7}
+                style={styles.wingItButton}
+                accessibilityRole="button"
+                accessibilityLabel="Skip timer, I already did it"
+              >
+                <Text style={styles.wingItText}>or just wing it →</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -508,6 +517,16 @@ const styles = StyleSheet.create({
   timerButtonText: {
     ...t.timer,
     color: '#737373',
+  },
+  wingItButton: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 16,
+  },
+  wingItText: {
+    ...t.label,
+    color: '#3a3a3a',
+    letterSpacing: 1,
   },
   timerRunning: {
     alignItems: 'center',

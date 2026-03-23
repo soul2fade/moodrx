@@ -48,6 +48,9 @@ export default function HomeScreen() {
   const streak = useMemo(() => getStreak(sessions), [sessions]);
   const sessionCount = sessions.length;
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
+
+  const lastSession = sessions.length > 0 ? sessions[sessions.length - 1] : null;
+  const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
   const { isPremium } = useSubscription();
 
   const showPanel = useCallback(() => {
@@ -142,6 +145,22 @@ export default function HomeScreen() {
           <View style={styles.streakBox}>
             <Text style={styles.streakBoxText}>You&apos;re on a roll. Don&apos;t blow it.</Text>
           </View>
+        )}
+
+        {/* Still feeling this? re-entry banner */}
+        {showStillFeeling && lastSession && (
+          <TouchableOpacity
+            style={styles.stillFeelingBanner}
+            onPress={() => router.push({ pathname: '/prescription', params: { mood: lastSession.mood, intensity: String(lastSession.intensity) } })}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Last time you felt ${MOODS[lastSession.mood].name}. Tap to repeat.`}
+          >
+            <Text style={styles.stillFeelingText}>
+              Last time: {MOODS[lastSession.mood].name.toUpperCase()} → {lastSession.postScore - lastSession.intensity >= 0 ? `+${lastSession.postScore - lastSession.intensity}` : `${lastSession.postScore - lastSession.intensity}`}. Still?
+            </Text>
+            <Text style={styles.stillFeelingArrow}> →</Text>
+          </TouchableOpacity>
         )}
 
         {/* Mood list */}
@@ -346,6 +365,26 @@ const styles = StyleSheet.create({
   streakBoxText: {
     ...t.number,
     color: '#a3a3a3',
+  },
+  stillFeelingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    backgroundColor: '#0f0f0f',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  stillFeelingText: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 1,
+    flex: 1,
+  },
+  stillFeelingArrow: {
+    ...t.label,
+    color: '#525252',
   },
   moodList: {
     marginTop: 28,

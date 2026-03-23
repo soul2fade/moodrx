@@ -171,6 +171,33 @@ export default function SupplementsScreen() {
           <Text style={styles.progressLabel}>TODAY</Text>
         </View>
 
+        {/* TODAY'S PRIORITY card */}
+        {visibleSupplements.length > 0 && (() => {
+          const priority = visibleSupplements[0];
+          const isPriorityTaken = takenSet.has(priority.name);
+          return (
+            <View style={[styles.priorityCard, { borderLeftColor: accentColor }]}>
+              <Text style={styles.priorityCardLabel}>TODAY&apos;S PRIORITY</Text>
+              <Text style={styles.priorityCardHeadline}>One thing. Take it.</Text>
+              <Text style={styles.priorityCardName}>{priority.name}</Text>
+              <Text style={styles.priorityCardDose}>{priority.dose} · {priority.timing.toUpperCase()}</Text>
+              <Text style={styles.priorityCardScience}>{priority.science}</Text>
+              <TouchableOpacity
+                onPress={() => handleToggle(priority.name)}
+                activeOpacity={0.7}
+                style={[styles.priorityCheckBtn, isPriorityTaken && { borderColor: accentColor }]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isPriorityTaken }}
+                accessibilityLabel={`${priority.name}: ${isPriorityTaken ? 'taken' : 'not taken'}. Tap to toggle.`}
+              >
+                <Text style={[styles.priorityCheckBtnText, isPriorityTaken && { color: accentColor }]}>
+                  {isPriorityTaken ? 'TAKEN ✓' : 'MARK AS TAKEN'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
+
         {/* Supplement list */}
         <View style={styles.supplementList}>
           {visibleSupplements.map((supp) => {
@@ -333,6 +360,55 @@ const styles = StyleSheet.create({
     color: '#737373',
     letterSpacing: 3,
     marginLeft: 8,
+  },
+  priorityCard: {
+    borderLeftWidth: 3,
+    backgroundColor: '#111111',
+    padding: 16,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  priorityCardLabel: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 3,
+    fontSize: 10,
+  },
+  priorityCardHeadline: {
+    ...t.headlineSm,
+    fontSize: 18,
+    marginTop: 4,
+  },
+  priorityCardName: {
+    ...t.label,
+    color: '#a3a3a3',
+    letterSpacing: 2,
+    marginTop: 12,
+  },
+  priorityCardDose: {
+    ...t.timestamp,
+    color: '#525252',
+    letterSpacing: 2,
+    marginTop: 2,
+  },
+  priorityCardScience: {
+    ...t.soft,
+    color: '#737373',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 10,
+  },
+  priorityCheckBtn: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  priorityCheckBtnText: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 3,
   },
   supplementList: {
     marginTop: 8,

@@ -3,9 +3,11 @@ import {
   View,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   ScrollView,
   StyleSheet,
   Animated,
+  Dimensions,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import ViewShot from 'react-native-view-shot';
@@ -29,6 +31,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const DAY_ABBREVS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const CASE_PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
 
 function getMostCommonMood(sessions: Session[]): MoodKey {
   const counts: Partial<Record<MoodKey, number>> = {};
@@ -60,7 +63,10 @@ export default function InsightsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [showBurnConfirm, setShowBurnConfirm] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const [caseSession, setCaseSession] = useState<Session | null>(null);
   const shareCardRef = useRef<ViewShot>(null);
+  const casePanelAnim = useRef(new Animated.Value(CASE_PANEL_HEIGHT)).current;
+  const caseBackdropAnim = useRef(new Animated.Value(0)).current;
   const { isPremium } = useSubscription();
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
@@ -107,6 +113,21 @@ export default function InsightsScreen() {
       // Share failed silently — non-critical feature
     }
   };
+
+  const showCasePanel = useCallback((session: Session) => {
+    setCaseSession(session);
+    Animated.parallel([
+      Animated.spring(casePanelAnim, { toValue: 0, useNativeDriver: true, speed: 18, bounciness: 2 }),
+      Animated.timing(caseBackdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+    ]).start();
+  }, [casePanelAnim, caseBackdropAnim]);
+
+  const dismissCasePanel = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(casePanelAnim, { toValue: CASE_PANEL_HEIGHT, duration: 220, useNativeDriver: true }),
+      Animated.timing(caseBackdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => setCaseSession(null));
+  }, [casePanelAnim, caseBackdropAnim]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -272,10 +293,10 @@ export default function InsightsScreen() {
           </View>
         )}
 
-        {/* Recent sessions */}
+        {/* Case History */}
         {recent10.length > 0 && (
           <View style={styles.recentSection}>
-            <Text style={styles.recentLabel}>RECENT SESSIONS</Text>
+            <Text style={styles.recentLabel}>CASE HISTORY</Text>
             {recent10.map((session) => {
               const change = session.postScore - session.intensity;
               const changeStr = change >= 0 ? `+${change}` : `${change}`;
@@ -284,14 +305,26 @@ export default function InsightsScreen() {
               const date = new Date(session.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
               return (
-                <View key={session.id} style={styles.recentRow}>
+                <TouchableOpacity
+                  key={session.id}
+                  style={styles.recentRow}
+                  onPress={() => showCasePanel(session)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${session.workoutName}, ${dateStr}, change ${changeStr}. Tap for details.`}
+                >
                   <MoodIcon mood={session.mood} size={20} color={moodColor} />
                   <View style={styles.recentInfo}>
                     <Text style={styles.recentWorkout}>{session.workoutName}</Text>
                     <Text style={styles.recentDate}>{dateStr}</Text>
                   </View>
-                  <Text style={{ ...t.dataValue, fontSize: 16, fontFamily: fonts.mono.regular, color: changeColor }}>{changeStr}</Text>
-                </View>
+                  <View style={styles.recentRight}>
+                    {session.rating === 'yes' && (
+                      <Text style={styles.recentStar}>★</Text>
+                    )}
+                    <Text style={{ ...t.dataValue, fontSize: 16, fontFamily: fonts.mono.regular, color: changeColor }}>{changeStr}</Text>
+                  </View>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -372,6 +405,84 @@ export default function InsightsScreen() {
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
       />
+
+      {/* Case History backdrop */}
+      <Animated.View
+        style={[styles.caseBackdrop, { opacity: caseBackdropAnim }]}
+        pointerEvents={caseSession ? 'auto' : 'none'}
+      >
+        <TouchableWithoutFeedback onPress={dismissCasePanel} accessibilityLabel="Dismiss case file" accessibilityRole="button">
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
+      </Animated.View>
+
+      {/* Case History slide-up panel */}
+      <Animated.View style={[styles.casePanel, { transform: [{ translateY: casePanelAnim }] }]}>
+        {caseSession && (() => {
+          const cs = caseSession;
+          const change = cs.postScore - cs.intensity;
+          const changeStr = change >= 0 ? `+${change}` : `${change}`;
+          const changeColor = change >= 0 ? '#059669' : '#737373';
+          const moodColor = MOODS[cs.mood]?.color ?? '#737373';
+          const date = new Date(cs.timestamp);
+          const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
+          const ratingLabel = cs.rating === 'yes' ? 'YES ★' : cs.rating === 'somewhat' ? 'SOMEWHAT' : cs.rating === 'no' ? 'NOT REALLY' : null;
+          const ratingColor = cs.rating === 'yes' ? '#059669' : '#525252';
+          return (
+            <View style={styles.casePanelContent}>
+              <View style={styles.casePanelHandle} />
+              <Text style={styles.casePanelTitle}>DR. MOODRX // CASE FILE</Text>
+              <View style={styles.casePanelMoodRow}>
+                <View style={[styles.casePanelMoodBadge, { borderColor: moodColor }]}>
+                  <Text style={[styles.casePanelMoodText, { color: moodColor }]}>
+                    {MOODS[cs.mood].name.toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={styles.casePanelDate}>{dateStr}</Text>
+              </View>
+              <Text style={styles.casePanelWorkoutName}>{cs.workoutName}</Text>
+              <View style={styles.casePanelScores}>
+                <Text style={styles.casePanelScoreLabel}>BEFORE</Text>
+                <Text style={styles.casePanelScoreVal}>{cs.intensity}</Text>
+                <Text style={styles.casePanelScoreSep}>→</Text>
+                <Text style={styles.casePanelScoreLabel}>AFTER</Text>
+                <Text style={styles.casePanelScoreVal}>{cs.postScore}</Text>
+                <Text style={[styles.casePanelChange, { color: changeColor }]}>{changeStr}</Text>
+              </View>
+              {ratingLabel && (
+                <Text style={[styles.casePanelRating, { color: ratingColor }]}>
+                  YOU SAID: {ratingLabel}
+                </Text>
+              )}
+              <TouchableOpacity
+                style={styles.casePrescribeBtn}
+                onPress={() => {
+                  dismissCasePanel();
+                  if (cs.workoutId) {
+                    router.push({ pathname: '/workout', params: { mood: cs.mood, workoutId: cs.workoutId, intensity: String(cs.intensity) } });
+                  } else {
+                    router.push({ pathname: '/prescription', params: { mood: cs.mood, intensity: String(cs.intensity) } });
+                  }
+                }}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Prescribe this workout again"
+              >
+                <Text style={styles.casePrescribeBtnText}>PRESCRIBE THIS AGAIN →</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={dismissCasePanel}
+                activeOpacity={0.7}
+                style={styles.caseDismissBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Close case file"
+              >
+                <Text style={styles.caseDismissBtnText}>CLOSE</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -556,6 +667,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
+  recentRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  recentStar: {
+    color: '#059669',
+    fontSize: 12,
+  },
   recentWorkout: {
     ...t.body,
     fontSize: 14,
@@ -645,6 +765,117 @@ const styles = StyleSheet.create({
   lockedCalendarButtonText: {
     ...t.label,
     color: '#a3a3a3',
+    letterSpacing: 2,
+  },
+  caseBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  casePanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: CASE_PANEL_HEIGHT,
+    backgroundColor: '#111111',
+    borderTopWidth: 1,
+    borderTopColor: '#222222',
+  },
+  casePanelContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    flex: 1,
+  },
+  casePanelHandle: {
+    width: 36,
+    height: 3,
+    backgroundColor: '#333333',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 20,
+  },
+  casePanelTitle: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 3,
+    fontSize: 10,
+    marginBottom: 14,
+  },
+  casePanelMoodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  casePanelMoodBadge: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  casePanelMoodText: {
+    ...t.label,
+    letterSpacing: 2,
+    fontSize: 11,
+  },
+  casePanelDate: {
+    ...t.timestamp,
+    color: '#525252',
+    letterSpacing: 2,
+  },
+  casePanelWorkoutName: {
+    ...t.headlineSm,
+    fontSize: 18,
+    marginBottom: 16,
+  },
+  casePanelScores: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    marginBottom: 10,
+  },
+  casePanelScoreLabel: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 2,
+    fontSize: 10,
+  },
+  casePanelScoreVal: {
+    ...t.dataValue,
+    fontSize: 20,
+  },
+  casePanelScoreSep: {
+    ...t.label,
+    color: '#333333',
+  },
+  casePanelChange: {
+    ...t.dataValue,
+    fontSize: 20,
+    marginLeft: 4,
+  },
+  casePanelRating: {
+    ...t.label,
+    letterSpacing: 2,
+    fontSize: 10,
+    marginBottom: 4,
+  },
+  casePrescribeBtn: {
+    backgroundColor: '#059669',
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  casePrescribeBtnText: {
+    ...t.button,
+    letterSpacing: 3,
+  },
+  caseDismissBtn: {
+    alignItems: 'center',
+    paddingTop: 16,
+  },
+  caseDismissBtnText: {
+    ...t.label,
+    color: '#333333',
     letterSpacing: 2,
   },
 });

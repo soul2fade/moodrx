@@ -29,7 +29,6 @@ export default function PrescriptionScreen() {
     : (Object.keys(MOODS)[0] as MoodKey);
   const intensity = parseInt(params.intensity || '5', 10);
   const [activeTab, setActiveTab] = useState<Tab>('workouts');
-  const [expandedScience, setExpandedScience] = useState<Set<string>>(new Set());
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const { isPremium } = useSubscription();
 
@@ -50,18 +49,6 @@ export default function PrescriptionScreen() {
     router.push({
       pathname: '/workout',
       params: { mood, workoutId: workout.id, intensity: String(intensity) },
-    });
-  };
-
-  const toggleScience = (workoutId: string) => {
-    setExpandedScience((prev) => {
-      const next = new Set(prev);
-      if (next.has(workoutId)) {
-        next.delete(workoutId);
-      } else {
-        next.add(workoutId);
-      }
-      return next;
     });
   };
 
@@ -131,7 +118,6 @@ export default function PrescriptionScreen() {
           <View>
             {workouts.map((workout, index) => {
               const isLocked = !isPremium && index > 0;
-              const scienceOpen = expandedScience.has(workout.id);
 
               if (isLocked) {
                 return (
@@ -152,28 +138,29 @@ export default function PrescriptionScreen() {
                         </View>
                       </View>
                     </View>
-                    <Text style={styles.workoutName}>{workout.name}</Text>
+                    <TouchableOpacity
+                      style={styles.workoutNameRow}
+                      onPress={() => setShowPremiumSheet(true)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Unlock ${workout.name} with Pro`}
+                    >
+                      <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
+                      <Text style={{ ...t.label, color: '#525252', letterSpacing: 2 }}>UNLOCK PRO →</Text>
+                    </TouchableOpacity>
                     <Text style={styles.workoutVibe}>{workout.vibe}</Text>
-                    <View style={styles.actionRow}>
-                      <TouchableOpacity
-                        onPress={() => setShowPremiumSheet(true)}
-                        activeOpacity={0.7}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Unlock ${workout.name} with Pro`}
-                      >
-                        <Text style={{ ...t.label, color: '#525252', letterSpacing: 2 }}>
-                          UNLOCK PRO →
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
                   </View>
                 );
               }
 
               return (
-                <View
+                <TouchableOpacity
                   key={workout.id}
                   style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
+                  onPress={() => handleWorkoutTap(workout)}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${workout.name} workout`}
                 >
                   <View style={styles.workoutCardTop}>
                     <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
@@ -188,41 +175,18 @@ export default function PrescriptionScreen() {
                       </View>
                     </View>
                   </View>
-                  <Text style={styles.workoutName}>{workout.name}</Text>
+                  <View style={styles.workoutNameRow}>
+                    <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
+                    <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
+                  </View>
                   <Text style={styles.workoutVibe}>{workout.vibe}</Text>
 
-                  {/* Science expandable */}
-                  {scienceOpen && (
-                    <View style={styles.scienceInline}>
-                      <Text style={styles.scienceInlineLabel}>THE SCIENCE</Text>
-                      <Text style={styles.scienceInlineText}>{workout.why}</Text>
-                    </View>
-                  )}
-
-                  {/* Action row */}
-                  <View style={styles.actionRow}>
-                    <TouchableOpacity
-                      onPress={() => handleWorkoutTap(workout)}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={`View ${workout.name} workout`}
-                    >
-                      <Text style={{ ...t.label, color: accentColor, letterSpacing: 2 }}>
-                        VIEW WORKOUT →
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => toggleScience(workout.id)}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={scienceOpen ? 'Hide science' : 'View the science'}
-                    >
-                      <Text style={{ ...t.label, color: '#a3a3a3', letterSpacing: 2, fontWeight: '600' }}>
-                        {scienceOpen ? 'HIDE SCIENCE ↑' : 'THE SCIENCE ↓'}
-                      </Text>
-                    </TouchableOpacity>
+                  {/* Science — always visible */}
+                  <View style={styles.scienceInline}>
+                    <Text style={flattenStyle([styles.scienceInlineLabel, { color: accentColor }])}>THE SCIENCE</Text>
+                    <Text style={styles.scienceInlineText}>{workout.why}</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -417,9 +381,18 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     fontWeight: '600',
   },
+  workoutNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   workoutName: {
     ...t.headlineSm,
-    marginTop: 8,
+  },
+  workoutArrow: {
+    fontSize: 18,
+    fontWeight: '300',
+    marginLeft: 8,
   },
   workoutVibe: {
     ...t.soft,
@@ -436,24 +409,15 @@ const styles = StyleSheet.create({
   },
   scienceInlineLabel: {
     ...t.label,
-    color: '#525252',
     letterSpacing: 3,
     fontSize: 10,
+    fontWeight: '700',
   },
   scienceInlineText: {
     ...t.bodyMuted,
     fontSize: 13,
     marginTop: 6,
     lineHeight: 20,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#1a1a1a',
-    paddingTop: 12,
   },
   stackTitle: {
     ...t.headlineSm,

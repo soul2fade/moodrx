@@ -1,0 +1,6 @@
+.local/
+attached_assets/
+start-tunnel.sh
+/tmp/
+*.log
+.git/

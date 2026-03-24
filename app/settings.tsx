@@ -33,7 +33,7 @@ export default function SettingsScreen() {
   const [selectedTime, setSelectedTime] = useState('8:00 AM');
   const [permDenied, setPermDenied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { restorePurchases } = useSubscription();
+  const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial } = useSubscription();
   const toggleAnim = useRef(new Animated.Value(0)).current;
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
@@ -44,7 +44,6 @@ export default function SettingsScreen() {
   useHardwareBack(backHandler);
 
   useEffect(() => {
-    // Load persisted state
     Promise.all([
       AsyncStorage.getItem(NOTIFICATIONS_KEY),
       AsyncStorage.getItem(REMINDER_TIME_KEY),
@@ -68,7 +67,6 @@ export default function SettingsScreen() {
 
   const handleToggle = async () => {
     if (!notificationsEnabled) {
-      // Turn on
       if (Platform.OS !== 'web') {
         const { status } = await Notifications.requestPermissionsAsync();
         if (status !== 'granted') {
@@ -82,7 +80,6 @@ export default function SettingsScreen() {
       await AsyncStorage.setItem(NOTIFICATIONS_KEY, 'true');
       await scheduleNotification(selectedTime);
     } else {
-      // Turn off
       setNotificationsEnabled(false);
       animateToggle(0);
       await AsyncStorage.setItem(NOTIFICATIONS_KEY, 'false');
@@ -110,7 +107,7 @@ export default function SettingsScreen() {
         },
       });
     } catch {
-      // ignore — may not work in Expo Go
+      // ignore
     }
   };
 
@@ -133,6 +130,8 @@ export default function SettingsScreen() {
     outputRange: [3, 25],
   });
 
+  const trialExpired = hasUsedTrial && !isInTrial && !isPremium;
+
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
@@ -151,6 +150,71 @@ export default function SettingsScreen() {
 
         <Text style={styles.settingsLabel}>SETTINGS</Text>
         <Text style={styles.headline}>Preferences.</Text>
+
+        {/* Subscription section */}
+        <Text style={styles.sectionHeader}>SUBSCRIPTION</Text>
+
+        {isPremium && !isInTrial && (
+          <View style={styles.subStatusRow}>
+            <Text style={styles.subStatusLabel}>STATUS</Text>
+            <View style={[styles.subStatusBadge, styles.proBadge]}>
+              <Text style={styles.proBadgeText}>PRO</Text>
+            </View>
+          </View>
+        )}
+
+        {isInTrial && (
+          <View style={styles.subStatusRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.subStatusLabel}>FREE TRIAL</Text>
+              <Text style={styles.trialDaysText}>
+                {trialDaysLeft === 1 ? '1 day remaining' : `${trialDaysLeft} days remaining`}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push('/premium')}
+              activeOpacity={0.7}
+              style={styles.upgradeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Upgrade to Pro"
+            >
+              <Text style={styles.upgradeBtnText}>UPGRADE →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {trialExpired && (
+          <View style={styles.subStatusRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.subStatusLabel}>TRIAL ENDED</Text>
+              <Text style={styles.expiredText}>Upgrade to restore full access</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push('/premium')}
+              activeOpacity={0.7}
+              style={[styles.upgradeBtn, styles.upgradeBtnUrgent]}
+              accessibilityRole="button"
+              accessibilityLabel="Upgrade to Pro"
+            >
+              <Text style={styles.upgradeBtnText}>UPGRADE →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!hasUsedTrial && !isPremium && (
+          <View style={styles.subStatusRow}>
+            <Text style={styles.subStatusLabel}>FREE VERSION</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/premium')}
+              activeOpacity={0.7}
+              style={styles.upgradeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="View Pro plans"
+            >
+              <Text style={styles.upgradeBtnText}>TRY PRO →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Reminders section */}
         <Text style={styles.sectionHeader}>REMINDERS</Text>
@@ -292,34 +356,12 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingTop: 56,
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-  },
-  backButton: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 2,
-  },
-  settingsLabel: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 3,
-    marginTop: 24,
-  },
-  headline: {
-    ...t.headlineMd,
-    fontSize: 24,
-    marginTop: 8,
-  },
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  scroll: { flex: 1 },
+  content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 32 },
+  backButton: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  settingsLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 3, marginTop: 24 },
+  headline: { ...t.headlineMd, fontSize: 24, marginTop: 8 },
   sectionHeader: {
     ...t.label,
     color: '#c8c8c8',
@@ -329,6 +371,34 @@ const styles = StyleSheet.create({
     borderTopColor: '#1a1a1a',
     paddingTop: 16,
   },
+  subStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  subStatusLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  trialDaysText: { ...t.bodySm, color: '#E8B84B', marginTop: 4 },
+  expiredText: { ...t.bodySm, color: '#a3a3a3', marginTop: 4 },
+  proBadge: {
+    borderWidth: 1,
+    borderColor: '#E8B84B',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  proBadgeText: { ...t.label, color: '#E8B84B', letterSpacing: 2 },
+  upgradeBtn: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  upgradeBtnUrgent: {
+    borderColor: '#E8B84B',
+  },
+  upgradeBtnText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -337,101 +407,32 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
-  toggleLabel: {
-    ...t.body,
-    fontSize: 15,
-  },
-  toggle: {
-    width: 50,
-    height: 28,
-    borderRadius: 0,
-    justifyContent: 'center',
-  },
-  toggleOff: {
-    backgroundColor: '#1a1a1a',
-  },
-  toggleOn: {
-    backgroundColor: '#059669',
-  },
-  toggleCircle: {
-    width: 22,
-    height: 22,
-    backgroundColor: '#ffffff',
-    borderRadius: 0,
-  },
-  permDenied: {
-    ...t.bodySm,
-    color: '#E11D48',
-    marginTop: 8,
-  },
+  toggleLabel: { ...t.body, fontSize: 15 },
+  toggle: { width: 50, height: 28, borderRadius: 0, justifyContent: 'center' },
+  toggleOff: { backgroundColor: '#1a1a1a' },
+  toggleOn: { backgroundColor: '#059669' },
+  toggleCircle: { width: 22, height: 22, backgroundColor: '#ffffff', borderRadius: 0 },
+  permDenied: { ...t.bodySm, color: '#E11D48', marginTop: 8 },
   timeSection: {
     marginTop: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
-  timeSectionLabel: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 3,
-    marginBottom: 12,
-  },
-  timeChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  timeChip: {
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  timeChipSelected: {
-    borderColor: '#059669',
-  },
-  timeChipUnselected: {
-    borderColor: '#1a1a1a',
-  },
-  timeChipText: {
-    ...t.label,
-    letterSpacing: 1,
-  },
-  timeChipTextSelected: {
-    color: '#ffffff',
-  },
-  timeChipTextUnselected: {
-    color: '#c8c8c8',
-  },
-  appName: {
-    ...t.headlineSm,
-    marginTop: 12,
-  },
-  appTagline: {
-    ...t.bodyMuted,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  appVersion: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 2,
-    marginTop: 8,
-  },
-  dataRow: {
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
-  },
-  dataRowText: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 2,
-  },
-  deleteRowText: {
-    ...t.label,
-    color: '#E11D48',
-    letterSpacing: 2,
-  },
+  timeSectionLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 3, marginBottom: 12 },
+  timeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  timeChip: { borderWidth: 1, paddingHorizontal: 16, paddingVertical: 8 },
+  timeChipSelected: { borderColor: '#059669' },
+  timeChipUnselected: { borderColor: '#1a1a1a' },
+  timeChipText: { ...t.label, letterSpacing: 1 },
+  timeChipTextSelected: { color: '#ffffff' },
+  timeChipTextUnselected: { color: '#c8c8c8' },
+  appName: { ...t.headlineSm, marginTop: 12 },
+  appTagline: { ...t.bodyMuted, fontSize: 14, marginTop: 4 },
+  appVersion: { ...t.label, color: '#c8c8c8', letterSpacing: 2, marginTop: 8 },
+  dataRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1a1a1a' },
+  dataRowText: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  deleteRowText: { ...t.label, color: '#E11D48', letterSpacing: 2 },
   deleteConfirm: {
     borderWidth: 1,
     borderColor: '#E11D48',
@@ -439,36 +440,22 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
   },
-  deleteConfirmTitle: {
-    ...t.body,
-    fontSize: 14,
-  },
-  deleteConfirmSub: {
-    ...t.bodySm,
-    color: '#c8c8c8',
-    marginTop: 4,
-  },
+  deleteConfirmTitle: { ...t.body, fontSize: 14 },
+  deleteConfirmSub: { ...t.bodySm, color: '#c8c8c8', marginTop: 4 },
   deleteConfirmButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 12,
   },
-  neverMindText: {
-    ...t.label,
-    color: '#c8c8c8',
-  },
+  neverMindText: { ...t.label, color: '#c8c8c8' },
   deleteItButton: {
     borderWidth: 1,
     borderColor: '#E11D48',
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  deleteItText: {
-    ...t.label,
-    color: '#E11D48',
-    letterSpacing: 1,
-  },
+  deleteItText: { ...t.label, color: '#E11D48', letterSpacing: 1 },
   disclaimer: {
     ...t.label,
     fontFamily: fonts.mono.regular,
@@ -480,14 +467,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textTransform: 'none' as const,
   },
-  legalLink: {
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
-  },
-  legalLinkText: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 2,
-  },
+  legalLink: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1a1a1a' },
+  legalLinkText: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
 });

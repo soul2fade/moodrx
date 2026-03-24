@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Alert } from 'react-native';
-import { getPremiumStatus, setPremiumStatus, PRODUCT_IDS } from '@/lib/subscription';
+import {
+  getPremiumStatus,
+  setPremiumStatus,
+  PRODUCT_IDS,
+  startTrial as startTrialStorage,
+  getTrialInfo,
+} from '@/lib/subscription';
 
-// Safely load expo-in-app-purchases — it crashes at import time in Expo Go,
-// web preview, and any environment without the native module. We require()
-// it lazily inside functions so the module boundary never throws.
 function getIAP() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -16,7 +19,11 @@ function getIAP() {
 
 interface SubscriptionContextValue {
   isPremium: boolean;
+  isInTrial: boolean;
+  trialDaysLeft: number;
+  hasUsedTrial: boolean;
   isLoading: boolean;
+  startTrial: () => Promise<void>;
   purchaseMonthly: () => Promise<void>;
   purchaseYearly: () => Promise<void>;
   restorePurchases: () => Promise<void>;
@@ -24,15 +31,31 @@ interface SubscriptionContextValue {
 
 const SubscriptionContext = createContext<SubscriptionContextValue>({
   isPremium: false,
+  isInTrial: false,
+  trialDaysLeft: 0,
+  hasUsedTrial: false,
   isLoading: true,
+  startTrial: async () => {},
   purchaseMonthly: async () => {},
   purchaseYearly: async () => {},
   restorePurchases: async () => {},
 });
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
-  const [isPremium, setIsPremium] = useState(false);
+  const [isPaidPremium, setIsPaidPremium] = useState(false);
+  const [isInTrial, setIsInTrial] = useState(false);
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+  const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const isPremium = isPaidPremium || isInTrial;
+
+  const loadTrialInfo = useCallback(async () => {
+    const info = await getTrialInfo();
+    setIsInTrial(info.isInTrial);
+    setTrialDaysLeft(info.daysLeft);
+    setHasUsedTrial(info.hasUsedTrial);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -40,14 +63,19 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     async function init() {
       try {
-        const cached = await getPremiumStatus();
-        if (mounted) setIsPremium(cached);
+        const [cached, trialInfo] = await Promise.all([
+          getPremiumStatus(),
+          getTrialInfo(),
+        ]);
+        if (mounted) {
+          setIsPaidPremium(cached);
+          setIsInTrial(trialInfo.isInTrial);
+          setTrialDaysLeft(trialInfo.daysLeft);
+          setHasUsedTrial(trialInfo.hasUsedTrial);
+        }
 
         const IAP = getIAP();
-        if (!IAP) {
-          // Native module not available (Expo Go / web) — use cached value only
-          return;
-        }
+        if (!IAP) return;
 
         await IAP.connectAsync();
         connected = true;
@@ -64,11 +92,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
               }
             }
             setPremiumStatus(true);
-            if (mounted) setIsPremium(true);
+            if (mounted) setIsPaidPremium(true);
           }
         });
       } catch {
-        // Silently fall back to cached premium status
+        // Silently fall back to cached status
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -85,46 +113,48 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     };
   }, []);
 
+  const startTrial = useCallback(async () => {
+    await startTrialStorage();
+    await loadTrialInfo();
+  }, [loadTrialInfo]);
+
   const purchaseMonthly = useCallback(async () => {
     try {
       const IAP = getIAP();
       if (!IAP) {
-        // Mock environment — toggle for testing
-        const newVal = !isPremium;
+        const newVal = !isPaidPremium;
         await setPremiumStatus(newVal);
-        setIsPremium(newVal);
+        setIsPaidPremium(newVal);
         return;
       }
       await IAP.purchaseItemAsync(PRODUCT_IDS.monthly);
     } catch {
       // handled by listener
     }
-  }, [isPremium]);
+  }, [isPaidPremium]);
 
   const purchaseYearly = useCallback(async () => {
     try {
       const IAP = getIAP();
       if (!IAP) {
-        // Mock environment — toggle for testing
-        const newVal = !isPremium;
+        const newVal = !isPaidPremium;
         await setPremiumStatus(newVal);
-        setIsPremium(newVal);
+        setIsPaidPremium(newVal);
         return;
       }
       await IAP.purchaseItemAsync(PRODUCT_IDS.yearly);
     } catch {
       // handled by listener
     }
-  }, [isPremium]);
+  }, [isPaidPremium]);
 
   const restorePurchases = useCallback(async () => {
     try {
       const IAP = getIAP();
       if (!IAP) {
-        // Mock environment — check cached status
         const cached = await getPremiumStatus();
         if (cached) {
-          setIsPremium(true);
+          setIsPaidPremium(true);
           Alert.alert('Restored', 'Your Pro subscription has been restored.');
         } else {
           Alert.alert('No purchases found', 'No previous Pro subscription was found.');
@@ -134,7 +164,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const { responseCode, results } = await IAP.getPurchaseHistoryAsync();
       if (responseCode === IAP.IAPResponseCode.OK && results && results.length > 0) {
         await setPremiumStatus(true);
-        setIsPremium(true);
+        setIsPaidPremium(true);
         Alert.alert('Restored', 'Your Pro subscription has been restored.');
       } else {
         Alert.alert('No purchases found', 'No previous Pro subscription was found.');
@@ -145,7 +175,17 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, []);
 
   return (
-    <SubscriptionContext.Provider value={{ isPremium, isLoading, purchaseMonthly, purchaseYearly, restorePurchases }}>
+    <SubscriptionContext.Provider value={{
+      isPremium,
+      isInTrial,
+      trialDaysLeft,
+      hasUsedTrial,
+      isLoading,
+      startTrial,
+      purchaseMonthly,
+      purchaseYearly,
+      restorePurchases,
+    }}>
       {children}
     </SubscriptionContext.Provider>
   );

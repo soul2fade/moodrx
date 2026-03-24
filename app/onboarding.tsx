@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import { getFirstLaunchDone, setFirstLaunchDone } from '@/lib/storage';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 
 const STEPS = [
   {
@@ -30,9 +31,16 @@ const STEPS = [
   },
 ];
 
+const TRIAL_FEATURES = [
+  'All 18 science-backed workouts',
+  'Supplement tracker with research',
+  'Full progress history',
+];
+
 export default function OnboardingScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
-  const buttonScale = useRef(new Animated.Value(1)).current;
+  const trialScale = useRef(new Animated.Value(1)).current;
+  const { startTrial, hasUsedTrial } = useSubscription();
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -40,13 +48,21 @@ export default function OnboardingScreen() {
     });
   }, []);
 
-  const onPressIn = () => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start();
-  const onPressOut = () => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  const onPressIn = (anim: Animated.Value) =>
+    Animated.spring(anim, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start();
+  const onPressOut = (anim: Animated.Value) =>
+    Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
-  const handleStart = async () => {
+  const handleStartTrial = useCallback(async () => {
+    await startTrial();
     await setFirstLaunchDone();
     router.replace('/home');
-  };
+  }, [startTrial]);
+
+  const handleFreeVersion = useCallback(async () => {
+    await setFirstLaunchDone();
+    router.replace('/home');
+  }, []);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -82,19 +98,57 @@ export default function OnboardingScreen() {
 
         <View style={styles.preCTALine} />
 
-        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleStart}
-            onPressIn={onPressIn}
-            onPressOut={onPressOut}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Get started with MoodRx"
-          >
-            <Text style={styles.buttonText}>LET&apos;S GO →</Text>
-          </TouchableOpacity>
-        </Animated.View>
+        {!hasUsedTrial ? (
+          <>
+            <View style={styles.trialBanner}>
+              <Text style={styles.trialBannerLabel}>7-DAY FREE TRIAL</Text>
+              <Text style={styles.trialBannerSub}>Full access. No charge until day 8.</Text>
+              <View style={styles.trialFeatures}>
+                {TRIAL_FEATURES.map((f) => (
+                  <Text key={f} style={styles.trialFeatureItem}>+ {f}</Text>
+                ))}
+              </View>
+            </View>
+
+            <Animated.View style={{ transform: [{ scale: trialScale }] }}>
+              <TouchableOpacity
+                style={styles.trialButton}
+                onPress={handleStartTrial}
+                onPressIn={() => onPressIn(trialScale)}
+                onPressOut={() => onPressOut(trialScale)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Start 7-day free trial"
+              >
+                <Text style={styles.trialButtonText}>TRY 7 DAYS FREE →</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <TouchableOpacity
+              style={styles.freeButton}
+              onPress={handleFreeVersion}
+              activeOpacity={0.6}
+              accessibilityRole="button"
+              accessibilityLabel="Continue with free version"
+            >
+              <Text style={styles.freeButtonText}>CONTINUE WITH FREE VERSION</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <Animated.View style={{ transform: [{ scale: trialScale }] }}>
+            <TouchableOpacity
+              style={styles.trialButton}
+              onPress={handleFreeVersion}
+              onPressIn={() => onPressIn(trialScale)}
+              onPressOut={() => onPressOut(trialScale)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Get started"
+            >
+              <Text style={styles.trialButtonText}>LET&apos;S GO →</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         <Text style={styles.disclaimer}>
           MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
@@ -179,17 +233,52 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 0,
   },
-  button: {
+  trialBanner: {
     marginTop: 24,
+    marginBottom: 20,
+    borderLeftWidth: 2,
+    borderLeftColor: '#E8B84B',
+    paddingLeft: 16,
+  },
+  trialBannerLabel: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 3,
+  },
+  trialBannerSub: {
+    ...t.bodyMuted,
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  trialFeatures: {
+    gap: 4,
+  },
+  trialFeatureItem: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+  },
+  trialButton: {
     borderWidth: 1,
     borderColor: '#ffffff',
     paddingVertical: 16,
     alignItems: 'center',
     borderRadius: 0,
+    marginBottom: 12,
   },
-  buttonText: {
+  trialButtonText: {
     ...t.button,
     letterSpacing: 4,
+  },
+  freeButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  freeButtonText: {
+    ...t.label,
+    color: '#a3a3a3',
+    letterSpacing: 2,
   },
   disclaimer: {
     ...t.label,

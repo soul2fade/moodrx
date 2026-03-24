@@ -22,7 +22,16 @@ const FEATURES = [
 ];
 
 export default function PremiumScreen() {
-  const { purchaseMonthly, purchaseYearly, restorePurchases, isPremium } = useSubscription();
+  const {
+    purchaseMonthly,
+    purchaseYearly,
+    restorePurchases,
+    isPremium,
+    isInTrial,
+    trialDaysLeft,
+    hasUsedTrial,
+  } = useSubscription();
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
 
@@ -33,7 +42,6 @@ export default function PremiumScreen() {
     ]).start();
   }, [fadeAnim, slideAnim]);
 
-  // Android hardware back button
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.back();
@@ -41,6 +49,8 @@ export default function PremiumScreen() {
     });
     return () => backHandler.remove();
   }, []);
+
+  const trialExpired = hasUsedTrial && !isInTrial && !isPremium;
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: '#0a0a0a', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -61,9 +71,24 @@ export default function PremiumScreen() {
 
         <Text style={styles.subtext}>Your brain deserves the upgrade.</Text>
 
-        {isPremium && (
-          <View style={styles.alreadyPremium}>
-            <Text style={styles.alreadyPremiumText}>YOU HAVE PRO</Text>
+        {/* Status badge */}
+        {isPremium && !isInTrial && (
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>YOU HAVE PRO</Text>
+          </View>
+        )}
+
+        {isInTrial && (
+          <View style={[styles.statusBadge, styles.trialBadge]}>
+            <Text style={styles.trialBadgeText}>
+              {trialDaysLeft === 1 ? 'TRIAL — 1 DAY REMAINING' : `TRIAL — ${trialDaysLeft} DAYS REMAINING`}
+            </Text>
+          </View>
+        )}
+
+        {trialExpired && (
+          <View style={[styles.statusBadge, styles.expiredBadge]}>
+            <Text style={styles.expiredBadgeText}>YOUR TRIAL HAS ENDED</Text>
           </View>
         )}
 
@@ -79,53 +104,54 @@ export default function PremiumScreen() {
 
         <View style={styles.divider} />
 
-        {/* Pricing */}
-        <Text style={styles.pricingLabel}>CHOOSE YOUR PLAN</Text>
+        {/* Pricing — only if not paid */}
+        {!isPremium || isInTrial ? (
+          <>
+            <Text style={styles.pricingLabel}>CHOOSE YOUR PLAN</Text>
 
-        <TouchableOpacity
-          style={styles.yearlyCard}
-          onPress={purchaseYearly}
-          activeOpacity={0.8}
-          disabled={isPremium}
-          accessibilityRole="button"
-          accessibilityLabel="Yearly plan, $49.99 per year, save 40%"
-        >
-          <View style={styles.bestValueBadge}>
-            <Text style={styles.bestValueText}>BEST VALUE</Text>
-          </View>
-          <Text style={styles.yearlyPrice}>
-            $49.99 <Text style={styles.yearlyPer}>/ year</Text>
-          </Text>
-          <Text style={styles.yearlySub}>save 40% — $4.17/month</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.yearlyCard}
+              onPress={purchaseYearly}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Yearly plan, $49.99 per year, save 40%"
+            >
+              <View style={styles.bestValueBadge}>
+                <Text style={styles.bestValueText}>BEST VALUE</Text>
+              </View>
+              <Text style={styles.yearlyPrice}>
+                $49.99 <Text style={styles.yearlyPer}>/ year</Text>
+              </Text>
+              <Text style={styles.yearlySub}>save 40% — $4.17/month</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.monthlyCard}
-          onPress={purchaseMonthly}
-          activeOpacity={0.8}
-          disabled={isPremium}
-          accessibilityRole="button"
-          accessibilityLabel="Monthly plan, $6.99 per month"
-        >
-          <Text style={styles.monthlyPrice}>
-            $6.99 <Text style={styles.monthlyPer}>/ month</Text>
-          </Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.monthlyCard}
+              onPress={purchaseMonthly}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Monthly plan, $6.99 per month"
+            >
+              <Text style={styles.monthlyPrice}>
+                $6.99 <Text style={styles.monthlyPer}>/ month</Text>
+              </Text>
+            </TouchableOpacity>
 
-        {/* Trial CTA */}
-        {!isPremium && (
-          <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={purchaseYearly}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Start 7-day free trial"
-          >
-            <Text style={styles.ctaText}>START 7-DAY FREE TRIAL</Text>
-          </TouchableOpacity>
-        )}
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={purchaseYearly}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Unlock MoodRx Pro"
+            >
+              <Text style={styles.ctaText}>
+                {isInTrial ? 'KEEP PRO ACCESS →' : 'UNLOCK MOODRX PRO →'}
+              </Text>
+            </TouchableOpacity>
 
-        <Text style={styles.cancelNote}>Cancel anytime. No commitment.</Text>
+            <Text style={styles.cancelNote}>Cancel anytime. No commitment.</Text>
+          </>
+        ) : null}
 
         <TouchableOpacity
           onPress={restorePurchases}
@@ -151,7 +177,7 @@ const styles = StyleSheet.create({
   headline: { ...t.headline, fontSize: 32, marginTop: 8 },
   divider: { width: 32, height: 1, backgroundColor: '#333333', marginVertical: 20 },
   subtext: { ...t.bodyMuted, color: '#c8c8c8' },
-  alreadyPremium: {
+  statusBadge: {
     borderWidth: 1,
     borderColor: '#E8B84B',
     paddingVertical: 8,
@@ -159,7 +185,16 @@ const styles = StyleSheet.create({
     marginTop: 16,
     alignSelf: 'flex-start',
   },
-  alreadyPremiumText: { ...t.label, color: '#E8B84B', letterSpacing: 2 },
+  statusBadgeText: { ...t.label, color: '#E8B84B', letterSpacing: 2 },
+  trialBadge: {
+    borderColor: '#E8B84B',
+    backgroundColor: 'rgba(232, 184, 75, 0.08)',
+  },
+  trialBadgeText: { ...t.label, color: '#E8B84B', letterSpacing: 2 },
+  expiredBadge: {
+    borderColor: '#737373',
+  },
+  expiredBadgeText: { ...t.label, color: '#a3a3a3', letterSpacing: 2 },
   featureList: { marginTop: 24 },
   featureRow: {
     flexDirection: 'row',

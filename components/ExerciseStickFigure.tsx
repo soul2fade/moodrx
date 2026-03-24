@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   bubbleText: {
     fontFamily: 'SpaceGrotesk_400Regular',
     fontSize: 12,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
     textAlign: 'center',
   },
   bubbleTextLast: {

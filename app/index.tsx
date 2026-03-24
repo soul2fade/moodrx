@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 3,
     textTransform: 'uppercase',
   },

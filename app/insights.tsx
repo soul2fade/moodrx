@@ -197,7 +197,7 @@ export default function InsightsScreen() {
           accessibilityRole="button"
           accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker with Pro'}
         >
-          <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>
+          <Text style={{ ...t.label, color: '#c8c8c8', letterSpacing: 2 }}>
             {isPremium ? 'SUPPLEMENT TRACKER →' : 'SUPPLEMENT TRACKER [PRO] →'}
           </Text>
         </TouchableOpacity>
@@ -339,7 +339,7 @@ export default function InsightsScreen() {
             accessibilityRole="button"
             accessibilityLabel="Share your progress"
           >
-            <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>SHARE PROGRESS →</Text>
+            <Text style={{ ...t.label, color: '#c8c8c8', letterSpacing: 2 }}>SHARE PROGRESS →</Text>
           </TouchableOpacity>
         )}
 
@@ -502,12 +502,12 @@ const styles = StyleSheet.create({
   },
   backButton: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   evidenceLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginTop: 24,
   },
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   },
   statsLoading: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   statItem: {
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     ...t.dataLabel,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 4,
   },
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   },
   chartLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginBottom: 16,
   },
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
   },
   noSessions: {
     ...t.headlineSm,
-    color: '#525252',
+    color: '#c8c8c8',
     fontSize: 14,
   },
   noSessionsSub: {
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
   },
   chartDay: {
     ...t.timestamp,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 9,
     letterSpacing: 1,
     marginTop: 4,
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 1,
   },
   patternBox: {
@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   },
   patternLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
   },
   patternText: {
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
   },
   recentLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginBottom: 8,
   },
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
   },
   recentDate: {
     ...t.timestamp,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 1,
     marginTop: 2,
   },
@@ -726,7 +726,7 @@ const styles = StyleSheet.create({
   },
   neverMind: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   burnItButton: {
     borderWidth: 1,
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
   },
   lockedCalendarTitle: {
     ...t.bodyMuted,
-    color: '#737373',
+    color: '#c8c8c8',
     textAlign: 'center',
   },
   lockedCalendarButton: {
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
   },
   lockedCalendarButtonText: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   caseBackdrop: {
@@ -797,7 +797,7 @@ const styles = StyleSheet.create({
   },
   casePanelTitle: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 3,
     fontSize: 10,
     marginBottom: 14,
@@ -820,7 +820,7 @@ const styles = StyleSheet.create({
   },
   casePanelDate: {
     ...t.timestamp,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   casePanelWorkoutName: {
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
   },
   casePanelScoreLabel: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 2,
     fontSize: 10,
   },

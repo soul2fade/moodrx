@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   },
   checkInLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   topRight: {
     flexDirection: 'row',
@@ -310,11 +310,11 @@ const styles = StyleSheet.create({
   },
   sessionCount: {
     ...t.timestamp,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
   },
   settingsText: {
     ...t.timestamp,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
   },
   streakBadge: {
     backgroundColor: 'transparent',
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
   subtext: {
     ...t.bodyMuted,
-    color: '#737373',
+    color: '#c8c8c8',
     marginTop: 12,
   },
   streakBox: {
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   streakBoxText: {
     ...t.number,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
   },
   stillFeelingBanner: {
     flexDirection: 'row',
@@ -378,13 +378,13 @@ const styles = StyleSheet.create({
   },
   stillFeelingText: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 1,
     flex: 1,
   },
   stillFeelingArrow: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
   },
   moodList: {
     marginTop: 28,
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   },
   moodCode: {
     ...t.code,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   moodChevron: {
     fontSize: 14,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   intensityLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   intensityValueRow: {
     flexDirection: 'row',
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   intensityMax: {
     ...t.bodyMuted,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 16,
     marginLeft: 3,
   },

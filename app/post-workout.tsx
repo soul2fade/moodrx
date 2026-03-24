@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   howLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     textAlign: 'center',
   },
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   scoreDenom: {
     ...t.dataValue,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 24,
     fontFamily: fonts.primary.regular,
     marginLeft: 4,
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   startedAt: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     textAlign: 'center',
   },
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   completedLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
   },
   workoutName: {
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   },
   ratingPrompt: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     textAlign: 'center',
     marginBottom: 16,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   ratingBtnText: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 1,
     fontSize: 10,
   },

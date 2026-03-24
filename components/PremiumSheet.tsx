@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
   description: {
     ...t.bodyMuted,
-    color: '#737373',
+    color: '#c8c8c8',
     marginTop: 10,
     marginBottom: 20,
   },
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   planSub: {
     ...t.bodySm,
-    color: '#737373',
+    color: '#c8c8c8',
     marginTop: 2,
   },
   monthlyButton: {
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   },
   monthlyPrice: {
     ...t.headlineSm,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
   },
   closeButton: {
     alignItems: 'center',
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   closeText: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 3,
   },
 });

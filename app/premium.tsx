@@ -146,11 +146,11 @@ export default function PremiumScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 32 },
-  backButton: { ...t.label, color: '#737373', letterSpacing: 2 },
+  backButton: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
   proLabel: { ...t.label, color: '#E8B84B', letterSpacing: 4, marginTop: 24 },
   headline: { ...t.headline, fontSize: 32, marginTop: 8 },
   divider: { width: 32, height: 1, backgroundColor: '#333333', marginVertical: 20 },
-  subtext: { ...t.bodyMuted, color: '#737373' },
+  subtext: { ...t.bodyMuted, color: '#c8c8c8' },
   alreadyPremium: {
     borderWidth: 1,
     borderColor: '#E8B84B',
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   checkmark: { ...t.label, color: '#E8B84B', fontSize: 14, paddingTop: 1 },
   featureText: { ...t.body, flex: 1 },
-  pricingLabel: { ...t.label, color: '#737373', letterSpacing: 3, marginTop: 24, marginBottom: 16 },
+  pricingLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 3, marginTop: 24, marginBottom: 16 },
   yearlyCard: {
     borderWidth: 1,
     borderColor: '#E8B84B',
@@ -190,8 +190,8 @@ const styles = StyleSheet.create({
   },
   bestValueText: { ...t.label, color: '#0a0a0a', fontSize: 9, letterSpacing: 1 },
   yearlyPrice: { ...t.headlineMd, color: '#E8B84B' },
-  yearlyPer: { ...t.bodyMuted, color: '#737373', fontSize: 16 },
-  yearlySub: { ...t.bodySm, color: '#737373', marginTop: 4 },
+  yearlyPer: { ...t.bodyMuted, color: '#c8c8c8', fontSize: 16 },
+  yearlySub: { ...t.bodySm, color: '#c8c8c8', marginTop: 4 },
   monthlyCard: {
     borderWidth: 1,
     borderColor: '#333333',
@@ -199,8 +199,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
   },
-  monthlyPrice: { ...t.headlineSm, color: '#a3a3a3' },
-  monthlyPer: { ...t.bodyMuted, color: '#737373', fontSize: 14 },
+  monthlyPrice: { ...t.headlineSm, color: '#c8c8c8' },
+  monthlyPer: { ...t.bodyMuted, color: '#c8c8c8', fontSize: 14 },
   ctaButton: {
     borderWidth: 1,
     borderColor: '#ffffff',
@@ -211,5 +211,5 @@ const styles = StyleSheet.create({
   ctaText: { ...t.button, letterSpacing: 3 },
   cancelNote: { ...t.softMuted, textAlign: 'center', marginBottom: 16 },
   restoreButton: { alignItems: 'center', paddingVertical: 8 },
-  restoreText: { ...t.label, color: '#525252', letterSpacing: 2 },
+  restoreText: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
 });

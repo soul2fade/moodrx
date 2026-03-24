@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   stepSub: {
     ...t.bodySm,
-    color: '#737373',
+    color: '#c8c8c8',
     marginTop: 3,
   },
   preCTALine: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   disclaimer: {
     ...t.label,
     fontFamily: fonts.mono.regular,
-    color: '#525252',
+    color: '#c8c8c8',
     fontSize: 9,
     letterSpacing: 0.5,
     lineHeight: 14,

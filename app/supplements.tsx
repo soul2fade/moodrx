@@ -289,12 +289,12 @@ const styles = StyleSheet.create({
   },
   backButton: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   trackerLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginTop: 24,
   },
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     ...t.timestamp,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginTop: 4,
   },
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   },
   moodFilterLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   moodFilterMood: {
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   moodFilterNote: {
     ...t.bodySm,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   progressRow: {
     flexDirection: 'row',
@@ -351,13 +351,13 @@ const styles = StyleSheet.create({
   },
   progressCountSlash: {
     ...t.dataValue,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 20,
     fontFamily: fonts.primary.regular,
   },
   progressLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginLeft: 8,
   },
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   },
   priorityCardLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     fontSize: 10,
   },
@@ -381,19 +381,19 @@ const styles = StyleSheet.create({
   },
   priorityCardName: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 12,
   },
   priorityCardDose: {
     ...t.timestamp,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 2,
   },
   priorityCardScience: {
     ...t.soft,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 13,
     lineHeight: 20,
     marginTop: 10,
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   priorityCheckBtnText: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 3,
   },
   supplementList: {
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   supplementBenefit: {
     ...t.bodyMuted,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 12,
     marginTop: 2,
   },
@@ -465,11 +465,11 @@ const styles = StyleSheet.create({
   },
   supplementDose: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   supplementTiming: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 2,
   },
@@ -486,13 +486,13 @@ const styles = StyleSheet.create({
   },
   sciencePanelLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginBottom: 8,
   },
   sciencePanelText: {
     ...t.soft,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
     fontSize: 13,
     lineHeight: 20,
   },
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   consistencyLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
   },
   streakRow: {
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   },
   streakNone: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 14,
   },
 });

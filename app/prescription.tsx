@@ -98,7 +98,7 @@ export default function PrescriptionScreen() {
                 <Text
                   style={isSelected
                     ? { ...t.labelBright, letterSpacing: 2 }
-                    : { ...styles.tabText, color: '#737373' }}
+                    : { ...styles.tabText, color: '#a3a3a3' }}
                 >
                   {tab.label}
                 </Text>
@@ -146,7 +146,7 @@ export default function PrescriptionScreen() {
                       accessibilityLabel={`Unlock ${workout.name} with Pro`}
                     >
                       <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
-                      <Text style={{ ...t.label, color: '#525252', letterSpacing: 2 }}>UNLOCK PRO →</Text>
+                      <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>UNLOCK PRO →</Text>
                     </TouchableOpacity>
                     <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                   </View>
@@ -221,7 +221,7 @@ export default function PrescriptionScreen() {
                           <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
                           <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
                         </View>
-                        <Text style={{ ...t.label, color: '#525252', letterSpacing: 2, marginTop: 10 }}>
+                        <Text style={{ ...t.label, color: '#737373', letterSpacing: 2, marginTop: 10 }}>
                           UNLOCK PRO →
                         </Text>
                       </View>
@@ -259,7 +259,7 @@ export default function PrescriptionScreen() {
               accessibilityRole="button"
               accessibilityLabel="Track today's supplement stack"
             >
-              <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>TRACK TODAY&apos;S STACK →</Text>
+              <Text style={{ ...t.label, color: '#c8c8c8', letterSpacing: 2 }}>TRACK TODAY&apos;S STACK →</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   heroSection: {
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   },
   prescriptionLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginTop: 12,
   },
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   scroll: {
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   workoutDuration: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   intensityBadgeText: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#c8c8c8',
     fontSize: 10,
     letterSpacing: 1,
     fontWeight: '600',
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   },
   workoutVibe: {
     ...t.soft,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 11,
     letterSpacing: 1,
     marginTop: 4,
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
   },
   supplementDose: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 12,
   },
   supplementBenefitRow: {
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   },
   supplementTiming: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
 });

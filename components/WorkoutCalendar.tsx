@@ -141,12 +141,12 @@ const styles = StyleSheet.create({
   },
   label: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
   },
   monthName: {
     ...t.timestamp,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 4,
   },
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     ...t.timestamp,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 9,
     letterSpacing: 1,
   },
@@ -192,10 +192,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   dayTextMuted: {
-    color: '#737373',
+    color: '#c8c8c8',
   },
   dayTextToday: {
-    color: '#a3a3a3',
+    color: '#c8c8c8',
   },
   dot: {
     width: 4,

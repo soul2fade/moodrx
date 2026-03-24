@@ -306,12 +306,12 @@ const styles = StyleSheet.create({
   },
   backButton: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   settingsLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginTop: 24,
   },
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginTop: 32,
     borderTopWidth: 1,
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   },
   timeSectionLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginBottom: 12,
   },
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   timeChipTextUnselected: {
-    color: '#737373',
+    color: '#c8c8c8',
   },
   appName: {
     ...t.headlineSm,
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   },
   appVersion: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 8,
   },
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   },
   dataRowText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   deleteRowText: {
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   },
   deleteConfirmSub: {
     ...t.bodySm,
-    color: '#737373',
+    color: '#c8c8c8',
     marginTop: 4,
   },
   deleteConfirmButtons: {
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   neverMindText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   deleteItButton: {
     borderWidth: 1,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   disclaimer: {
     ...t.label,
     fontFamily: fonts.mono.regular,
-    color: '#525252',
+    color: '#c8c8c8',
     fontSize: 9,
     letterSpacing: 0.5,
     lineHeight: 14,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   },
   legalLinkText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
 });

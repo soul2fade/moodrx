@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     ...t.bodyMuted,
-    color: '#737373',
+    color: '#c8c8c8',
     fontSize: 12,
     marginTop: 4,
   },
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     ...t.dataLabel,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 4,
   },
@@ -124,13 +124,13 @@ const styles = StyleSheet.create({
   },
   moodLabel: {
     ...t.dataLabel,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 4,
   },
   watermark: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginTop: 24,
   },

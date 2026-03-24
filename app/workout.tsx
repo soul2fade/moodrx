@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     textAlign: 'center',
     marginTop: 80,
   },
@@ -404,12 +404,12 @@ const styles = StyleSheet.create({
   },
   quitText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   stepCounter: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   quitConfirm: {
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   },
   keepGoingText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   quitConfirmBtn: {
     borderWidth: 1,
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   },
   timerButtonText: {
     ...t.timer,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   wingItButton: {
     width: '100%',
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   },
   timerRemainingLabel: {
     ...t.timestamp,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   stopButton: {
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   },
   stopButtonText: {
     ...t.timer,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   bottomNav: {
     flexDirection: 'row',
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     ...t.timer,
-    color: '#737373',
+    color: '#c8c8c8',
   },
   nextBtn: {
     borderWidth: 1,

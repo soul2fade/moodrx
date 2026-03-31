@@ -120,38 +120,38 @@ const EXERCISES: ExerciseDef[] = [
       rlkx:154, rlky:173, rlax:174, rlay:GND,
     },
   },
-  // 4. Lunge — side profile: standing upright → deep forward lunge → back up
+  // 4. Lunge — side profile, back foot stays planted, front leg lunges right
   {
     label: "Lunge", color: "#E8B84B", cycle: 1400,
-    // poseA: upright standing (side profile facing right)
+    // poseA: standing, both feet near center
     poseA: { hx:108, hy:30, sx:98, sy:64, bx:98, by:112,
-      laex:112, laey:86, lahx:118, lahy:103,  // forward-side arm
-      raex:84,  raey:88, rahx:78,  rahy:105,  // back-side arm
-      llkx:101, llky:146, llax:104, llay:GND, // feet close together
-      rlkx:95,  rlky:146, rlax:92,  rlay:GND,
+      laex:112, laey:86, lahx:118, lahy:103,
+      raex:84,  raey:88, rahx:78,  rahy:105,
+      llkx:100, llky:146, llax:102, llay:GND, // front leg (will step right)
+      rlkx:96,  rlky:146, rlax:96,  rlay:GND, // back leg (foot stays at x≈96)
     },
-    // poseB: deep forward lunge (front leg right, back knee near floor)
-    poseB: { hx:108, hy:44, sx:98, sy:78, bx:98, by:122, // body lowers
-      laex:116, laey:96, lahx:124, lahy:110,  // arms at hips for balance
+    // poseB: deep lunge — front leg way right, back foot STAYS at x=96
+    poseB: { hx:108, hy:44, sx:98, sy:78, bx:98, by:122,
+      laex:116, laey:96, lahx:124, lahy:110,
       raex:80,  raey:96, rahx:72,  rahy:110,
-      llkx:142, llky:148, llax:160, llay:GND, // front leg steps way right
-      rlkx:70,  rlky:166, rlax:58,  rlay:GND, // back knee near floor
+      llkx:142, llky:148, llax:160, llay:GND, // front foot lunges right
+      rlkx:82,  rlky:162, rlax:96,  rlay:GND, // back FOOT stays (x=96), knee drops
     },
   },
-  // 5. Plank
+  // 5. Plank — forearm plank, collinear body/legs, same line as push-up
   {
-    label: "Plank", color: "#D97706", cycle: 1800,
-    poseA: { hx:48, hy:95, sx:70, sy:112, bx:150, by:120,
-      laex:70, laey:140, lahx:60, lahy:GND,
-      raex:72, raey:138, rahx:64, rahy:GND,
-      llkx:135, llky:132, llax:168, llay:GND,
-      rlkx:137, rlky:132, rlax:170, rlay:GND,
+    label: "Plank", color: "#D97706", cycle: 2000,
+    poseA: { hx:46, hy:99, sx:58, sy:112, bx:121, by:151,  // perfectly straight
+      laex:65, laey:GND, lahx:48, lahy:GND,   // forearm flat on ground
+      raex:67, raey:GND, rahx:50, rahy:GND,
+      llkx:152, llky:169, llax:172, llay:GND, // legs on same line
+      rlkx:154, rlky:169, rlax:174, rlay:GND,
     },
-    poseB: { hx:48, hy:97, sx:70, sy:114, bx:150, by:122,
-      laex:70, laey:140, lahx:60, lahy:GND,
-      raex:72, raey:138, rahx:64, rahy:GND,
-      llkx:135, llky:134, llax:168, llay:GND,
-      rlkx:137, rlky:134, rlax:170, rlay:GND,
+    poseB: { hx:46, hy:102, sx:58, sy:114, bx:121, by:154, // slight hip sag
+      laex:65, laey:GND, lahx:48, lahy:GND,
+      raex:67, raey:GND, rahx:50, rahy:GND,
+      llkx:152, llky:171, llax:172, llay:GND,
+      rlkx:154, rlky:171, rlax:174, rlay:GND,
     },
   },
   // 6. Jumping Jacks
@@ -250,36 +250,40 @@ const EXERCISES: ExerciseDef[] = [
       rlkx:112, rlky:126, rlax:116, rlay:152,
     },
   },
-  // 12. Sprinting — forward lean, big stride, bent-elbow arms
+  // 12. Sprinting — side profile, knee lifts visible, arm swings like shadowboxing
   {
-    label: "Sprinting", color: "#059669", cycle: 480,
-    poseA: { hx:89, hy:24, sx:87, sy:57, bx:88, by:105,  // lean forward
-      laex:98,  laey:72, lahx:104, lahy:88,   // left elbow back, forearm angled down-back
-      raex:77,  raey:66, rahx:72,  rahy:50,   // right elbow fwd, forearm angled up-front
-      llkx:73,  llky:143, llax:60,  llay:GND, // left leg way forward
-      rlkx:114, rlky:136, rlax:128, rlay:GND, // right leg way back
+    label: "Sprinting", color: "#059669", cycle: 450,
+    // poseA: left knee lifted high, right arm forward, right leg pushing off
+    poseA: { hx:108, hy:24, sx:96, sy:58, bx:97, by:106,  // head right, lean fwd
+      laex:82,  laey:70, lahx:76,  lahy:86,   // left arm back (elbow bent)
+      raex:110, raey:70, rahx:118, rahy:55,   // right arm forward (elbow up)
+      llkx:82,  llky:115, llax:76,  llay:138, // left knee HIGH, foot tucked
+      rlkx:116, rlky:146, rlax:130, rlay:GND, // right leg on ground
     },
-    poseB: { hx:89, hy:24, sx:87, sy:57, bx:88, by:105,
-      laex:77,  laey:66, lahx:72,  lahy:50,   // arms swap
-      raex:98,  raey:72, rahx:104, rahy:88,
-      llkx:114, llky:136, llax:128, llay:GND, // legs swap
-      rlkx:73,  rlky:143, rlax:60,  rlay:GND,
+    // poseB: right knee lifted, left arm forward
+    poseB: { hx:108, hy:24, sx:96, sy:58, bx:97, by:106,
+      laex:110, laey:70, lahx:118, lahy:55,   // left arm forward
+      raex:82,  raey:70, rahx:76,  rahy:86,   // right arm back
+      llkx:116, llky:146, llax:130, llay:GND, // left leg on ground
+      rlkx:82,  rlky:115, rlax:76,  rlay:138, // right knee HIGH
     },
   },
-  // 13. Running in Place — bent-elbow pump, high knees
+  // 13. Running in Place — side profile, knee lifts visible, arm swings
   {
     label: "Running in Place", color: "#D97706", cycle: 480,
-    poseA: { hx:100, hy:28, sx:100, sy:62, bx:100, by:110,
-      laex:108, laey:74, lahx:112, lahy:90,   // left elbow back, forearm down
-      raex:90,  raey:68, rahx:86,  rahy:52,   // right elbow fwd, forearm up
-      llkx:90,  llky:145, llax:87, llay:GND,  // left foot on ground
-      rlkx:112, rlky:108, rlax:118, rlay:130, // right knee high, foot tucked
+    // poseA: left knee high, right arm forward, right foot on ground
+    poseA: { hx:108, hy:28, sx:100, sy:62, bx:100, by:110, // more upright
+      laex:90,  laey:76, lahx:84,  lahy:92,   // left arm back
+      raex:110, raey:74, rahx:118, rahy:60,   // right arm forward
+      llkx:88,  llky:110, llax:82,  llay:132, // left knee HIGH, foot tucked
+      rlkx:106, rlky:146, rlax:108, rlay:GND, // right foot on ground
     },
-    poseB: { hx:100, hy:28, sx:100, sy:62, bx:100, by:110,
-      laex:90,  laey:68, lahx:86,  lahy:52,   // arms swap
-      raex:108, raey:74, rahx:112, rahy:90,
-      llkx:88,  llky:108, llax:82,  llay:130, // left knee high
-      rlkx:110, rlky:145, rlax:113, rlay:GND,
+    // poseB: right knee high, left arm forward
+    poseB: { hx:108, hy:28, sx:100, sy:62, bx:100, by:110,
+      laex:110, laey:74, lahx:118, lahy:60,   // left arm forward
+      raex:90,  raey:76, rahx:84,  rahy:92,   // right arm back
+      llkx:106, llky:146, llax:108, llay:GND, // left foot on ground
+      rlkx:88,  rlky:110, rlax:82,  rlay:132, // right knee HIGH
     },
   },
   // 14. Yoga (Warrior II)

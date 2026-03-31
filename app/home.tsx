@@ -12,7 +12,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getSessions, getStreak, Session } from '@/lib/storage';
+import { getSessions, getStreak, getMoodIdentity, Session } from '@/lib/storage';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
@@ -48,6 +48,7 @@ export default function HomeScreen() {
   const streak = useMemo(() => getStreak(sessions), [sessions]);
   const sessionCount = sessions.length;
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
+  const moodIdentity = useMemo(() => getMoodIdentity(sessions), [sessions]);
 
   const lastSession = sessions.length > 0 ? sessions[sessions.length - 1] : null;
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
@@ -140,11 +141,32 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <Text style={styles.headline}>Alright. How bad is it?</Text>
+        <Text style={styles.headline}>
+          {moodIdentity && sessions.length >= 10
+            ? `Still ${MOODS[moodIdentity.dominantMood].name.toLowerCase()}? Let\u2019s fix that.`
+            : 'Alright. How bad is it?'}
+        </Text>
 
         <View style={styles.divider} />
 
         <Text style={styles.subtext}>Be honest. I&apos;m not here to judge. Much.</Text>
+
+        {/* Mood identity — visible after 5 sessions */}
+        {moodIdentity && !selectedMood && (
+          <TouchableOpacity
+            style={styles.identityRow}
+            onPress={() => router.push('/insights')}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Your pattern: ${moodIdentity.label}, ${moodIdentity.sessionCount} sessions`}
+          >
+            <Text style={styles.identityLabel}>YOUR PATTERN</Text>
+            <Text style={[styles.identityValue, { color: MOODS[moodIdentity.dominantMood].color }]}>
+              {moodIdentity.label.toUpperCase()}
+            </Text>
+            <Text style={styles.identityCount}>{moodIdentity.sessionCount} sessions logged →</Text>
+          </TouchableOpacity>
+        )}
 
         {streak >= 1 && (
           <View style={styles.streakBox}>
@@ -382,6 +404,34 @@ const styles = StyleSheet.create({
     ...t.bodyMuted,
     color: '#c8c8c8',
     marginTop: 12,
+  },
+  identityRow: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#0d0d0d',
+  },
+  identityLabel: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 3,
+    fontSize: 9,
+    marginBottom: 4,
+  },
+  identityValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    fontFamily: fonts.primary.bold,
+    letterSpacing: 1,
+  },
+  identityCount: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 1,
+    fontSize: 10,
+    marginTop: 6,
   },
   streakBox: {
     borderLeftWidth: 3,

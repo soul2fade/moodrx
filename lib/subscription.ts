@@ -32,6 +32,16 @@ export interface TrialInfo {
   hasUsedTrial: boolean;
 }
 
+export async function getTrialStartMs(): Promise<number | null> {
+  try {
+    const val = await AsyncStorage.getItem(TRIAL_KEY);
+    if (!val) return null;
+    return parseInt(val, 10);
+  } catch {
+    return null;
+  }
+}
+
 export async function getTrialInfo(): Promise<TrialInfo> {
   try {
     const val = await AsyncStorage.getItem(TRIAL_KEY);

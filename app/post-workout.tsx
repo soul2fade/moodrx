@@ -7,16 +7,20 @@ import {
   StyleSheet,
   Animated,
   Alert,
+  Platform,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
+import * as Sharing from 'expo-sharing';
+import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
 import { addSession, getNotifPromptShown } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
 import { NotificationPrompt } from '@/components/NotificationPrompt';
+import { BreakthroughCard } from '@/components/BreakthroughCard';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
@@ -39,12 +43,29 @@ export default function PostWorkoutScreen() {
   const [rating, setRating] = useState<'yes' | 'somewhat' | 'no' | null>(null);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const workout = getWorkoutById(workoutId);
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
+  const breakthroughRef = useRef<ViewShot>(null);
 
   const buttonScale = useRef(new Animated.Value(1)).current;
   const { fadeAnim, slideAnim } = useScreenAnimation();
+
+  const handleShare = async () => {
+    if (isSharing || Platform.OS === 'web') return;
+    try {
+      setIsSharing(true);
+      const uri = await (breakthroughRef.current as any)?.capture?.();
+      if (uri && await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share your result' });
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   // Prevent Android back button from going back to workout mid-flow
   const backHandler = useCallback(() => {
@@ -175,6 +196,33 @@ export default function PostWorkoutScreen() {
             })}
           </View>
         </View>
+
+        {/* Hidden breakthrough card — captured for sharing */}
+        {workout && Platform.OS !== 'web' && (
+          <View style={styles.hiddenCardWrapper} pointerEvents="none">
+            <ViewShot ref={breakthroughRef} options={{ format: 'png', quality: 1 }}>
+              <BreakthroughCard
+                mood={mood}
+                intensity={intensity}
+                postScore={postScore}
+                workoutName={workout.name}
+              />
+            </ViewShot>
+          </View>
+        )}
+
+        {workout && Platform.OS !== 'web' && (
+          <TouchableOpacity
+            style={styles.shareButton}
+            onPress={handleShare}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Share your result"
+            disabled={isSharing}
+          >
+            <Text style={styles.shareButtonText}>{isSharing ? 'PREPARING...' : 'SHARE YOUR RESULT →'}</Text>
+          </TouchableOpacity>
+        )}
 
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           <TouchableOpacity
@@ -352,8 +400,27 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     fontSize: 10,
   },
+  hiddenCardWrapper: {
+    position: 'absolute',
+    opacity: 0,
+    top: -9999,
+    left: -9999,
+  },
+  shareButton: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 3,
+    fontSize: 11,
+  },
   logButton: {
-    marginTop: 24,
+    marginTop: 12,
     backgroundColor: '#059669',
     paddingVertical: 16,
     alignItems: 'center',

@@ -210,6 +210,33 @@ export function getStreak(sessions: Session[]): number {
   return streak;
 }
 
+export type MoodIdentity = {
+  label: string;
+  dominantMood: MoodKey;
+  sessionCount: number;
+};
+
+const MOOD_IDENTITY_LABELS: Record<MoodKey, string> = {
+  anxious: 'Chronic Overthinker',
+  low: 'Heavy Lifter',
+  foggy: 'Fog Walker',
+  restless: 'Caged Runner',
+  stressed: 'Pressure Cooker',
+  good: 'Momentum Builder',
+};
+
+export function getMoodIdentity(sessions: Session[]): MoodIdentity | null {
+  if (sessions.length < 5) return null;
+  const counts: Partial<Record<MoodKey, number>> = {};
+  for (const s of sessions) counts[s.mood] = (counts[s.mood] ?? 0) + 1;
+  let max = 0;
+  let dominant: MoodKey = 'anxious';
+  for (const key of Object.keys(counts) as MoodKey[]) {
+    if ((counts[key] ?? 0) > max) { max = counts[key] ?? 0; dominant = key; }
+  }
+  return { label: MOOD_IDENTITY_LABELS[dominant], dominantMood: dominant, sessionCount: sessions.length };
+}
+
 export function getAverageChange(sessions: Session[]): number {
   if (sessions.length === 0) return 0;
   const total = sessions.reduce((sum, s) => sum + (s.postScore - s.intensity), 0);

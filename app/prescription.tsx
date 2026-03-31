@@ -30,6 +30,7 @@ export default function PrescriptionScreen() {
   const intensity = parseInt(params.intensity || '5', 10);
   const [activeTab, setActiveTab] = useState<Tab>('workouts');
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(false);
   const { isPremium } = useSubscription();
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
@@ -114,81 +115,116 @@ export default function PrescriptionScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {activeTab === 'workouts' && (
+        {activeTab === 'workouts' && workouts.length > 0 && (
           <View>
-            {workouts.map((workout, index) => {
-              const isLocked = !isPremium && index > 0;
+            {/* Hero workout — today's prescription */}
+            <Text style={[styles.heroRxLabel, { color: accentColor }]}>TODAY&apos;S PRESCRIPTION</Text>
+            <TouchableOpacity
+              style={flattenStyle([styles.workoutCard, styles.heroCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
+              onPress={() => handleWorkoutTap(workouts[0])}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={`Start ${workouts[0].name}`}
+            >
+              <View style={styles.workoutCardTop}>
+                <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>01</Text>
+                <View style={styles.workoutCardRight}>
+                  <Text style={styles.workoutDuration}>{workouts[0].duration} MIN</Text>
+                  <View style={styles.intensityBadge}>
+                    <Text style={styles.intensityBadgeText}>{workouts[0].intensity.toUpperCase()}</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.workoutNameRow}>
+                <Text style={flattenStyle([styles.workoutName, { flex: 1, fontSize: 20 }])}>{workouts[0].name}</Text>
+                <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
+              </View>
+              <Text style={styles.workoutVibe}>{workouts[0].vibe}</Text>
+              <View style={styles.scienceInline}>
+                <Text style={flattenStyle([styles.scienceInlineLabel, { color: accentColor }])}>THE SCIENCE</Text>
+                <Text style={styles.scienceInlineText}>{workouts[0].why}</Text>
+              </View>
+              <View style={[styles.startButton, { borderColor: accentColor }]}>
+                <Text style={[styles.startButtonText, { color: accentColor }]}>START THIS WORKOUT →</Text>
+              </View>
+            </TouchableOpacity>
 
-              if (isLocked) {
-                return (
-                  <View
-                    key={workout.id}
-                    style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
-                  >
-                    <View style={styles.workoutCardTop}>
-                      <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
-                        {String(index + 1).padStart(2, '0')}
-                      </Text>
-                      <View style={styles.workoutCardRight}>
-                        <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
-                        <View style={styles.intensityBadge}>
-                          <Text style={styles.intensityBadgeText}>
-                            {workout.intensity.toUpperCase()}
-                          </Text>
+            {/* Alternatives toggle */}
+            {workouts.length > 1 && (
+              <>
+                <TouchableOpacity
+                  style={styles.alternativesToggle}
+                  onPress={() => setShowAlternatives(v => !v)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={showAlternatives ? 'Hide alternatives' : `Show ${workouts.length - 1} alternative workouts`}
+                >
+                  <Text style={styles.alternativesLabel}>
+                    ALTERNATIVES ({workouts.length - 1})
+                  </Text>
+                  <Text style={styles.alternativesArrow}>{showAlternatives ? '↑' : '↓'}</Text>
+                </TouchableOpacity>
+
+                {showAlternatives && workouts.slice(1).map((workout, idx) => {
+                  const index = idx + 1;
+                  const isLocked = !isPremium;
+                  if (isLocked) {
+                    return (
+                      <TouchableOpacity
+                        key={workout.id}
+                        style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: '#333333', opacity: 0.7 }])}
+                        onPress={() => setShowPremiumSheet(true)}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Unlock ${workout.name} with Pro`}
+                      >
+                        <View style={styles.workoutCardTop}>
+                          <Text style={styles.workoutNumber}>{String(index + 1).padStart(2, '0')}</Text>
+                          <View style={styles.workoutCardRight}>
+                            <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
+                            <View style={styles.intensityBadge}>
+                              <Text style={styles.intensityBadgeText}>{workout.intensity.toUpperCase()}</Text>
+                            </View>
+                          </View>
+                        </View>
+                        <View style={styles.workoutNameRow}>
+                          <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
+                          <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>UNLOCK PRO →</Text>
+                        </View>
+                        <Text style={styles.workoutVibe}>{workout.vibe}</Text>
+                      </TouchableOpacity>
+                    );
+                  }
+                  return (
+                    <TouchableOpacity
+                      key={workout.id}
+                      style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
+                      onPress={() => handleWorkoutTap(workout)}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open ${workout.name} workout`}
+                    >
+                      <View style={styles.workoutCardTop}>
+                        <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
+                          {String(index + 1).padStart(2, '0')}
+                        </Text>
+                        <View style={styles.workoutCardRight}>
+                          <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
+                          <View style={styles.intensityBadge}>
+                            <Text style={styles.intensityBadgeText}>{workout.intensity.toUpperCase()}</Text>
+                          </View>
                         </View>
                       </View>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.workoutNameRow}
-                      onPress={() => setShowPremiumSheet(true)}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Unlock ${workout.name} with Pro`}
-                    >
-                      <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
-                      <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>UNLOCK PRO →</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.workoutVibe}>{workout.vibe}</Text>
-                  </View>
-                );
-              }
-
-              return (
-                <TouchableOpacity
-                  key={workout.id}
-                  style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
-                  onPress={() => handleWorkoutTap(workout)}
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Open ${workout.name} workout`}
-                >
-                  <View style={styles.workoutCardTop}>
-                    <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
-                      {String(index + 1).padStart(2, '0')}
-                    </Text>
-                    <View style={styles.workoutCardRight}>
-                      <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
-                      <View style={styles.intensityBadge}>
-                        <Text style={styles.intensityBadgeText}>
-                          {workout.intensity.toUpperCase()}
-                        </Text>
+                      <View style={styles.workoutNameRow}>
+                        <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
+                        <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
                       </View>
-                    </View>
-                  </View>
-                  <View style={styles.workoutNameRow}>
-                    <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
-                    <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
-                  </View>
-                  <Text style={styles.workoutVibe}>{workout.vibe}</Text>
-
-                  {/* Science — always visible */}
-                  <View style={styles.scienceInline}>
-                    <Text style={flattenStyle([styles.scienceInlineLabel, { color: accentColor }])}>THE SCIENCE</Text>
-                    <Text style={styles.scienceInlineText}>{workout.why}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                      <Text style={styles.workoutVibe}>{workout.vibe}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </>
+            )}
           </View>
         )}
 
@@ -339,6 +375,47 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 24,
     paddingBottom: 48,
+  },
+  heroRxLabel: {
+    ...t.label,
+    letterSpacing: 4,
+    fontSize: 10,
+    marginBottom: 10,
+    marginTop: 4,
+  },
+  heroCard: {
+    backgroundColor: '#0d0d0d',
+  },
+  startButton: {
+    borderWidth: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  startButtonText: {
+    ...t.label,
+    letterSpacing: 3,
+    fontSize: 11,
+  },
+  alternativesToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    marginBottom: 4,
+  },
+  alternativesLabel: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 3,
+    fontSize: 10,
+  },
+  alternativesArrow: {
+    ...t.label,
+    color: '#525252',
+    fontSize: 14,
   },
   workoutCard: {
     backgroundColor: '#111111',

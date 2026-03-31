@@ -7,6 +7,27 @@ integrations = ["revenuecat:1.0.0"]
 channel = "stable-25_05"
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc --noEmit 2>&1 | head -20 || true; echo 'MoodRx — React Native/Expo project'; echo 'Use EAS (GitHub Actions) to build for Android/iOS'; echo 'Repo: github.com/soul2fade/moodrx'"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [[ports]]
 localPort = 5000

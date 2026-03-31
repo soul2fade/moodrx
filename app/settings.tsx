@@ -331,22 +331,13 @@ export default function SettingsScreen() {
           MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
         </Text>
         <TouchableOpacity
-          onPress={() => Linking.openURL('https://courageous-gingersnap-6f23d7.netlify.app/privacy')}
+          onPress={() => Linking.openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
           activeOpacity={0.7}
           style={styles.legalLink}
           accessibilityRole="link"
           accessibilityLabel="Privacy Policy"
         >
           <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => Linking.openURL('https://courageous-gingersnap-6f23d7.netlify.app/terms')}
-          activeOpacity={0.7}
-          style={styles.legalLink}
-          accessibilityRole="link"
-          accessibilityLabel="Terms of Service"
-        >
-          <Text style={styles.legalLinkText}>TERMS OF SERVICE</Text>
         </TouchableOpacity>
 
         <View style={{ height: 48 }} />

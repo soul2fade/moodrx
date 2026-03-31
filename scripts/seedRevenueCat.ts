@@ -24,6 +24,7 @@ import {
   type Offering,
   type Package,
   type CreateProductData,
+  type Duration,
 } from '@replit/revenuecat-sdk';
 
 const PROJECT_NAME = 'MoodRx';
@@ -55,18 +56,21 @@ const MONTHLY_PACKAGE_DISPLAY_NAME = 'Monthly';
 const YEARLY_PACKAGE_IDENTIFIER = '$rc_annual';
 const YEARLY_PACKAGE_DISPLAY_NAME = 'Yearly';
 
-const MONTHLY_PRICES = [
-  { amount_micros: 6990000, currency: 'USD' },
-];
+const MONTHLY_PRICES = [{ amount_micros: 6990000, currency: 'USD' }];
+const YEARLY_PRICES = [{ amount_micros: 49990000, currency: 'USD' }];
 
-const YEARLY_PRICES = [
-  { amount_micros: 49990000, currency: 'USD' },
-];
-
-type TestStorePricesResponse = {
+interface TestStorePricesResponse {
   object: string;
   prices: { amount_micros: number; currency: string }[];
-};
+}
+
+function hasType(err: unknown): err is { type: string } {
+  return typeof err === 'object' && err !== null && 'type' in err && typeof (err as { type: unknown }).type === 'string';
+}
+
+function hasMessage(err: unknown): err is { message: string } {
+  return typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message: unknown }).message === 'string';
+}
 
 async function seedRevenueCat() {
   const client = await getUncachableRevenueCatClient();
@@ -107,7 +111,7 @@ async function seedRevenueCat() {
   let appStoreApp: App | undefined = apps.items.find((a) => a.type === 'app_store');
   let playStoreApp: App | undefined = apps.items.find((a) => a.type === 'play_store');
 
-  if (!testStoreApp) throw new Error('No test store app found — RevenueCat should create one automatically');
+  if (!testStoreApp) throw new Error('No test store app found');
   console.log('Test store app found:', testStoreApp.id);
 
   if (!appStoreApp) {
@@ -150,7 +154,7 @@ async function seedRevenueCat() {
     storeId: string,
     displayName: string,
     title: string,
-    duration: string,
+    duration: Duration,
     isTestStore: boolean
   ): Promise<Product> => {
     const existing = existingProducts.items?.find(
@@ -180,25 +184,23 @@ async function seedRevenueCat() {
     return created;
   };
 
-  // Monthly products
   const testMonthly = await ensureProduct(testStoreApp, 'Test/Monthly', MONTHLY_IDENTIFIER, MONTHLY_DISPLAY_NAME, MONTHLY_TITLE, 'P1M', true);
   const iosMonthly = await ensureProduct(appStoreApp, 'iOS/Monthly', MONTHLY_IDENTIFIER, MONTHLY_DISPLAY_NAME, MONTHLY_TITLE, 'P1M', false);
   const androidMonthly = await ensureProduct(playStoreApp, 'Android/Monthly', MONTHLY_PLAY_IDENTIFIER, MONTHLY_DISPLAY_NAME, MONTHLY_TITLE, 'P1M', false);
 
-  // Yearly products
   const testYearly = await ensureProduct(testStoreApp, 'Test/Yearly', YEARLY_IDENTIFIER, YEARLY_DISPLAY_NAME, YEARLY_TITLE, 'P1Y', true);
   const iosYearly = await ensureProduct(appStoreApp, 'iOS/Yearly', YEARLY_IDENTIFIER, YEARLY_DISPLAY_NAME, YEARLY_TITLE, 'P1Y', false);
   const androidYearly = await ensureProduct(playStoreApp, 'Android/Yearly', YEARLY_PLAY_IDENTIFIER, YEARLY_DISPLAY_NAME, YEARLY_TITLE, 'P1Y', false);
 
   // ----- Test store prices -----
   const addPrices = async (productId: string, prices: typeof MONTHLY_PRICES, label: string) => {
-    const { data: priceData, error: priceError } = await client.post<TestStorePricesResponse>({
+    const { error: priceError } = await client.post<TestStorePricesResponse>({
       url: '/projects/{project_id}/products/{product_id}/test_store_prices',
       path: { project_id: project.id, product_id: productId },
       body: { prices },
     });
     if (priceError) {
-      if (typeof priceError === 'object' && 'type' in priceError && (priceError as any).type === 'resource_already_exists') {
+      if (hasType(priceError) && priceError.type === 'resource_already_exists') {
         console.log(label + ' test store prices already exist');
       } else {
         console.warn(label + ' price error (non-fatal):', JSON.stringify(priceError));
@@ -243,7 +245,7 @@ async function seedRevenueCat() {
     },
   });
   if (attachEntErr) {
-    if ((attachEntErr as any).type === 'unprocessable_entity_error') {
+    if (hasType(attachEntErr) && attachEntErr.type === 'unprocessable_entity_error') {
       console.log('Products already attached to entitlement');
     } else {
       throw new Error('Failed to attach products to entitlement: ' + JSON.stringify(attachEntErr));
@@ -313,51 +315,33 @@ async function seedRevenueCat() {
   const monthlyPkg = await ensurePackage(MONTHLY_PACKAGE_IDENTIFIER, MONTHLY_PACKAGE_DISPLAY_NAME);
   const yearlyPkg = await ensurePackage(YEARLY_PACKAGE_IDENTIFIER, YEARLY_PACKAGE_DISPLAY_NAME);
 
-  // Attach products to monthly package
-  const { error: attachMonthlyErr } = await attachProductsToPackage({
-    client,
-    path: { project_id: project.id, package_id: monthlyPkg.id },
-    body: {
-      products: [
-        { product_id: testMonthly.id, eligibility_criteria: 'all' },
-        { product_id: iosMonthly.id, eligibility_criteria: 'all' },
-        { product_id: androidMonthly.id, eligibility_criteria: 'all' },
-      ],
-    },
-  });
-  if (attachMonthlyErr) {
-    if ((attachMonthlyErr as any).type === 'unprocessable_entity_error') {
-      console.log('Monthly products already attached to package');
+  const attachToPackage = async (pkgId: string, products: Product[], label: string) => {
+    const { error } = await attachProductsToPackage({
+      client,
+      path: { project_id: project.id, package_id: pkgId },
+      body: {
+        products: products.map((p) => ({ product_id: p.id, eligibility_criteria: 'all' as const })),
+      },
+    });
+    if (error) {
+      if (hasType(error) && error.type === 'unprocessable_entity_error') {
+        if (hasMessage(error) && error.message.includes('Cannot attach product')) {
+          console.log('Skipping ' + label + ' package attach: incompatible product already attached');
+        } else {
+          console.log(label + ' products already attached to package');
+        }
+      } else {
+        throw new Error('Failed to attach ' + label + ' products to package: ' + JSON.stringify(error));
+      }
     } else {
-      throw new Error('Failed to attach monthly products to package: ' + JSON.stringify(attachMonthlyErr));
+      console.log('Attached ' + label + ' products to package');
     }
-  } else {
-    console.log('Attached monthly products to package');
-  }
+  };
 
-  // Attach products to yearly package
-  const { error: attachYearlyErr } = await attachProductsToPackage({
-    client,
-    path: { project_id: project.id, package_id: yearlyPkg.id },
-    body: {
-      products: [
-        { product_id: testYearly.id, eligibility_criteria: 'all' },
-        { product_id: iosYearly.id, eligibility_criteria: 'all' },
-        { product_id: androidYearly.id, eligibility_criteria: 'all' },
-      ],
-    },
-  });
-  if (attachYearlyErr) {
-    if ((attachYearlyErr as any).type === 'unprocessable_entity_error') {
-      console.log('Yearly products already attached to package');
-    } else {
-      throw new Error('Failed to attach yearly products to package: ' + JSON.stringify(attachYearlyErr));
-    }
-  } else {
-    console.log('Attached yearly products to package');
-  }
+  await attachToPackage(monthlyPkg.id, [testMonthly, iosMonthly, androidMonthly], 'monthly');
+  await attachToPackage(yearlyPkg.id, [testYearly, iosYearly, androidYearly], 'yearly');
 
-  // ----- Print API Keys -----
+  // ----- API Keys -----
   const { data: testKeys, error: testKeysErr } = await listAppPublicApiKeys({
     client,
     path: { project_id: project.id, app_id: testStoreApp.id },
@@ -389,7 +373,7 @@ async function seedRevenueCat() {
   console.log('====================\n');
 }
 
-seedRevenueCat().catch((err) => {
-  console.error('Seed failed:', err?.message ?? err);
+seedRevenueCat().catch((err: unknown) => {
+  console.error('Seed failed:', err instanceof Error ? err.message : String(err));
   process.exit(1);
 });

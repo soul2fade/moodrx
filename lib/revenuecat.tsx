@@ -2,24 +2,27 @@ import { Platform } from 'react-native';
 import Purchases from 'react-native-purchases';
 import Constants from 'expo-constants';
 
-const REVENUECAT_TEST_API_KEY = 'test_dLQldoOvEOufmPZoFoJRXfpqWQU';
-const REVENUECAT_IOS_API_KEY = 'appl_cVmaSBaUVAlgatSJqDmFjVXReRD';
-const REVENUECAT_ANDROID_API_KEY = 'goog_CcFgmogOBsOonqVQhWkBfyWWlKM';
-
 export const REVENUECAT_ENTITLEMENT_IDENTIFIER = 'premium';
 
 function getRevenueCatApiKey(): string {
-  if (__DEV__ || Platform.OS === 'web' || Constants.executionEnvironment === 'storeClient') {
-    return REVENUECAT_TEST_API_KEY;
+  const testKey = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY ?? '';
+  const iosKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? '';
+  const androidKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ?? '';
+
+  if (!testKey || !iosKey || !androidKey) {
+    throw new Error('RevenueCat public API keys are not configured. Set EXPO_PUBLIC_REVENUECAT_*.');
   }
-  if (Platform.OS === 'ios') return REVENUECAT_IOS_API_KEY;
-  if (Platform.OS === 'android') return REVENUECAT_ANDROID_API_KEY;
-  return REVENUECAT_TEST_API_KEY;
+
+  if (__DEV__ || Platform.OS === 'web' || Constants.executionEnvironment === 'storeClient') {
+    return testKey;
+  }
+  if (Platform.OS === 'ios') return iosKey;
+  if (Platform.OS === 'android') return androidKey;
+  return testKey;
 }
 
 export function initializeRevenueCat() {
   const apiKey = getRevenueCatApiKey();
-  if (!apiKey) throw new Error('RevenueCat API key not found');
   Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
   Purchases.configure({ apiKey });
   console.log('RevenueCat configured');

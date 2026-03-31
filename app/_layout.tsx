@@ -25,8 +25,8 @@ initCatDoesWatch();
 
 try {
   initializeRevenueCat();
-} catch (err: any) {
-  Alert.alert("RevenueCat Unavailable", err?.message ?? "Unknown error");
+} catch (err: unknown) {
+  Alert.alert("RevenueCat Unavailable", err instanceof Error ? err.message : "Unknown error");
 }
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.

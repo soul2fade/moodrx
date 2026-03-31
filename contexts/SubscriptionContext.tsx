@@ -25,6 +25,15 @@ import {
   getTrialInfo,
 } from '@/lib/subscription';
 
+interface RCPurchaseError {
+  userCancelled?: boolean | null;
+  message?: string;
+}
+
+function isRCPurchaseError(err: unknown): err is RCPurchaseError {
+  return typeof err === 'object' && err !== null;
+}
+
 interface SubscriptionContextValue {
   isPremium: boolean;
   isInTrial: boolean;
@@ -94,8 +103,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
           setIsPaidPremium(hasEntitlement);
           setOfferings(rcOfferings);
         }
-      } catch (err) {
-        console.warn('SubscriptionContext init error:', err);
+      } catch (err: unknown) {
+        console.warn('SubscriptionContext init error:', isRCPurchaseError(err) ? err.message : String(err));
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -119,17 +128,17 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const hasEntitlement =
         customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
       setIsPaidPremium(hasEntitlement);
-    } catch (err: any) {
-      if (!err?.userCancelled) {
-        Alert.alert('Purchase failed', err?.message ?? 'Something went wrong. Please try again.');
-      }
+    } catch (err: unknown) {
+      if (isRCPurchaseError(err) && err.userCancelled) return;
+      const msg = isRCPurchaseError(err) ? (err.message ?? 'Something went wrong.') : 'Something went wrong.';
+      Alert.alert('Purchase failed', msg);
     }
   }, []);
 
   const triggerPurchase = useCallback(
     async (packageId: string) => {
       const pkg = offerings?.current?.availablePackages?.find(
-        (p) => p.packageType === packageId || p.identifier === packageId
+        (p) => p.identifier === packageId
       );
 
       if (!pkg) {
@@ -166,8 +175,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       } else {
         Alert.alert('No purchases found', 'No previous Pro subscription was found.');
       }
-    } catch (err: any) {
-      Alert.alert('Restore failed', err?.message ?? 'Could not connect to the store. Please try again.');
+    } catch (err: unknown) {
+      const msg = isRCPurchaseError(err) ? (err.message ?? 'Could not connect to the store. Please try again.') : 'Could not connect to the store. Please try again.';
+      Alert.alert('Restore failed', msg);
     }
   }, []);
 

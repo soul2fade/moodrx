@@ -1,14 +1,25 @@
 import { createClient } from '@replit/revenuecat-sdk/client';
 
-let connectionSettings: any;
+interface ConnectionSettings {
+  settings: {
+    expires_at?: string;
+    access_token?: string;
+    oauth?: {
+      credentials?: {
+        access_token?: string;
+      };
+    };
+  };
+}
 
-async function getApiKey() {
+let connectionSettings: ConnectionSettings | undefined;
+
+async function getApiKey(): Promise<string> {
   if (
-    connectionSettings &&
-    connectionSettings.settings.expires_at &&
+    connectionSettings?.settings?.expires_at &&
     new Date(connectionSettings.settings.expires_at).getTime() > Date.now()
   ) {
-    return connectionSettings.settings.access_token;
+    return connectionSettings.settings.access_token ?? '';
   }
 
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
@@ -22,17 +33,18 @@ async function getApiKey() {
     throw new Error('X-Replit-Token not found for repl/depl');
   }
 
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=revenuecat',
+  const response = await fetch(
+    `https://${hostname}/api/v2/connection?include_secrets=true&connector_names=revenuecat`,
     {
       headers: {
         Accept: 'application/json',
         'X-Replit-Token': xReplitToken,
       },
     }
-  )
-    .then((res) => res.json())
-    .then((data) => data.items?.[0]);
+  );
+
+  const json = await response.json() as { items?: ConnectionSettings[] };
+  connectionSettings = json.items?.[0];
 
   const accessToken =
     connectionSettings?.settings?.access_token ||

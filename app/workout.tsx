@@ -270,6 +270,7 @@ export default function WorkoutScreen() {
         <WorkoutCoach
           mood={mood}
           step={Math.min(3, Math.floor((currentStep / Math.max(totalSteps, 1)) * 4))}
+          phraseKey={currentStep}
           figureSize={140}
         />
 

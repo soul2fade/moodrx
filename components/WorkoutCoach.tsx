@@ -366,6 +366,7 @@ interface WorkoutCoachProps {
   mood?: MoodKey;
   coachOverride?: CoachId;
   step?: number;           // controlled step — hides prev/next when provided
+  phraseKey?: number;      // pass currentStep to refresh quote on every screen
   onComplete?: () => void;
   autoPlay?: boolean;
   stepDuration?: number;
@@ -377,6 +378,7 @@ export default function WorkoutCoach({
   mood = 'anxious',
   coachOverride,
   step: controlledStep,
+  phraseKey,
   onComplete,
   autoPlay = false,
   stepDuration = 2800,
@@ -393,7 +395,9 @@ export default function WorkoutCoach({
 
   useEffect(() => {
     setPhrase(getPhrase(selectedCoach, step));
-  }, [step, selectedCoach]);
+  // phraseKey triggers a fresh random pick from the same bank on every workout step
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, selectedCoach, phraseKey]);
 
   useEffect(() => {
     const newCoach = (coachOverride || MOOD_COACH_MAP[mood] || 'ron') as CoachId;
@@ -450,13 +454,6 @@ export default function WorkoutCoach({
         <Text style={styles.phraseText}>{`\u201C${phrase}\u201D`}</Text>
       </View>
       <Text style={[styles.coachName, { color: activeCoach.color }]}>{`\u2014 ${activeCoach.name.toLowerCase()}`}</Text>
-
-      <View style={styles.dotRow}>
-        {STEPS.map((st, i) => (
-          <View key={st.key} style={[styles.dot, i === step && { backgroundColor: activeCoach.color }]} />
-        ))}
-      </View>
-      <Text style={styles.stepLabel}>{`${STEPS[step].label.toLowerCase()}`}</Text>
 
       {!isControlled && !autoPlay && (
         <View style={styles.controls}>

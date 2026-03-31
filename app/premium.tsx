@@ -30,6 +30,7 @@ export default function PremiumScreen() {
     isInTrial,
     trialDaysLeft,
     hasUsedTrial,
+    offerings,
   } = useSubscription();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -52,6 +53,17 @@ export default function PremiumScreen() {
 
   const trialExpired = hasUsedTrial && !isInTrial && !isPremium;
 
+  const currentOffering = offerings?.current;
+  const monthlyPkg = currentOffering?.availablePackages?.find(
+    (p) => p.identifier === '$rc_monthly'
+  );
+  const yearlyPkg = currentOffering?.availablePackages?.find(
+    (p) => p.identifier === '$rc_annual'
+  );
+
+  const monthlyPrice = monthlyPkg?.product?.priceString ?? '$6.99';
+  const yearlyPrice = yearlyPkg?.product?.priceString ?? '$49.99';
+
   return (
     <Animated.View style={{ flex: 1, backgroundColor: '#0a0a0a', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -71,7 +83,6 @@ export default function PremiumScreen() {
 
         <Text style={styles.subtext}>Your brain deserves the upgrade.</Text>
 
-        {/* Status badge */}
         {isPremium && !isInTrial && (
           <View style={styles.statusBadge}>
             <Text style={styles.statusBadgeText}>YOU HAVE PRO</Text>
@@ -92,7 +103,6 @@ export default function PremiumScreen() {
           </View>
         )}
 
-        {/* Social proof */}
         <View style={styles.socialProofBox}>
           <Text style={styles.socialProofStat}>−2.8 pts</Text>
           <Text style={styles.socialProofLabel}>AVERAGE IMPROVEMENT PER SESSION</Text>
@@ -101,7 +111,6 @@ export default function PremiumScreen() {
           </Text>
         </View>
 
-        {/* Feature list */}
         <View style={styles.featureList}>
           {FEATURES.map((f) => (
             <View key={f} style={styles.featureRow}>
@@ -113,7 +122,6 @@ export default function PremiumScreen() {
 
         <View style={styles.divider} />
 
-        {/* Pricing — only if not paid */}
         {!isPremium || isInTrial ? (
           <>
             <Text style={styles.pricingLabel}>CHOOSE YOUR PLAN</Text>
@@ -123,15 +131,15 @@ export default function PremiumScreen() {
               onPress={purchaseYearly}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Yearly plan, $49.99 per year, save 40%"
+              accessibilityLabel={`Yearly plan, ${yearlyPrice} per year, save 40%`}
             >
               <View style={styles.bestValueBadge}>
                 <Text style={styles.bestValueText}>BEST VALUE</Text>
               </View>
               <Text style={styles.yearlyPrice}>
-                $49.99 <Text style={styles.yearlyPer}>/ year</Text>
+                {yearlyPrice} <Text style={styles.yearlyPer}>/ year</Text>
               </Text>
-              <Text style={styles.yearlySub}>save 40% — $4.17/month</Text>
+              <Text style={styles.yearlySub}>save 40% — ~$4.17/month</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -139,10 +147,10 @@ export default function PremiumScreen() {
               onPress={purchaseMonthly}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="Monthly plan, $6.99 per month"
+              accessibilityLabel={`Monthly plan, ${monthlyPrice} per month`}
             >
               <Text style={styles.monthlyPrice}>
-                $6.99 <Text style={styles.monthlyPer}>/ month</Text>
+                {monthlyPrice} <Text style={styles.monthlyPer}>/ month</Text>
               </Text>
             </TouchableOpacity>
 

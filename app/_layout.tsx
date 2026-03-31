@@ -9,17 +9,25 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
+import { Alert } from "react-native";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GluestackInitializer from "@/components/GluestackInitializer";
 import useColorScheme from "@/hooks/useColorScheme";
 import { Stack } from "expo-router";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { initializeRevenueCat } from "@/lib/revenuecat";
 
 // Initialize CatDoes Watch for error tracking
 // Set EXPO_PUBLIC_CATDOES_WATCH_KEY in your environment to enable
 import { initCatDoesWatch } from "@/catdoes.watch";
 initCatDoesWatch();
+
+try {
+  initializeRevenueCat();
+} catch (err: any) {
+  Alert.alert("RevenueCat Unavailable", err?.message ?? "Unknown error");
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

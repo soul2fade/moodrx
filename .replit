@@ -53,3 +53,14 @@ publicDir = "dist"
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 60000
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_REVENUECAT_TEST_API_KEY = "test_dLQldoOvEOufmPZoFoJRXfpqWQU"
+EXPO_PUBLIC_REVENUECAT_IOS_API_KEY = "appl_cVmaSBaUVAlgatSJqDmFjVXReRD"
+EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY = "goog_CcFgmogOBsOonqVQhWkBfyWWlKM"
+REVENUECAT_PROJECT_ID = "projead2b038"
+REVENUECAT_TEST_STORE_APP_ID = "appcf1de2875e"
+REVENUECAT_APPLE_APP_STORE_APP_ID = "appa97ed33ec8"
+REVENUECAT_GOOGLE_PLAY_STORE_APP_ID = "appb072c40d0f"

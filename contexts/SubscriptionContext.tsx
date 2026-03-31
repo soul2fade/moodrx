@@ -1,21 +1,29 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Alert } from 'react-native';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from 'react';
 import {
-  getPremiumStatus,
-  setPremiumStatus,
-  PRODUCT_IDS,
+  Alert,
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+} from 'react-native';
+import Purchases, {
+  type PurchasesOfferings,
+  type PurchasesPackage,
+} from 'react-native-purchases';
+import { REVENUECAT_ENTITLEMENT_IDENTIFIER } from '@/lib/revenuecat';
+import {
   startTrial as startTrialStorage,
   getTrialInfo,
 } from '@/lib/subscription';
-
-function getIAP() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require('expo-in-app-purchases') as typeof import('expo-in-app-purchases');
-  } catch {
-    return null;
-  }
-}
 
 interface SubscriptionContextValue {
   isPremium: boolean;
@@ -23,6 +31,7 @@ interface SubscriptionContextValue {
   trialDaysLeft: number;
   hasUsedTrial: boolean;
   isLoading: boolean;
+  offerings: PurchasesOfferings | null;
   startTrial: () => Promise<void>;
   purchaseMonthly: () => Promise<void>;
   purchaseYearly: () => Promise<void>;
@@ -35,6 +44,7 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
   trialDaysLeft: 0,
   hasUsedTrial: false,
   isLoading: true,
+  offerings: null,
   startTrial: async () => {},
   purchaseMonthly: async () => {},
   purchaseYearly: async () => {},
@@ -47,6 +57,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const [trialDaysLeft, setTrialDaysLeft] = useState(0);
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
+
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const pendingPurchaseRef = useRef<PurchasesPackage | null>(null);
 
   const isPremium = isPaidPremium || isInTrial;
 
@@ -59,44 +73,29 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     let mounted = true;
-    let connected = false;
 
     async function init() {
       try {
-        const [cached, trialInfo] = await Promise.all([
-          getPremiumStatus(),
-          getTrialInfo(),
-        ]);
+        const trialInfo = await getTrialInfo();
         if (mounted) {
-          setIsPaidPremium(cached);
           setIsInTrial(trialInfo.isInTrial);
           setTrialDaysLeft(trialInfo.daysLeft);
           setHasUsedTrial(trialInfo.hasUsedTrial);
         }
 
-        const IAP = getIAP();
-        if (!IAP) return;
+        const [customerInfo, rcOfferings] = await Promise.all([
+          Purchases.getCustomerInfo(),
+          Purchases.getOfferings(),
+        ]);
 
-        await IAP.connectAsync();
-        connected = true;
-
-        IAP.setPurchaseListener(({ responseCode, results }: {
-          responseCode: number;
-          results?: Array<{ acknowledged: boolean }>;
-          errorCode?: number;
-        }) => {
-          if (responseCode === IAP.IAPResponseCode.OK && results) {
-            for (const purchase of results) {
-              if (!purchase.acknowledged) {
-                IAP.finishTransactionAsync(purchase as never, true);
-              }
-            }
-            setPremiumStatus(true);
-            if (mounted) setIsPaidPremium(true);
-          }
-        });
-      } catch {
-        // Silently fall back to cached status
+        if (mounted) {
+          const hasEntitlement =
+            customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
+          setIsPaidPremium(hasEntitlement);
+          setOfferings(rcOfferings);
+        }
+      } catch (err) {
+        console.warn('SubscriptionContext init error:', err);
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -106,10 +105,6 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     return () => {
       mounted = false;
-      if (connected) {
-        const IAP = getIAP();
-        IAP?.disconnectAsync().catch(() => {});
-      }
     };
   }, []);
 
@@ -118,75 +113,123 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     await loadTrialInfo();
   }, [loadTrialInfo]);
 
-  const purchaseMonthly = useCallback(async () => {
+  const executePurchase = useCallback(async (pkg: PurchasesPackage) => {
     try {
-      const IAP = getIAP();
-      if (!IAP) {
-        const newVal = !isPaidPremium;
-        await setPremiumStatus(newVal);
-        setIsPaidPremium(newVal);
+      const { customerInfo } = await Purchases.purchasePackage(pkg);
+      const hasEntitlement =
+        customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
+      setIsPaidPremium(hasEntitlement);
+    } catch (err: any) {
+      if (!err?.userCancelled) {
+        Alert.alert('Purchase failed', err?.message ?? 'Something went wrong. Please try again.');
+      }
+    }
+  }, []);
+
+  const triggerPurchase = useCallback(
+    async (packageId: string) => {
+      const pkg = offerings?.current?.availablePackages?.find(
+        (p) => p.packageType === packageId || p.identifier === packageId
+      );
+
+      if (!pkg) {
+        Alert.alert('Unavailable', 'This plan is not available right now. Please try again later.');
         return;
       }
-      await IAP.purchaseItemAsync(PRODUCT_IDS.monthly);
-    } catch {
-      // handled by listener
-    }
-  }, [isPaidPremium]);
+
+      if (__DEV__ || Platform.OS === 'web') {
+        pendingPurchaseRef.current = pkg;
+        setConfirmVisible(true);
+      } else {
+        await executePurchase(pkg);
+      }
+    },
+    [offerings, executePurchase]
+  );
+
+  const purchaseMonthly = useCallback(async () => {
+    await triggerPurchase('$rc_monthly');
+  }, [triggerPurchase]);
 
   const purchaseYearly = useCallback(async () => {
-    try {
-      const IAP = getIAP();
-      if (!IAP) {
-        const newVal = !isPaidPremium;
-        await setPremiumStatus(newVal);
-        setIsPaidPremium(newVal);
-        return;
-      }
-      await IAP.purchaseItemAsync(PRODUCT_IDS.yearly);
-    } catch {
-      // handled by listener
-    }
-  }, [isPaidPremium]);
+    await triggerPurchase('$rc_annual');
+  }, [triggerPurchase]);
 
   const restorePurchases = useCallback(async () => {
     try {
-      const IAP = getIAP();
-      if (!IAP) {
-        const cached = await getPremiumStatus();
-        if (cached) {
-          setIsPaidPremium(true);
-          Alert.alert('Restored', 'Your Pro subscription has been restored.');
-        } else {
-          Alert.alert('No purchases found', 'No previous Pro subscription was found.');
-        }
-        return;
-      }
-      const { responseCode, results } = await IAP.getPurchaseHistoryAsync();
-      if (responseCode === IAP.IAPResponseCode.OK && results && results.length > 0) {
-        await setPremiumStatus(true);
-        setIsPaidPremium(true);
+      const customerInfo = await Purchases.restorePurchases();
+      const hasEntitlement =
+        customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
+      setIsPaidPremium(hasEntitlement);
+      if (hasEntitlement) {
         Alert.alert('Restored', 'Your Pro subscription has been restored.');
       } else {
         Alert.alert('No purchases found', 'No previous Pro subscription was found.');
       }
-    } catch {
-      Alert.alert('Restore failed', 'Could not connect to the store. Please try again.');
+    } catch (err: any) {
+      Alert.alert('Restore failed', err?.message ?? 'Could not connect to the store. Please try again.');
     }
   }, []);
 
+  const handleConfirmPurchase = useCallback(async () => {
+    const pkg = pendingPurchaseRef.current;
+    setConfirmVisible(false);
+    pendingPurchaseRef.current = null;
+    if (pkg) await executePurchase(pkg);
+  }, [executePurchase]);
+
+  const handleCancelPurchase = useCallback(() => {
+    setConfirmVisible(false);
+    pendingPurchaseRef.current = null;
+  }, []);
+
   return (
-    <SubscriptionContext.Provider value={{
-      isPremium,
-      isInTrial,
-      trialDaysLeft,
-      hasUsedTrial,
-      isLoading,
-      startTrial,
-      purchaseMonthly,
-      purchaseYearly,
-      restorePurchases,
-    }}>
+    <SubscriptionContext.Provider
+      value={{
+        isPremium,
+        isInTrial,
+        trialDaysLeft,
+        hasUsedTrial,
+        isLoading,
+        offerings,
+        startTrial,
+        purchaseMonthly,
+        purchaseYearly,
+        restorePurchases,
+      }}
+    >
       {children}
+      <Modal
+        visible={confirmVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelPurchase}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.dialog}>
+            <Text style={styles.dialogTitle}>TEST PURCHASE</Text>
+            <Text style={styles.dialogBody}>
+              You are in development mode. This will complete a mock purchase in the RevenueCat test store.
+            </Text>
+            <View style={styles.dialogActions}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={handleCancelPurchase}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cancelBtnText}>CANCEL</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmBtn}
+                onPress={handleConfirmPurchase}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.confirmBtnText}>CONFIRM</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SubscriptionContext.Provider>
   );
 }
@@ -194,3 +237,67 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 export function useSubscription() {
   return useContext(SubscriptionContext);
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  dialog: {
+    backgroundColor: '#111111',
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 24,
+    width: '100%',
+  },
+  dialogTitle: {
+    color: '#E8B84B',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 3,
+    marginBottom: 12,
+    fontFamily: 'SpaceGrotesk_700Bold',
+  },
+  dialogBody: {
+    color: '#c8c8c8',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 24,
+    fontFamily: 'SpaceGrotesk_400Regular',
+  },
+  dialogActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    color: '#737373',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    fontFamily: 'SpaceGrotesk_700Bold',
+  },
+  confirmBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#E8B84B',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  confirmBtnText: {
+    color: '#E8B84B',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    fontFamily: 'SpaceGrotesk_700Bold',
+  },
+});

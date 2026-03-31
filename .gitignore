@@ -5,6 +5,8 @@ node_modules/
 artifacts/
 .local/
 attached_assets/
+.canvas/
+.agents/
 temp-package/
 fix-package/
 fix-package-json-prefix.js

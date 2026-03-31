@@ -47,4 +47,4 @@ echo ""
 
 # Start Expo with the tunnel hostname injected
 export REACT_NATIVE_PACKAGER_HOSTNAME="$TUNNEL_HOST"
-exec npx expo start --port "$PORT"
+exec npx expo start --port "$PORT" --clear

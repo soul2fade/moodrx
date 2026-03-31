@@ -474,9 +474,9 @@ const styles = StyleSheet.create({
   workoutVibe: {
     ...t.soft,
     color: '#c8c8c8',
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 0.5,
-    marginTop: 4,
+    marginTop: 6,
   },
   scienceInline: {
     borderTopWidth: 1,
@@ -487,14 +487,14 @@ const styles = StyleSheet.create({
   scienceInlineLabel: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '700',
   },
   scienceInlineText: {
     ...t.bodyMuted,
-    fontSize: 13,
-    marginTop: 6,
-    lineHeight: 20,
+    fontSize: 16,
+    marginTop: 8,
+    lineHeight: 24,
   },
   stackTitle: {
     ...t.headlineSm,

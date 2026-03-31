@@ -19,6 +19,15 @@ import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
+function parseStepDuration(stepText: string): number | null {
+  const match = stepText.match(/(\d+)\s*sec(?:onds?)?/i);
+  if (match) {
+    const secs = parseInt(match[1], 10);
+    if (secs > 0 && secs <= 300) return secs;
+  }
+  return null;
+}
+
 const MOTIVATIONAL = [
   "Let's go.",
   "You showed up. Most didn't.",
@@ -308,21 +317,25 @@ export default function WorkoutScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            /* Pick a duration */
+            /* Pick a duration — smart: show only the step's duration if it has one */
             <View style={styles.timerButtons}>
               <Text style={styles.timerPrompt}>SELECT TIME TO CONTINUE</Text>
-              {[30, 60, 90].map((sec) => (
-                <TouchableOpacity
-                  key={sec}
-                  onPress={() => selectTimer(sec)}
-                  activeOpacity={0.7}
-                  style={styles.timerButton}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Start ${sec} second timer`}
-                >
-                  <Text style={styles.timerButtonText}>{sec}S</Text>
-                </TouchableOpacity>
-              ))}
+              {(() => {
+                const stepDuration = parseStepDuration(resolvedWorkout.steps[currentStep]);
+                const durations = stepDuration ? [stepDuration] : [30, 60, 90];
+                return durations.map((sec) => (
+                  <TouchableOpacity
+                    key={sec}
+                    onPress={() => selectTimer(sec)}
+                    activeOpacity={0.7}
+                    style={[styles.timerButton, stepDuration ? styles.timerButtonSingle : null]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Start ${sec} second timer`}
+                  >
+                    <Text style={styles.timerButtonText}>{sec}S</Text>
+                  </TouchableOpacity>
+                ));
+              })()}
               <TouchableOpacity
                 onPress={() => setTimerReady(true)}
                 activeOpacity={0.7}
@@ -350,22 +363,35 @@ export default function WorkoutScreen() {
         </TouchableOpacity>
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           {(() => {
-            const canNext = timerReady && timerSeconds === null && countdown === null;
+            const timerActive = timerSeconds !== null || countdown !== null;
+            const canNext = timerReady && !timerActive;
+            const canSkip = !timerReady && !timerActive;
+            const handleSkip = () => {
+              setTimerReady(true);
+              handleNext();
+            };
+            if (timerActive) {
+              return (
+                <View style={flattenStyle([styles.nextBtn, { borderColor: '#2a2a2a' }])}>
+                  <Text style={{ ...t.timer, color: '#3a3a3a' }}>NEXT →</Text>
+                </View>
+              );
+            }
             return (
               <TouchableOpacity
-                onPress={canNext ? handleNext : undefined}
-                onPressIn={canNext ? onPressIn : undefined}
-                onPressOut={canNext ? onPressOut : undefined}
-                activeOpacity={canNext ? 0.7 : 1}
+                onPress={canSkip ? handleSkip : handleNext}
+                onPressIn={onPressIn}
+                onPressOut={onPressOut}
+                activeOpacity={0.7}
                 style={flattenStyle([
                   styles.nextBtn,
-                  { borderColor: canNext ? accentColor : '#2a2a2a' },
+                  { borderColor: canNext ? accentColor : '#555555' },
                 ])}
                 accessibilityRole="button"
-                accessibilityLabel={isLastStep ? 'Complete workout' : 'Next step'}
+                accessibilityLabel={canSkip ? 'Skip this step' : isLastStep ? 'Complete workout' : 'Next step'}
               >
-                <Text style={{ ...t.timer, color: canNext ? accentColor : '#3a3a3a' }}>
-                  {isLastStep ? 'DONE. LEGEND. →' : 'NEXT →'}
+                <Text style={{ ...t.timer, color: canNext ? accentColor : '#888888' }}>
+                  {canSkip ? 'SKIP →' : isLastStep ? 'DONE. LEGEND. →' : 'NEXT →'}
                 </Text>
               </TouchableOpacity>
             );
@@ -514,6 +540,12 @@ const styles = StyleSheet.create({
     borderColor: '#525252',
     paddingVertical: 8,
     alignItems: 'center',
+  },
+  timerButtonSingle: {
+    flex: 0,
+    minWidth: 100,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
   },
   timerButtonText: {
     ...t.timer,

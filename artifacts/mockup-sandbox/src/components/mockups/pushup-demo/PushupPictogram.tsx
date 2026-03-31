@@ -102,20 +102,22 @@ const EXERCISES: ExerciseDef[] = [
       rlkx:120, rlky:155, rlax:120, rlay:GND,
     },
   },
-  // 3. Push-up — straight plank body (sy == by at all times)
+  // 3. Push-up — body/legs are ONE collinear line at ~30° from ground
   {
     label: "Push-up", color: "#5EAAB5", cycle: 900,
-    poseA: { hx:50, hy:116, sx:72, sy:138, bx:148, by:138,  // body flat & straight
-      laex:70, laey:160, lahx:65, lahy:GND,                 // arm extended
-      raex:72, raey:158, rahx:67, rahy:GND,
-      llkx:158, llky:158, llax:166, llay:GND,               // legs in line with body
-      rlkx:160, rlky:158, rlax:168, rlay:GND,
+    // Line A: shoulder(58,112)→ankle(172,182), slope≈30°. Hip & knee on same line.
+    poseA: { hx:46, hy:99,  sx:58, sy:112, bx:121, by:151,  // torso on line
+      laex:56, laey:148, lahx:53, lahy:GND,  // arm nearly straight (up)
+      raex:58, raey:148, rahx:55, rahy:GND,
+      llkx:152, llky:169, llax:172, llay:GND, // knee & ankle on same line
+      rlkx:154, rlky:169, rlax:174, rlay:GND,
     },
-    poseB: { hx:50, hy:133, sx:72, sy:155, bx:148, by:155,  // body lower, still flat
-      laex:69, laey:167, lahx:65, lahy:GND,                 // arm bent
-      raex:71, raey:165, rahx:67, rahy:GND,
-      llkx:158, llky:167, llax:166, llay:GND,
-      rlkx:160, rlky:167, rlax:168, rlay:GND,
+    // Line B: shoulder(58,132)→ankle(172,182), shallower. Hip & knee on same line.
+    poseB: { hx:46, hy:119, sx:58, sy:132, bx:121, by:160,
+      laex:50, laey:158, lahx:53, lahy:GND,  // elbow bends outward (down)
+      raex:52, raey:157, rahx:55, rahy:GND,
+      llkx:152, llky:173, llax:172, llay:GND,
+      rlkx:154, rlky:173, rlax:174, rlay:GND,
     },
   },
   // 4. Lunge

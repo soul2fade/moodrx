@@ -268,22 +268,22 @@ const EXERCISES: ExerciseDef[] = [
       rlkx:82,  rlky:115, rlax:76,  rlay:138, // right knee HIGH
     },
   },
-  // 13. Running in Place — side profile, knee lifts visible, arm swings
+  // 13. Running in Place — side profile matching sprinting, upright torso
   {
     label: "Running in Place", color: "#D97706", cycle: 480,
-    // poseA: left knee high, right arm forward, right foot on ground
-    poseA: { hx:108, hy:28, sx:100, sy:62, bx:100, by:110, // more upright
-      laex:90,  laey:76, lahx:84,  lahy:92,   // left arm back
-      raex:110, raey:74, rahx:118, rahy:60,   // right arm forward
-      llkx:88,  llky:110, llax:82,  llay:132, // left knee HIGH, foot tucked
-      rlkx:106, rlky:146, rlax:108, rlay:GND, // right foot on ground
+    // poseA: left knee high, right arm forward
+    poseA: { hx:108, hy:26, sx:96, sy:60, bx:97, by:108, // head right, body offset like sprint
+      laex:82,  laey:72, lahx:76,  lahy:88,   // left arm back, elbow bent
+      raex:110, raey:72, rahx:118, rahy:57,   // right arm forward, elbow up
+      llkx:84,  llky:112, llax:78,  llay:136, // left knee HIGH, foot tucked
+      rlkx:108, rlky:148, rlax:112, rlay:GND, // right foot on ground
     },
     // poseB: right knee high, left arm forward
-    poseB: { hx:108, hy:28, sx:100, sy:62, bx:100, by:110,
-      laex:110, laey:74, lahx:118, lahy:60,   // left arm forward
-      raex:90,  raey:76, rahx:84,  rahy:92,   // right arm back
-      llkx:106, llky:146, llax:108, llay:GND, // left foot on ground
-      rlkx:88,  rlky:110, rlax:82,  rlay:132, // right knee HIGH
+    poseB: { hx:108, hy:26, sx:96, sy:60, bx:97, by:108,
+      laex:110, laey:72, lahx:118, lahy:57,   // left arm forward
+      raex:82,  raey:72, rahx:76,  rahy:88,   // right arm back
+      llkx:108, llky:148, llax:112, llay:GND, // left foot on ground
+      rlkx:84,  rlky:112, rlax:78,  rlay:136, // right knee HIGH
     },
   },
   // 14. Yoga (Warrior II)

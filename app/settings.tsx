@@ -380,6 +380,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1a1a1a',
   },
   subStatusLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  subStatusBadge: { alignSelf: 'flex-start' },
   trialDaysText: { ...t.bodySm, color: '#E8B84B', marginTop: 4 },
   expiredText: { ...t.bodySm, color: '#a3a3a3', marginTop: 4 },
   proBadge: {

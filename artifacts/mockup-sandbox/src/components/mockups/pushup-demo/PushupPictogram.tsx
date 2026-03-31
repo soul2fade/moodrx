@@ -116,11 +116,6 @@ function renderFrame(g: SVGGElement, t: number) {
 
   const elements: string[] = [];
 
-  // Shadow ellipse on ground (subtle)
-  elements.push(
-    `<ellipse cx="${(HAND_X + FOOT_X) / 2}" cy="${GROUND_Y + 6}" rx="80" ry="6" fill="#e8e8e8" />`
-  );
-
   // Ground line
   elements.push(
     `<line x1="30" y1="${GROUND_Y + SW / 2}" x2="270" y2="${GROUND_Y + SW / 2}" stroke="${COL}" stroke-width="${SW - 4}" stroke-linecap="square" />`

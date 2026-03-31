@@ -71,7 +71,7 @@ const PHRASES: Record<CoachId, string[][]> = {
     ["I am COMPLETE, I am WHOLE, I am MUSCULAR","*flexes* THE WORK PAYS OFF, DARLING","I have TRANSCENDED. I am GLOWING. I am RIPPED.","Clarity? Try DEFINITION, honey","HEAR ME ROAR, and LOOK AT THESE DELTOIDS"],
   ],
   ron: [
-    ["I'm in a glass case of emotion... and sweat","My body is like a fine leather-bound book being read in a hurricane","The pain is... actually quite poetic","I immediately regret this decision","This is NOT what the brochure promised"],
+    ["I'm in a glass case of emotion... and sweat","I'm in a glass case of emotion","My body is like a fine leather-bound book being read in a hurricane","The pain is... actually quite poetic","I immediately regret this decision","This is NOT what the brochure promised"],
     ["Stay classy, muscles","I'm having a moment of clarity about my biceps","Wait... am I kind of a big deal right now?","Something is happening and it is GOOD","My body just got a memo it did NOT expect"],
     ["I'm KIND of a big deal","People KNOW me. My body ESPECIALLY.","I have many leather-bound books about my own strength","I don't know how to put this but I'm pretty important","This feeling? It's called being MAGNIFICENT"],
     ["That escalated quickly... into enlightenment","I'm a man of substance AND definition","Milk was a bad choice but THIS was magnificent","You stay classy. I stay POWERFUL.","60% of the time I feel incredible EVERY time"],

@@ -1,5 +1,10 @@
 node_modules/
 .expo/
+
+# Replit-specific — never commit
+artifacts/
+.local/
+attached_assets/
 temp-package/
 fix-package/
 fix-package-json-prefix.js

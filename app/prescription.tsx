@@ -474,8 +474,8 @@ const styles = StyleSheet.create({
   workoutVibe: {
     ...t.soft,
     color: '#c8c8c8',
-    fontSize: 11,
-    letterSpacing: 1,
+    fontSize: 13,
+    letterSpacing: 0.5,
     marginTop: 4,
   },
   scienceInline: {

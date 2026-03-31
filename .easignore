@@ -14,7 +14,6 @@ artifacts/
 attached_assets/
 
 # Replit dev tooling
-start-tunnel.sh
 *.log
 /tmp/
 

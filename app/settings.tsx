@@ -339,6 +339,15 @@ export default function SettingsScreen() {
         >
           <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => Linking.openURL('https://soul2fade.github.io/moodrx/terms.html')}
+          activeOpacity={0.7}
+          style={styles.legalLink}
+          accessibilityRole="link"
+          accessibilityLabel="Terms of Service"
+        >
+          <Text style={styles.legalLinkText}>TERMS OF SERVICE</Text>
+        </TouchableOpacity>
 
         <View style={{ height: 48 }} />
       </ScrollView>

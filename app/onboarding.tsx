@@ -122,6 +122,10 @@ export default function OnboardingScreen() {
 
         <View style={styles.preCTALine} />
 
+        <Text style={styles.wellnessDisclaimer}>
+          MoodRx is a wellness tool, not a substitute for professional mental health care.
+        </Text>
+
         {!hasUsedTrial ? (
           <>
             <View style={styles.trialBanner}>
@@ -325,6 +329,17 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 40,
     marginBottom: 0,
+  },
+  wellnessDisclaimer: {
+    ...t.label,
+    color: '#555',
+    fontSize: 10,
+    letterSpacing: 0.5,
+    lineHeight: 15,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 4,
+    textTransform: 'none' as const,
   },
   trialBanner: {
     marginTop: 24,

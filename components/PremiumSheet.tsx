@@ -23,7 +23,14 @@ export function PremiumSheet({
   headline = 'Unlock all 18 workouts.',
   description = '3 science-backed options for every mood state. Plus supplement tracking, full insights, and the neuroscience behind every rep.',
 }: PremiumSheetProps) {
-  const { purchaseMonthly, purchaseYearly } = useSubscription();
+  const { purchaseMonthly, purchaseYearly, offerings } = useSubscription();
+
+  const currentOffering = offerings?.current;
+  const monthlyPkg = currentOffering?.availablePackages?.find((p) => p.identifier === '$rc_monthly');
+  const yearlyPkg = currentOffering?.availablePackages?.find((p) => p.identifier === '$rc_annual');
+
+  const monthlyPrice = monthlyPkg?.product?.priceString ?? '$6.99';
+  const yearlyPrice = yearlyPkg?.product?.priceString ?? '$49.99';
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -47,13 +54,13 @@ export function PremiumSheet({
           onPress={purchaseYearly}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Yearly plan, $49.99 per year"
+          accessibilityLabel={`Yearly plan, ${yearlyPrice} per year`}
         >
           <View style={styles.bestValue}>
             <Text style={styles.bestValueText}>BEST VALUE</Text>
           </View>
-          <Text style={styles.planPrice}>$49.99 / year</Text>
-          <Text style={styles.planSub}>save 40% — $4.17/mo</Text>
+          <Text style={styles.planPrice}>{yearlyPrice} / year</Text>
+          <Text style={styles.planSub}>save 40% — ~$4.17/mo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -61,9 +68,9 @@ export function PremiumSheet({
           onPress={purchaseMonthly}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Monthly plan, $6.99 per month"
+          accessibilityLabel={`Monthly plan, ${monthlyPrice} per month`}
         >
-          <Text style={styles.monthlyPrice}>$6.99 / month</Text>
+          <Text style={styles.monthlyPrice}>{monthlyPrice} / month</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Dismiss">

@@ -238,8 +238,17 @@ export default function InsightsScreen() {
           <Text style={styles.chartLabel}>LAST {last7.length} SESSIONS</Text>
           {!isLoading && last7.length === 0 ? (
             <View style={styles.emptyChart}>
-              <Text style={styles.noSessions}>No sessions yet.</Text>
-              <Text style={styles.noSessionsSub}>Complete a workout to see your data here.</Text>
+              <Text style={styles.noSessions}>No data yet.</Text>
+              <Text style={styles.noSessionsSub}>Your first session is the baseline. Let&apos;s get it.</Text>
+              <TouchableOpacity
+                style={styles.emptyStartButton}
+                onPress={() => router.replace('/home')}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Start your first session"
+              >
+                <Text style={styles.emptyStartText}>START YOUR FIRST SESSION →</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.chart}>
@@ -590,6 +599,19 @@ const styles = StyleSheet.create({
     marginTop: 6,
     letterSpacing: 1,
     textAlign: 'center',
+  },
+  emptyStartButton: {
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: '#059669',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+  },
+  emptyStartText: {
+    ...t.label,
+    color: '#059669',
+    letterSpacing: 3,
+    fontSize: 11,
   },
   chart: {
     flexDirection: 'row',

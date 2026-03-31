@@ -92,6 +92,15 @@ export default function PremiumScreen() {
           </View>
         )}
 
+        {/* Social proof */}
+        <View style={styles.socialProofBox}>
+          <Text style={styles.socialProofStat}>−2.8 pts</Text>
+          <Text style={styles.socialProofLabel}>AVERAGE IMPROVEMENT PER SESSION</Text>
+          <Text style={styles.socialProofSub}>
+            Based on before/after mood scores across all logged workouts.
+          </Text>
+        </View>
+
         {/* Feature list */}
         <View style={styles.featureList}>
           {FEATURES.map((f) => (
@@ -195,6 +204,37 @@ const styles = StyleSheet.create({
     borderColor: '#737373',
   },
   expiredBadgeText: { ...t.label, color: '#a3a3a3', letterSpacing: 2 },
+  socialProofBox: {
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    borderLeftWidth: 3,
+    borderLeftColor: '#059669',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#0d0d0d',
+  },
+  socialProofStat: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#059669',
+    fontFamily: 'SpaceMono-Regular',
+  },
+  socialProofLabel: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 2,
+    fontSize: 10,
+    marginTop: 4,
+  },
+  socialProofSub: {
+    ...t.label,
+    color: '#525252',
+    fontSize: 10,
+    letterSpacing: 1,
+    marginTop: 6,
+    lineHeight: 16,
+  },
   featureList: { marginTop: 24 },
   featureRow: {
     flexDirection: 'row',

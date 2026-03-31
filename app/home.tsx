@@ -51,6 +51,11 @@ export default function HomeScreen() {
 
   const lastSession = sessions.length > 0 ? sessions[sessions.length - 1] : null;
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
+  const daysSinceLastSession = useMemo(() => {
+    if (!lastSession) return null;
+    return Math.floor((Date.now() - lastSession.timestamp) / (24 * 60 * 60 * 1000));
+  }, [lastSession]);
+  const showWelcomeBack = !isLoading && !showStillFeeling && !selectedMood && lastSession !== null && daysSinceLastSession !== null && daysSinceLastSession >= 1;
   const { isPremium } = useSubscription();
 
   const showPanel = useCallback(() => {
@@ -108,7 +113,7 @@ export default function HomeScreen() {
                 {isLoading ? '—' : `${sessionCount} ${sessionCount === 1 ? 'SESSION' : 'SESSIONS'}`}
               </Text>
             </TouchableOpacity>
-            {streak >= 3 && (
+            {streak >= 1 && (
               <View style={styles.streakBadge} accessibilityLabel={`${streak} day streak`}>
                 <Text style={styles.streakBadgeText}>{streak}x</Text>
               </View>
@@ -141,10 +146,34 @@ export default function HomeScreen() {
 
         <Text style={styles.subtext}>Be honest. I&apos;m not here to judge. Much.</Text>
 
-        {streak >= 3 && (
+        {streak >= 1 && (
           <View style={styles.streakBox}>
-            <Text style={styles.streakBoxText}>You&apos;re on a roll. Don&apos;t blow it.</Text>
+            <Text style={styles.streakBoxText}>
+              {streak === 1
+                ? "Day one. Don\u2019t let it be the only one."
+                : streak === 2
+                ? "Two days straight. Something\u2019s clicking."
+                : "You\u2019re on a roll. Don\u2019t blow it."}
+            </Text>
           </View>
+        )}
+
+        {/* Welcome back nudge — shows when user returns after 1+ day away */}
+        {showWelcomeBack && lastSession && daysSinceLastSession !== null && (
+          <TouchableOpacity
+            style={styles.welcomeBackBanner}
+            onPress={() => router.push('/insights')}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Welcome back. ${daysSinceLastSession === 1 ? '1 day' : `${daysSinceLastSession} days`} since your last check-in.`}
+          >
+            <Text style={styles.welcomeBackText}>
+              {daysSinceLastSession === 1
+                ? `Yesterday you were ${MOODS[lastSession.mood].name.toUpperCase()}. Today?`
+                : `${daysSinceLastSession} days since your last check-in. What changed?`}
+            </Text>
+            <Text style={styles.welcomeBackArrow}> →</Text>
+          </TouchableOpacity>
         )}
 
         {/* Still feeling this? re-entry banner */}
@@ -365,6 +394,26 @@ const styles = StyleSheet.create({
   streakBoxText: {
     ...t.number,
     color: '#c8c8c8',
+  },
+  welcomeBackBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderLeftWidth: 2,
+    borderLeftColor: '#D97706',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: '#0f0f0f',
+  },
+  welcomeBackText: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 1,
+    flex: 1,
+  },
+  welcomeBackArrow: {
+    ...t.label,
+    color: '#D97706',
   },
   stillFeelingBanner: {
     flexDirection: 'row',

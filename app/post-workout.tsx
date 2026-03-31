@@ -122,8 +122,25 @@ export default function PostWorkoutScreen() {
             accessibilityRole="adjustable"
           />
 
-          <View style={styles.startedAtBox}>
-            <Text style={styles.startedAt}>STARTED AT {intensity}/10</Text>
+          {/* Before → After delta */}
+          <View style={styles.deltaRow}>
+            <View style={styles.deltaBlock}>
+              <Text style={styles.deltaBlockLabel}>BEFORE</Text>
+              <Text style={styles.deltaBlockValue}>{intensity}</Text>
+            </View>
+            <Text style={styles.deltaArrow}>→</Text>
+            <View style={styles.deltaBlock}>
+              <Text style={styles.deltaBlockLabel}>NOW</Text>
+              <Text style={[styles.deltaBlockValue, { color: accentColor }]}>{postScore}</Text>
+            </View>
+            <View style={[styles.deltaBlock, styles.deltaSeparated]}>
+              <Text style={styles.deltaBlockLabel}>CHANGE</Text>
+              <Text style={[styles.deltaBlockChange, {
+                color: (postScore - intensity) >= 0 ? '#059669' : '#c8c8c8',
+              }]}>
+                {(postScore - intensity) > 0 ? `+${postScore - intensity}` : `${postScore - intensity}`}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -247,17 +264,46 @@ const styles = StyleSheet.create({
     height: 40,
     marginVertical: 16,
   },
-  startedAtBox: {
+  deltaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#1a1a1a',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    marginTop: 4,
+    width: '100%',
   },
-  startedAt: {
+  deltaBlock: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  deltaSeparated: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#1a1a1a',
+  },
+  deltaBlockLabel: {
     ...t.label,
+    color: '#525252',
+    letterSpacing: 2,
+    fontSize: 9,
+    marginBottom: 4,
+  },
+  deltaBlockValue: {
+    ...t.dataValue,
+    fontSize: 28,
     color: '#c8c8c8',
-    letterSpacing: 3,
-    textAlign: 'center',
+  },
+  deltaBlockChange: {
+    fontSize: 28,
+    fontWeight: '700',
+    fontFamily: fonts.mono.regular,
+  },
+  deltaArrow: {
+    ...t.label,
+    color: '#333333',
+    fontSize: 16,
+    marginHorizontal: 4,
   },
   workoutInfo: {
     marginTop: 32,

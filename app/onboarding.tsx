@@ -96,6 +96,30 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
+        {/* Outcome proof — sample before/after */}
+        <View style={styles.outcomeProof}>
+          <Text style={styles.outcomeProofLabel}>REAL RESULTS</Text>
+          <View style={styles.outcomeProofRow}>
+            <View style={styles.outcomeBlock}>
+              <Text style={styles.outcomeBlockCap}>BEFORE</Text>
+              <Text style={styles.outcomeBlockVal}>7</Text>
+              <Text style={styles.outcomeBlockMood}>ANXIOUS</Text>
+            </View>
+            <View style={styles.outcomeArrowBlock}>
+              <Text style={styles.outcomeArrow}>→</Text>
+              <Text style={styles.outcomeDelta}>−3 pts</Text>
+            </View>
+            <View style={styles.outcomeBlock}>
+              <Text style={styles.outcomeBlockCap}>AFTER</Text>
+              <Text style={[styles.outcomeBlockVal, { color: '#059669' }]}>4</Text>
+              <Text style={styles.outcomeBlockMood}>ONE WORKOUT</Text>
+            </View>
+          </View>
+          <Text style={styles.outcomeProofSub}>
+            Avg improvement: −2.8 pts per session
+          </Text>
+        </View>
+
         <View style={styles.preCTALine} />
 
         {!hasUsedTrial ? (
@@ -225,6 +249,75 @@ const styles = StyleSheet.create({
     ...t.bodySm,
     color: '#c8c8c8',
     marginTop: 3,
+  },
+  outcomeProof: {
+    marginTop: 28,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    backgroundColor: '#0d0d0d',
+  },
+  outcomeProofLabel: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 3,
+    fontSize: 9,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  outcomeProofRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outcomeBlock: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  outcomeBlockCap: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 2,
+    fontSize: 9,
+    marginBottom: 4,
+  },
+  outcomeBlockVal: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: '#c8c8c8',
+    fontFamily: 'SpaceMono-Regular',
+  },
+  outcomeBlockMood: {
+    ...t.label,
+    color: '#333333',
+    letterSpacing: 1,
+    fontSize: 8,
+    marginTop: 4,
+  },
+  outcomeArrowBlock: {
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  outcomeArrow: {
+    ...t.label,
+    color: '#333333',
+    fontSize: 20,
+  },
+  outcomeDelta: {
+    ...t.label,
+    color: '#059669',
+    fontSize: 11,
+    letterSpacing: 1,
+    marginTop: 4,
+  },
+  outcomeProofSub: {
+    ...t.label,
+    color: '#525252',
+    fontSize: 10,
+    letterSpacing: 1,
+    textAlign: 'center',
+    marginTop: 16,
   },
   preCTALine: {
     height: 1,

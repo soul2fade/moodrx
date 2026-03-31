@@ -120,20 +120,22 @@ const EXERCISES: ExerciseDef[] = [
       rlkx:154, rlky:173, rlax:174, rlay:GND,
     },
   },
-  // 4. Lunge
+  // 4. Lunge — side profile: standing upright → deep forward lunge → back up
   {
-    label: "Lunge", color: "#E8B84B", cycle: 900,
-    poseA: { hx:100, hy:30, sx:100, sy:64, bx:100, by:112,
-      laex:84, laey:86, lahx:78, lahy:108,
-      raex:116, raey:86, rahx:122, rahy:108,
-      llkx:78, llky:146, llax:68, llay:GND,   // front leg
-      rlkx:122, rlky:160, rlax:132, rlay:GND, // back knee low
+    label: "Lunge", color: "#E8B84B", cycle: 1400,
+    // poseA: upright standing (side profile facing right)
+    poseA: { hx:108, hy:30, sx:98, sy:64, bx:98, by:112,
+      laex:112, laey:86, lahx:118, lahy:103,  // forward-side arm
+      raex:84,  raey:88, rahx:78,  rahy:105,  // back-side arm
+      llkx:101, llky:146, llax:104, llay:GND, // feet close together
+      rlkx:95,  rlky:146, rlax:92,  rlay:GND,
     },
-    poseB: { hx:100, hy:30, sx:100, sy:64, bx:100, by:112,
-      laex:84, laey:86, lahx:78, lahy:108,
-      raex:116, raey:86, rahx:122, rahy:108,
-      llkx:78, llky:160, llax:68, llay:GND,   // swapped
-      rlkx:122, rlky:146, rlax:132, rlay:GND,
+    // poseB: deep forward lunge (front leg right, back knee near floor)
+    poseB: { hx:108, hy:44, sx:98, sy:78, bx:98, by:122, // body lowers
+      laex:116, laey:96, lahx:124, lahy:110,  // arms at hips for balance
+      raex:80,  raey:96, rahx:72,  rahy:110,
+      llkx:142, llky:148, llax:160, llay:GND, // front leg steps way right
+      rlkx:70,  rlky:166, rlax:58,  rlay:GND, // back knee near floor
     },
   },
   // 5. Plank

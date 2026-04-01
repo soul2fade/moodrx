@@ -51,14 +51,14 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-// Mood → starting mouth offset (positive = frown, negative = smile)
-const MOOD_START_OFFSET: Record<MoodKey, number> = {
-  anxious: 3,
-  stressed: 2.5,
-  low: 4,
-  foggy: 0,
+// Mood → starting mouth curvature (positive = frown, negative = gentle smile, 0 = flat)
+const MOOD_START_CURVE: Record<MoodKey, number> = {
+  anxious:  6,
+  stressed: 8,
+  low:      12,
+  foggy:    0,
   restless: 0,
-  good: -2,
+  good:     -2,
 };
 
 function FaceOnHead({
@@ -72,11 +72,11 @@ function FaceOnHead({
   progress: number;
   mood: MoodKey | undefined;
 }) {
-  const startOffset = mood != null ? MOOD_START_OFFSET[mood] : 0;
+  const startCurve = mood != null ? MOOD_START_CURVE[mood] : 0;
   // Mouth control Y: positive offset = frown, negative = smile
-  // Interpolates from mood-start all the way to a full upward smile
+  // Interpolates from mood-start to a full upward smile
   const mouthY = cy + 3;
-  const controlY = mouthY + lerp(startOffset, -5, progress);
+  const controlY = mouthY + lerp(startCurve, -5, progress);
   const mouthHalfW = 4;
   const eyeY = cy - 3.5;
   const eyeOffsetX = 3.5;
@@ -106,7 +106,7 @@ interface Props {
   size?: number;
 }
 
-export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, mood, size = 80 }: Props) {
+export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, mood = 'anxious', size = 80 }: Props) {
   const type = detectType(stepText);
   const [t, setT] = useState(0);
   const animRef = useRef(new Animated.Value(0));
@@ -114,8 +114,8 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
   const thoughtText = getThought(currentStep, totalSteps);
   const isLast = totalSteps > 0 && currentStep >= totalSteps - 1;
 
-  // progress 0→1 across the workout (drives face expression)
-  const progress = totalSteps <= 1 ? 0 : currentStep / (totalSteps - 1);
+  // progress 0→1 across the workout (drives face expression). Single-step workouts are always complete.
+  const progress = totalSteps <= 1 ? 1 : Math.min(1, currentStep / (totalSteps - 1));
 
   useEffect(() => {
     const anim = animRef.current;

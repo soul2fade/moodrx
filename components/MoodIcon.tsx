@@ -57,17 +57,15 @@ export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps)
       }
 
       case 'low': {
-        // Single horizontal line that visibly sags in the middle — drooping, heavy, low.
-        // One stroke, immediately reads as "things are weighing down." Nothing else in the set uses this pattern.
+        // Single horizontal line that sags downward in the middle — drooping weight.
         const w = size;
         const h = size;
-        const startY = h * 0.42;
-        const sagY = h * 0.72; // control point — how deep the sag goes
-        const endY = h * 0.42;
+        const y = h * 0.42;
+        const sagY = h * 0.72;
         return (
           <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             <Path
-              d={`M ${w * 0.04},${startY} Q ${w * 0.5},${sagY} ${w * 0.96},${endY}`}
+              d={`M ${w * 0.05},${y} Q ${w * 0.5},${sagY} ${w * 0.95},${y}`}
               stroke={moodColor}
               strokeWidth={1.5}
               fill="none"
@@ -101,29 +99,28 @@ export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps)
       }
 
       case 'restless': {
-        // Tight zigzag / sawtooth line — sharp, erratic, high-frequency energy.
-        // Completely different pattern language from Low (smooth sag) and Anxious (single spike).
-        // Reads instantly as "can't hold still."
+        // Tight zigzag/sawtooth line — rapid alternating diagonals across full width.
+        // Reads as: nervous, can't-settle energy. Clearly distinct from Low (single sag).
         const w = size;
         const h = size;
         const midY = h * 0.5;
-        const amp = h * 0.28;
-        const numTeeth = 7;
-        const segW = w / numTeeth;
-        const points = Array.from({ length: numTeeth + 1 }, (_, i) => {
+        const amp = h * 0.22;
+        const numZags = 8;
+        const segW = w / numZags;
+        const points = Array.from({ length: numZags + 1 }, (_, i) => {
           const x = i * segW;
           const y = i % 2 === 0 ? midY - amp : midY + amp;
           return `${x},${y}`;
-        }).join(' ');
+        }).join(' L ');
         return (
           <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             <Path
-              d={`M ${points.split(' ').map((p, i) => (i === 0 ? `${p}` : `L ${p}`)).join(' ')}`}
+              d={`M ${points}`}
               stroke={moodColor}
               strokeWidth={1.5}
               fill="none"
-              strokeLinejoin="round"
               strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </Svg>
         );

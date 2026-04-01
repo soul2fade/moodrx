@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, Line } from 'react-native-svg';
+import Svg, { Circle, Line, Path } from 'react-native-svg';
+import type { MoodKey } from '@/lib/storage';
 
 type ExerciseType =
   | 'walk' | 'run' | 'squat' | 'pushup' | 'plank'
@@ -46,9 +47,54 @@ function getThought(currentStep: number, totalSteps: number): string {
   return options[currentStep % options.length];
 }
 
-// Linear interpolation helper
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
+}
+
+// Mood → starting mouth offset (positive = frown, negative = smile)
+const MOOD_START_OFFSET: Record<MoodKey, number> = {
+  anxious: 3,
+  stressed: 2.5,
+  low: 4,
+  foggy: 0,
+  restless: 0,
+  good: -2,
+};
+
+function FaceOnHead({
+  cx,
+  cy,
+  progress,
+  mood,
+}: {
+  cx: number;
+  cy: number;
+  progress: number;
+  mood: MoodKey | undefined;
+}) {
+  const startOffset = mood != null ? MOOD_START_OFFSET[mood] : 0;
+  // Mouth control Y: positive offset = frown, negative = smile
+  // Interpolates from mood-start all the way to a full upward smile
+  const mouthY = cy + 3;
+  const controlY = mouthY + lerp(startOffset, -5, progress);
+  const mouthHalfW = 4;
+  const eyeY = cy - 3.5;
+  const eyeOffsetX = 3.5;
+  const faceColor = '#111111';
+
+  return (
+    <>
+      <Circle cx={cx - eyeOffsetX} cy={eyeY} r={1.5} fill={faceColor} />
+      <Circle cx={cx + eyeOffsetX} cy={eyeY} r={1.5} fill={faceColor} />
+      <Path
+        d={`M ${cx - mouthHalfW},${mouthY} Q ${cx},${controlY} ${cx + mouthHalfW},${mouthY}`}
+        stroke={faceColor}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinecap="round"
+      />
+    </>
+  );
 }
 
 interface Props {
@@ -56,16 +102,20 @@ interface Props {
   color: string;
   currentStep: number;
   totalSteps: number;
+  mood?: MoodKey;
   size?: number;
 }
 
-export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, size = 80 }: Props) {
+export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, mood, size = 80 }: Props) {
   const type = detectType(stepText);
-  const [t, setT] = useState(0); // 0→1 oscillating animation value
+  const [t, setT] = useState(0);
   const animRef = useRef(new Animated.Value(0));
   const loopRef = useRef<Animated.CompositeAnimation | null>(null);
   const thoughtText = getThought(currentStep, totalSteps);
   const isLast = totalSteps > 0 && currentStep >= totalSteps - 1;
+
+  // progress 0→1 across the workout (drives face expression)
+  const progress = totalSteps <= 1 ? 0 : currentStep / (totalSteps - 1);
 
   useEffect(() => {
     const anim = animRef.current;
@@ -97,6 +147,7 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
     switch (type) {
 
       case 'walk': {
+        const cx = 50; const cy = 14;
         const lLegX = lerp(34, 66, t);
         const rLegX = lerp(66, 34, t);
         const lLegY = lerp(90, 80, t);
@@ -105,7 +156,8 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
         const rArmX = lerp(72, 26, t);
         return (
           <>
-            <Circle cx={50} cy={14} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={50} y1={24} x2={50} y2={64} {...s} />
             <Line x1={50} y1={40} x2={lArmX} y2={54} {...s} />
             <Line x1={50} y1={40} x2={rArmX} y2={54} {...s} />
@@ -116,6 +168,7 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
       }
 
       case 'run': {
+        const cx = 56; const cy = 12;
         const lLegX = lerp(22, 70, t);
         const rLegX = lerp(70, 22, t);
         const lArmX = lerp(18, 78, t);
@@ -124,7 +177,8 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
         const rArmY = lerp(48, 24, t);
         return (
           <>
-            <Circle cx={56} cy={12} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={56} y1={22} x2={46} y2={60} {...s} />
             <Line x1={52} y1={36} x2={lArmX} y2={lArmY} {...s} />
             <Line x1={52} y1={36} x2={rArmX} y2={rArmY} {...s} />
@@ -140,9 +194,11 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
         const lLegX = lerp(20, 32, t);
         const rLegX = lerp(80, 68, t);
         const armY = lerp(40, 54, t);
+        const cx = 50; const cy = headY;
         return (
           <>
-            <Circle cx={50} cy={headY} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={50} y1={headY + 10} x2={50} y2={bodyY} {...s} />
             <Line x1={50} y1={headY + 24} x2={28} y2={armY} {...s} />
             <Line x1={50} y1={headY + 24} x2={72} y2={armY} {...s} />
@@ -156,9 +212,11 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
         const bodyY = lerp(56, 66, t);
         const headY = lerp(48, 58, t);
         const armY = lerp(82, 72, t);
+        const cx = 20; const cy = headY;
         return (
           <>
-            <Circle cx={20} cy={headY} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={28} y1={bodyY} x2={82} y2={bodyY} {...s} />
             <Line x1={42} y1={bodyY} x2={42} y2={armY} {...s} />
             <Line x1={64} y1={bodyY} x2={64} y2={armY} {...s} />
@@ -169,10 +227,12 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
       }
 
       case 'plank': {
+        const cx = 16; const cy = 48;
         const armY = lerp(78, 84, t);
         return (
           <>
-            <Circle cx={16} cy={48} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={26} y1={56} x2={86} y2={60} {...s} />
             <Line x1={40} y1={57} x2={40} y2={armY} {...s} />
             <Line x1={62} y1={59} x2={62} y2={armY} {...s} />
@@ -188,9 +248,11 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
         const lArmX = lerp(26, 10, t);
         const rArmX = lerp(74, 90, t);
         const armY = lerp(36, 18, t);
+        const cx = 50; const cy = 14 + offset;
         return (
           <>
-            <Circle cx={50} cy={14 + offset} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={50} y1={24 + offset} x2={50} y2={62 + offset} {...s} />
             <Line x1={50} y1={38 + offset} x2={lArmX} y2={armY + offset} {...s} />
             <Line x1={50} y1={38 + offset} x2={rArmX} y2={armY + offset} {...s} />
@@ -201,11 +263,13 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
       }
 
       case 'yoga': {
+        const cx = 50; const cy = 14;
         const lArmX = lerp(18, 6, t);
         const rArmX = lerp(82, 94, t);
         return (
           <>
-            <Circle cx={50} cy={14} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={50} y1={24} x2={50} y2={62} {...s} />
             <Line x1={50} y1={38} x2={lArmX} y2={38} {...s} />
             <Line x1={50} y1={38} x2={rArmX} y2={38} {...s} />
@@ -216,11 +280,13 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
       }
 
       case 'box': {
+        const cx = 52; const cy = 14;
         const punchX = lerp(72, 96, t);
         const punchY = lerp(28, 24, t);
         return (
           <>
-            <Circle cx={52} cy={14} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={52} y1={24} x2={48} y2={62} {...s} />
             <Line x1={50} y1={38} x2={26} y2={30} {...s} />
             <Circle cx={24} cy={28} r={6} fill={color} />
@@ -233,10 +299,12 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
       }
 
       case 'rest': {
+        const cx = 16; const cy = 52;
         const bodyY = lerp(58, 60, t);
         return (
           <>
-            <Circle cx={16} cy={52} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={26} y1={bodyY} x2={88} y2={bodyY} {...s} />
             <Line x1={44} y1={bodyY} x2={40} y2={40} {...s} />
             <Line x1={68} y1={bodyY} x2={64} y2={42} {...s} />
@@ -248,6 +316,7 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
       }
 
       case 'dance': {
+        const cx = 50; const cy = 14;
         const lArmX = lerp(22, 76, t);
         const lArmY = lerp(20, 52, t);
         const rArmX = lerp(76, 22, t);
@@ -256,7 +325,8 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
         const rLegX = lerp(72, 28, t);
         return (
           <>
-            <Circle cx={50} cy={14} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={50} y1={24} x2={50} y2={62} {...s} />
             <Line x1={50} y1={38} x2={lArmX} y2={lArmY} {...s} />
             <Line x1={50} y1={38} x2={rArmX} y2={rArmY} {...s} />
@@ -267,9 +337,11 @@ export function ExerciseStickFigure({ stepText, color, currentStep, totalSteps, 
       }
 
       default: {
+        const cx = 50; const cy = 14;
         return (
           <>
-            <Circle cx={50} cy={14} r={10} fill={color} />
+            <Circle cx={cx} cy={cy} r={10} fill={color} />
+            <FaceOnHead cx={cx} cy={cy} progress={progress} mood={mood} />
             <Line x1={50} y1={24} x2={50} y2={64} {...s} />
             <Line x1={50} y1={40} x2={28} y2={54} {...s} />
             <Line x1={50} y1={40} x2={72} y2={54} {...s} />

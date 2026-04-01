@@ -57,45 +57,20 @@ export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps)
       }
 
       case 'low': {
-        // 3 arcs descending in height — a bounce that loses energy — then flat
-        // Kept: this icon works at all sizes and the concept is immediately clear.
+        // Single horizontal line that visibly sags in the middle — drooping, heavy, low.
+        // One stroke, immediately reads as "things are weighing down." Nothing else in the set uses this pattern.
         const w = size;
         const h = size;
-        const baseline = h * 0.72;
-        const r1 = h * 0.35;
-        const r2 = h * 0.22;
-        const r3 = h * 0.12;
-        const seg = w / 4;
+        const startY = h * 0.42;
+        const sagY = h * 0.72; // control point — how deep the sag goes
+        const endY = h * 0.42;
         return (
           <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             <Path
-              d={`M ${0},${baseline} Q ${seg * 0.5},${baseline - r1 * 2} ${seg},${baseline}`}
+              d={`M ${w * 0.04},${startY} Q ${w * 0.5},${sagY} ${w * 0.96},${endY}`}
               stroke={moodColor}
               strokeWidth={1.5}
               fill="none"
-              strokeLinecap="round"
-            />
-            <Path
-              d={`M ${seg},${baseline} Q ${seg * 1.5},${baseline - r2 * 2} ${seg * 2},${baseline}`}
-              stroke={moodColor}
-              strokeWidth={1.5}
-              fill="none"
-              strokeLinecap="round"
-            />
-            <Path
-              d={`M ${seg * 2},${baseline} Q ${seg * 2.5},${baseline - r3 * 2} ${seg * 3},${baseline}`}
-              stroke={moodColor}
-              strokeWidth={1.5}
-              fill="none"
-              strokeLinecap="round"
-            />
-            <Line
-              x1={seg * 3}
-              y1={baseline}
-              x2={w}
-              y2={baseline}
-              stroke={moodColor}
-              strokeWidth={1.5}
               strokeLinecap="round"
             />
           </Svg>
@@ -126,32 +101,30 @@ export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps)
       }
 
       case 'restless': {
-        // 5 rapid equal-height bouncing arcs across the full width.
-        // Reads as: constant kinetic energy, can't-stop bouncing.
-        // Clearly different from Low (3 declining arcs) and Anxious (single sharp spike).
+        // Tight zigzag / sawtooth line — sharp, erratic, high-frequency energy.
+        // Completely different pattern language from Low (smooth sag) and Anxious (single spike).
+        // Reads instantly as "can't hold still."
         const w = size;
         const h = size;
-        const baseline = h * 0.78;
-        const arcH = h * 0.5;
-        const numArcs = 5;
-        const arcW = w / numArcs;
+        const midY = h * 0.5;
+        const amp = h * 0.28;
+        const numTeeth = 7;
+        const segW = w / numTeeth;
+        const points = Array.from({ length: numTeeth + 1 }, (_, i) => {
+          const x = i * segW;
+          const y = i % 2 === 0 ? midY - amp : midY + amp;
+          return `${x},${y}`;
+        }).join(' ');
         return (
           <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-            {Array.from({ length: numArcs }).map((_, i) => {
-              const x1 = i * arcW;
-              const x2 = (i + 1) * arcW;
-              const mx = (x1 + x2) / 2;
-              return (
-                <Path
-                  key={i}
-                  d={`M ${x1},${baseline} Q ${mx},${baseline - arcH} ${x2},${baseline}`}
-                  stroke={moodColor}
-                  strokeWidth={1.5}
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              );
-            })}
+            <Path
+              d={`M ${points.split(' ').map((p, i) => (i === 0 ? `${p}` : `L ${p}`)).join(' ')}`}
+              stroke={moodColor}
+              strokeWidth={1.5}
+              fill="none"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
           </Svg>
         );
       }

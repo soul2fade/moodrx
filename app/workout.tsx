@@ -14,6 +14,7 @@ import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
+import { ExerciseStickFigure } from '@/components/ExerciseStickFigure';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
@@ -290,6 +291,18 @@ export default function WorkoutScreen() {
           </Text>
         </View>
 
+        {/* Exercise stick figure — face starts mood-matched, gets happier each step */}
+        <View style={styles.figureCenter}>
+          <ExerciseStickFigure
+            stepText={resolvedWorkout.steps[currentStep]}
+            color={accentColor}
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            mood={mood}
+            size={88}
+          />
+        </View>
+
         {/* Motivational */}
         <Text style={styles.motivational}>{motivationalMsg}</Text>
 
@@ -485,6 +498,11 @@ const styles = StyleSheet.create({
   iconCenter: {
     alignItems: 'center',
     marginBottom: 12,
+  },
+  figureCenter: {
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 8,
   },
   workoutName: {
     ...t.headlineMd,

@@ -336,6 +336,19 @@ export default function InsightsScreen() {
                 </TouchableOpacity>
               );
             })}
+            {!isPremium && sessionCount > 3 && (
+              <TouchableOpacity
+                style={styles.historyUpsellRow}
+                onPress={() => setShowPremiumSheet(true)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`See all ${sessionCount - 3} more sessions with Pro`}
+              >
+                <Text style={styles.historyUpsellText}>
+                  +{sessionCount - 3} MORE SESSION{sessionCount - 3 === 1 ? '' : 'S'} — UNLOCK PRO →
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -697,6 +710,18 @@ const styles = StyleSheet.create({
   recentStar: {
     color: '#059669',
     fontSize: 12,
+  },
+  historyUpsellRow: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  historyUpsellText: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 2,
+    fontSize: 10,
   },
   recentWorkout: {
     ...t.body,

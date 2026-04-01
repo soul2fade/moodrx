@@ -7,8 +7,9 @@ import {
   StyleSheet,
   Animated,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import type { MoodKey } from '@/lib/storage';
+import { getUserProfile, UserProfile } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutsForMood, Workout } from '@/lib/workouts';
 import { getSupplementsForMood } from '@/lib/supplements';
@@ -31,9 +32,16 @@ export default function PrescriptionScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('workouts');
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [showAlternatives, setShowAlternatives] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile>({});
   const { isPremium } = useSubscription();
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
+
+  useFocusEffect(
+    useCallback(() => {
+      getUserProfile().then(setUserProfile);
+    }, [])
+  );
 
   const backHandler = useCallback(() => {
     router.back();
@@ -78,6 +86,11 @@ export default function PrescriptionScreen() {
           <Text style={styles.prescriptionLabel}>YOUR PRESCRIPTION</Text>
           <Text style={styles.prescriptionTitle}>Dr. MoodRx recommends the following.</Text>
           <Text style={styles.prescriptionSub}>Don&apos;t argue.</Text>
+          {userProfile.preferredTime && (
+            <Text style={styles.personalizationNote}>
+              Matched to your {userProfile.preferredTime.toLowerCase()} preference
+            </Text>
+          )}
         </View>
 
         {/* Tab bar */}
@@ -167,7 +180,8 @@ export default function PrescriptionScreen() {
 
                 {showAlternatives && workouts.slice(1).map((workout, idx) => {
                   const index = idx + 1;
-                  const isLocked = !isPremium;
+                  const isLocked = !isPremium && idx > 0;
+                  const isFreeAlternative = idx === 0;
                   if (isLocked) {
                     return (
                       <TouchableOpacity
@@ -196,8 +210,11 @@ export default function PrescriptionScreen() {
                     );
                   }
                   return (
+                    <React.Fragment key={workout.id}>
+                    {isFreeAlternative && (
+                      <Text style={styles.cantDoThatLabel}>CAN&apos;T DO THAT? TRY THIS</Text>
+                    )}
                     <TouchableOpacity
-                      key={workout.id}
                       style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
                       onPress={() => handleWorkoutTap(workout)}
                       activeOpacity={0.85}
@@ -221,6 +238,7 @@ export default function PrescriptionScreen() {
                       </View>
                       <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                     </TouchableOpacity>
+                    </React.Fragment>
                   );
                 })}
               </>
@@ -351,6 +369,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
+  personalizationNote: {
+    ...t.label,
+    color: '#525252',
+    fontSize: 11,
+    letterSpacing: 1,
+    marginTop: 8,
+    textAlign: 'center',
+  },
   tabBar: {
     flexDirection: 'row',
     marginTop: 8,
@@ -419,6 +445,14 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#c8c8c8',
     fontSize: 18,
+  },
+  cantDoThatLabel: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 3,
+    fontSize: 10,
+    marginBottom: 8,
+    marginTop: 4,
   },
   workoutCard: {
     backgroundColor: '#111111',

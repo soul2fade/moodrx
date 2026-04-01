@@ -250,7 +250,33 @@ export async function clearAllData(): Promise<void> {
       SUPPLEMENT_LOGS_KEY,
       CUSTOM_WORKOUTS_KEY,
       FIRST_LAUNCH_KEY,
+      USER_PROFILE_KEY,
     ]);
+  } catch {
+    // ignore
+  }
+}
+
+export interface UserProfile {
+  preferredTime?: 'Morning' | 'Afternoon' | 'Evening';
+  primaryGoal?: 'Stress relief' | 'Energy' | 'Sleep' | 'Mood';
+}
+
+const USER_PROFILE_KEY = '@moodrx_user_profile';
+
+export async function getUserProfile(): Promise<UserProfile> {
+  try {
+    const raw = await AsyncStorage.getItem(USER_PROFILE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as UserProfile;
+  } catch {
+    return {};
+  }
+}
+
+export async function setUserProfile(profile: UserProfile): Promise<void> {
+  try {
+    await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
   } catch {
     // ignore
   }

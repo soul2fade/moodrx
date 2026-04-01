@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { addSession, getNotifPromptShown } from '@/lib/storage';
+import { addSession, getNotifPromptShown, getSessions, getUserProfile, setUserProfile, UserProfile } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
@@ -44,7 +44,19 @@ export default function PostWorkoutScreen() {
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [sessionCount, setSessionCount] = useState<number | null>(null);
+  const [userProfile, setUserProfileState] = useState<UserProfile>({});
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const workout = getWorkoutById(workoutId);
+
+  useEffect(() => {
+    Promise.all([getSessions(), getUserProfile()]).then(([sessions, profile]) => {
+      // sessionCount is pre-save: 0 = completing session 1, 2 = completing session 3
+      setSessionCount(sessions.length);
+      setUserProfileState(profile);
+      setProfileLoaded(true);
+    });
+  }, []);
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const breakthroughRef = useRef<ViewShot>(null);
@@ -196,6 +208,66 @@ export default function PostWorkoutScreen() {
             })}
           </View>
         </View>
+
+        {profileLoaded && sessionCount === 0 && !userProfile.preferredTime && (
+          <View style={styles.contextQuestion}>
+            <Text style={styles.contextQuestionPrompt}>WHEN DO YOU USUALLY TRAIN?</Text>
+            <View style={styles.ratingButtons}>
+              {(['Morning', 'Afternoon', 'Evening'] as const).map((time) => {
+                const isSelected = userProfile.preferredTime === time;
+                return (
+                  <TouchableOpacity
+                    key={time}
+                    onPress={async () => {
+                      const updated = { ...userProfile, preferredTime: time };
+                      setUserProfileState(updated);
+                      await setUserProfile(updated);
+                    }}
+                    activeOpacity={0.7}
+                    style={[styles.ratingBtn, isSelected && { borderColor: accentColor }]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={time}
+                  >
+                    <Text style={[styles.ratingBtnText, isSelected && { color: accentColor }]}>
+                      {time.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {profileLoaded && sessionCount === 2 && !userProfile.primaryGoal && (
+          <View style={styles.contextQuestion}>
+            <Text style={styles.contextQuestionPrompt}>WHAT&apos;S YOUR MAIN GOAL?</Text>
+            <View style={styles.goalButtons}>
+              {(['Stress relief', 'Energy', 'Sleep', 'Mood'] as const).map((goal) => {
+                const isSelected = userProfile.primaryGoal === goal;
+                return (
+                  <TouchableOpacity
+                    key={goal}
+                    onPress={async () => {
+                      const updated = { ...userProfile, primaryGoal: goal };
+                      setUserProfileState(updated);
+                      await setUserProfile(updated);
+                    }}
+                    activeOpacity={0.7}
+                    style={[styles.ratingBtn, isSelected && { borderColor: accentColor }]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={goal}
+                  >
+                    <Text style={[styles.ratingBtnText, isSelected && { color: accentColor }]}>
+                      {goal.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* Hidden breakthrough card — captured for sharing */}
         {workout && Platform.OS !== 'web' && (
@@ -399,6 +471,24 @@ const styles = StyleSheet.create({
     color: '#c8c8c8',
     letterSpacing: 1,
     fontSize: 10,
+  },
+  contextQuestion: {
+    marginTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingTop: 24,
+  },
+  contextQuestionPrompt: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 3,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  goalButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   hiddenCardWrapper: {
     position: 'absolute',

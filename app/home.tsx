@@ -12,7 +12,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getSessions, getStreak, getMoodIdentity, Session } from '@/lib/storage';
+import { getSessions, getStreak, getMoodIdentity, getUserProfile, UserProfile, Session } from '@/lib/storage';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
@@ -28,6 +28,7 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
+  const [userProfile, setUserProfile] = useState<UserProfile>({});
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -37,8 +38,9 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       setIsLoading(true);
-      getSessions().then((data) => {
+      Promise.all([getSessions(), getUserProfile()]).then(([data, profile]) => {
         setSessions(data);
+        setUserProfile(profile);
         setIsLoading(false);
       });
       dismissPanel();
@@ -150,6 +152,16 @@ export default function HomeScreen() {
         <View style={styles.divider} />
 
         <Text style={styles.subtext}>Be honest. I&apos;m not here to judge. Much.</Text>
+
+        {/* Prescription evolving — visible after 3 sessions with profile data */}
+        {sessionCount >= 3 && !selectedMood && (userProfile.preferredTime || userProfile.primaryGoal) && (
+          <View style={styles.prescriptionEvolvingRow} accessibilityLabel="Your prescription is personalizing">
+            <Text style={styles.prescriptionEvolvingLabel}>PRESCRIPTION EVOLVING</Text>
+            <Text style={styles.prescriptionEvolvingValue}>
+              {[userProfile.preferredTime, userProfile.primaryGoal].filter(Boolean).join(' · ')}
+            </Text>
+          </View>
+        )}
 
         {/* Mood identity — visible after 5 sessions */}
         {moodIdentity && !selectedMood && (
@@ -404,6 +416,24 @@ const styles = StyleSheet.create({
     ...t.bodyMuted,
     color: '#c8c8c8',
     marginTop: 12,
+  },
+  prescriptionEvolvingRow: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  prescriptionEvolvingLabel: {
+    ...t.label,
+    color: '#525252',
+    letterSpacing: 2,
+    fontSize: 9,
+  },
+  prescriptionEvolvingValue: {
+    ...t.label,
+    color: '#525252',
+    fontSize: 9,
+    letterSpacing: 1,
   },
   identityRow: {
     marginTop: 16,

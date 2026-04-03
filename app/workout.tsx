@@ -15,10 +15,15 @@ import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { ExerciseStickFigure } from '@/components/ExerciseStickFigure';
+import { ExerciseVideo } from '@/components/ExerciseVideo';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+
+const EXERCISE_VIDEOS: Record<string, number> = {
+  'restless-3': require('../assets/videos/sprint-intervals.mp4'),
+};
 
 function parseStepDuration(stepText: string): number | null {
   const match = stepText.match(/(\d+)\s*sec(?:onds?)?/i);
@@ -291,16 +296,24 @@ export default function WorkoutScreen() {
           </Text>
         </View>
 
-        {/* Exercise stick figure — face starts mood-matched, gets happier each step */}
+        {/* Exercise animation — video clip if available, else animated stick figure */}
         <View style={styles.figureCenter}>
-          <ExerciseStickFigure
-            stepText={resolvedWorkout.steps[currentStep]}
-            color={accentColor}
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            mood={mood}
-            size={88}
-          />
+          {EXERCISE_VIDEOS[resolvedWorkout.id] ? (
+            <ExerciseVideo
+              source={EXERCISE_VIDEOS[resolvedWorkout.id]}
+              accentColor={accentColor}
+              size={200}
+            />
+          ) : (
+            <ExerciseStickFigure
+              stepText={resolvedWorkout.steps[currentStep]}
+              color={accentColor}
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              mood={mood}
+              size={88}
+            />
+          )}
         </View>
 
         {/* Motivational */}

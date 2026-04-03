@@ -3,13 +3,13 @@ import { View, StyleSheet } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 
 interface Props {
-  source: number;
+  source: string;
   accentColor: string;
   size?: number;
 }
 
 export function ExerciseVideo({ source, accentColor, size = 200 }: Props) {
-  const player = useVideoPlayer(source, (p) => {
+  const player = useVideoPlayer({ uri: source }, (p) => {
     p.loop = true;
     p.muted = true;
     p.play();

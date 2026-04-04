@@ -15,16 +15,10 @@ import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { ExerciseStickFigure } from '@/components/ExerciseStickFigure';
-import { ExerciseVideo } from '@/components/ExerciseVideo';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
-
-const EXERCISE_VIDEOS: Record<string, string> = {
-  'restless-1': 'https://github.com/soul2fade/moodrx/releases/download/v-assets-1/sprint-intervals.mp4',
-  'restless-3': 'https://github.com/soul2fade/moodrx/releases/download/v-assets-1/sprint-intervals.mp4',
-};
 
 function parseStepDuration(stepText: string): number | null {
   const match = stepText.match(/(\d+)\s*sec(?:onds?)?/i);
@@ -297,24 +291,16 @@ export default function WorkoutScreen() {
           </Text>
         </View>
 
-        {/* Exercise animation — video clip if available, else animated stick figure */}
+        {/* Exercise animation */}
         <View style={styles.figureCenter}>
-          {EXERCISE_VIDEOS[resolvedWorkout.id] ? (
-            <ExerciseVideo
-              source={EXERCISE_VIDEOS[resolvedWorkout.id]}
-              accentColor={accentColor}
-              size={200}
-            />
-          ) : (
-            <ExerciseStickFigure
-              stepText={resolvedWorkout.steps[currentStep]}
-              color={accentColor}
-              currentStep={currentStep}
-              totalSteps={totalSteps}
-              mood={mood}
-              size={88}
-            />
-          )}
+          <ExerciseStickFigure
+            stepText={resolvedWorkout.steps[currentStep]}
+            color={accentColor}
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            mood={mood}
+            size={88}
+          />
         </View>
 
         {/* Motivational */}

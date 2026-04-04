@@ -22,6 +22,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const EXERCISE_VIDEOS: Record<string, string> = {
+  'restless-1': 'https://github.com/soul2fade/moodrx/releases/download/v-assets-1/sprint-intervals.mp4',
   'restless-3': 'https://github.com/soul2fade/moodrx/releases/download/v-assets-1/sprint-intervals.mp4',
 };
 

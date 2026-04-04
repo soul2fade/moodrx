@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,9 @@ export default function HomeScreen() {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const panelAnim = useRef(new Animated.Value(PANEL_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
+  const moodAnims = useRef(
+    MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
+  ).current;
 
   useFocusEffect(
     useCallback(() => {
@@ -44,6 +47,19 @@ export default function HomeScreen() {
         setIsLoading(false);
       });
       dismissPanel();
+      // Re-stagger mood rows on every focus
+      moodAnims.forEach((anim) => {
+        anim.opacity.setValue(0);
+        anim.y.setValue(10);
+      });
+      moodAnims.forEach((anim, i) => {
+        setTimeout(() => {
+          Animated.parallel([
+            Animated.timing(anim.opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+            Animated.timing(anim.y,       { toValue: 0, duration: 200, useNativeDriver: true }),
+          ]).start();
+        }, 180 + i * 55);
+      });
     }, [])
   );
 
@@ -228,12 +244,15 @@ export default function HomeScreen() {
 
         {/* Mood list */}
         <View style={styles.moodList} accessibilityRole="radiogroup" accessibilityLabel="Select your mood">
-          {MOOD_ORDER.map((moodKey) => {
+          {MOOD_ORDER.map((moodKey, idx) => {
             const mood = MOODS[moodKey];
             const isSelected = selectedMood === moodKey;
             return (
-              <TouchableOpacity
+              <Animated.View
                 key={moodKey}
+                style={{ opacity: moodAnims[idx].opacity, transform: [{ translateY: moodAnims[idx].y }] }}
+              >
+              <TouchableOpacity
                 style={isSelected
                   ? flattenStyle([styles.moodRow, styles.moodRowSelected, { borderLeftColor: mood.color }])
                   : styles.moodRow}
@@ -260,6 +279,7 @@ export default function HomeScreen() {
                   )}
                 </View>
               </TouchableOpacity>
+              </Animated.View>
             );
           })}
         </View>

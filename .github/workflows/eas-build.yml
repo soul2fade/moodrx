@@ -45,10 +45,28 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Submit build
+      - name: Build (preview — fire and forget)
+        if: github.event.inputs.profile == 'preview'
         run: |
           eas build \
             --platform ${{ github.event.inputs.platform }} \
-            --profile ${{ github.event.inputs.profile }} \
+            --profile preview \
             --non-interactive \
             --no-wait
+
+      - name: Build (production — wait for completion)
+        if: github.event.inputs.profile == 'production'
+        run: |
+          eas build \
+            --platform ${{ github.event.inputs.platform }} \
+            --profile production \
+            --non-interactive \
+            --wait
+
+      - name: Submit iOS to App Store Connect
+        if: github.event.inputs.profile == 'production' && github.event.inputs.platform == 'ios'
+        run: |
+          eas submit \
+            --platform ios \
+            --latest \
+            --non-interactive

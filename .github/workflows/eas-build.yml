@@ -56,11 +56,14 @@ jobs:
 
       - name: Build (production — wait for completion)
         if: github.event.inputs.profile == 'production'
+        env:
+          EAS_SKIP_AUTO_FINGERPRINT: "1"
         run: |
           eas build \
             --platform ${{ github.event.inputs.platform }} \
             --profile production \
             --non-interactive \
+            --clear-credentials \
             --wait
 
       - name: Submit iOS to App Store Connect

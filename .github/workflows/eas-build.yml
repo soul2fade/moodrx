@@ -61,7 +61,6 @@ jobs:
             --platform ${{ github.event.inputs.platform }} \
             --profile production \
             --non-interactive \
-            --clear-credentials \
             --wait
 
       - name: Submit iOS to App Store Connect

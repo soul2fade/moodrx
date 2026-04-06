@@ -63,10 +63,28 @@ jobs:
             --non-interactive \
             --wait
 
-      - name: Submit iOS to App Store Connect
+      - name: Submit iOS to TestFlight
         if: github.event.inputs.profile == 'production' && github.event.inputs.platform == 'ios'
+        env:
+          ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
         run: |
+          if [ -z "$ASC_APP_ID" ]; then
+            echo ""
+            echo "========================================="
+            echo "BUILD SUCCEEDED — .ipa is on Expo dashboard"
+            echo "========================================="
+            echo ""
+            echo "To enable auto-submit to TestFlight:"
+            echo "  1. appstoreconnect.apple.com → My Apps"
+            echo "  2. Create MoodRx (bundle: com.moodrx.app) if it doesn't exist"
+            echo "  3. App Information page → copy the numeric Apple ID"
+            echo "  4. GitHub repo → Settings → Secrets → add ASC_APP_ID"
+            echo ""
+            echo "Then re-trigger this workflow — submit will run automatically."
+            exit 0
+          fi
           eas submit \
             --platform ios \
             --latest \
-            --non-interactive
+            --non-interactive \
+            --app-apple-id "$ASC_APP_ID"

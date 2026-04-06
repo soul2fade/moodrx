@@ -83,8 +83,17 @@ jobs:
             echo "Then re-trigger this workflow — submit will run automatically."
             exit 0
           fi
+          node -e "
+            const fs = require('fs');
+            const eas = JSON.parse(fs.readFileSync('eas.json', 'utf8'));
+            eas.submit = eas.submit || {};
+            eas.submit.production = eas.submit.production || {};
+            eas.submit.production.ios = eas.submit.production.ios || {};
+            eas.submit.production.ios.ascAppId = process.env.ASC_APP_ID;
+            fs.writeFileSync('eas.json', JSON.stringify(eas, null, 2));
+            console.log('Set ascAppId:', process.env.ASC_APP_ID);
+          "
           eas submit \
             --platform ios \
             --latest \
-            --non-interactive \
-            --app-apple-id "$ASC_APP_ID"
+            --non-interactive

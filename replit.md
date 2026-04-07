@@ -83,6 +83,47 @@ The following packages were not in the original `package.json` but were required
 - `react-native-view-shot` — screenshot/share from insights screen
 - `expo-sharing` — native share sheet for insights
 
+## iOS Build → TestFlight (WORKING PROCESS)
+
+**Full end-to-end process that works as of April 6, 2026.**
+
+### One-time setup (already done — do not redo)
+- **Apple Distribution Certificate**: Generated via OpenSSL CSR, signed by Apple, converted to `.p12` with **legacy 3DES encryption** (`openssl pkcs12 -export -legacy`). Key insight: OpenSSL 3.x uses AES-256 by default which macOS keychain rejects — must use `-legacy` flag.
+- **Certificate files**: `.local/ios-cert/distribution.key`, `.local/ios-cert/distribution_legacy.p12` (password: `MoodRx2026`), `.local/ios-cert/chain.pem` (cert + Apple WWDR G3 intermediate)
+- **EAS credentials** (stored in EAS cloud):
+  - App credentials ID: `a0d5f707`
+  - Distribution cert ID: `45e38347` (serial: `45F57738150F2526813F66A57A9B53EA`, valid until Apr 2027)
+  - Provisioning profile ID: `9f748fb2` (App Store type, bundle: `com.moodrx.app`, valid until Apr 2027)
+  - APP_STORE build credentials ID: `1d89f696`
+- **Apple Team**: `ST6C3ZM5C3` (Daniel Zimmer Individual)
+- **Bundle ID**: `com.moodrx.app`
+- **EAS project ID**: `856c4912-709e-4132-9028-49d55e06e6b5`
+- **GitHub secrets required**: `EXPO_TOKEN`, `GITHUB_TOKEN`, `ASC_APP_ID` (numeric Apple ID from App Store Connect → App Information)
+
+### To trigger a new iOS production build + TestFlight upload
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/soul2fade/moodrx/actions/workflows/eas-build.yml/dispatches \
+  -d '{"ref":"main","inputs":{"platform":"ios","profile":"production"}}'
+```
+Or go to **github.com/soul2fade/moodrx/actions → EAS Build → Run workflow → ios / production**.
+
+### How it works
+1. GitHub Actions runs `.github/workflows/eas-build.yml`
+2. `eas build --platform ios --profile production --non-interactive --wait` — EAS pulls credentials from cloud, builds on Apple's Mac servers (~15 min)
+3. Submit step patches `eas.json` with `ASC_APP_ID` secret at runtime, then runs `eas submit --platform ios --latest --non-interactive`
+4. Apple processes the build (~10–30 min), then it appears in TestFlight
+
+### If credentials need to be re-uploaded to EAS
+```bash
+# Upload the cert (must use -legacy flag for macOS keychain compatibility)
+P12_BASE64=$(base64 -w 0 .local/ios-cert/distribution_legacy.p12)
+# POST to EAS GraphQL: createAppleDistributionCertificate with certP12=$P12_BASE64, certPassword="MoodRx2026"
+# Then link to APP_STORE build credentials via setDistributionCertificate
+```
+
 ## Deployment
 
 Configured as static deployment:

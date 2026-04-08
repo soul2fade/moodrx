@@ -57,19 +57,27 @@ export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps)
       }
 
       case 'low': {
-        // Single horizontal line that sags downward in the middle — drooping weight.
+        // Flat line that drops off a cliff — energy suddenly falling low.
+        // No curves, no arcs — nothing that could be read as a smile.
         const w = size;
         const h = size;
-        const y = h * 0.42;
-        const sagY = h * 0.72;
+        const highY = h * 0.32;
+        const lowY = h * 0.75;
+        const d = [
+          `M ${w * 0.05},${highY}`,
+          `L ${w * 0.52},${highY}`,
+          `L ${w * 0.78},${lowY}`,
+          `L ${w * 0.95},${lowY}`,
+        ].join(' ');
         return (
           <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             <Path
-              d={`M ${w * 0.05},${y} Q ${w * 0.5},${sagY} ${w * 0.95},${y}`}
+              d={d}
               stroke={moodColor}
               strokeWidth={1.5}
               fill="none"
               strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </Svg>
         );

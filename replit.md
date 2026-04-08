@@ -1,5 +1,9 @@
 # MoodRx
 
+> **BEFORE DOING ANY IOS BUILD WORK** — read the "iOS Build → TestFlight" section below first.
+> The working process is fully documented. Do not guess, do not regenerate credentials, do not change the p12 format.
+> Cert files live in `.local/ios-cert/` — see `.local/ios-cert/README.md` for everything.
+
 A mobile-first wellness app built with Expo (React Native) that focuses on mood tracking, workouts, and mental wellness.
 
 ## Tech Stack

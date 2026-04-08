@@ -52,11 +52,11 @@ export const SUPPLEMENTS: Supplement[] = [
   },
   {
     name: "Lion's Mane",
-    benefit: 'Neurogenesis',
+    benefit: 'Cognitive support',
     timing: 'Morning',
     dose: '500-1000mg',
     moods: ['foggy'],
-    science: "Lion's Mane stimulates Nerve Growth Factor (NGF) production — a protein that literally grows and repairs neurons. Two clinical trials showed improved cognitive function in adults with mild cognitive impairment. It's one of the only legal, over-the-counter compounds with evidence for actual neurogenesis. Your brain fog isn't permanent. Feed it.",
+    science: "Lion's Mane stimulates Nerve Growth Factor (NGF) production — a protein involved in the growth and maintenance of neurons. Two randomized clinical trials showed significant improvements in cognitive function in adults with mild cognitive impairment. It's one of the few over-the-counter compounds with human clinical evidence for NGF stimulation and measurable cognitive benefit. Your brain fog isn't permanent. Feed it.",
   },
   {
     name: 'Rhodiola',

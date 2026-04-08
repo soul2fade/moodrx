@@ -30,7 +30,7 @@ export const WORKOUTS: Workout[] = [
       '3 min gradual slowdown.',
       '2 min standing. 4-7-8 breathing: in 4, hold 7, out 8.',
     ],
-    why: "Rhythmic bilateral movement (left-right-left-right) activates the brain's default mode network and reduces amygdala hyperactivity. Translation: your alarm system gets a break. The counting gives your prefrontal cortex something to do besides catastrophize. Research shows 20 minutes of steady-state rhythmic exercise reduces cortisol by up to 26%. The 4-7-8 breathing at the end activates your vagus nerve — your body's own chill-out switch.",
+    why: "Rhythmic bilateral movement (left-right-left-right) reduces amygdala hyperactivity and suppresses the ruminative default mode network. Translation: your alarm system gets a break. The counting gives your prefrontal cortex something to do besides catastrophize. Studies consistently show significant reductions in cortisol after 20 minutes of steady-state rhythmic exercise. The 4-7-8 breathing at the end activates your vagus nerve — your body's own chill-out switch.",
   },
   {
     id: 'anxious-2',
@@ -48,7 +48,7 @@ export const WORKOUTS: Workout[] = [
       "Legs up the wall — 5 min. Looks lazy. It's science.",
       "Savasana — 4 min. Lie there. You're welcome.",
     ],
-    why: "Yoga's combination of controlled breathing and physical postures directly regulates the autonomic nervous system. Inversions like legs-up-the-wall increase parasympathetic tone — basically telling your fight-or-flight system to take five. Pigeon pose targets the hip flexors, which store tension during chronic stress. Studies show a single yoga session reduces state anxiety by an average of 40%.",
+    why: "Yoga's combination of controlled breathing and physical postures directly regulates the autonomic nervous system. Inversions like legs-up-the-wall increase parasympathetic tone — basically telling your fight-or-flight system to take five. Pigeon pose targets the hip flexors, which store tension during chronic stress. Multiple studies consistently show significant reductions in state anxiety after a single yoga session.",
   },
   {
     id: 'anxious-3',
@@ -175,7 +175,7 @@ export const WORKOUTS: Workout[] = [
       '10 jumping jacks.',
       '5 rounds box breathing. Clear? Good.',
     ],
-    why: "Cold water triggers the dive reflex, immediately activating the vagus nerve and increasing alertness via norepinephrine release — up to a 300% spike in some studies. The rapid temperature contrast followed by movement creates an adrenaline response that clears cerebral fog faster than caffeine. The brief bodyweight circuit maintains that alertness state. This is the biochemical equivalent of rebooting a frozen computer.",
+    why: "Cold water on the face triggers the mammalian dive reflex, immediately activating the vagus nerve and producing a measurable norepinephrine release that increases alertness. The temperature contrast followed by movement reinforces that adrenaline response. The brief bodyweight circuit locks in the alertness state. This is the biochemical equivalent of rebooting a frozen computer.",
   },
 
   // RESTLESS
@@ -195,7 +195,7 @@ export const WORKOUTS: Workout[] = [
       'Repeat 4 rounds.',
       '3 min stretching. The calm is earned.',
     ],
-    why: "Restlessness is excess energy with nowhere to go — your sympathetic nervous system revved with no outlet. Explosive compound movements are the fastest way to metabolize stress hormones. Jump squats and burpees recruit large muscle groups and rapidly deplete excess adrenaline and cortisol. After 20 minutes of this, your parasympathetic system will assert dominance whether you want it to or not. Studies on exercise and akathisia (extreme restlessness) show high-intensity movement provides the fastest and most complete relief.",
+    why: "Restlessness is excess energy with nowhere to go — your sympathetic nervous system revved with no outlet. Explosive compound movements are the fastest way to metabolize stress hormones. Jump squats and burpees recruit large muscle groups and rapidly deplete excess adrenaline and cortisol. After 20 minutes of this, your parasympathetic system will assert dominance whether you want it to or not. High-intensity exercise is consistently shown to produce the most rapid and complete discharge of sympathetic overactivation.",
   },
   {
     id: 'restless-2',

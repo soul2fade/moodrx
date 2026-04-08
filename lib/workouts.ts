@@ -84,7 +84,7 @@ export const WORKOUTS: Workout[] = [
       '10 jumping jacks between sets.',
       "3 min cool-down. You did something your brain said you couldn't.",
     ],
-    why: "Resistance training triggers BDNF (Brain-Derived Neurotrophic Factor) — literally called 'Miracle-Gro for the brain.' Depression physically shrinks the hippocampus. Strength training grows it back. Every rep is a small dopamine hit. The compound movements (squats, lunges) activate multiple muscle groups simultaneously, creating a larger neurochemical response. Studies show strength training reduces depressive symptoms with effect sizes comparable to antidepressants.",
+    why: "Resistance training triggers BDNF (Brain-Derived Neurotrophic Factor) — literally called 'Miracle-Gro for the brain.' Depression physically shrinks the hippocampus. Strength training grows it back. Every rep is a small dopamine hit. The compound movements (squats, lunges) activate multiple muscle groups simultaneously, creating a larger neurochemical response. A 2018 meta-analysis in JAMA Psychiatry across 33 randomized controlled trials found resistance exercise produced a clinically meaningful effect size of 0.66 on depressive symptoms — comparable to antidepressant medications.",
   },
   {
     id: 'low-2',
@@ -118,7 +118,7 @@ export const WORKOUTS: Workout[] = [
       "Name 5 things you're grateful for. Coffee counts.",
       "5 min back. You went outside when your brain said don't.",
     ],
-    why: 'Exposure to natural environments reduces rumination by decreasing activity in the subgenual prefrontal cortex — the brain region overactive in depression. The gratitude component activates the medial prefrontal cortex and releases dopamine. Even 20 minutes in a park lowers cortisol measurably. Getting outside when you don\'t want to is itself a behavioral activation technique — the cornerstone of evidence-based depression treatment.',
+    why: 'Exposure to natural environments reduces rumination by decreasing activity in the subgenual prefrontal cortex — the brain region overactive in depression. A 2015 Stanford study published in PNAS measured this directly: participants who walked 90 minutes in nature showed significantly lower sgPFC activity and self-reported rumination compared to those who walked in an urban setting. The gratitude component activates the medial prefrontal cortex and releases dopamine. Getting outside when you don\'t want to is itself a behavioral activation technique — the cornerstone of evidence-based depression treatment.',
   },
 
   // FOGGY

@@ -16,7 +16,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Night',
     dose: '200-400mg',
     moods: ['anxious', 'stressed'],
-    science: "Magnesium regulates your GABA receptors — the same system benzodiazepines target, minus the prescription and the zombie eyes. Most people are deficient and don't know it. The glycinate form crosses the blood-brain barrier better than cheap magnesium oxide, which mostly just makes you run to the bathroom.",
+    science: "Magnesium regulates your GABA receptors — the same system benzodiazepines target, minus the prescription and the zombie eyes. NHANES data shows roughly 48% of Americans fall below the estimated average requirement for magnesium — most of them have no idea. The glycinate form is significantly better absorbed than cheap magnesium oxide, which mostly just makes you run to the bathroom.",
   },
   {
     name: 'Omega-3 EPA/DHA',
@@ -24,7 +24,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'With food',
     dose: '1-2g',
     moods: ['low'],
-    science: "EPA and DHA are structural components of your brain cell membranes. Low omega-3 levels correlate with reduced serotonin transmission — your brain literally can't move the happy chemical around efficiently. The EPA fraction specifically has anti-inflammatory effects in neural tissue that multiple meta-analyses link to reduced depressive symptoms.",
+    science: "EPA and DHA are structural components of your brain cell membranes. Low omega-3 levels correlate with reduced serotonin transmission — your brain literally can't move the happy chemical around efficiently. Across multiple meta-analyses, it's EPA specifically — not DHA — that consistently shows antidepressant effects, via its anti-inflammatory action in neural tissue. Look for supplements where EPA is the dominant fraction.",
   },
   {
     name: 'Ashwagandha KSM-66',
@@ -64,7 +64,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Morning',
     dose: '200-400mg',
     moods: ['stressed', 'foggy'],
-    science: "Rhodiola is an adaptogen that specifically targets mental fatigue. Clinical trials show it reduces cortisol while simultaneously improving attention and cognitive function under stress. It works on the HPA axis — the same stress pathway that ashwagandha hits, but through a different mechanism. They actually stack well together.",
+    science: "Rhodiola is an adaptogen that specifically targets mental fatigue. A placebo-controlled trial by Olsson et al. (2009) found meaningful reductions in burnout and improved attention after just 14 days of use. It works on the HPA axis — the same stress pathway that ashwagandha hits, but through a different mechanism. They stack well together without overlap.",
   },
   {
     name: 'B-Complex',

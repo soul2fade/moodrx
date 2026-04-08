@@ -57,22 +57,13 @@ export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps)
       }
 
       case 'low': {
-        // Flat line that drops off a cliff — energy suddenly falling low.
-        // No curves, no arcs — nothing that could be read as a smile.
+        // Elongated V — abstract downward arrow
         const w = size;
         const h = size;
-        const highY = h * 0.32;
-        const lowY = h * 0.75;
-        const d = [
-          `M ${w * 0.05},${highY}`,
-          `L ${w * 0.52},${highY}`,
-          `L ${w * 0.78},${lowY}`,
-          `L ${w * 0.95},${lowY}`,
-        ].join(' ');
         return (
           <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             <Path
-              d={d}
+              d={`M ${w * 0.05},${h * 0.2} L ${w * 0.5},${h * 0.82} L ${w * 0.95},${h * 0.2}`}
               stroke={moodColor}
               strokeWidth={1.5}
               fill="none"

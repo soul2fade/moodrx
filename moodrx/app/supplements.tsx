@@ -19,27 +19,10 @@ import {
 } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
+import { todayDateString, formatTodayLabel, toDateString } from '@/lib/dateUtils';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
-
-function getTodayString(): string {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function formatTodayLabel(): string {
-  const d = new Date();
-  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  const dayName = days[d.getDay()];
-  const dayNum = String(d.getDate()).padStart(2, '0');
-  const monthName = months[d.getMonth()];
-  return `${dayName}, ${dayNum} ${monthName}`;
-}
 
 function getSupplementStreak(logs: SupplementLog[], supplementName: string): number {
   const takenDates = new Set(
@@ -51,10 +34,7 @@ function getSupplementStreak(logs: SupplementLog[], supplementName: string): num
   check.setHours(0, 0, 0, 0);
 
   while (true) {
-    const year = check.getFullYear();
-    const month = String(check.getMonth() + 1).padStart(2, '0');
-    const day = String(check.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
+    const dateStr = toDateString(check.getTime());
     if (takenDates.has(dateStr)) {
       streak++;
       check.setDate(check.getDate() - 1);
@@ -70,7 +50,7 @@ export default function SupplementsScreen() {
   const [logs, setLogs] = useState<SupplementLog[]>([]);
   const [lastMood, setLastMood] = useState<MoodKey | null>(null);
   const [expandedSupp, setExpandedSupp] = useState<string | null>(null);
-  const today = getTodayString();
+  const today = todayDateString();
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
 

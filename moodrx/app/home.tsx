@@ -20,6 +20,7 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '@/lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useBottomPanel } from '@/hooks/useBottomPanel';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
 
@@ -32,8 +33,7 @@ export default function HomeScreen() {
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const buttonScale = useRef(new Animated.Value(1)).current;
-  const panelAnim = useRef(new Animated.Value(PANEL_HEIGHT)).current;
-  const backdropAnim = useRef(new Animated.Value(0)).current;
+  const { panelAnim, backdropAnim, show: showPanel, dismiss: dismissPanelAnim } = useBottomPanel(PANEL_HEIGHT);
   const moodAnims = useRef(
     MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
   ).current;
@@ -77,19 +77,9 @@ export default function HomeScreen() {
   const showWelcomeBack = !isLoading && !showStillFeeling && !selectedMood && lastSession !== null && daysSinceLastSession !== null && daysSinceLastSession >= 1;
   const { isPremium } = useSubscription();
 
-  const showPanel = useCallback(() => {
-    Animated.parallel([
-      Animated.spring(panelAnim, { toValue: 0, useNativeDriver: true, speed: 18, bounciness: 2 }),
-      Animated.timing(backdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-    ]).start();
-  }, [panelAnim, backdropAnim]);
-
   const dismissPanel = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(panelAnim, { toValue: PANEL_HEIGHT, duration: 220, useNativeDriver: true }),
-      Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(() => setSelectedMood(null));
-  }, [panelAnim, backdropAnim]);
+    dismissPanelAnim(() => setSelectedMood(null));
+  }, [dismissPanelAnim]);
 
   const handleMoodSelect = useCallback((mood: MoodKey) => {
     setSelectedMood(mood);

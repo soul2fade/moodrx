@@ -18,6 +18,7 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer';
 
 function parseStepDuration(stepText: string): number | null {
   const match = stepText.match(/(\d+)\s*sec(?:onds?)?/i);
@@ -50,12 +51,6 @@ export default function WorkoutScreen() {
   const resolvedWorkout = workout ?? getWorkoutsForMood(mood)[0];
   const [currentStep, setCurrentStep] = useState(0);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
-  const [timerReady, setTimerReady] = useState(false);   // unlocks NEXT once a timer is picked
-  const [countdown, setCountdown] = useState<number | null>(null); // 3-2-1 phase
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const countdownRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const timerEndRef = useRef<number | null>(null);
   const isNavigating = useRef(false);
   const handleNextRef = useRef<() => void>(() => {});
 
@@ -67,6 +62,13 @@ export default function WorkoutScreen() {
   const accentColor = moodData.color;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
 
+  // Timer hook — replaces 5 state vars + 3 refs
+  const {
+    timerSeconds, timerReady, countdown, isTimerActive,
+    clearTimer, clearCountdown, selectTimer, stopTimer,
+    setTimerReady, resetForNextStep,
+  } = useWorkoutTimer(() => handleNextRef.current());
+
   useEffect(() => {
     if (totalSteps === 0) return;
     Animated.timing(progressAnim, {
@@ -76,28 +78,6 @@ export default function WorkoutScreen() {
     }).start();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, totalSteps]);
-
-  const clearTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    timerEndRef.current = null;
-    setTimerSeconds(null);
-  }, []);
-
-  const clearCountdown = useCallback(() => {
-    countdownRef.current.forEach(clearTimeout);
-    countdownRef.current = [];
-    setCountdown(null);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      countdownRef.current.forEach(clearTimeout);
-    };
-  }, []);
 
   const hwBackHandler = useCallback(() => {
     if (showQuitConfirm) {
@@ -114,46 +94,6 @@ export default function WorkoutScreen() {
   }, [showQuitConfirm, currentStep, clearTimer]);
   useHardwareBack(hwBackHandler);
 
-  const startTimer = (seconds: number) => {
-    clearTimer();
-    const endTime = Date.now() + seconds * 1000;
-    timerEndRef.current = endTime;
-    setTimerSeconds(seconds);
-    intervalRef.current = setInterval(() => {
-      const remaining = Math.round((endTime - Date.now()) / 1000);
-      if (remaining <= 0) {
-        clearInterval(intervalRef.current!);
-        intervalRef.current = null;
-        timerEndRef.current = null;
-        setTimerSeconds(null);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Auto-advance to next step after a short breath
-        setTimeout(() => handleNextRef.current(), 700);
-      } else {
-        setTimerSeconds(remaining);
-      }
-    }, 250);
-  };
-
-  const selectTimer = (seconds: number) => {
-    clearTimer();
-    clearCountdown();
-    setTimerReady(true);
-    setCountdown(3);
-    const t1 = setTimeout(() => setCountdown(2), 1000);
-    const t2 = setTimeout(() => setCountdown(1), 2000);
-    const t3 = setTimeout(() => {
-      setCountdown(null);
-      startTimer(seconds);
-    }, 3000);
-    countdownRef.current = [t1, t2, t3];
-  };
-
-  const stopTimer = () => {
-    clearCountdown();
-    clearTimer();
-  };
-
   const onPressIn = useCallback(() => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start(), [buttonScale]);
   const onPressOut = useCallback(() => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start(), [buttonScale]);
 
@@ -164,7 +104,7 @@ export default function WorkoutScreen() {
     clearTimer();
     clearCountdown();
     if (currentStep < totalSteps - 1) {
-      setTimerReady(false);
+      resetForNextStep();
       setCurrentStep((s) => s + 1);
     } else {
       isNavigating.current = true;
@@ -185,7 +125,7 @@ export default function WorkoutScreen() {
     } else {
       clearTimer();
       clearCountdown();
-      setTimerReady(false);
+      resetForNextStep();
       setCurrentStep((s) => s - 1);
     }
   };
@@ -363,17 +303,16 @@ export default function WorkoutScreen() {
         </TouchableOpacity>
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           {(() => {
-            const timerActive = timerSeconds !== null || countdown !== null;
-            const canNext = timerReady && !timerActive;
-            const canSkip = !timerReady && !timerActive;
+            const canNext = timerReady && !isTimerActive;
+            const canSkip = !timerReady && !isTimerActive;
             const handleSkip = () => {
               setTimerReady(true);
               handleNext();
             };
-            if (timerActive) {
+            if (isTimerActive) {
               return (
-                <View style={flattenStyle([styles.nextBtn, { borderColor: '#2a2a2a' }])}>
-                  <Text style={{ ...t.timer, color: '#3a3a3a' }}>NEXT →</Text>
+                <View style={[styles.nextBtn, styles.nextBtnDisabled]}>
+                  <Text style={styles.nextBtnTextDisabled}>NEXT →</Text>
                 </View>
               );
             }
@@ -390,7 +329,7 @@ export default function WorkoutScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={canSkip ? 'Skip this step' : isLastStep ? 'Complete workout' : 'Next step'}
               >
-                <Text style={{ ...t.timer, color: canNext ? accentColor : '#888888' }}>
+                <Text style={[styles.nextBtnText, { color: canNext ? accentColor : '#888888' }]}>
                   {canSkip ? 'SKIP →' : isLastStep ? 'DONE. LEGEND. →' : 'NEXT →'}
                 </Text>
               </TouchableOpacity>
@@ -608,5 +547,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 12,
     paddingHorizontal: 24,
+  },
+  nextBtnDisabled: {
+    borderColor: '#2a2a2a',
+  },
+  nextBtnText: {
+    ...t.timer,
+  },
+  nextBtnTextDisabled: {
+    ...t.timer,
+    color: '#3a3a3a',
   },
 });

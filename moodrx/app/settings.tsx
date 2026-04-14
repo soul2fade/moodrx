@@ -53,8 +53,7 @@ export default function SettingsScreen() {
       toggleAnim.setValue(enabled ? 1 : 0);
       if (timeVal) setSelectedTime(timeVal);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [toggleAnim]);
 
   const animateToggle = (toValue: number) => {
     Animated.spring(toggleAnim, {

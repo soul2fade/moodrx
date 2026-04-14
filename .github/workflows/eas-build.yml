@@ -63,6 +63,40 @@ jobs:
             --non-interactive \
             --wait
 
+      - name: Submit Android to Play Store
+        if: github.event.inputs.profile == 'production' && github.event.inputs.platform == 'android'
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICE_ACCOUNT_JSON" ]; then
+            echo ""
+            echo "========================================="
+            echo "BUILD SUCCEEDED — .aab is on Expo dashboard"
+            echo "========================================="
+            echo ""
+            echo "To enable auto-submit to Play Store:"
+            echo "  1. Add GOOGLE_SERVICE_ACCOUNT_JSON secret to GitHub"
+            echo "  2. Re-trigger this workflow"
+            exit 0
+          fi
+          echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > /tmp/service-account.json
+          node -e "
+            const fs = require('fs');
+            const eas = JSON.parse(fs.readFileSync('eas.json', 'utf8'));
+            eas.submit = eas.submit || {};
+            eas.submit.production = eas.submit.production || {};
+            eas.submit.production.android = {
+              serviceAccountKeyPath: '/tmp/service-account.json',
+              track: 'internal'
+            };
+            fs.writeFileSync('eas.json', JSON.stringify(eas, null, 2));
+            console.log('Android submit config patched.');
+          "
+          eas submit \
+            --platform android \
+            --latest \
+            --non-interactive
+
       - name: Submit iOS to TestFlight
         if: github.event.inputs.profile == 'production' && github.event.inputs.platform == 'ios'
         env:

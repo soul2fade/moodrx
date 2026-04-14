@@ -63,17 +63,21 @@ export default function HomeScreen() {
     }, [])
   );
 
-  const streak = useMemo(() => getStreak(sessions), [sessions]);
+  const { streak, moodIdentity, lastSession, daysSinceLastSession } = useMemo(() => {
+    const last = sessions.length > 0 ? sessions[sessions.length - 1] : null;
+    return {
+      streak: getStreak(sessions),
+      moodIdentity: getMoodIdentity(sessions),
+      lastSession: last,
+      daysSinceLastSession: last
+        ? Math.floor((Date.now() - last.timestamp) / (24 * 60 * 60 * 1000))
+        : null,
+    };
+  }, [sessions]);
+
   const sessionCount = sessions.length;
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
-  const moodIdentity = useMemo(() => getMoodIdentity(sessions), [sessions]);
-
-  const lastSession = sessions.length > 0 ? sessions[sessions.length - 1] : null;
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
-  const daysSinceLastSession = useMemo(() => {
-    if (!lastSession) return null;
-    return Math.floor((Date.now() - lastSession.timestamp) / (24 * 60 * 60 * 1000));
-  }, [lastSession]);
   const showWelcomeBack = !isLoading && !showStillFeeling && !selectedMood && lastSession !== null && daysSinceLastSession !== null && daysSinceLastSession >= 1;
   const { isPremium } = useSubscription();
 

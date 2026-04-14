@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -24,26 +24,35 @@ import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
-function getSupplementStreak(logs: SupplementLog[], supplementName: string): number {
-  const takenDates = new Set(
-    logs.filter((l) => l.supplementName === supplementName && l.taken).map((l) => l.date)
-  );
-
-  let streak = 0;
-  const check = new Date();
-  check.setHours(0, 0, 0, 0);
-
-  while (true) {
-    const dateStr = toDateString(check.getTime());
-    if (takenDates.has(dateStr)) {
-      streak++;
-      check.setDate(check.getDate() - 1);
-    } else {
-      break;
+function buildSupplementStreakMap(logs: SupplementLog[]): Map<string, number> {
+  // Single pass: group taken dates by supplement name
+  const takenByName = new Map<string, Set<string>>();
+  for (const l of logs) {
+    if (!l.taken) continue;
+    let set = takenByName.get(l.supplementName);
+    if (!set) {
+      set = new Set();
+      takenByName.set(l.supplementName, set);
     }
+    set.add(l.date);
   }
 
-  return streak;
+  const streaks = new Map<string, number>();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  for (const [name, dates] of takenByName) {
+    let streak = 0;
+    let t = todayMs;
+    while (dates.has(toDateString(t))) {
+      streak++;
+      t -= dayMs;
+    }
+    streaks.set(name, streak);
+  }
+  return streaks;
 }
 
 export default function SupplementsScreen() {
@@ -74,15 +83,23 @@ export default function SupplementsScreen() {
 
   useFocusEffect(loadData);
 
-  const visibleSupplements = lastMood
-    ? SUPPLEMENTS.filter((s) => s.moods.includes(lastMood))
-    : SUPPLEMENTS;
+  const visibleSupplements = useMemo(
+    () => (lastMood ? SUPPLEMENTS.filter((s) => s.moods.includes(lastMood)) : SUPPLEMENTS),
+    [lastMood]
+  );
 
-  const todayLogs = logs.filter((l) => l.date === today);
-  const takenSet = new Set(todayLogs.filter((l) => l.taken).map((l) => l.supplementName));
-  const takenCount = [...takenSet].filter((name) =>
-    visibleSupplements.some((s) => s.name === name)
-  ).length;
+  const takenSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of logs) {
+      if (l.date === today && l.taken) set.add(l.supplementName);
+    }
+    return set;
+  }, [logs, today]);
+
+  const takenCount = useMemo(
+    () => visibleSupplements.reduce((n, s) => n + (takenSet.has(s.name) ? 1 : 0), 0),
+    [visibleSupplements, takenSet]
+  );
   const totalCount = visibleSupplements.length;
 
   const accentColor = lastMood ? MOODS[lastMood].color : '#059669';
@@ -97,10 +114,13 @@ export default function SupplementsScreen() {
     setExpandedSupp((prev) => (prev === supplementName ? null : supplementName));
   };
 
-  const supplementStreaks = visibleSupplements.map((s) => ({
-    name: s.name,
-    streak: getSupplementStreak(logs, s.name),
-  })).sort((a, b) => b.streak - a.streak).slice(0, 3);
+  const supplementStreaks = useMemo(() => {
+    const streakMap = buildSupplementStreakMap(logs);
+    return visibleSupplements
+      .map((s) => ({ name: s.name, streak: streakMap.get(s.name) ?? 0 }))
+      .sort((a, b) => b.streak - a.streak)
+      .slice(0, 3);
+  }, [logs, visibleSupplements]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>

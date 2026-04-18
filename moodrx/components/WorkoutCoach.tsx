@@ -192,13 +192,14 @@ export default function WorkoutCoach({
       )}
 
       <View style={styles.figureWrap}>
-        <View style={[{ width: figureSize, height: figureSize }, styles.videoContainer, { borderColor: activeCoach.color + '40' }]}>
+        <View style={[{ width: figureSize, height: figureSize, borderWidth: 3, borderColor: '#00FF00', backgroundColor: '#001100' }]}>
           <VideoView
             player={player}
             style={{ width: figureSize, height: figureSize }}
             contentFit="contain"
             nativeControls={false}
           />
+          <Text style={{ position: 'absolute', top: 2, left: 2, color: '#00FF00', fontSize: 10, fontWeight: 'bold' }}>VIDEO v3</Text>
         </View>
       </View>
 

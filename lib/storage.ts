@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { toDateString, todayDateString, yesterdayDateString } from './dateUtils';
 
 export type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
@@ -36,11 +37,29 @@ const SESSIONS_KEY = '@moodrx_sessions';
 const SUPPLEMENT_LOGS_KEY = 'supplement_logs';
 const CUSTOM_WORKOUTS_KEY = 'custom_workouts';
 
+// ─── Simple in-memory cache to avoid redundant AsyncStorage reads ───
+let sessionsCache: Session[] | null = null;
+let sessionsCacheTime = 0;
+let supplementsCache: SupplementLog[] | null = null;
+let supplementsCacheTime = 0;
+const CACHE_TTL = 5000; // 5 seconds
+
+function invalidateSessionsCache() {
+  sessionsCache = null;
+  sessionsCacheTime = 0;
+}
+
+function invalidateSupplementsCache() {
+  supplementsCache = null;
+  supplementsCacheTime = 0;
+}
+
 export async function getFirstLaunchDone(): Promise<boolean> {
   try {
     const value = await AsyncStorage.getItem(FIRST_LAUNCH_KEY);
     return value === 'true';
-  } catch {
+  } catch (e) {
+    console.warn('[MoodRx] getFirstLaunchDone failed:', e);
     return false;
   }
 }
@@ -48,17 +67,29 @@ export async function getFirstLaunchDone(): Promise<boolean> {
 export async function setFirstLaunchDone(): Promise<void> {
   try {
     await AsyncStorage.setItem(FIRST_LAUNCH_KEY, 'true');
-  } catch {
-    // ignore
+  } catch (e) {
+    console.warn('[MoodRx] setFirstLaunchDone failed:', e);
   }
 }
 
 export async function getSessions(): Promise<Session[]> {
+  const now = Date.now();
+  if (sessionsCache && now - sessionsCacheTime < CACHE_TTL) {
+    return sessionsCache;
+  }
   try {
     const raw = await AsyncStorage.getItem(SESSIONS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as Session[];
-  } catch {
+    if (!raw) {
+      sessionsCache = [];
+      sessionsCacheTime = now;
+      return [];
+    }
+    const parsed = JSON.parse(raw) as Session[];
+    sessionsCache = parsed;
+    sessionsCacheTime = now;
+    return parsed;
+  } catch (e) {
+    console.warn('[MoodRx] getSessions failed:', e);
     return [];
   }
 }
@@ -67,22 +98,36 @@ export async function addSession(session: Session): Promise<void> {
   const existing = await getSessions();
   existing.push(session);
   await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(existing));
+  invalidateSessionsCache();
 }
 
 export async function clearSessions(): Promise<void> {
   try {
     await AsyncStorage.removeItem(SESSIONS_KEY);
-  } catch {
-    // ignore
+    invalidateSessionsCache();
+  } catch (e) {
+    console.warn('[MoodRx] clearSessions failed:', e);
   }
 }
 
 export async function getSupplementLogs(): Promise<SupplementLog[]> {
+  const now = Date.now();
+  if (supplementsCache && now - supplementsCacheTime < CACHE_TTL) {
+    return supplementsCache;
+  }
   try {
     const raw = await AsyncStorage.getItem(SUPPLEMENT_LOGS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as SupplementLog[];
-  } catch {
+    if (!raw) {
+      supplementsCache = [];
+      supplementsCacheTime = now;
+      return [];
+    }
+    const parsed = JSON.parse(raw) as SupplementLog[];
+    supplementsCache = parsed;
+    supplementsCacheTime = now;
+    return parsed;
+  } catch (e) {
+    console.warn('[MoodRx] getSupplementLogs failed:', e);
     return [];
   }
 }
@@ -99,8 +144,9 @@ export async function saveSupplementLog(log: SupplementLog): Promise<void> {
       existing.push(log);
     }
     await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(existing));
-  } catch {
-    // ignore
+    invalidateSupplementsCache();
+  } catch (e) {
+    console.warn('[MoodRx] saveSupplementLog failed:', e);
   }
 }
 
@@ -121,8 +167,9 @@ export async function toggleSupplementLog(supplementName: string, date: string):
       all[idx].taken = true;
     }
     await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(all));
-  } catch {
-    // ignore
+    invalidateSupplementsCache();
+  } catch (e) {
+    console.warn('[MoodRx] toggleSupplementLog failed:', e);
   }
 }
 
@@ -131,7 +178,8 @@ export async function getCustomWorkouts(): Promise<CustomWorkout[]> {
     const raw = await AsyncStorage.getItem(CUSTOM_WORKOUTS_KEY);
     if (!raw) return [];
     return JSON.parse(raw) as CustomWorkout[];
-  } catch {
+  } catch (e) {
+    console.warn('[MoodRx] getCustomWorkouts failed:', e);
     return [];
   }
 }
@@ -141,8 +189,8 @@ export async function saveCustomWorkout(workout: CustomWorkout): Promise<void> {
     const existing = await getCustomWorkouts();
     existing.push(workout);
     await AsyncStorage.setItem(CUSTOM_WORKOUTS_KEY, JSON.stringify(existing));
-  } catch {
-    // ignore
+  } catch (e) {
+    console.warn('[MoodRx] saveCustomWorkout failed:', e);
   }
 }
 
@@ -151,29 +199,9 @@ export async function deleteCustomWorkout(id: string): Promise<void> {
     const existing = await getCustomWorkouts();
     const filtered = existing.filter((w) => w.id !== id);
     await AsyncStorage.setItem(CUSTOM_WORKOUTS_KEY, JSON.stringify(filtered));
-  } catch {
-    // ignore
+  } catch (e) {
+    console.warn('[MoodRx] deleteCustomWorkout failed:', e);
   }
-}
-
-function toDateString(ts: number): string {
-  const d = new Date(ts);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-/** Return today's YYYY-MM-DD in local time — DST-safe */
-function todayDateString(): string {
-  return toDateString(Date.now());
-}
-
-/** Return yesterday's YYYY-MM-DD in local time — DST-safe (avoids 86400000 constant) */
-function yesterdayDateString(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return toDateString(d.getTime());
 }
 
 export function getStreak(sessions: Session[]): number {
@@ -252,8 +280,10 @@ export async function clearAllData(): Promise<void> {
       FIRST_LAUNCH_KEY,
       USER_PROFILE_KEY,
     ]);
-  } catch {
-    // ignore
+    invalidateSessionsCache();
+    invalidateSupplementsCache();
+  } catch (e) {
+    console.warn('[MoodRx] clearAllData failed:', e);
   }
 }
 
@@ -269,7 +299,8 @@ export async function getUserProfile(): Promise<UserProfile> {
     const raw = await AsyncStorage.getItem(USER_PROFILE_KEY);
     if (!raw) return {};
     return JSON.parse(raw) as UserProfile;
-  } catch {
+  } catch (e) {
+    console.warn('[MoodRx] getUserProfile failed:', e);
     return {};
   }
 }
@@ -277,8 +308,8 @@ export async function getUserProfile(): Promise<UserProfile> {
 export async function setUserProfile(profile: UserProfile): Promise<void> {
   try {
     await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
-  } catch {
-    // ignore
+  } catch (e) {
+    console.warn('[MoodRx] setUserProfile failed:', e);
   }
 }
 
@@ -288,7 +319,8 @@ export async function getNotifPromptShown(): Promise<boolean> {
   try {
     const val = await AsyncStorage.getItem(NOTIF_PROMPT_SHOWN_KEY);
     return val === 'true';
-  } catch {
+  } catch (e) {
+    console.warn('[MoodRx] getNotifPromptShown failed:', e);
     return false;
   }
 }
@@ -296,7 +328,7 @@ export async function getNotifPromptShown(): Promise<boolean> {
 export async function setNotifPromptShown(): Promise<void> {
   try {
     await AsyncStorage.setItem(NOTIF_PROMPT_SHOWN_KEY, 'true');
-  } catch {
-    // ignore
+  } catch (e) {
+    console.warn('[MoodRx] setNotifPromptShown failed:', e);
   }
 }

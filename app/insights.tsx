@@ -19,41 +19,21 @@ import {
   getAverageChange,
   Session,
 } from '@/lib/storage';
-import type { MoodKey } from '@/lib/storage';
-import { MOODS, MOOD_ORDER } from '@/lib/moods';
+import { MOODS } from '@/lib/moods';
 import { MoodIcon } from '@/components/MoodIcon';
 import { WorkoutCalendar } from '@/components/WorkoutCalendar';
 import { ShareCard } from '@/components/ShareCard';
+import { getMostCommonMood, formatChange } from '@/lib/analytics';
+import { DAY_ABBREVS } from '@/lib/dateUtils';
+import { colors } from '@/lib/colors';
 import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { useBottomPanel } from '@/hooks/useBottomPanel';
 
-const DAY_ABBREVS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const CASE_PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
-
-function getMostCommonMood(sessions: Session[]): MoodKey {
-  const counts: Partial<Record<MoodKey, number>> = {};
-  for (const s of sessions) {
-    counts[s.mood] = (counts[s.mood] ?? 0) + 1;
-  }
-  let max = 0;
-  let best: MoodKey = 'anxious';
-  for (const key of MOOD_ORDER) {
-    const c = counts[key] ?? 0;
-    if (c > max) {
-      max = c;
-      best = key;
-    }
-  }
-  return best;
-}
-
-function formatChange(val: number): string {
-  const rounded = Math.abs(val).toFixed(1);
-  return val >= 0 ? `+${rounded}` : `-${rounded}`;
-}
 
 const BAR_MAX_HEIGHT = 60;
 const BAR_WIDTH = 18;
@@ -65,8 +45,7 @@ export default function InsightsScreen() {
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [caseSession, setCaseSession] = useState<Session | null>(null);
   const shareCardRef = useRef<ViewShot>(null);
-  const casePanelAnim = useRef(new Animated.Value(CASE_PANEL_HEIGHT)).current;
-  const caseBackdropAnim = useRef(new Animated.Value(0)).current;
+  const { panelAnim: casePanelAnim, backdropAnim: caseBackdropAnim, show: showCasePanelAnim, dismiss: dismissCasePanelAnim } = useBottomPanel(CASE_PANEL_HEIGHT);
   const { isPremium } = useSubscription();
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
@@ -116,18 +95,12 @@ export default function InsightsScreen() {
 
   const showCasePanel = useCallback((session: Session) => {
     setCaseSession(session);
-    Animated.parallel([
-      Animated.spring(casePanelAnim, { toValue: 0, useNativeDriver: true, speed: 18, bounciness: 2 }),
-      Animated.timing(caseBackdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-    ]).start();
-  }, [casePanelAnim, caseBackdropAnim]);
+    showCasePanelAnim();
+  }, [showCasePanelAnim]);
 
   const dismissCasePanel = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(casePanelAnim, { toValue: CASE_PANEL_HEIGHT, duration: 220, useNativeDriver: true }),
-      Animated.timing(caseBackdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(() => setCaseSession(null));
-  }, [casePanelAnim, caseBackdropAnim]);
+    dismissCasePanelAnim(() => setCaseSession(null));
+  }, [dismissCasePanelAnim]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -163,7 +136,7 @@ export default function InsightsScreen() {
               accessible={true}
               accessibilityLabel={`${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}`}
             >
-              <Text style={{ ...t.dataValue, color: '#5EAAB5' }}>{sessionCount}</Text>
+              <Text style={styles.statValueSessions}>{sessionCount}</Text>
               <Text style={styles.statLabel}>SESSIONS</Text>
             </View>
             <View style={styles.statDivider} />
@@ -172,7 +145,7 @@ export default function InsightsScreen() {
               accessible={true}
               accessibilityLabel={`Average intensity change: ${sessionCount === 0 ? 'no data' : formatChange(avgChange) + ' points'}`}
             >
-              <Text style={{ ...t.dataValue, color: '#059669' }}>
+              <Text style={styles.statValueChange}>
                 {sessionCount === 0 ? '—' : formatChange(avgChange)}
               </Text>
               <Text style={styles.statLabel}>AVG CHANGE</Text>
@@ -183,7 +156,7 @@ export default function InsightsScreen() {
               accessible={true}
               accessibilityLabel={`${streak} ${streak === 1 ? 'day' : 'days'} streak`}
             >
-              <Text style={{ ...t.dataValue, color: '#D97706' }}>{streak}</Text>
+              <Text style={styles.statValueStreak}>{streak}</Text>
               <Text style={styles.statLabel}>DAY STREAK</Text>
             </View>
           </View>
@@ -191,20 +164,20 @@ export default function InsightsScreen() {
 
         {/* Supplement Tracker button */}
         <TouchableOpacity
-          style={{ borderWidth: 1, borderColor: '#525252', paddingVertical: 12, alignItems: 'center', marginTop: 16 }}
+          style={styles.supplementBtn}
           onPress={() => isPremium ? router.push('/supplements') : setShowPremiumSheet(true)}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker with Pro'}
         >
-          <Text style={{ ...t.label, color: '#c8c8c8', letterSpacing: 2 }}>
+          <Text style={styles.supplementBtnText}>
             {isPremium ? 'SUPPLEMENT TRACKER →' : 'SUPPLEMENT TRACKER [PRO] →'}
           </Text>
         </TouchableOpacity>
 
         {/* Calendar */}
         {isPremium ? (
-          <View style={{ marginTop: 32 }}>
+          <View style={styles.calendarWrap}>
             <WorkoutCalendar sessions={sessions} />
           </View>
         ) : (
@@ -331,7 +304,7 @@ export default function InsightsScreen() {
                     {session.rating === 'yes' && (
                       <Text style={styles.recentStar}>★</Text>
                     )}
-                    <Text style={{ ...t.dataValue, fontSize: 16, fontFamily: fonts.mono.regular, color: changeColor }}>{changeStr}</Text>
+                    <Text style={[styles.recentChangeValue, { color: changeColor }]}>{changeStr}</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -355,13 +328,13 @@ export default function InsightsScreen() {
         {/* Share Progress button */}
         {sessionCount > 0 && (
           <TouchableOpacity
-            style={{ borderWidth: 1, borderColor: '#525252', paddingVertical: 16, alignItems: 'center', marginBottom: 12, marginTop: 32 }}
+            style={styles.shareBtn}
             onPress={handleShare}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Share your progress"
           >
-            <Text style={{ ...t.label, color: '#c8c8c8', letterSpacing: 2 }}>SHARE PROGRESS →</Text>
+            <Text style={styles.shareBtnText}>SHARE PROGRESS →</Text>
           </TouchableOpacity>
         )}
 
@@ -415,7 +388,7 @@ export default function InsightsScreen() {
           </View>
         )}
 
-        <View style={{ height: 32 }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
       {/* Hidden ShareCard for screenshot */}
@@ -924,5 +897,53 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#333333',
     letterSpacing: 2,
+  },
+  statValueSessions: {
+    ...t.dataValue,
+    color: colors.info,
+  },
+  statValueChange: {
+    ...t.dataValue,
+    color: colors.success,
+  },
+  statValueStreak: {
+    ...t.dataValue,
+    color: colors.warning,
+  },
+  supplementBtn: {
+    borderWidth: 1,
+    borderColor: colors.textDim,
+    paddingVertical: 12,
+    alignItems: 'center' as const,
+    marginTop: 16,
+  },
+  supplementBtnText: {
+    ...t.label,
+    color: colors.textSecondary,
+    letterSpacing: 2,
+  },
+  calendarWrap: {
+    marginTop: 32,
+  },
+  recentChangeValue: {
+    ...t.dataValue,
+    fontSize: 16,
+    fontFamily: fonts.mono.regular,
+  },
+  shareBtn: {
+    borderWidth: 1,
+    borderColor: colors.textDim,
+    paddingVertical: 16,
+    alignItems: 'center' as const,
+    marginBottom: 12,
+    marginTop: 32,
+  },
+  shareBtnText: {
+    ...t.label,
+    color: colors.textSecondary,
+    letterSpacing: 2,
+  },
+  bottomSpacer: {
+    height: 32,
   },
 });

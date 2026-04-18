@@ -95,25 +95,6 @@ function getPhrase(coachId: CoachId, stepIndex: number): string {
 
 const COACH_VIDEO = require('../assets/videos/coach-figure.mp4');
 
-const CoachFigure = ({ color, size }: { coachId: CoachId; step: number; color: string; size: number }) => {
-  const player = useVideoPlayer(COACH_VIDEO, (p) => {
-    p.loop = true;
-    p.muted = true;
-    p.play();
-  });
-
-  return (
-    <View style={[{ width: size, height: size }, styles.videoContainer, { borderColor: color + '40' }]}>
-      <VideoView
-        player={player}
-        style={{ width: size, height: size }}
-        contentFit="contain"
-        nativeControls={false}
-      />
-    </View>
-  );
-};
-
 // ─── MAIN COMPONENT ─────────────────────────────────────────────
 
 interface WorkoutCoachProps {
@@ -143,6 +124,16 @@ export default function WorkoutCoach({
   const [selectedCoach, setSelectedCoach] = useState<CoachId>(defaultCoachId);
   const [internalStep, setInternalStep] = useState(0);
   const [phrase, setPhrase] = useState(() => getPhrase(defaultCoachId, 0));
+
+  const player = useVideoPlayer(COACH_VIDEO, (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
+  });
+
+  useEffect(() => {
+    try { player.play(); } catch (_) {}
+  }, [player]);
 
   const isControlled = controlledStep !== undefined;
   const step = isControlled ? Math.min(3, Math.max(0, controlledStep)) : internalStep;
@@ -201,7 +192,14 @@ export default function WorkoutCoach({
       )}
 
       <View style={styles.figureWrap}>
-        <CoachFigure coachId={selectedCoach} step={step} color={activeCoach.color} size={figureSize} />
+        <View style={[{ width: figureSize, height: figureSize }, styles.videoContainer, { borderColor: activeCoach.color + '40' }]}>
+          <VideoView
+            player={player}
+            style={{ width: figureSize, height: figureSize }}
+            contentFit="contain"
+            nativeControls={false}
+          />
+        </View>
       </View>
 
       <View style={styles.bubble}>

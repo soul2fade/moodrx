@@ -25,7 +25,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { VeraFigure, RonFigure, BrickFigure, RickyFigure, DerekFigure } from './coaches';
+import { useVideoPlayer, VideoView } from 'expo-video';
 
 type CoachId = 'vera' | 'ron' | 'brick' | 'ricky' | 'derek';
 type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
@@ -93,16 +93,25 @@ function getPhrase(coachId: CoachId, stepIndex: number): string {
   return bank[Math.floor(Math.random() * bank.length)];
 }
 
-const CoachFigure = ({ coachId, step, color, size }: { coachId: CoachId; step: number; color: string; size: number }) => {
-  const props = { step, color, size };
-  switch (coachId) {
-    case 'vera':  return <VeraFigure {...props} />;
-    case 'ron':   return <RonFigure {...props} />;
-    case 'brick': return <BrickFigure {...props} />;
-    case 'ricky': return <RickyFigure {...props} />;
-    case 'derek': return <DerekFigure {...props} />;
-    default:      return <RonFigure {...props} />;
-  }
+const COACH_VIDEO = require('../assets/videos/coach-figure.mp4');
+
+const CoachFigure = ({ color, size }: { coachId: CoachId; step: number; color: string; size: number }) => {
+  const player = useVideoPlayer(COACH_VIDEO, (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
+  });
+
+  return (
+    <View style={[{ width: size, height: size }, styles.videoContainer, { borderColor: color + '40' }]}>
+      <VideoView
+        player={player}
+        style={{ width: size, height: size }}
+        contentFit="contain"
+        nativeControls={false}
+      />
+    </View>
+  );
 };
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────
@@ -231,4 +240,5 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', gap: 8 },
   ctrlBtn: { paddingHorizontal: 20, paddingVertical: 9, borderRadius: 8, borderWidth: 0.5, borderColor: '#333' },
   ctrlText: { fontSize: 13, color: '#bbb' },
+  videoContainer: { borderRadius: 8, overflow: 'hidden', borderWidth: 1, backgroundColor: '#111' },
 });

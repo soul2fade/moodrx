@@ -20,7 +20,7 @@ interface MoodIconProps {
   color?: string;
 }
 
-export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps) {
+function MoodIconImpl({ mood, size = 32, opacity = 1, color }: MoodIconProps) {
   const moodColor = color ?? MOODS[mood].color;
   const half = size / 2;
 
@@ -202,3 +202,5 @@ export function MoodIcon({ mood, size = 32, opacity = 1, color }: MoodIconProps)
     </View>
   );
 }
+
+export const MoodIcon = React.memo(MoodIconImpl);

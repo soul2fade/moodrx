@@ -1,36 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Session } from '@/lib/storage';
-import type { MoodKey } from '@/lib/storage';
-import { MOODS, MOOD_ORDER } from '@/lib/moods';
+import { MOODS } from '@/lib/moods';
+import { getMostCommonMood, formatChange } from '@/lib/analytics';
 import { type as t } from '../lib/typography';
 
 interface ShareCardProps {
   sessions: Session[];
   streak: number;
   avgChange: number;
-}
-
-function getMostCommonMood(sessions: Session[]): MoodKey {
-  const counts: Partial<Record<MoodKey, number>> = {};
-  for (const s of sessions) {
-    counts[s.mood] = (counts[s.mood] ?? 0) + 1;
-  }
-  let max = 0;
-  let best: MoodKey = 'anxious';
-  for (const key of MOOD_ORDER) {
-    const c = counts[key] ?? 0;
-    if (c > max) {
-      max = c;
-      best = key;
-    }
-  }
-  return best;
-}
-
-function formatChange(val: number): string {
-  const rounded = Math.abs(val).toFixed(1);
-  return val >= 0 ? `+${rounded}` : `-${rounded}`;
 }
 
 export function ShareCard({ sessions, streak, avgChange }: ShareCardProps) {

@@ -52,6 +52,7 @@ jobs:
             --platform ${{ github.event.inputs.platform }} \
             --profile preview \
             --non-interactive \
+            --clear-cache \
             --no-wait
 
       - name: Build (production — wait for completion)
@@ -61,6 +62,7 @@ jobs:
             --platform ${{ github.event.inputs.platform }} \
             --profile production \
             --non-interactive \
+            --clear-cache \
             --wait
 
       - name: Submit Android to Play Store

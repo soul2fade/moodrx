@@ -111,8 +111,8 @@ export default function PrescriptionScreen() {
               >
                 <Text
                   style={isSelected
-                    ? { ...t.labelBright, letterSpacing: 2 }
-                    : { ...styles.tabText, color: '#a3a3a3' }}
+                    ? styles.tabTextActive
+                    : styles.tabTextInactive}
                 >
                   {tab.label}
                 </Text>
@@ -203,7 +203,7 @@ export default function PrescriptionScreen() {
                         </View>
                         <View style={styles.workoutNameRow}>
                           <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
-                          <Text style={{ ...t.label, color: '#737373', letterSpacing: 2 }}>UNLOCK PRO →</Text>
+                          <Text style={styles.unlockProText}>UNLOCK PRO →</Text>
                         </View>
                         <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                       </TouchableOpacity>
@@ -275,7 +275,7 @@ export default function PrescriptionScreen() {
                           <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
                           <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
                         </View>
-                        <Text style={{ ...t.label, color: '#737373', letterSpacing: 2, marginTop: 10 }}>
+                        <Text style={styles.unlockProTextStack}>
                           UNLOCK PRO →
                         </Text>
                       </View>
@@ -307,13 +307,13 @@ export default function PrescriptionScreen() {
             </View>
 
             <TouchableOpacity
-              style={{ borderWidth: 1, borderColor: '#525252', paddingVertical: 12, alignItems: 'center', marginTop: 32 }}
+              style={styles.trackStackBtn}
               onPress={() => router.push('/supplements')}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Track today's supplement stack"
             >
-              <Text style={{ ...t.label, color: '#c8c8c8', letterSpacing: 2 }}>TRACK TODAY&apos;S STACK →</Text>
+              <Text style={styles.trackStackBtnText}>TRACK TODAY&apos;S STACK →</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -578,6 +578,38 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   supplementTiming: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 2,
+  },
+  tabTextActive: {
+    ...t.labelBright,
+    letterSpacing: 2,
+  },
+  tabTextInactive: {
+    ...t.label,
+    color: '#a3a3a3',
+    letterSpacing: 2,
+  },
+  unlockProText: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 2,
+  },
+  unlockProTextStack: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 2,
+    marginTop: 10,
+  },
+  trackStackBtn: {
+    borderWidth: 1,
+    borderColor: '#525252',
+    paddingVertical: 12,
+    alignItems: 'center' as const,
+    marginTop: 32,
+  },
+  trackStackBtnText: {
     ...t.label,
     color: '#c8c8c8',
     letterSpacing: 2,

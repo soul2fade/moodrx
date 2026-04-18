@@ -135,7 +135,7 @@ export default function PostWorkoutScreen() {
           <Text style={styles.howLabel}>HOW DO YOU FEEL NOW?</Text>
 
           <View style={styles.scoreDisplay}>
-            <Text style={{ fontSize: 64, fontWeight: '700', color: accentColor }}>{postScore}</Text>
+            <Text style={[styles.scoreNumber, { color: accentColor }]}>{postScore}</Text>
             <Text style={styles.scoreDenom}>/10</Text>
           </View>
 
@@ -519,5 +519,9 @@ const styles = StyleSheet.create({
   logButtonText: {
     ...t.button,
     letterSpacing: 4,
+  },
+  scoreNumber: {
+    fontSize: 64,
+    fontWeight: '700' as const,
   },
 });

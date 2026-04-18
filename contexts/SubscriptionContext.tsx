@@ -2,6 +2,7 @@ import React, {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   useCallback,
   useRef,
@@ -193,21 +194,35 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     pendingPurchaseRef.current = null;
   }, []);
 
+  const value = useMemo<SubscriptionContextValue>(
+    () => ({
+      isPremium,
+      isInTrial,
+      trialDaysLeft,
+      hasUsedTrial,
+      isLoading,
+      offerings,
+      startTrial,
+      purchaseMonthly,
+      purchaseYearly,
+      restorePurchases,
+    }),
+    [
+      isPremium,
+      isInTrial,
+      trialDaysLeft,
+      hasUsedTrial,
+      isLoading,
+      offerings,
+      startTrial,
+      purchaseMonthly,
+      purchaseYearly,
+      restorePurchases,
+    ]
+  );
+
   return (
-    <SubscriptionContext.Provider
-      value={{
-        isPremium,
-        isInTrial,
-        trialDaysLeft,
-        hasUsedTrial,
-        isLoading,
-        offerings,
-        startTrial,
-        purchaseMonthly,
-        purchaseYearly,
-        restorePurchases,
-      }}
-    >
+    <SubscriptionContext.Provider value={value}>
       {children}
       <Modal
         visible={confirmVisible}

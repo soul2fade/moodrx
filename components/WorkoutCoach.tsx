@@ -93,7 +93,14 @@ function getPhrase(coachId: CoachId, stepIndex: number): string {
   return bank[Math.floor(Math.random() * bank.length)];
 }
 
-const COACH_VIDEO = require('../assets/videos/coach-figure.mp4');
+const COACH_VIDEO_BY_MOOD: Record<MoodKey, number> = {
+  anxious:  require('../assets/videos/coach-anxious.mp4'),
+  low:      require('../assets/videos/coach-low.mp4'),
+  foggy:    require('../assets/videos/coach-foggy.mp4'),
+  restless: require('../assets/videos/coach-restless.mp4'),
+  stressed: require('../assets/videos/coach-stressed.mp4'),
+  good:     require('../assets/videos/coach-good.mp4'),
+};
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────
 
@@ -125,7 +132,8 @@ export default function WorkoutCoach({
   const [internalStep, setInternalStep] = useState(0);
   const [phrase, setPhrase] = useState(() => getPhrase(defaultCoachId, 0));
 
-  const player = useVideoPlayer(COACH_VIDEO, (p) => {
+  const coachVideoSource = COACH_VIDEO_BY_MOOD[mood] ?? COACH_VIDEO_BY_MOOD.anxious;
+  const player = useVideoPlayer(coachVideoSource, (p) => {
     p.loop = true;
     p.muted = true;
     p.play();
@@ -192,15 +200,12 @@ export default function WorkoutCoach({
       )}
 
       <View style={styles.figureWrap}>
-        <View style={[{ width: figureSize, height: figureSize, borderWidth: 3, borderColor: '#00FF00', backgroundColor: '#001100' }]}>
-          <VideoView
-            player={player}
-            style={{ width: figureSize, height: figureSize }}
-            contentFit="contain"
-            nativeControls={false}
-          />
-          <Text style={{ position: 'absolute', top: 2, left: 2, color: '#00FF00', fontSize: 10, fontWeight: 'bold' }}>VIDEO v3</Text>
-        </View>
+        <VideoView
+          player={player}
+          style={{ width: figureSize, height: figureSize, backgroundColor: 'transparent' }}
+          contentFit="contain"
+          nativeControls={false}
+        />
       </View>
 
       <View style={styles.bubble}>

@@ -114,6 +114,7 @@ interface WorkoutCoachProps {
   stepDuration?: number;
   figureSize?: number;
   showCoachSelector?: boolean;
+  accentColor?: string;    // mood accent color for attribution text
 }
 
 export default function WorkoutCoach({
@@ -126,6 +127,7 @@ export default function WorkoutCoach({
   stepDuration = 2800,
   figureSize = 160,
   showCoachSelector = false,
+  accentColor,
 }: WorkoutCoachProps) {
   const defaultCoachId = (coachOverride || MOOD_COACH_MAP[mood] || 'ron') as CoachId;
   const [selectedCoach, setSelectedCoach] = useState<CoachId>(defaultCoachId);
@@ -211,7 +213,7 @@ export default function WorkoutCoach({
       <View style={styles.bubble}>
         <Text style={styles.phraseText}>{`\u201C${phrase}\u201D`}</Text>
       </View>
-      <Text style={[styles.coachName, { color: activeCoach.color }]}>{`\u2014 ${activeCoach.name.toLowerCase()}`}</Text>
+      <Text style={[styles.coachName, { color: accentColor ?? activeCoach.color }]}>{`\u2014 ${activeCoach.name.toLowerCase()}`}</Text>
 
       {!isControlled && !autoPlay && (
         <View style={styles.controls}>

@@ -18,16 +18,6 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
-import { useWorkoutTimer } from '@/hooks/useWorkoutTimer';
-
-function parseStepDuration(stepText: string): number | null {
-  const match = stepText.match(/(\d+)\s*sec(?:onds?)?/i);
-  if (match) {
-    const secs = parseInt(match[1], 10);
-    if (secs > 0 && secs <= 300) return secs;
-  }
-  return null;
-}
 
 const MOTIVATIONAL = [
   "Let's go.",
@@ -52,7 +42,6 @@ export default function WorkoutScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const isNavigating = useRef(false);
-  const handleNextRef = useRef<() => void>(() => {});
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -61,13 +50,6 @@ export default function WorkoutScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
-
-  // Timer hook — replaces 5 state vars + 3 refs
-  const {
-    timerSeconds, timerReady, countdown, isTimerActive,
-    clearTimer, clearCountdown, selectTimer, stopTimer,
-    setTimerReady, resetForNextStep,
-  } = useWorkoutTimer(() => handleNextRef.current());
 
   useEffect(() => {
     if (totalSteps === 0) return;
@@ -85,13 +67,12 @@ export default function WorkoutScreen() {
       return true;
     }
     if (currentStep > 0) {
-      clearTimer();
       setCurrentStep((s) => s - 1);
       return true;
     }
     setShowQuitConfirm(true);
     return true;
-  }, [showQuitConfirm, currentStep, clearTimer]);
+  }, [showQuitConfirm, currentStep]);
   useHardwareBack(hwBackHandler);
 
   const onPressIn = useCallback(() => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start(), [buttonScale]);
@@ -101,10 +82,7 @@ export default function WorkoutScreen() {
     if (!resolvedWorkout) return;
     if (isNavigating.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    clearTimer();
-    clearCountdown();
     if (currentStep < totalSteps - 1) {
-      resetForNextStep();
       setCurrentStep((s) => s + 1);
     } else {
       isNavigating.current = true;
@@ -116,22 +94,15 @@ export default function WorkoutScreen() {
     }
   };
 
-  // Keep ref current so the timer interval closure always calls the latest handleNext
-  handleNextRef.current = handleNext;
-
   const handleBack = () => {
     if (currentStep === 0) {
       setShowQuitConfirm(true);
     } else {
-      clearTimer();
-      clearCountdown();
-      resetForNextStep();
       setCurrentStep((s) => s - 1);
     }
   };
 
   const handleQuit = () => {
-    clearTimer();
     router.replace('/home');
   };
 
@@ -221,6 +192,7 @@ export default function WorkoutScreen() {
           step={Math.min(3, Math.floor((currentStep / Math.max(totalSteps, 1)) * 4))}
           phraseKey={currentStep}
           figureSize={140}
+          accentColor={accentColor}
         />
 
         {/* Step text box */}
@@ -232,62 +204,6 @@ export default function WorkoutScreen() {
 
         {/* Motivational */}
         <Text style={styles.motivational}>{motivationalMsg}</Text>
-
-        {/* Timer section */}
-        <View style={styles.timerSection}>
-          {countdown !== null ? (
-            /* 3 - 2 - 1 phase */
-            <View style={styles.timerRunning}>
-              <Text style={[styles.timerCount, { color: accentColor }]}>{countdown}</Text>
-              <Text style={styles.timerRemainingLabel}>GET READY</Text>
-            </View>
-          ) : timerSeconds !== null ? (
-            /* Timer running */
-            <View style={styles.timerRunning}>
-              <Text style={[styles.timerCount, { color: accentColor }]}>{timerSeconds}</Text>
-              <Text style={styles.timerRemainingLabel}>SECONDS REMAINING</Text>
-              <TouchableOpacity
-                onPress={stopTimer}
-                activeOpacity={0.7}
-                style={styles.stopButton}
-                accessibilityRole="button"
-                accessibilityLabel="Stop timer"
-              >
-                <Text style={styles.stopButtonText}>STOP</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            /* Pick a duration — smart: show only the step's duration if it has one */
-            <View style={styles.timerButtons}>
-              <Text style={styles.timerPrompt}>SELECT TIME TO CONTINUE</Text>
-              {(() => {
-                const stepDuration = parseStepDuration(resolvedWorkout.steps[currentStep]);
-                const durations = stepDuration ? [stepDuration] : [30, 60, 90];
-                return durations.map((sec) => (
-                  <TouchableOpacity
-                    key={sec}
-                    onPress={() => selectTimer(sec)}
-                    activeOpacity={0.7}
-                    style={[styles.timerButton, stepDuration ? styles.timerButtonSingle : null]}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Start ${sec} second timer`}
-                  >
-                    <Text style={styles.timerButtonText}>{sec}S</Text>
-                  </TouchableOpacity>
-                ));
-              })()}
-              <TouchableOpacity
-                onPress={() => setTimerReady(true)}
-                activeOpacity={0.7}
-                style={styles.wingItButton}
-                accessibilityRole="button"
-                accessibilityLabel="Skip timer, I already did it"
-              >
-                <Text style={styles.wingItText}>or just wing it →</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
       </ScrollView>
 
       {/* Bottom nav */}
@@ -302,39 +218,19 @@ export default function WorkoutScreen() {
           <Text style={styles.backBtnText}>← BACK</Text>
         </TouchableOpacity>
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-          {(() => {
-            const canNext = timerReady && !isTimerActive;
-            const canSkip = !timerReady && !isTimerActive;
-            const handleSkip = () => {
-              setTimerReady(true);
-              handleNext();
-            };
-            if (isTimerActive) {
-              return (
-                <View style={[styles.nextBtn, styles.nextBtnDisabled]}>
-                  <Text style={styles.nextBtnTextDisabled}>NEXT →</Text>
-                </View>
-              );
-            }
-            return (
-              <TouchableOpacity
-                onPress={canSkip ? handleSkip : handleNext}
-                onPressIn={onPressIn}
-                onPressOut={onPressOut}
-                activeOpacity={0.7}
-                style={flattenStyle([
-                  styles.nextBtn,
-                  { borderColor: canNext ? accentColor : '#555555' },
-                ])}
-                accessibilityRole="button"
-                accessibilityLabel={canSkip ? 'Skip this step' : isLastStep ? 'Complete workout' : 'Next step'}
-              >
-                <Text style={[styles.nextBtnText, { color: canNext ? accentColor : '#888888' }]}>
-                  {canSkip ? 'SKIP →' : isLastStep ? 'DONE. LEGEND. →' : 'NEXT →'}
-                </Text>
-              </TouchableOpacity>
-            );
-          })()}
+          <TouchableOpacity
+            onPress={handleNext}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            activeOpacity={0.7}
+            style={flattenStyle([styles.nextBtn, { borderColor: accentColor }])}
+            accessibilityRole="button"
+            accessibilityLabel={isLastStep ? 'Complete workout' : 'Next step'}
+          >
+            <Text style={[styles.nextBtnText, { color: accentColor }]}>
+              {isLastStep ? 'DONE. LEGEND. →' : 'NEXT →'}
+            </Text>
+          </TouchableOpacity>
         </Animated.View>
       </View>
     </Animated.View>
@@ -454,77 +350,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 24,
   },
-  timerSection: {
-    marginTop: 32,
-    alignItems: 'center',
-  },
-  timerButtons: {
-    flexDirection: 'row',
-    alignSelf: 'stretch',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  timerPrompt: {
-    ...t.label,
-    color: '#555',
-    letterSpacing: 2,
-    width: '100%',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  timerButton: {
-    flex: 1,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: '#525252',
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  timerButtonSingle: {
-    flex: 0,
-    minWidth: 100,
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-  },
-  timerButtonText: {
-    ...t.timer,
-    color: '#c8c8c8',
-  },
-  wingItButton: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 16,
-  },
-  wingItText: {
-    ...t.label,
-    color: '#3a3a3a',
-    letterSpacing: 1,
-  },
-  timerRunning: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  timerCount: {
-    fontSize: 48,
-    fontFamily: fonts.mono.regular,
-    fontWeight: '700',
-  },
-  timerRemainingLabel: {
-    ...t.timestamp,
-    color: '#c8c8c8',
-    letterSpacing: 2,
-  },
-  stopButton: {
-    borderWidth: 1,
-    borderColor: '#525252',
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-    marginTop: 8,
-  },
-  stopButtonText: {
-    ...t.timer,
-    color: '#c8c8c8',
-  },
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -548,14 +373,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
   },
-  nextBtnDisabled: {
-    borderColor: '#2a2a2a',
-  },
   nextBtnText: {
     ...t.timer,
-  },
-  nextBtnTextDisabled: {
-    ...t.timer,
-    color: '#3a3a3a',
   },
 });

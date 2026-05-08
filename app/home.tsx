@@ -230,7 +230,7 @@ export default function HomeScreen() {
             accessibilityLabel={`Last time you felt ${MOODS[lastSession.mood].name}. Tap to repeat.`}
           >
             <Text style={styles.stillFeelingText}>
-              Last time: {MOODS[lastSession.mood].name.toUpperCase()} → {lastSession.postScore - lastSession.intensity >= 0 ? `+${lastSession.postScore - lastSession.intensity}` : `${lastSession.postScore - lastSession.intensity}`}. Still?
+              Last time: {MOODS[lastSession.mood].name.toUpperCase()}. Still feeling it?
             </Text>
             <Text style={styles.stillFeelingArrow}> →</Text>
           </TouchableOpacity>

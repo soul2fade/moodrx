@@ -313,6 +313,33 @@ export async function setUserProfile(profile: UserProfile): Promise<void> {
   }
 }
 
+const STREAK_STATE_KEY = '@moodrx_streak_state';
+
+export interface StreakState {
+  hwm: number;           // all-time high watermark streak
+  lastBrokenDate: string | null;   // YYYY-MM-DD when last streak was broken
+  lastBrokenHwm: number; // what the streak was when it broke
+}
+
+export async function getStreakState(): Promise<StreakState> {
+  try {
+    const raw = await AsyncStorage.getItem(STREAK_STATE_KEY);
+    if (!raw) return { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 };
+    return JSON.parse(raw) as StreakState;
+  } catch (e) {
+    console.warn('[MoodRx] getStreakState failed:', e);
+    return { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 };
+  }
+}
+
+export async function saveStreakState(state: StreakState): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STREAK_STATE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('[MoodRx] saveStreakState failed:', e);
+  }
+}
+
 const PERSONAL_BESTS_KEY = '@moodrx_personal_bests';
 
 export interface PersonalBest {

@@ -139,7 +139,7 @@ export default function WorkoutScreen() {
       const insult = INSULTS[insultIdxRef.current % INSULTS.length];
       insultIdxRef.current += 1;
       setCurrentInsult(insult);
-      Speech.speak(insult, { rate: 0.9, pitch: 1.0 });
+      Speech.speak(insult, { language: 'en-GB', rate: 0.9, pitch: 1.0 });
     };
     speakNext();
     trashIntervalRef.current = setInterval(speakNext, 40000);

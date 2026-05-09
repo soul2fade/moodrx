@@ -93,6 +93,8 @@ const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
   { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/whitenoise.mp3') },
 ];
 
+const STEP_COMPLETE_SRC = require('../assets/audio/step_complete.wav');
+
 export default function WorkoutScreen() {
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string }>();
   const mood = (params.mood as MoodKey) in MOODS
@@ -137,6 +139,7 @@ export default function WorkoutScreen() {
 
   const player = useAudioPlayer(audioSrc);
   const insultPlayer = useAudioPlayer(insultAudioSrc);
+  const stepCompletePlayer = useAudioPlayer(STEP_COMPLETE_SRC);
 
   useEffect(() => {
     if (audioSrc && activeSoundscape) {
@@ -156,6 +159,7 @@ export default function WorkoutScreen() {
     return () => {
       try { player.remove(); } catch {}
       try { insultPlayer.remove(); } catch {}
+      try { stepCompletePlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
       if (restTimerRef.current) clearInterval(restTimerRef.current);
     };
@@ -247,6 +251,7 @@ export default function WorkoutScreen() {
     if (!resolvedWorkout || isNavigating.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStep < totalSteps - 1) {
+      try { stepCompletePlayer.seekTo(0); stepCompletePlayer.play(); } catch {}
       setCurrentStep((s) => s + 1);
     } else {
       isNavigating.current = true;

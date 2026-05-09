@@ -10,6 +10,7 @@ import {
   Platform,
   TextInput,
   KeyboardAvoidingView,
+  Modal,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
@@ -17,7 +18,7 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { addSession, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { addSession, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setUserProfile, UserProfile, PersonalBest, Session } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById } from '@/lib/workouts';
@@ -49,7 +50,9 @@ export default function PostWorkoutScreen() {
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [showCardPreview, setShowCardPreview] = useState(false);
   const [sessionCount, setSessionCount] = useState<number | null>(null);
+  const [streak, setStreak] = useState(0);
   const [userProfile, setUserProfileState] = useState<UserProfile>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [previousBest, setPreviousBest] = useState<PersonalBest | null>(null);
@@ -60,6 +63,7 @@ export default function PostWorkoutScreen() {
     Promise.all([getSessions(), getUserProfile(), getPersonalBest(workoutId)]).then(([sessions, profile, pb]) => {
       // sessionCount is pre-save: 0 = completing session 1, 2 = completing session 3
       setSessionCount(sessions.length);
+      setStreak(getStreak(sessions));
       setUserProfileState(profile);
       setProfileLoaded(true);
       setPreviousBest(pb);
@@ -89,7 +93,14 @@ export default function PostWorkoutScreen() {
       // ignore
     } finally {
       setIsSharing(false);
+      setShowCardPreview(false);
     }
+  };
+
+  const handleOpenCardPreview = () => {
+    if (Platform.OS === 'web') return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowCardPreview(true);
   };
 
   // Prevent Android back button from going back to workout mid-flow
@@ -331,6 +342,8 @@ export default function PostWorkoutScreen() {
                 intensity={intensity}
                 postScore={postScore}
                 workoutName={workout.name}
+                duration={workout.duration}
+                streak={streak}
               />
             </ViewShot>
           </View>
@@ -339,13 +352,13 @@ export default function PostWorkoutScreen() {
         {workout && Platform.OS !== 'web' && (
           <TouchableOpacity
             style={styles.shareButton}
-            onPress={handleShare}
+            onPress={handleOpenCardPreview}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel="Share your result"
-            disabled={isSharing}
+            accessibilityLabel="Preview and share your result card"
           >
-            <Text style={styles.shareButtonText}>{isSharing ? 'PREPARING...' : 'SHARE YOUR RESULT →'}</Text>
+            <Text style={styles.shareButtonEyebrow}>NEW</Text>
+            <Text style={styles.shareButtonText}>SEE YOUR CARD →</Text>
           </TouchableOpacity>
         )}
 
@@ -371,6 +384,51 @@ export default function PostWorkoutScreen() {
           router.replace('/home');
         }}
       />
+
+      {/* Card preview modal */}
+      {workout && (
+        <Modal
+          visible={showCardPreview}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowCardPreview(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalEyebrow}>YOUR RESULT CARD</Text>
+              <BreakthroughCard
+                mood={mood}
+                intensity={intensity}
+                postScore={postScore}
+                workoutName={workout.name}
+                duration={workout.duration}
+                streak={streak}
+              />
+              <TouchableOpacity
+                style={[styles.modalShareBtn, { borderColor: accentColor }]}
+                onPress={handleShare}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Share this card"
+                disabled={isSharing}
+              >
+                <Text style={[styles.modalShareBtnText, { color: accentColor }]}>
+                  {isSharing ? 'PREPARING...' : 'SHARE THIS →'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => setShowCardPreview(false)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Close preview"
+              >
+                <Text style={styles.modalCloseBtnText}>CLOSE</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </Animated.View>
     </KeyboardAvoidingView>
   );
@@ -630,15 +688,63 @@ const styles = StyleSheet.create({
   shareButton: {
     marginTop: 16,
     borderWidth: 1,
-    borderColor: '#333333',
-    paddingVertical: 13,
+    borderColor: '#252525',
+    paddingVertical: 16,
     alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#0d0d0d',
+  },
+  shareButtonEyebrow: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 7,
+    color: '#555555',
+    letterSpacing: 4,
   },
   shareButtonText: {
-    ...t.label,
+    fontFamily: fonts.mono.regular,
     color: '#c8c8c8',
     letterSpacing: 3,
+    fontSize: 12,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.88)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  modalContent: {
+    alignItems: 'center',
+    gap: 14,
+    width: '100%',
+    maxWidth: 380,
+  },
+  modalEyebrow: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 8,
+    color: '#444444',
+    letterSpacing: 4,
+  },
+  modalShareBtn: {
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+    alignSelf: 'stretch',
+  },
+  modalShareBtnText: {
+    fontFamily: fonts.mono.regular,
     fontSize: 11,
+    letterSpacing: 3,
+  },
+  modalCloseBtn: {
+    paddingVertical: 10,
+  },
+  modalCloseBtnText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#444444',
+    letterSpacing: 3,
   },
   logButton: {
     marginTop: 12,

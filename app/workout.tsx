@@ -261,7 +261,7 @@ export default function WorkoutScreen() {
   };
 
   const handleSoundscape = (key: Soundscape) => {
-    if (activeSoundscape === key) {
+    if (key === null || activeSoundscape === key) {
       setActiveSoundscape(null);
       setAudioSrc(null);
       try { player.pause(); } catch {}

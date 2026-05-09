@@ -13,6 +13,7 @@ export interface Session {
   duration: number;
   timestamp: number;
   rating?: 'yes' | 'somewhat' | 'no';
+  note?: string;
 }
 
 export interface SupplementLog {

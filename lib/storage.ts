@@ -313,6 +313,36 @@ export async function setUserProfile(profile: UserProfile): Promise<void> {
   }
 }
 
+const PERSONAL_BESTS_KEY = '@moodrx_personal_bests';
+
+export interface PersonalBest {
+  reps: number;
+  date: string;
+}
+
+export async function getPersonalBest(workoutId: string): Promise<PersonalBest | null> {
+  try {
+    const raw = await AsyncStorage.getItem(PERSONAL_BESTS_KEY);
+    if (!raw) return null;
+    const all = JSON.parse(raw) as Record<string, PersonalBest>;
+    return all[workoutId] ?? null;
+  } catch (e) {
+    console.warn('[MoodRx] getPersonalBest failed:', e);
+    return null;
+  }
+}
+
+export async function savePersonalBest(workoutId: string, reps: number): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(PERSONAL_BESTS_KEY);
+    const all: Record<string, PersonalBest> = raw ? JSON.parse(raw) : {};
+    all[workoutId] = { reps, date: todayDateString() };
+    await AsyncStorage.setItem(PERSONAL_BESTS_KEY, JSON.stringify(all));
+  } catch (e) {
+    console.warn('[MoodRx] savePersonalBest failed:', e);
+  }
+}
+
 const NOTIF_PROMPT_SHOWN_KEY = '@moodrx_notif_prompt_shown';
 
 export async function getNotifPromptShown(): Promise<boolean> {

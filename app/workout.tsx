@@ -49,21 +49,21 @@ const AFFIRMATIONS = [
 ];
 
 const INSULTS = [
-  "Is that all you've got? My grandma moves faster and she's been dead for six years.",
-  "You call that a rep? I've seen more effort from a houseplant.",
-  "Wow. Really pushing it. Truly inspirational. I'm almost awake.",
-  "At this pace you'll be done by Tuesday. Of next year.",
-  "Even your excuses are out of breath.",
-  "Your couch misses you. It's the only relationship that accepts this level of commitment.",
-  "Incredible effort. If incredible means what I think it doesn't mean.",
-  "A sloth just lapped you. A sleeping one.",
-  "Legend has it someone once tried harder than this. We called them athletes.",
-  "You're really making the floor proud by existing near it.",
-  "I've seen more intensity from a screensaver.",
-  "At least you showed up. That's genuinely the best thing I can say right now.",
-  "Your future self is watching this and cringing. Do better for them.",
-  "The reps aren't going to count themselves. Neither is anyone else, apparently.",
-  "I believe in you. I'm also very easily convinced of things.",
+  "I'm not saying it's going badly. I'm simply not saying it's going well.",
+  "Marvellous. Truly. In the way that a biscuit left in tea too long is marvellous.",
+  "You are giving this your absolute something. I shan't specify what.",
+  "I've attended funerals with more vigour. Lovely funerals, mind you.",
+  "Keep going. The body does eventually respond to suggestion.",
+  "One does not climb Everest by standing near it. Merely an observation.",
+  "I believe in you. I want to be clear that belief requires no evidence.",
+  "The effort is noted. Filed. We shall revisit it at a later date.",
+  "You're doing wonderfully, if we're grading on quite a generous curve.",
+  "Progress is a relative concept. You are making some form of it.",
+  "Splendid. You've broken a sweat. The bar clears itself.",
+  "I've seen sloths with more urgency, and I find that genuinely inspiring.",
+  "At this pace, your future self sends neither congratulations nor complaints.",
+  "Remarkable commitment to the current rep count. Truly. Remarkable.",
+  "You showed up. That's not nothing. It's also not everything. Carry on.",
 ];
 
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
@@ -139,7 +139,7 @@ export default function WorkoutScreen() {
       const insult = INSULTS[insultIdxRef.current % INSULTS.length];
       insultIdxRef.current += 1;
       setCurrentInsult(insult);
-      Speech.speak(insult, { language: 'en-GB', rate: 0.9, pitch: 1.0 });
+      Speech.speak(insult, { language: 'en-GB', rate: 0.82, pitch: 0.78 });
     };
     speakNext();
     trashIntervalRef.current = setInterval(speakNext, 40000);
@@ -494,8 +494,8 @@ const styles = StyleSheet.create({
   },
   miniMap: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 16, gap: 10 },
   miniMapRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  miniMapDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#555' },
-  miniMapText: { ...t.label, color: '#888', fontSize: 11, flex: 1, letterSpacing: 0.3 },
+  miniMapDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#888' },
+  miniMapText: { ...t.label, color: '#e8e8e8', fontSize: 11, flex: 1, letterSpacing: 0.3 },
 
   repSection: { marginTop: 28 },
   sectionLabel: { ...t.label, color: '#888', letterSpacing: 2, fontSize: 10, marginBottom: 14 },
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   warningBody: { fontFamily: fonts.mono.regular, fontSize: 13, color: '#c8c8c8', lineHeight: 20 },
   warningHint: { ...t.label, color: '#333', fontSize: 9, letterSpacing: 2, marginTop: 14 },
 
-  bottomNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
+  bottomNav: { flexDirection: 'row', justifyContent: 'center', gap: 16, paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   backBtn: { borderWidth: 1, borderColor: '#1a1a1a', paddingVertical: 12, paddingHorizontal: 24 },
   backBtnText: { ...t.timer, color: '#c8c8c8' },
   nextBtn: { borderWidth: 1, paddingVertical: 12, paddingHorizontal: 24 },

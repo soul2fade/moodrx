@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 80,
     paddingBottom: 24,
   },
   topRow: {
@@ -379,19 +379,25 @@ const styles = StyleSheet.create({
   checkInLabel: {
     ...t.label,
     color: '#c8c8c8',
+    fontSize: 13,
+    letterSpacing: 1,
   },
   topRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 18,
   },
   sessionCount: {
     ...t.timestamp,
     color: '#c8c8c8',
+    fontSize: 13,
+    letterSpacing: 1,
   },
   settingsText: {
     ...t.timestamp,
     color: '#c8c8c8',
+    fontSize: 13,
+    letterSpacing: 1,
   },
   streakBadge: {
     backgroundColor: 'transparent',
@@ -418,7 +424,7 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...t.headline,
-    marginTop: 16,
+    marginTop: 36,
   },
   divider: {
     width: 32,

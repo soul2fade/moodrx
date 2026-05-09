@@ -93,6 +93,9 @@ export default function WorkoutScreen() {
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
   const [currentInsult, setCurrentInsult] = useState('');
+  const [showTrashWarning, setShowTrashWarning] = useState(false);
+  const warningAnim = useRef(new Animated.Value(0)).current;
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insultIdxRef = useRef(0);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNavigating = useRef(false);
@@ -199,8 +202,21 @@ export default function WorkoutScreen() {
     router.replace('/home');
   };
 
+  const dismissTrashWarning = () => {
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+    Animated.timing(warningAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
+      setShowTrashWarning(false);
+    });
+  };
+
   const handleTrashTalk = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!trashTalkOn) {
+      setShowTrashWarning(true);
+      warningAnim.setValue(0);
+      Animated.timing(warningAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+      warningTimerRef.current = setTimeout(dismissTrashWarning, 2500);
+    }
     setTrashTalkOn((on) => !on);
   };
 
@@ -403,6 +419,23 @@ export default function WorkoutScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Trash talk warning overlay */}
+      {showTrashWarning && (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={dismissTrashWarning}
+          style={styles.warningOverlay}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss warning"
+        >
+          <Animated.View style={[styles.warningCard, { opacity: warningAnim, transform: [{ scale: warningAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }] }]}>
+            <Text style={styles.warningTitle}>HEADS UP</Text>
+            <Text style={styles.warningBody}>You're about to be roasted. It's all in good fun.</Text>
+            <Text style={styles.warningHint}>tap anywhere to dismiss</Text>
+          </Animated.View>
+        </TouchableOpacity>
+      )}
+
       {/* Bottom nav */}
       <View style={styles.bottomNav}>
         <TouchableOpacity onPress={handleBack} activeOpacity={0.7} style={styles.backBtn} accessibilityRole="button" accessibilityLabel={currentStep === 0 ? 'Quit workout' : 'Previous step'}>
@@ -485,6 +518,12 @@ const styles = StyleSheet.create({
   affirmation: { marginTop: 28, alignItems: 'center', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   affirmText: { ...t.body, textAlign: 'center', color: '#666', fontSize: 13, lineHeight: 20 },
   affirmHint: { ...t.label, color: '#333', fontSize: 9, letterSpacing: 2, marginTop: 8 },
+
+  warningOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, zIndex: 50 },
+  warningCard: { backgroundColor: '#111', borderWidth: 1, borderColor: '#2a2a2a', padding: 24, width: '100%' },
+  warningTitle: { ...t.label, color: '#E11D48', letterSpacing: 3, fontSize: 10, marginBottom: 10 },
+  warningBody: { fontFamily: fonts.mono.regular, fontSize: 13, color: '#c8c8c8', lineHeight: 20 },
+  warningHint: { ...t.label, color: '#333', fontSize: 9, letterSpacing: 2, marginTop: 14 },
 
   bottomNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   backBtn: { borderWidth: 1, borderColor: '#1a1a1a', paddingVertical: 12, paddingHorizontal: 24 },

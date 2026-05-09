@@ -88,9 +88,9 @@ const INSULT_AUDIO = [
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
 
 const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
-  { key: 'rain',   label: 'RAIN',    src: require('../assets/audio/rain.mp3') },
-  { key: 'forest', label: 'FOREST',  src: require('../assets/audio/forest.mp3') },
-  { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/whitenoise.mp3') },
+  { key: 'rain',   label: 'RAIN',    src: require('../assets/audio/forest.mp3') },
+  { key: 'forest', label: 'FOREST',  src: require('../assets/audio/rain.mp3') },
+  { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/brownnoise.mp3') },
 ];
 
 const STEP_COMPLETE_SRC = require('../assets/audio/step_complete.wav');
@@ -439,7 +439,7 @@ export default function WorkoutScreen() {
         {/* ── REP COUNTER ── */}
         <View style={styles.repSection}>
           <View style={styles.repHeaderRow}>
-            <Text style={[styles.sectionLabel, { marginBottom: 0 }]}>REP COUNTER</Text>
+            <Text style={[styles.sectionLabel, { marginBottom: 0, fontSize: 16 }]}>REP COUNTER</Text>
             {previousBest !== null && (
               <Text style={styles.pbBadge}>PB  {previousBest}</Text>
             )}

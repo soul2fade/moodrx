@@ -301,8 +301,8 @@ export default function WorkoutScreen() {
         {/* Motivational */}
         <Text style={styles.motivational}>{motivationalMsg}</Text>
 
-        {/* Mid-workout insult at halfway step */}
-        {currentStep === midStep && midInsult !== '' && (
+        {/* Mid-workout insult — only when trash talk is off to avoid overlap */}
+        {currentStep === midStep && midInsult !== '' && !trashTalkOn && (
           <Text style={styles.insultLine}>{midInsult}</Text>
         )}
 

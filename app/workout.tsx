@@ -10,7 +10,6 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAudioPlayer } from 'expo-audio';
-import * as Speech from 'expo-speech';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
@@ -66,6 +65,24 @@ const INSULTS = [
   "I believe in you. I'm also very easily convinced of things.",
 ];
 
+const INSULT_AUDIO = [
+  require('../assets/audio/insults/insult_01.mp3'),
+  require('../assets/audio/insults/insult_02.mp3'),
+  require('../assets/audio/insults/insult_03.mp3'),
+  require('../assets/audio/insults/insult_04.mp3'),
+  require('../assets/audio/insults/insult_05.mp3'),
+  require('../assets/audio/insults/insult_06.mp3'),
+  require('../assets/audio/insults/insult_07.mp3'),
+  require('../assets/audio/insults/insult_08.mp3'),
+  require('../assets/audio/insults/insult_09.mp3'),
+  require('../assets/audio/insults/insult_10.mp3'),
+  require('../assets/audio/insults/insult_11.mp3'),
+  require('../assets/audio/insults/insult_12.mp3'),
+  require('../assets/audio/insults/insult_13.mp3'),
+  require('../assets/audio/insults/insult_14.mp3'),
+  require('../assets/audio/insults/insult_15.mp3'),
+];
+
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
 
 const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
@@ -93,12 +110,12 @@ export default function WorkoutScreen() {
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
   const [currentInsult, setCurrentInsult] = useState('');
+  const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insultIdxRef = useRef(0);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const britishVoiceRef = useRef<string | null>(null);
   const isNavigating = useRef(false);
   const repScaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -113,14 +130,7 @@ export default function WorkoutScreen() {
   const midStep = Math.floor((totalSteps - 1) / 2);
 
   const player = useAudioPlayer(audioSrc);
-
-  useEffect(() => {
-    Speech.getAvailableVoicesAsync().then((voices) => {
-      const gbVoices = voices.filter(v => v.language?.startsWith('en-GB') || v.identifier?.toLowerCase().includes('en-gb'));
-      const pick = gbVoices.find(v => /male|daniel|george|oliver/i.test(v.name ?? v.identifier ?? '')) ?? gbVoices[0];
-      if (pick) britishVoiceRef.current = pick.identifier;
-    }).catch(() => {});
-  }, []);
+  const insultPlayer = useAudioPlayer(insultAudioSrc);
 
   useEffect(() => {
     if (audioSrc && activeSoundscape) {
@@ -130,9 +140,16 @@ export default function WorkoutScreen() {
   }, [audioSrc, activeSoundscape]);
 
   useEffect(() => {
+    if (insultAudioSrc) {
+      insultPlayer.seekTo(0);
+      insultPlayer.play();
+    }
+  }, [insultAudioSrc]);
+
+  useEffect(() => {
     return () => {
       try { player.remove(); } catch {}
-      Speech.stop();
+      try { insultPlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
   }, []);
@@ -140,20 +157,18 @@ export default function WorkoutScreen() {
   useEffect(() => {
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     if (!trashTalkOn) {
-      Speech.stop();
+      try { insultPlayer.pause(); } catch {}
       setCurrentInsult('');
       return;
     }
-    const speakNext = () => {
-      const insult = INSULTS[insultIdxRef.current % INSULTS.length];
+    const playNext = () => {
+      const idx = insultIdxRef.current % INSULTS.length;
       insultIdxRef.current += 1;
-      setCurrentInsult(insult);
-      const voiceOpts: Speech.SpeechOptions = { language: 'en-GB', rate: 0.82, pitch: 0.78 };
-      if (britishVoiceRef.current) voiceOpts.voice = britishVoiceRef.current;
-      Speech.speak(insult, voiceOpts);
+      setCurrentInsult(INSULTS[idx]);
+      setInsultAudioSrc(INSULT_AUDIO[idx]);
     };
-    speakNext();
-    trashIntervalRef.current = setInterval(speakNext, 40000);
+    playNext();
+    trashIntervalRef.current = setInterval(playNext, 40000);
     return () => {
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
@@ -186,7 +201,7 @@ export default function WorkoutScreen() {
 
   const stopAll = () => {
     try { player.remove(); } catch {}
-    Speech.stop();
+    try { insultPlayer.pause(); } catch {}
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
   };
 

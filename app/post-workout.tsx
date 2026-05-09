@@ -23,6 +23,7 @@ import { NotificationPrompt } from '@/components/NotificationPrompt';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { getInsult } from '@/utils/insults';
 
 function getScoreContext(score: number): string {
   if (score <= 3) return 'Rough. But you moved.';
@@ -59,6 +60,7 @@ export default function PostWorkoutScreen() {
   }, []);
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
+  const postInsult = useRef(getInsult(mood, 'post')).current;
   const breakthroughRef = useRef<ViewShot>(null);
 
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -128,6 +130,9 @@ export default function PostWorkoutScreen() {
         <Text style={styles.subtext}>
           You showed up when your brain said don&apos;t. That takes guts.
         </Text>
+        {postInsult !== '' && (
+          <Text style={styles.insultLine}>{postInsult}</Text>
+        )}
 
         <View style={styles.sectionDivider} />
 
@@ -345,6 +350,13 @@ const styles = StyleSheet.create({
     ...t.soft,
     textAlign: 'center',
     marginTop: 12,
+  },
+  insultLine: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#525252',
+    marginTop: 16,
+    lineHeight: 18,
   },
   sectionDivider: {
     height: 1,

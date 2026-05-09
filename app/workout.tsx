@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
   repResetText: { ...t.label, color: '#c8c8c8', letterSpacing: 2, fontSize: 10 },
 
   soundSection: { marginTop: 28 },
-  soundRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  soundRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   soundBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
   soundBtnText: { ...t.label, color: '#c8c8c8', fontSize: 10, letterSpacing: 2 },
   soundOffBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   warningBody: { fontFamily: fonts.mono.regular, fontSize: 13, color: '#c8c8c8', lineHeight: 20 },
   warningHint: { ...t.label, color: '#333', fontSize: 9, letterSpacing: 2, marginTop: 14 },
 
-  bottomNav: { flexDirection: 'row', justifyContent: 'center', gap: 16, paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
+  bottomNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   backBtn: { borderWidth: 1, borderColor: '#1a1a1a', paddingVertical: 12, paddingHorizontal: 24 },
   backBtnText: { ...t.timer, color: '#c8c8c8' },
   nextBtn: { borderWidth: 1, paddingVertical: 12, paddingHorizontal: 24 },

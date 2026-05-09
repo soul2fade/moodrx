@@ -8,6 +8,7 @@ import {
   Animated,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Haptics from 'expo-haptics';
 import { useAudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
@@ -114,6 +115,7 @@ export default function WorkoutScreen() {
   const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
+  const [keepAwake, setKeepAwake] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const [restTotalSeconds, setRestTotalSeconds] = useState(0);
@@ -162,6 +164,7 @@ export default function WorkoutScreen() {
       try { stepCompletePlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
       if (restTimerRef.current) clearInterval(restTimerRef.current);
+      deactivateKeepAwake();
     };
   }, []);
 
@@ -287,6 +290,17 @@ export default function WorkoutScreen() {
       warningTimerRef.current = setTimeout(dismissTrashWarning, 2500);
     }
     setTrashTalkOn((on) => !on);
+  };
+
+  const handleKeepAwake = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (keepAwake) {
+      deactivateKeepAwake();
+      setKeepAwake(false);
+    } else {
+      await activateKeepAwakeAsync();
+      setKeepAwake(true);
+    }
   };
 
   const handleRepTap = () => {
@@ -502,6 +516,19 @@ export default function WorkoutScreen() {
           </View>
         </View>
 
+        {/* ── KEEP AWAKE ── */}
+        <TouchableOpacity
+          onPress={handleKeepAwake}
+          activeOpacity={0.7}
+          style={[styles.keepAwakeBtn, keepAwake && { borderColor: accentColor, backgroundColor: accentColor + '18' }]}
+          accessibilityRole="button"
+          accessibilityLabel={`Keep screen awake ${keepAwake ? 'on' : 'off'}`}
+        >
+          <Text style={[styles.keepAwakeBtnText, keepAwake && { color: accentColor }]}>
+            {keepAwake ? 'SCREEN ON  ●' : 'KEEP SCREEN ON'}
+          </Text>
+        </TouchableOpacity>
+
         {/* ── AFFIRMATION ON TAP ── */}
         <TouchableOpacity onPress={handleAffirmation} activeOpacity={0.6} style={styles.affirmation} accessibilityRole="button" accessibilityLabel="Tap for a new affirmation">
           <Text style={styles.affirmText}>{AFFIRMATIONS[affirmIdx]}</Text>
@@ -612,6 +639,9 @@ const styles = StyleSheet.create({
   soundBtnText: { ...t.label, color: '#c8c8c8', fontSize: 10, letterSpacing: 2 },
   soundOffBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
   soundOffText: { ...t.label, color: '#c8c8c8', fontSize: 10, letterSpacing: 2 },
+
+  keepAwakeBtn: { marginTop: 16, borderWidth: 1, borderColor: '#333', paddingVertical: 10, alignItems: 'center' },
+  keepAwakeBtnText: { ...t.label, color: '#666', fontSize: 10, letterSpacing: 2 },
 
   affirmation: { marginTop: 28, alignItems: 'center', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   affirmText: { ...t.body, textAlign: 'center', color: '#c8c8c8', fontSize: 13, lineHeight: 20 },

@@ -49,21 +49,21 @@ const AFFIRMATIONS = [
 ];
 
 const INSULTS = [
-  "I'm not saying it's going badly. I'm simply not saying it's going well.",
-  "Marvellous. Truly. In the way that a biscuit left in tea too long is marvellous.",
-  "You are giving this your absolute something. I shan't specify what.",
-  "I've attended funerals with more vigour. Lovely funerals, mind you.",
-  "Keep going. The body does eventually respond to suggestion.",
-  "One does not climb Everest by standing near it. Merely an observation.",
-  "I believe in you. I want to be clear that belief requires no evidence.",
-  "The effort is noted. Filed. We shall revisit it at a later date.",
-  "You're doing wonderfully, if we're grading on quite a generous curve.",
-  "Progress is a relative concept. You are making some form of it.",
-  "Splendid. You've broken a sweat. The bar clears itself.",
-  "I've seen sloths with more urgency, and I find that genuinely inspiring.",
-  "At this pace, your future self sends neither congratulations nor complaints.",
-  "Remarkable commitment to the current rep count. Truly. Remarkable.",
-  "You showed up. That's not nothing. It's also not everything. Carry on.",
+  "Is that all you've got? My grandma moves faster and she's been dead for six years.",
+  "You call that a rep? I've seen more effort from a houseplant.",
+  "Wow. Really pushing it. Truly inspirational. I'm almost awake.",
+  "At this pace you'll be done by Tuesday. Of next year.",
+  "Even your excuses are out of breath.",
+  "Your couch misses you. It's the only relationship that accepts this level of commitment.",
+  "Incredible effort. If incredible means what I think it doesn't mean.",
+  "A sloth just lapped you. A sleeping one.",
+  "Legend has it someone once tried harder than this. We called them athletes.",
+  "You're really making the floor proud by existing near it.",
+  "I've seen more intensity from a screensaver.",
+  "At least you showed up. That's genuinely the best thing I can say right now.",
+  "Your future self is watching this and cringing. Do better for them.",
+  "The reps aren't going to count themselves. Neither is anyone else, apparently.",
+  "I believe in you. I'm also very easily convinced of things.",
 ];
 
 type Soundscape = 'rain' | 'forest' | 'focus' | null;

@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { addSession, getNotifPromptShown, getSessions, getUserProfile, setUserProfile, UserProfile } from '@/lib/storage';
+import { addSession, getNotifPromptShown, getPersonalBest, getSessions, getUserProfile, savePersonalBest, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
@@ -33,12 +33,13 @@ function getScoreContext(score: number): string {
 }
 
 export default function PostWorkoutScreen() {
-  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string }>();
+  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
     : (Object.keys(MOODS)[0] as MoodKey);
   const workoutId = params.workoutId || '';
   const intensity = parseInt(params.intensity || '5', 10);
+  const sessionReps = parseInt(params.reps || '0', 10);
 
   const [postScore, setPostScore] = useState(5);
   const [rating, setRating] = useState<'yes' | 'somewhat' | 'no' | null>(null);
@@ -48,14 +49,20 @@ export default function PostWorkoutScreen() {
   const [sessionCount, setSessionCount] = useState<number | null>(null);
   const [userProfile, setUserProfileState] = useState<UserProfile>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [previousBest, setPreviousBest] = useState<PersonalBest | null>(null);
   const workout = getWorkoutById(workoutId);
 
   useEffect(() => {
-    Promise.all([getSessions(), getUserProfile()]).then(([sessions, profile]) => {
+    Promise.all([getSessions(), getUserProfile(), getPersonalBest(workoutId)]).then(([sessions, profile, pb]) => {
       // sessionCount is pre-save: 0 = completing session 1, 2 = completing session 3
       setSessionCount(sessions.length);
       setUserProfileState(profile);
       setProfileLoaded(true);
+      setPreviousBest(pb);
+      if (sessionReps > 0) {
+        const isNewBest = pb === null || sessionReps > pb.reps;
+        if (isNewBest) savePersonalBest(workoutId, sessionReps);
+      }
     });
   }, []);
   const moodData = MOODS[mood];
@@ -132,6 +139,19 @@ export default function PostWorkoutScreen() {
         </Text>
         {postInsult !== '' && (
           <Text style={styles.insultLine}>{postInsult}</Text>
+        )}
+
+        {sessionReps > 0 && (
+          <View style={styles.pbRow}>
+            <Text style={styles.pbLabel}>REPS THIS SESSION</Text>
+            <Text style={[styles.pbReps, { color: accentColor }]}>{sessionReps}</Text>
+            {previousBest !== null && sessionReps > previousBest.reps && (
+              <Text style={styles.pbNewBest}>NEW PERSONAL BEST</Text>
+            )}
+            {previousBest !== null && sessionReps <= previousBest.reps && (
+              <Text style={styles.pbPrev}>prev best  {previousBest.reps}</Text>
+            )}
+          </View>
         )}
 
         <View style={styles.sectionDivider} />
@@ -357,6 +377,40 @@ const styles = StyleSheet.create({
     color: '#525252',
     marginTop: 16,
     lineHeight: 18,
+  },
+  pbRow: {
+    alignItems: 'center',
+    marginTop: 24,
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#1a1a1a',
+  },
+  pbLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#555',
+    letterSpacing: 3,
+    marginBottom: 8,
+  },
+  pbReps: {
+    fontSize: 52,
+    fontFamily: fonts.mono.regular,
+    lineHeight: 56,
+  },
+  pbNewBest: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#888',
+    letterSpacing: 3,
+    marginTop: 8,
+  },
+  pbPrev: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#444',
+    letterSpacing: 2,
+    marginTop: 8,
   },
   sectionDivider: {
     height: 1,

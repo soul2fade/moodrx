@@ -8,6 +8,8 @@ import {
   Animated,
   Alert,
   Platform,
+  TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
@@ -50,6 +52,7 @@ export default function PostWorkoutScreen() {
   const [userProfile, setUserProfileState] = useState<UserProfile>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [previousBest, setPreviousBest] = useState<PersonalBest | null>(null);
+  const [note, setNote] = useState('');
   const workout = getWorkoutById(workoutId);
 
   useEffect(() => {
@@ -113,6 +116,7 @@ export default function PostWorkoutScreen() {
         duration: workout?.duration ?? 0,
         timestamp: Date.now(),
         rating: rating ?? undefined,
+        note: note.trim() || undefined,
       });
       const promptShown = await getNotifPromptShown();
       if (!promptShown) {
@@ -127,6 +131,7 @@ export default function PostWorkoutScreen() {
   };
 
   return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
@@ -294,6 +299,27 @@ export default function PostWorkoutScreen() {
           </View>
         )}
 
+        {/* Field note */}
+        <View style={styles.noteSection}>
+          <View style={styles.noteHeader}>
+            <Text style={styles.noteLabel}>FIELD NOTES</Text>
+            <Text style={styles.noteCount}>{note.length}/140</Text>
+          </View>
+          <TextInput
+            style={[styles.noteInput, note.length > 0 && { borderColor: '#2a2a2a' }]}
+            value={note}
+            onChangeText={(t) => setNote(t.slice(0, 140))}
+            placeholder="What happened in there?"
+            placeholderTextColor="#2a2a2a"
+            multiline
+            numberOfLines={3}
+            maxLength={140}
+            returnKeyType="done"
+            blurOnSubmit
+            accessibilityLabel="Session field notes"
+          />
+        </View>
+
         {/* Hidden breakthrough card — captured for sharing */}
         {workout && Platform.OS !== 'web' && (
           <View style={styles.hiddenCardWrapper} pointerEvents="none">
@@ -344,6 +370,7 @@ export default function PostWorkoutScreen() {
         }}
       />
     </Animated.View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -507,6 +534,42 @@ const styles = StyleSheet.create({
     ...t.headlineSm,
     fontSize: 16,
     marginTop: 4,
+  },
+  noteSection: {
+    marginTop: 28,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingTop: 20,
+  },
+  noteHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 10,
+  },
+  noteLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#555',
+    letterSpacing: 3,
+  },
+  noteCount: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#333',
+    letterSpacing: 1,
+  },
+  noteInput: {
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    color: '#c8c8c8',
+    lineHeight: 20,
+    textAlignVertical: 'top',
+    minHeight: 72,
   },
   ratingSection: {
     marginTop: 32,

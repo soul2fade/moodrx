@@ -20,6 +20,8 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { getInsult } from '@/utils/insults';
+import { fonts } from '../lib/typography';
 
 const MOTIVATIONAL = [
   "Let's go.",
@@ -103,6 +105,8 @@ export default function WorkoutScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
+  const midInsult = useRef(getInsult(mood, 'mid')).current;
+  const midStep = Math.floor((totalSteps - 1) / 2);
 
   const player = useAudioPlayer(audioSrc);
 
@@ -297,6 +301,11 @@ export default function WorkoutScreen() {
         {/* Motivational */}
         <Text style={styles.motivational}>{motivationalMsg}</Text>
 
+        {/* Mid-workout insult at halfway step */}
+        {currentStep === midStep && midInsult !== '' && (
+          <Text style={styles.insultLine}>{midInsult}</Text>
+        )}
+
         {/* ── STEP MINI-MAP ── */}
         <View style={styles.miniMap}>
           {resolvedWorkout.steps.map((step, idx) => {
@@ -443,6 +452,13 @@ const styles = StyleSheet.create({
   stepText: { ...t.body, textAlign: 'center', lineHeight: 24 },
   motivational: { ...t.soft, textAlign: 'center', marginTop: 24 },
 
+  insultLine: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#525252',
+    marginTop: 16,
+    lineHeight: 18,
+  },
   miniMap: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 16, gap: 10 },
   miniMapRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   miniMapDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#2a2a2a' },

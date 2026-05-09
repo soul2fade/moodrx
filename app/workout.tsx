@@ -10,6 +10,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAudioPlayer } from 'expo-audio';
+import * as Speech from 'expo-speech';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
@@ -21,6 +22,24 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { getInsult } from '@/utils/insults';
 import { fonts } from '../lib/typography';
+
+function parseRestSeconds(text: string): number | null {
+  const lower = text.toLowerCase();
+  if (!lower.includes('rest') && !lower.includes('recover')) return null;
+  const secMatch = lower.match(/(\d+)\s*sec/);
+  const minMatch = lower.match(/(\d+)\s*min/);
+  if (secMatch) return parseInt(secMatch[1], 10);
+  if (minMatch) return parseInt(minMatch[1], 10) * 60;
+  return null;
+}
+
+const REST_COMPLETE_LINES = [
+  "Rest complete. Back to work.",
+  "Time's up. No more lounging.",
+  "That's enough recovery. Move.",
+  "Right. Off you go.",
+  "Rest over. Your body is ready.",
+];
 
 const MOTIVATIONAL = [
   "Let's go.",
@@ -92,9 +111,13 @@ export default function WorkoutScreen() {
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
+  const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
+  const [restTotalSeconds, setRestTotalSeconds] = useState(0);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restProgressAnim = useRef(new Animated.Value(1)).current;
+  const restTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const insultIdxRef = useRef(0);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNavigating = useRef(false);
@@ -132,8 +155,35 @@ export default function WorkoutScreen() {
       try { player.remove(); } catch {}
       try { insultPlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
+      if (restTimerRef.current) clearInterval(restTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (restTimerRef.current) { clearInterval(restTimerRef.current); restTimerRef.current = null; }
+    restProgressAnim.stopAnimation();
+    if (!resolvedWorkout) return;
+    const secs = parseRestSeconds(resolvedWorkout.steps[currentStep] ?? '');
+    if (!secs) { setRestSecondsLeft(null); return; }
+    setRestTotalSeconds(secs);
+    setRestSecondsLeft(secs);
+    restProgressAnim.setValue(1);
+    Animated.timing(restProgressAnim, { toValue: 0, duration: secs * 1000, useNativeDriver: false }).start();
+    restTimerRef.current = setInterval(() => {
+      setRestSecondsLeft(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(restTimerRef.current!);
+          restTimerRef.current = null;
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          const line = REST_COMPLETE_LINES[Math.floor(Math.random() * REST_COMPLETE_LINES.length)];
+          Speech.speak(line, { language: 'en-GB', rate: 0.85, pitch: 0.78 });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (restTimerRef.current) clearInterval(restTimerRef.current); };
+  }, [currentStep]);
 
   useEffect(() => {
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
@@ -312,15 +362,33 @@ export default function WorkoutScreen() {
           accentColor={accentColor}
         />
 
-        {/* Step text box */}
-        <View style={styles.stepBox}>
-          <Text style={styles.stepText} accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}: ${resolvedWorkout.steps[currentStep]}`}>
-            {resolvedWorkout.steps[currentStep]}
-          </Text>
-        </View>
+        {/* Step text box / Rest timer */}
+        {restSecondsLeft !== null ? (
+          <View style={styles.restBox}>
+            <Text style={styles.restLabel}>REST</Text>
+            <Text style={[styles.restCountdown, { color: accentColor }]}>
+              {Math.floor(restSecondsLeft / 60)}:{String(restSecondsLeft % 60).padStart(2, '0')}
+            </Text>
+            <View style={styles.restProgressBg}>
+              <Animated.View style={[styles.restProgressFill, {
+                width: restProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                backgroundColor: restSecondsLeft === 0 ? '#525252' : accentColor,
+              }]} />
+            </View>
+            <Text style={styles.restSubtext}>
+              {restSecondsLeft === 0 ? 'get ready.' : 'breathe.'}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.stepBox}>
+            <Text style={styles.stepText} accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}: ${resolvedWorkout.steps[currentStep]}`}>
+              {resolvedWorkout.steps[currentStep]}
+            </Text>
+          </View>
+        )}
 
         {/* Motivational */}
-        <Text style={styles.motivational}>{motivationalMsg}</Text>
+        {restSecondsLeft === null && <Text style={styles.motivational}>{motivationalMsg}</Text>}
 
         {/* Mid-workout insult — only when trash talk is off to avoid overlap */}
         {currentStep === midStep && midInsult !== '' && !trashTalkOn && (
@@ -484,6 +552,13 @@ const styles = StyleSheet.create({
   stepBox: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#1a1a1a', paddingVertical: 24, paddingHorizontal: 16, marginTop: 16, minHeight: 80, justifyContent: 'center' },
   stepText: { ...t.body, textAlign: 'center', lineHeight: 24 },
   motivational: { ...t.soft, textAlign: 'center', marginTop: 24 },
+
+  restBox: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#1a1a1a', paddingVertical: 32, paddingHorizontal: 16, marginTop: 16, alignItems: 'center' },
+  restLabel: { ...t.label, color: '#888', letterSpacing: 4, fontSize: 10, marginBottom: 12 },
+  restCountdown: { fontSize: 64, fontFamily: fonts.mono.regular, lineHeight: 72 },
+  restProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 20 },
+  restProgressFill: { height: 2 },
+  restSubtext: { ...t.label, color: '#555', letterSpacing: 2, fontSize: 9, marginTop: 12 },
 
   insultLine: {
     fontFamily: fonts.mono.regular,

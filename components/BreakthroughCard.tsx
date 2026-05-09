@@ -2,173 +2,292 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
-import { type as t, fonts } from '../lib/typography';
+import { fonts } from '../lib/typography';
 
 interface BreakthroughCardProps {
   mood: MoodKey;
   intensity: number;
   postScore: number;
   workoutName: string;
+  duration?: number;
+  streak?: number;
 }
 
-export function BreakthroughCard({ mood, intensity, postScore, workoutName }: BreakthroughCardProps) {
+function formatDate(): string {
+  const d = new Date();
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  return `${months[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`;
+}
+
+function getDeltaLabel(delta: number): string {
+  if (delta >= 5) return 'SIGNIFICANT IMPROVEMENT';
+  if (delta >= 3) return 'NOTABLE IMPROVEMENT';
+  if (delta >= 1) return 'MILD IMPROVEMENT';
+  if (delta === 0) return 'STABLE';
+  return 'UNDER OBSERVATION';
+}
+
+export function BreakthroughCard({
+  mood,
+  intensity,
+  postScore,
+  workoutName,
+  duration,
+  streak,
+}: BreakthroughCardProps) {
   const moodData = MOODS[mood];
   const delta = postScore - intensity;
   const deltaStr = delta > 0 ? `+${delta}` : `${delta}`;
-  const deltaColor = delta >= 0 ? '#059669' : '#c8c8c8';
+  const deltaColor = delta >= 2 ? '#059669' : delta >= 0 ? '#888888' : '#c8c8c8';
+  const statusColor = delta >= 1 ? '#059669' : '#888888';
+  const status = delta >= 1 ? 'TREATED' : 'LOGGED';
 
   return (
     <View style={styles.card}>
-      <View style={styles.topRow}>
+      {/* Top bar — mood color */}
+      <View style={[styles.topBar, { backgroundColor: moodData.color }]} />
+
+      {/* Header row */}
+      <View style={styles.header}>
         <Text style={styles.appName}>MOODRX</Text>
-        <Text style={styles.tag}>MOOD LOG</Text>
+        <View style={styles.headerRight}>
+          <Text style={styles.dateText}>{formatDate()}</Text>
+          <View style={[styles.statusBadge, { borderColor: statusColor }]}>
+            <Text style={[styles.statusText, { color: statusColor }]}>{status}</Text>
+          </View>
+        </View>
       </View>
 
-      <View style={[styles.accentBar, { backgroundColor: moodData.color }]} />
-
-      <View style={styles.moodRow}>
+      {/* Diagnosis */}
+      <View style={styles.diagnosisBlock}>
+        <Text style={styles.diagnosisLabel}>DIAGNOSIS</Text>
         <Text style={[styles.moodName, { color: moodData.color }]}>
           {moodData.name.toUpperCase()}
         </Text>
+        <Text style={styles.moodDescription}>{moodData.description}</Text>
       </View>
 
-      <View style={styles.numbersRow}>
-        <View style={styles.numberBlock}>
-          <Text style={styles.numberLabel}>BEFORE</Text>
-          <Text style={styles.numberValue}>{intensity}</Text>
+      {/* Delta hero */}
+      <View style={styles.heroBlock}>
+        <Text style={[styles.deltaHero, { color: deltaColor }]}>{deltaStr}</Text>
+        <Text style={styles.deltaHeroLabel}>{getDeltaLabel(delta)}</Text>
+      </View>
+
+      {/* Numbers grid */}
+      <View style={styles.numbersGrid}>
+        <View style={styles.numCell}>
+          <Text style={styles.numLabel}>PRE</Text>
+          <Text style={styles.numValue}>{intensity}</Text>
         </View>
-        <Text style={styles.arrow}>→</Text>
-        <View style={styles.numberBlock}>
-          <Text style={styles.numberLabel}>AFTER</Text>
-          <Text style={[styles.numberValue, { color: moodData.color }]}>{postScore}</Text>
+        <View style={styles.numSep}>
+          <Text style={styles.numSepText}>→</Text>
         </View>
-        <View style={[styles.numberBlock, styles.deltaBlock]}>
-          <Text style={styles.numberLabel}>CHANGE</Text>
-          <Text style={[styles.deltaValue, { color: deltaColor }]}>{deltaStr}</Text>
+        <View style={styles.numCell}>
+          <Text style={styles.numLabel}>POST</Text>
+          <Text style={[styles.numValue, { color: moodData.color }]}>{postScore}</Text>
+        </View>
+        <View style={[styles.numCell, styles.numCellBordered]}>
+          <Text style={styles.numLabel}>CHANGE</Text>
+          <Text style={[styles.numValue, { color: deltaColor }]}>{deltaStr}</Text>
         </View>
       </View>
 
-      <View style={styles.workoutRow}>
-        <Text style={styles.workoutLabel}>VIA</Text>
-        <Text style={styles.workoutName}>{workoutName}</Text>
+      {/* Treatment row */}
+      <View style={styles.treatmentBlock}>
+        <View style={styles.treatmentRow}>
+          <Text style={styles.treatmentLabel}>TREATMENT</Text>
+          <Text style={styles.treatmentValue} numberOfLines={1}>
+            {workoutName}{duration ? `  ·  ${duration} MIN` : ''}
+          </Text>
+        </View>
+        {streak !== undefined && streak > 0 && (
+          <View style={styles.treatmentRow}>
+            <Text style={styles.treatmentLabel}>STREAK</Text>
+            <Text style={styles.treatmentValue}>
+              {streak} {streak === 1 ? 'DAY' : 'DAYS'} STRAIGHT
+            </Text>
+          </View>
+        )}
       </View>
 
-      <View style={styles.divider} />
-
-      <Text style={styles.watermark}>moodrx.app  ·  move for your mind</Text>
+      {/* Footer */}
+      <View style={styles.footer}>
+        <View style={[styles.footerBar, { backgroundColor: moodData.color }]} />
+        <Text style={styles.watermark}>moodrx.app  ·  move for your mind</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 320,
-    backgroundColor: '#0a0a0a',
+    width: 360,
+    backgroundColor: '#080808',
     borderWidth: 1,
-    borderColor: '#1a1a1a',
-    padding: 20,
+    borderColor: '#1c1c1c',
+    overflow: 'hidden',
   },
-  topRow: {
+  topBar: {
+    height: 4,
+    width: '100%',
+  },
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
+    alignItems: 'flex-start',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 4,
   },
   appName: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 4,
+    fontFamily: fonts.mono.regular,
     fontSize: 11,
+    color: '#ffffff',
+    letterSpacing: 5,
   },
-  tag: {
-    ...t.label,
-    color: '#525252',
-    letterSpacing: 2,
+  headerRight: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  dateText: {
+    fontFamily: fonts.mono.regular,
     fontSize: 9,
+    color: '#444444',
+    letterSpacing: 2,
   },
-  accentBar: {
-    height: 2,
-    width: '100%',
-    marginBottom: 16,
-  },
-  moodRow: {
-    marginBottom: 20,
-  },
-  moodName: {
-    fontSize: 38,
-    fontWeight: '700',
-    fontFamily: fonts.primary.bold,
-    letterSpacing: 1,
-    lineHeight: 40,
-  },
-  numbersRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+  statusBadge: {
     borderWidth: 1,
-    borderColor: '#1a1a1a',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
   },
-  numberBlock: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  deltaBlock: {
-    borderLeftWidth: 1,
-    borderLeftColor: '#1a1a1a',
-  },
-  numberLabel: {
-    ...t.label,
-    color: '#525252',
+  statusText: {
+    fontFamily: fonts.mono.regular,
     fontSize: 8,
     letterSpacing: 2,
-    marginBottom: 4,
   },
-  numberValue: {
-    fontSize: 28,
-    fontWeight: '700',
+  diagnosisBlock: {
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 4,
+  },
+  diagnosisLabel: {
     fontFamily: fonts.mono.regular,
-    color: '#c8c8c8',
+    fontSize: 8,
+    color: '#444444',
+    letterSpacing: 4,
+    marginBottom: 6,
   },
-  deltaValue: {
-    fontSize: 28,
-    fontWeight: '700',
+  moodName: {
+    fontFamily: fonts.primary.bold,
+    fontSize: 46,
+    letterSpacing: -1,
+    lineHeight: 48,
+  },
+  moodDescription: {
     fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#525252',
+    marginTop: 6,
+    letterSpacing: 0.5,
   },
-  arrow: {
-    color: '#333333',
-    fontSize: 16,
-    marginHorizontal: 4,
+  heroBlock: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#131313',
+    marginTop: 24,
+    marginHorizontal: 24,
   },
-  workoutRow: {
+  deltaHero: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 80,
+    lineHeight: 84,
+    letterSpacing: -2,
+  },
+  deltaHeroLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 8,
+    color: '#444444',
+    letterSpacing: 4,
+    marginTop: 8,
+  },
+  numbersGrid: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    marginHorizontal: 24,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#131313',
+    paddingVertical: 14,
   },
-  workoutLabel: {
-    ...t.label,
-    color: '#525252',
+  numCell: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  numCellBordered: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#131313',
+  },
+  numSep: {
+    paddingHorizontal: 4,
+  },
+  numSepText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#2a2a2a',
+  },
+  numLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 7,
+    color: '#444444',
     letterSpacing: 2,
-    fontSize: 9,
+    marginBottom: 5,
   },
-  workoutName: {
-    ...t.label,
+  numValue: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 26,
     color: '#c8c8c8',
-    letterSpacing: 1,
+  },
+  treatmentBlock: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 28,
+    gap: 10,
+  },
+  treatmentRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'baseline',
+  },
+  treatmentLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 7,
+    color: '#444444',
+    letterSpacing: 3,
+    width: 70,
+    flexShrink: 0,
+  },
+  treatmentValue: {
+    fontFamily: fonts.mono.regular,
     fontSize: 11,
+    color: '#aaaaaa',
+    letterSpacing: 0.5,
     flex: 1,
   },
-  divider: {
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    gap: 10,
+  },
+  footerBar: {
     height: 1,
-    backgroundColor: '#1a1a1a',
-    marginBottom: 12,
+    opacity: 0.25,
   },
   watermark: {
-    ...t.label,
+    fontFamily: fonts.mono.regular,
+    fontSize: 8,
     color: '#333333',
     letterSpacing: 2,
-    fontSize: 9,
   },
 });

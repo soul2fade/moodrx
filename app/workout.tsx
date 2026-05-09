@@ -14,6 +14,7 @@ import * as Speech from 'expo-speech';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
+import { getPersonalBest } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -106,6 +107,7 @@ export default function WorkoutScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [repCount, setRepCount] = useState(0);
+  const [previousBest, setPreviousBest] = useState<number | null>(null);
   const [affirmIdx, setAffirmIdx] = useState(0);
   const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
   const [audioSrc, setAudioSrc] = useState<any>(null);
@@ -158,6 +160,13 @@ export default function WorkoutScreen() {
       if (restTimerRef.current) clearInterval(restTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!resolvedWorkout?.id) return;
+    getPersonalBest(resolvedWorkout.id).then(pb => {
+      if (pb) setPreviousBest(pb.reps);
+    });
+  }, [resolvedWorkout?.id]);
 
   useEffect(() => {
     if (restTimerRef.current) { clearInterval(restTimerRef.current); restTimerRef.current = null; }
@@ -243,7 +252,7 @@ export default function WorkoutScreen() {
       isNavigating.current = true;
       stopAll();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.push({ pathname: '/post-workout', params: { mood, workoutId, intensity } });
+      router.push({ pathname: '/post-workout', params: { mood, workoutId, intensity, reps: String(repCount) } });
     }
   };
 
@@ -424,17 +433,22 @@ export default function WorkoutScreen() {
 
         {/* ── REP COUNTER ── */}
         <View style={styles.repSection}>
-          <Text style={styles.sectionLabel}>REP COUNTER</Text>
+          <View style={styles.repHeaderRow}>
+            <Text style={[styles.sectionLabel, { marginBottom: 0 }]}>REP COUNTER</Text>
+            {previousBest !== null && (
+              <Text style={styles.pbBadge}>PB  {previousBest}</Text>
+            )}
+          </View>
           <View style={styles.repRow}>
             <Animated.View style={{ transform: [{ scale: repScaleAnim }] }}>
               <TouchableOpacity
                 onPress={handleRepTap}
                 activeOpacity={0.75}
-                style={[styles.repCircle, { borderColor: accentColor }]}
+                style={[styles.repCircle, { borderColor: repCount > 0 && previousBest !== null && repCount > previousBest ? accentColor : accentColor }]}
                 accessibilityRole="button"
                 accessibilityLabel={`Rep count ${repCount}, tap to increment`}
               >
-                <Text style={[styles.repNum, { color: accentColor }]}>{repCount}</Text>
+                <Text style={[styles.repNum, { color: previousBest !== null && repCount > previousBest ? accentColor : accentColor }]}>{repCount}</Text>
                 <Text style={styles.repLabel}>TAP</Text>
               </TouchableOpacity>
             </Animated.View>
@@ -442,6 +456,9 @@ export default function WorkoutScreen() {
               <Text style={styles.repResetText}>RESET</Text>
             </TouchableOpacity>
           </View>
+          {previousBest !== null && repCount > previousBest && (
+            <Text style={[styles.pbAlert, { color: accentColor }]}>NEW BEST</Text>
+          )}
         </View>
 
         {/* ── SOUNDSCAPE ── */}
@@ -574,6 +591,9 @@ const styles = StyleSheet.create({
 
   repSection: { marginTop: 28 },
   sectionLabel: { ...t.label, color: '#888', letterSpacing: 2, fontSize: 10, marginBottom: 14 },
+  repHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 10, color: '#555', letterSpacing: 2 },
+  pbAlert: { fontFamily: fonts.mono.regular, fontSize: 10, letterSpacing: 3, textAlign: 'center', marginTop: 10 },
   repRow: { flexDirection: 'column', alignItems: 'center', gap: 12 },
   repCircle: { width: 88, height: 88, borderRadius: 44, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   repNum: { fontSize: 32, fontWeight: '600', lineHeight: 36 },

@@ -10,6 +10,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAudioPlayer } from 'expo-audio';
+import * as Speech from 'expo-speech';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
@@ -45,6 +46,24 @@ const AFFIRMATIONS = [
   'You chose this. Own it.',
 ];
 
+const INSULTS = [
+  "Is that all you've got? My grandma moves faster and she's been dead for six years.",
+  "You call that a rep? I've seen more effort from a houseplant.",
+  "Wow. Really pushing it. Truly inspirational. I'm almost awake.",
+  "At this pace you'll be done by Tuesday. Of next year.",
+  "Even your excuses are out of breath.",
+  "Your couch misses you. It's the only relationship that accepts this level of commitment.",
+  "Incredible effort. If incredible means what I think it doesn't mean.",
+  "A sloth just lapped you. A sleeping one.",
+  "Legend has it someone once tried harder than this. We called them athletes.",
+  "You're really making the floor proud by existing near it.",
+  "I've seen more intensity from a screensaver.",
+  "At least you showed up. That's genuinely the best thing I can say right now.",
+  "Your future self is watching this and cringing. Do better for them.",
+  "The reps aren't going to count themselves. Neither is anyone else, apparently.",
+  "I believe in you. I'm also very easily convinced of things.",
+];
+
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
 
 const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
@@ -70,6 +89,10 @@ export default function WorkoutScreen() {
   const [affirmIdx, setAffirmIdx] = useState(0);
   const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
   const [audioSrc, setAudioSrc] = useState<any>(null);
+  const [trashTalkOn, setTrashTalkOn] = useState(false);
+  const [currentInsult, setCurrentInsult] = useState('');
+  const insultIdxRef = useRef(0);
+  const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNavigating = useRef(false);
   const repScaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -93,8 +116,30 @@ export default function WorkoutScreen() {
   useEffect(() => {
     return () => {
       try { player.remove(); } catch {}
+      Speech.stop();
+      if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
+    if (!trashTalkOn) {
+      Speech.stop();
+      setCurrentInsult('');
+      return;
+    }
+    const speakNext = () => {
+      const insult = INSULTS[insultIdxRef.current % INSULTS.length];
+      insultIdxRef.current += 1;
+      setCurrentInsult(insult);
+      Speech.speak(insult, { rate: 0.9, pitch: 1.0 });
+    };
+    speakNext();
+    trashIntervalRef.current = setInterval(speakNext, 40000);
+    return () => {
+      if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
+    };
+  }, [trashTalkOn]);
 
   useEffect(() => {
     if (totalSteps === 0) return;
@@ -121,6 +166,12 @@ export default function WorkoutScreen() {
   const onPressIn = useCallback(() => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start(), [buttonScale]);
   const onPressOut = useCallback(() => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start(), [buttonScale]);
 
+  const stopAll = () => {
+    try { player.remove(); } catch {}
+    Speech.stop();
+    if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
+  };
+
   const handleNext = () => {
     if (!resolvedWorkout || isNavigating.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -128,7 +179,7 @@ export default function WorkoutScreen() {
       setCurrentStep((s) => s + 1);
     } else {
       isNavigating.current = true;
-      try { player.remove(); } catch {}
+      stopAll();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.push({ pathname: '/post-workout', params: { mood, workoutId, intensity } });
     }
@@ -140,8 +191,13 @@ export default function WorkoutScreen() {
   };
 
   const handleQuit = () => {
-    try { player.remove(); } catch {}
+    stopAll();
     router.replace('/home');
+  };
+
+  const handleTrashTalk = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setTrashTalkOn((on) => !on);
   };
 
   const handleRepTap = () => {
@@ -309,12 +365,26 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
               );
             })}
-            {activeSoundscape && (
-              <TouchableOpacity onPress={() => handleSoundscape(null)} activeOpacity={0.7} style={styles.soundOffBtn}>
+            <TouchableOpacity
+              onPress={handleTrashTalk}
+              activeOpacity={0.7}
+              style={[styles.soundBtn, trashTalkOn && { borderColor: '#E11D48', backgroundColor: '#E11D4818' }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Trash talk mode ${trashTalkOn ? 'on' : 'off'}`}
+            >
+              <Text style={[styles.soundBtnText, trashTalkOn && { color: '#E11D48' }]}>TRASH</Text>
+            </TouchableOpacity>
+            {(activeSoundscape || trashTalkOn) && (
+              <TouchableOpacity onPress={() => { handleSoundscape(null); if (trashTalkOn) handleTrashTalk(); }} activeOpacity={0.7} style={styles.soundOffBtn}>
                 <Text style={styles.soundOffText}>OFF</Text>
               </TouchableOpacity>
             )}
           </View>
+          {trashTalkOn && currentInsult !== '' && (
+            <View style={styles.insultBox}>
+              <Text style={styles.insultText}>"{currentInsult}"</Text>
+            </View>
+          )}
         </View>
 
         {/* ── AFFIRMATION ON TAP ── */}
@@ -393,6 +463,8 @@ const styles = StyleSheet.create({
   soundBtnText: { ...t.label, color: '#555', fontSize: 10, letterSpacing: 2 },
   soundOffBtn: { borderWidth: 1, borderColor: '#2a2a2a', paddingVertical: 8, paddingHorizontal: 14 },
   soundOffText: { ...t.label, color: '#555', fontSize: 10, letterSpacing: 2 },
+  insultBox: { marginTop: 14, borderLeftWidth: 2, borderLeftColor: '#E11D48', paddingLeft: 12, paddingVertical: 4 },
+  insultText: { ...t.body, color: '#c8c8c8', fontSize: 12, lineHeight: 18, fontStyle: 'italic' },
 
   affirmation: { marginTop: 28, alignItems: 'center', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   affirmText: { ...t.body, textAlign: 'center', color: '#666', fontSize: 13, lineHeight: 20 },

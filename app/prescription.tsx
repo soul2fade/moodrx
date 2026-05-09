@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { getInsult } from '@/utils/insults';
+import { fonts } from '../lib/typography';
 
 type Tab = 'workouts' | 'stack';
 
@@ -51,6 +53,7 @@ export default function PrescriptionScreen() {
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
+  const preInsult = useRef(getInsult(mood, 'pre')).current;
   const workouts = getWorkoutsForMood(mood);
   const supplements = getSupplementsForMood(mood);
 
@@ -86,6 +89,9 @@ export default function PrescriptionScreen() {
           <Text style={styles.prescriptionLabel}>YOUR PRESCRIPTION</Text>
           <Text style={styles.prescriptionTitle}>Dr. MoodRx recommends the following.</Text>
           <Text style={styles.prescriptionSub}>Don&apos;t argue.</Text>
+          {preInsult !== '' && (
+            <Text style={styles.insultLine}>{preInsult}</Text>
+          )}
           {userProfile.preferredTime && (
             <Text style={styles.personalizationNote}>
               Matched to your {userProfile.preferredTime.toLowerCase()} preference
@@ -368,6 +374,15 @@ const styles = StyleSheet.create({
     ...t.bodyMuted,
     fontSize: 14,
     marginTop: 4,
+  },
+  insultLine: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#525252',
+    marginTop: 12,
+    textAlign: 'left',
+    alignSelf: 'flex-start',
+    lineHeight: 18,
   },
   personalizationNote: {
     ...t.label,

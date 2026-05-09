@@ -22,6 +22,7 @@ import {
 import { MOODS } from '@/lib/moods';
 import { MoodIcon } from '@/components/MoodIcon';
 import { WorkoutCalendar } from '@/components/WorkoutCalendar';
+import { MoodArc } from '@/components/MoodArc';
 import { ShareCard } from '@/components/ShareCard';
 import { getMostCommonMood, formatChange } from '@/lib/analytics';
 import { DAY_ABBREVS } from '@/lib/dateUtils';
@@ -263,6 +264,9 @@ export default function InsightsScreen() {
             </View>
           </View>
         </View>
+
+        {/* Mood Arc */}
+        {sessions.length >= 2 && <MoodArc sessions={sessions} />}
 
         {/* Pattern section */}
         {sessionCount >= 3 && mostCommonMood && (

@@ -6,10 +6,22 @@ import {
   SpaceGrotesk_700Bold,
 } from "@expo-google-fonts/space-grotesk";
 import * as SplashScreen from "expo-splash-screen";
+import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
 import { Alert } from "react-native";
+
+// Show notifications while app is in the foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GluestackInitializer from "@/components/GluestackInitializer";

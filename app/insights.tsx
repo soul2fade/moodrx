@@ -453,6 +453,12 @@ export default function InsightsScreen() {
                   YOU SAID: {ratingLabel}
                 </Text>
               )}
+              {cs.note ? (
+                <View style={styles.caseNoteBox}>
+                  <Text style={styles.caseNoteLabel}>FIELD NOTES</Text>
+                  <Text style={styles.caseNoteText}>{cs.note}</Text>
+                </View>
+              ) : null}
               <TouchableOpacity
                 style={styles.casePrescribeBtn}
                 onPress={() => {
@@ -882,6 +888,26 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     fontSize: 10,
     marginBottom: 4,
+  },
+  caseNoteBox: {
+    marginTop: 14,
+    borderLeftWidth: 2,
+    borderLeftColor: '#1a1a1a',
+    paddingLeft: 12,
+    paddingVertical: 4,
+  },
+  caseNoteLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 8,
+    color: '#444',
+    letterSpacing: 3,
+    marginBottom: 5,
+  },
+  caseNoteText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#888',
+    lineHeight: 18,
   },
   casePrescribeBtn: {
     backgroundColor: '#059669',

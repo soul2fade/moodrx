@@ -108,7 +108,7 @@ export default function HomeScreen() {
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { flexGrow: 1 }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         scrollEnabled={!selectedMood}
       >
@@ -531,7 +531,6 @@ const styles = StyleSheet.create({
   },
   moodList: {
     marginTop: 28,
-    flex: 1,
   },
   moodRow: {
     flex: 1,

@@ -9,13 +9,14 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useAudioPlayer } from 'expo-audio';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
-import { type as t, fonts } from '../lib/typography';
+import { type as t } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
@@ -25,8 +26,31 @@ const MOTIVATIONAL = [
   'Better than 90% of couches.',
   'Brain chemistry: changing.',
   'Halfway. Hard part was starting.',
-  'Almost. Don\'t quit.',
+  "Almost. Don't quit.",
   'Last one. Mean it.',
+];
+
+const AFFIRMATIONS = [
+  'Your body is doing the work.',
+  'One breath at a time.',
+  'Notice how you feel right now.',
+  'This moment matters.',
+  'Stronger than you think.',
+  "You're still here. That counts.",
+  'Keep it simple. Just move.',
+  'Your future self will thank you.',
+  'The hard part was showing up.',
+  'Progress, not perfection.',
+  'Every step counts.',
+  'You chose this. Own it.',
+];
+
+type Soundscape = 'rain' | 'forest' | 'focus' | null;
+
+const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
+  { key: 'rain',   label: 'RAIN',    src: require('../assets/audio/rain.mp3') },
+  { key: 'forest', label: 'FOREST',  src: require('../assets/audio/forest.mp3') },
+  { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/whitenoise.mp3') },
 ];
 
 export default function WorkoutScreen() {
@@ -39,9 +63,15 @@ export default function WorkoutScreen() {
 
   const workout = workoutId ? getWorkoutById(workoutId) : getWorkoutsForMood(mood)[0];
   const resolvedWorkout = workout ?? getWorkoutsForMood(mood)[0];
+
   const [currentStep, setCurrentStep] = useState(0);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [repCount, setRepCount] = useState(0);
+  const [affirmIdx, setAffirmIdx] = useState(0);
+  const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
+  const [audioSrc, setAudioSrc] = useState<any>(null);
   const isNavigating = useRef(false);
+  const repScaleAnim = useRef(new Animated.Value(1)).current;
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -50,6 +80,21 @@ export default function WorkoutScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
+
+  const player = useAudioPlayer(audioSrc);
+
+  useEffect(() => {
+    if (audioSrc && activeSoundscape) {
+      player.loop = true;
+      player.play();
+    }
+  }, [audioSrc, activeSoundscape]);
+
+  useEffect(() => {
+    return () => {
+      try { player.remove(); } catch {}
+    };
+  }, []);
 
   useEffect(() => {
     if (totalSteps === 0) return;
@@ -61,15 +106,13 @@ export default function WorkoutScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, totalSteps]);
 
+  useEffect(() => {
+    setRepCount(0);
+  }, [currentStep]);
+
   const hwBackHandler = useCallback(() => {
-    if (showQuitConfirm) {
-      setShowQuitConfirm(false);
-      return true;
-    }
-    if (currentStep > 0) {
-      setCurrentStep((s) => s - 1);
-      return true;
-    }
+    if (showQuitConfirm) { setShowQuitConfirm(false); return true; }
+    if (currentStep > 0) { setCurrentStep((s) => s - 1); return true; }
     setShowQuitConfirm(true);
     return true;
   }, [showQuitConfirm, currentStep]);
@@ -79,31 +122,54 @@ export default function WorkoutScreen() {
   const onPressOut = useCallback(() => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start(), [buttonScale]);
 
   const handleNext = () => {
-    if (!resolvedWorkout) return;
-    if (isNavigating.current) return;
+    if (!resolvedWorkout || isNavigating.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStep < totalSteps - 1) {
       setCurrentStep((s) => s + 1);
     } else {
       isNavigating.current = true;
+      try { player.remove(); } catch {}
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.push({
-        pathname: '/post-workout',
-        params: { mood, workoutId, intensity },
-      });
+      router.push({ pathname: '/post-workout', params: { mood, workoutId, intensity } });
     }
   };
 
   const handleBack = () => {
-    if (currentStep === 0) {
-      setShowQuitConfirm(true);
-    } else {
-      setCurrentStep((s) => s - 1);
-    }
+    if (currentStep === 0) { setShowQuitConfirm(true); }
+    else { setCurrentStep((s) => s - 1); }
   };
 
   const handleQuit = () => {
+    try { player.remove(); } catch {}
     router.replace('/home');
+  };
+
+  const handleRepTap = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setRepCount((c) => c + 1);
+    Animated.sequence([
+      Animated.spring(repScaleAnim, { toValue: 1.15, useNativeDriver: true, speed: 80, bounciness: 8 }),
+      Animated.spring(repScaleAnim, { toValue: 1, useNativeDriver: true, speed: 80, bounciness: 4 }),
+    ]).start();
+  };
+
+  const handleAffirmation = () => {
+    Haptics.selectionAsync();
+    setAffirmIdx((i) => (i + 1) % AFFIRMATIONS.length);
+  };
+
+  const handleSoundscape = (key: Soundscape) => {
+    if (activeSoundscape === key) {
+      setActiveSoundscape(null);
+      setAudioSrc(null);
+      try { player.pause(); } catch {}
+      return;
+    }
+    const sound = SOUNDSCAPES.find((s) => s.key === key);
+    if (!sound) return;
+    Haptics.selectionAsync();
+    setActiveSoundscape(key);
+    setAudioSrc(sound.src);
   };
 
   if (!resolvedWorkout) {
@@ -116,30 +182,18 @@ export default function WorkoutScreen() {
 
   const isLastStep = currentStep === totalSteps - 1;
   const motivationalMsg = MOTIVATIONAL[Math.min(currentStep, MOTIVATIONAL.length - 1)];
-
-  const progressWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
+  const progressWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}> 
+    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Progress bar */}
       <View style={styles.progressBarBg}>
-        <Animated.View
-          style={{ height: 2, width: progressWidth, backgroundColor: accentColor }}
-        />
+        <Animated.View style={{ height: 2, width: progressWidth, backgroundColor: accentColor }} />
       </View>
 
       {/* Top row */}
       <View style={styles.topRow}>
-        <TouchableOpacity
-          onPress={() => setShowQuitConfirm(true)}
-          activeOpacity={0.7}
-          style={styles.quitButton}
-          accessibilityRole="button"
-          accessibilityLabel="Quit workout"
-        >
+        <TouchableOpacity onPress={() => setShowQuitConfirm(true)} activeOpacity={0.7} style={styles.quitButton} accessibilityRole="button" accessibilityLabel="Quit workout">
           <Text style={styles.quitText}>X QUIT</Text>
         </TouchableOpacity>
         <Text style={styles.stepCounter}>{currentStep + 1} / {totalSteps}</Text>
@@ -150,41 +204,23 @@ export default function WorkoutScreen() {
         <View style={styles.quitConfirm} accessibilityRole="alert">
           <Text style={styles.quitConfirmText}>Abandon this workout?</Text>
           <View style={styles.quitConfirmButtons}>
-            <TouchableOpacity
-              onPress={() => setShowQuitConfirm(false)}
-              activeOpacity={0.7}
-              style={styles.keepGoingBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Keep going"
-            >
+            <TouchableOpacity onPress={() => setShowQuitConfirm(false)} activeOpacity={0.7} style={styles.keepGoingBtn} accessibilityRole="button">
               <Text style={styles.keepGoingText}>Keep going</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleQuit}
-              activeOpacity={0.7}
-              style={styles.quitConfirmBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Quit workout"
-            >
+            <TouchableOpacity onPress={handleQuit} activeOpacity={0.7} style={styles.quitConfirmBtn} accessibilityRole="button">
               <Text style={styles.quitConfirmBtnText}>Quit</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Icon + title */}
         <View style={styles.iconCenter}>
           <MoodIcon mood={mood} size={36} color={accentColor} />
         </View>
         <Text style={styles.workoutName}>{resolvedWorkout.name}</Text>
-        <Text style={styles.stepLabel}>
-          STEP {currentStep + 1} OF {totalSteps}
-        </Text>
+        <Text style={styles.stepLabel}>STEP {currentStep + 1} OF {totalSteps}</Text>
 
         {/* Workout Coach */}
         <WorkoutCoach
@@ -204,17 +240,93 @@ export default function WorkoutScreen() {
 
         {/* Motivational */}
         <Text style={styles.motivational}>{motivationalMsg}</Text>
+
+        {/* ── STEP MINI-MAP ── */}
+        <View style={styles.miniMap}>
+          {resolvedWorkout.steps.map((step, idx) => {
+            const isActive = idx === currentStep;
+            const isDone = idx < currentStep;
+            return (
+              <View key={idx} style={styles.miniMapRow}>
+                <View style={[
+                  styles.miniMapDot,
+                  isDone && { backgroundColor: accentColor + '50' },
+                  isActive && { backgroundColor: accentColor },
+                ]} />
+                <Text
+                  style={[
+                    styles.miniMapText,
+                    isDone && { color: '#444' },
+                    isActive && { color: accentColor },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {step.length > 42 ? step.slice(0, 42) + '…' : step}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* ── REP COUNTER ── */}
+        <View style={styles.repSection}>
+          <Text style={styles.sectionLabel}>REP COUNTER</Text>
+          <View style={styles.repRow}>
+            <Animated.View style={{ transform: [{ scale: repScaleAnim }] }}>
+              <TouchableOpacity
+                onPress={handleRepTap}
+                activeOpacity={0.75}
+                style={[styles.repCircle, { borderColor: accentColor }]}
+                accessibilityRole="button"
+                accessibilityLabel={`Rep count ${repCount}, tap to increment`}
+              >
+                <Text style={[styles.repNum, { color: accentColor }]}>{repCount}</Text>
+                <Text style={styles.repLabel}>TAP</Text>
+              </TouchableOpacity>
+            </Animated.View>
+            <TouchableOpacity onPress={() => setRepCount(0)} activeOpacity={0.6} style={styles.repReset}>
+              <Text style={styles.repResetText}>RESET</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ── SOUNDSCAPE ── */}
+        <View style={styles.soundSection}>
+          <Text style={styles.sectionLabel}>SOUNDSCAPE</Text>
+          <View style={styles.soundRow}>
+            {SOUNDSCAPES.map((s) => {
+              const isOn = activeSoundscape === s.key;
+              return (
+                <TouchableOpacity
+                  key={s.key}
+                  onPress={() => handleSoundscape(s.key)}
+                  activeOpacity={0.7}
+                  style={[styles.soundBtn, isOn && { borderColor: accentColor, backgroundColor: accentColor + '18' }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${s.label} soundscape ${isOn ? 'on' : 'off'}`}
+                >
+                  <Text style={[styles.soundBtnText, isOn && { color: accentColor }]}>{s.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+            {activeSoundscape && (
+              <TouchableOpacity onPress={() => handleSoundscape(null)} activeOpacity={0.7} style={styles.soundOffBtn}>
+                <Text style={styles.soundOffText}>OFF</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* ── AFFIRMATION ON TAP ── */}
+        <TouchableOpacity onPress={handleAffirmation} activeOpacity={0.6} style={styles.affirmation} accessibilityRole="button" accessibilityLabel="Tap for a new affirmation">
+          <Text style={styles.affirmText}>{AFFIRMATIONS[affirmIdx]}</Text>
+          <Text style={styles.affirmHint}>tap for another</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Bottom nav */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity
-          onPress={handleBack}
-          activeOpacity={0.7}
-          style={styles.backBtn}
-          accessibilityRole="button"
-          accessibilityLabel={currentStep === 0 ? 'Quit workout' : 'Previous step'}
-        >
+        <TouchableOpacity onPress={handleBack} activeOpacity={0.7} style={styles.backBtn} accessibilityRole="button" accessibilityLabel={currentStep === 0 ? 'Quit workout' : 'Previous step'}>
           <Text style={styles.backBtnText}>← BACK</Text>
         </TouchableOpacity>
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
@@ -238,142 +350,57 @@ export default function WorkoutScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-  errorText: {
-    ...t.label,
-    color: '#c8c8c8',
-    textAlign: 'center',
-    marginTop: 80,
-  },
-  progressBarBg: {
-    width: '100%',
-    height: 2,
-    backgroundColor: '#1a1a1a',
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 12,
-  },
-  quitButton: {
-    paddingVertical: 4,
-  },
-  quitText: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 2,
-  },
-  stepCounter: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 2,
-  },
-  quitConfirm: {
-    marginHorizontal: 24,
-    borderWidth: 1,
-    borderColor: '#E11D48',
-    padding: 16,
-    marginBottom: 8,
-  },
-  quitConfirmText: {
-    ...t.body,
-    fontSize: 14,
-  },
-  quitConfirmButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  keepGoingBtn: {
-    paddingVertical: 8,
-  },
-  keepGoingText: {
-    ...t.label,
-    color: '#c8c8c8',
-  },
-  quitConfirmBtn: {
-    borderWidth: 1,
-    borderColor: '#E11D48',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  quitConfirmBtnText: {
-    ...t.label,
-    color: '#E11D48',
-    letterSpacing: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  iconCenter: {
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  workoutName: {
-    ...t.headlineMd,
-    textAlign: 'center',
-  },
-  stepLabel: {
-    ...t.step,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  stepBox: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#1a1a1a',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    marginTop: 16,
-    minHeight: 80,
-    justifyContent: 'center',
-  },
-  stepText: {
-    ...t.body,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  motivational: {
-    ...t.soft,
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#1a1a1a',
-  },
-  backBtn: {
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  backBtnText: {
-    ...t.timer,
-    color: '#c8c8c8',
-  },
-  nextBtn: {
-    borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  nextBtnText: {
-    ...t.timer,
-  },
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  errorText: { ...t.label, color: '#c8c8c8', textAlign: 'center', marginTop: 80 },
+  progressBarBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a' },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 48, paddingBottom: 12 },
+  quitButton: { paddingVertical: 4 },
+  quitText: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  stepCounter: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  quitConfirm: { marginHorizontal: 24, borderWidth: 1, borderColor: '#E11D48', padding: 16, marginBottom: 8 },
+  quitConfirmText: { ...t.body, fontSize: 14 },
+  quitConfirmButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
+  keepGoingBtn: { paddingVertical: 8 },
+  keepGoingText: { ...t.label, color: '#c8c8c8' },
+  quitConfirmBtn: { borderWidth: 1, borderColor: '#E11D48', paddingHorizontal: 16, paddingVertical: 8 },
+  quitConfirmBtnText: { ...t.label, color: '#E11D48', letterSpacing: 1 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32 },
+  iconCenter: { alignItems: 'center', marginBottom: 12 },
+  workoutName: { ...t.headlineMd, textAlign: 'center' },
+  stepLabel: { ...t.step, textAlign: 'center', marginTop: 8 },
+  stepBox: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#1a1a1a', paddingVertical: 24, paddingHorizontal: 16, marginTop: 16, minHeight: 80, justifyContent: 'center' },
+  stepText: { ...t.body, textAlign: 'center', lineHeight: 24 },
+  motivational: { ...t.soft, textAlign: 'center', marginTop: 24 },
+
+  miniMap: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 16, gap: 10 },
+  miniMapRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  miniMapDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#2a2a2a' },
+  miniMapText: { ...t.label, color: '#333', fontSize: 11, flex: 1, letterSpacing: 0.3 },
+
+  repSection: { marginTop: 28 },
+  sectionLabel: { ...t.label, color: '#555', letterSpacing: 2, fontSize: 10, marginBottom: 14 },
+  repRow: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+  repCircle: { width: 88, height: 88, borderRadius: 44, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  repNum: { fontSize: 32, fontWeight: '600', lineHeight: 36 },
+  repLabel: { ...t.label, color: '#555', fontSize: 9, letterSpacing: 2, marginTop: 2 },
+  repReset: { paddingVertical: 8, paddingHorizontal: 12 },
+  repResetText: { ...t.label, color: '#444', letterSpacing: 2, fontSize: 10 },
+
+  soundSection: { marginTop: 28 },
+  soundRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  soundBtn: { borderWidth: 1, borderColor: '#2a2a2a', paddingVertical: 8, paddingHorizontal: 14 },
+  soundBtnText: { ...t.label, color: '#555', fontSize: 10, letterSpacing: 2 },
+  soundOffBtn: { borderWidth: 1, borderColor: '#2a2a2a', paddingVertical: 8, paddingHorizontal: 14 },
+  soundOffText: { ...t.label, color: '#555', fontSize: 10, letterSpacing: 2 },
+
+  affirmation: { marginTop: 28, alignItems: 'center', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
+  affirmText: { ...t.body, textAlign: 'center', color: '#666', fontSize: 13, lineHeight: 20 },
+  affirmHint: { ...t.label, color: '#333', fontSize: 9, letterSpacing: 2, marginTop: 8 },
+
+  bottomNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
+  backBtn: { borderWidth: 1, borderColor: '#1a1a1a', paddingVertical: 12, paddingHorizontal: 24 },
+  backBtnText: { ...t.timer, color: '#c8c8c8' },
+  nextBtn: { borderWidth: 1, paddingVertical: 12, paddingHorizontal: 24 },
+  nextBtnText: { ...t.timer },
 });

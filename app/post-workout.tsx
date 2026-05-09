@@ -17,7 +17,8 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { addSession, getNotifPromptShown, getPersonalBest, getSessions, getUserProfile, savePersonalBest, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { addSession, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { rescheduleAfterSession } from '@/lib/notifications';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
@@ -118,6 +119,7 @@ export default function PostWorkoutScreen() {
         rating: rating ?? undefined,
         note: note.trim() || undefined,
       });
+      getSessions().then((updated) => rescheduleAfterSession(getStreak(updated))).catch(() => {});
       const promptShown = await getNotifPromptShown();
       if (!promptShown) {
         setShowNotifPrompt(true);

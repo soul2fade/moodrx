@@ -12,7 +12,8 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getSessions, getStreak, getMoodIdentity, getUserProfile, UserProfile, Session } from '@/lib/storage';
+import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, UserProfile, Session, StreakState } from '@/lib/storage';
+import { todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
@@ -30,6 +31,7 @@ export default function HomeScreen() {
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
+  const [streakState, setStreakState] = useState<StreakState>({ hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 });
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -41,10 +43,21 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       setIsLoading(true);
-      Promise.all([getSessions(), getUserProfile()]).then(([data, profile]) => {
+      Promise.all([getSessions(), getUserProfile(), getStreakState()]).then(([data, profile, state]) => {
         setSessions(data);
         setUserProfile(profile);
         setIsLoading(false);
+        const currentStreak = getStreak(data);
+        const today = todayDateString();
+        let updated = { ...state };
+        if (currentStreak > state.hwm) {
+          updated = { ...updated, hwm: currentStreak };
+        }
+        if (currentStreak === 0 && state.hwm >= 2 && state.lastBrokenDate !== today) {
+          updated = { ...updated, lastBrokenDate: today, lastBrokenHwm: state.hwm };
+        }
+        if (JSON.stringify(updated) !== JSON.stringify(state)) saveStreakState(updated);
+        setStreakState(updated);
       });
       dismissPanel();
       // Re-stagger mood rows on every focus
@@ -190,14 +203,56 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {streak >= 1 && (
+        {/* ── STREAK CONSEQUENCE — shown the day a streak breaks ── */}
+        {streak === 0 && streakState.lastBrokenDate === todayDateString() && streakState.lastBrokenHwm >= 2 && (
+          <View style={styles.streakBrokenBox}>
+            <Text style={styles.streakBrokenLabel}>STREAK LOST</Text>
+            <Text style={styles.streakBrokenCount}>{streakState.lastBrokenHwm}</Text>
+            <Text style={styles.streakBrokenDays}>
+              {streakState.lastBrokenHwm === 1 ? 'day' : 'days'} gone.
+            </Text>
+            <Text style={styles.streakBrokenSub}>
+              {streakState.lastBrokenHwm >= 14
+                ? 'That was real momentum. You stopped.'
+                : streakState.lastBrokenHwm >= 7
+                ? 'A whole week. You walked away from it.'
+                : streakState.lastBrokenHwm >= 4
+                ? 'You were building something. Now you\u2019re not.'
+                : 'Two days in and you quit. Impressive.'}
+            </Text>
+          </View>
+        )}
+
+        {/* ── STREAK MILESTONE — shown at 3/7/14/30 days ── */}
+        {streak > 0 && [3, 7, 14, 30].includes(streak) && (
+          <View style={[styles.streakMilestoneBox, { borderLeftColor: '#D97706' }]}>
+            <Text style={styles.streakMilestoneNum}>{streak} DAYS</Text>
+            <Text style={styles.streakMilestoneMsg}>
+              {streak === 3
+                ? 'Three days. A habit is forming. Don\u2019t ruin it.'
+                : streak === 7
+                ? 'One week straight. That\u2019s genuinely rare.'
+                : streak === 14
+                ? 'Two weeks. You\u2019ve crossed a line most people never reach.'
+                : '30 days. This is who you are now.'}
+            </Text>
+          </View>
+        )}
+
+        {/* ── STREAK RUNNING — normal day display ── */}
+        {streak > 0 && ![3, 7, 14, 30].includes(streak) && (
           <View style={styles.streakBox}>
+            <Text style={styles.streakBoxLabel}>{streak} DAY{streak !== 1 ? 'S' : ''}</Text>
             <Text style={styles.streakBoxText}>
               {streak === 1
                 ? "Day one. Don\u2019t let it be the only one."
                 : streak === 2
                 ? "Two days straight. Something\u2019s clicking."
-                : "You\u2019re on a roll. Don\u2019t blow it."}
+                : streak < 7
+                ? "You\u2019re on a roll. Don\u2019t blow it."
+                : streak < 14
+                ? "Most people stop here. Don\u2019t be most people."
+                : "You\u2019ve outlasted almost everyone."}
             </Text>
           </View>
         )}
@@ -483,6 +538,63 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 6,
   },
+  streakBrokenBox: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#3a1010',
+    backgroundColor: '#0d0808',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  streakBrokenLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#8b2020',
+    letterSpacing: 4,
+    marginBottom: 8,
+  },
+  streakBrokenCount: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 52,
+    color: '#5a1515',
+    lineHeight: 56,
+  },
+  streakBrokenDays: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#5a1515',
+    letterSpacing: 2,
+    marginBottom: 10,
+  },
+  streakBrokenSub: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#7a2020',
+    textAlign: 'center',
+    lineHeight: 17,
+  },
+  streakMilestoneBox: {
+    marginTop: 16,
+    borderLeftWidth: 3,
+    paddingLeft: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#0d0d00',
+  },
+  streakMilestoneNum: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    color: '#D97706',
+    letterSpacing: 3,
+    marginBottom: 6,
+  },
+  streakMilestoneMsg: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 15,
+    color: '#e8e8e8',
+    lineHeight: 21,
+  },
   streakBox: {
     borderLeftWidth: 3,
     borderLeftColor: '#D97706',
@@ -490,6 +602,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginTop: 16,
+  },
+  streakBoxLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#D97706',
+    letterSpacing: 3,
+    marginBottom: 4,
   },
   streakBoxText: {
     ...t.number,

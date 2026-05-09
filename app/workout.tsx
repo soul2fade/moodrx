@@ -98,6 +98,7 @@ export default function WorkoutScreen() {
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insultIdxRef = useRef(0);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const britishVoiceRef = useRef<string | null>(null);
   const isNavigating = useRef(false);
   const repScaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -112,6 +113,14 @@ export default function WorkoutScreen() {
   const midStep = Math.floor((totalSteps - 1) / 2);
 
   const player = useAudioPlayer(audioSrc);
+
+  useEffect(() => {
+    Speech.getAvailableVoicesAsync().then((voices) => {
+      const gbVoices = voices.filter(v => v.language?.startsWith('en-GB') || v.identifier?.toLowerCase().includes('en-gb'));
+      const pick = gbVoices.find(v => /male|daniel|george|oliver/i.test(v.name ?? v.identifier ?? '')) ?? gbVoices[0];
+      if (pick) britishVoiceRef.current = pick.identifier;
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (audioSrc && activeSoundscape) {
@@ -139,7 +148,9 @@ export default function WorkoutScreen() {
       const insult = INSULTS[insultIdxRef.current % INSULTS.length];
       insultIdxRef.current += 1;
       setCurrentInsult(insult);
-      Speech.speak(insult, { language: 'en-GB', rate: 0.82, pitch: 0.78 });
+      const voiceOpts: Speech.SpeechOptions = { language: 'en-GB', rate: 0.82, pitch: 0.78 };
+      if (britishVoiceRef.current) voiceOpts.voice = britishVoiceRef.current;
+      Speech.speak(insult, voiceOpts);
     };
     speakNext();
     trashIntervalRef.current = setInterval(speakNext, 40000);

@@ -47,24 +47,6 @@ const AFFIRMATIONS = [
   'You chose this. Own it.',
 ];
 
-const INSULTS = [
-  "Is that all you've got? My grandma moves faster and she's been dead for six years.",
-  "You call that a rep? I've seen more effort from a houseplant.",
-  "Wow. Really pushing it. Truly inspirational. I'm almost awake.",
-  "At this pace you'll be done by Tuesday. Of next year.",
-  "Even your excuses are out of breath.",
-  "Your couch misses you. It's the only relationship that accepts this level of commitment.",
-  "Incredible effort. If incredible means what I think it doesn't mean.",
-  "A sloth just lapped you. A sleeping one.",
-  "Legend has it someone once tried harder than this. We called them athletes.",
-  "You're really making the floor proud by existing near it.",
-  "I've seen more intensity from a screensaver.",
-  "At least you showed up. That's genuinely the best thing I can say right now.",
-  "Your future self is watching this and cringing. Do better for them.",
-  "The reps aren't going to count themselves. Neither is anyone else, apparently.",
-  "I believe in you. I'm also very easily convinced of things.",
-];
-
 const INSULT_AUDIO = [
   require('../assets/audio/insults/insult_01.mp3'),
   require('../assets/audio/insults/insult_02.mp3'),
@@ -109,7 +91,6 @@ export default function WorkoutScreen() {
   const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
-  const [currentInsult, setCurrentInsult] = useState('');
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
@@ -158,13 +139,11 @@ export default function WorkoutScreen() {
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     if (!trashTalkOn) {
       try { insultPlayer.pause(); } catch {}
-      setCurrentInsult('');
       return;
     }
     const playNext = () => {
-      const idx = insultIdxRef.current % INSULTS.length;
+      const idx = insultIdxRef.current % INSULT_AUDIO.length;
       insultIdxRef.current += 1;
-      setCurrentInsult(INSULTS[idx]);
       setInsultAudioSrc(INSULT_AUDIO[idx]);
     };
     playNext();
@@ -431,11 +410,6 @@ export default function WorkoutScreen() {
               </TouchableOpacity>
             )}
           </View>
-          {trashTalkOn && currentInsult !== '' && (
-            <View style={styles.insultBox}>
-              <Text style={styles.insultText}>"{currentInsult}"</Text>
-            </View>
-          )}
         </View>
 
         {/* ── AFFIRMATION ON TAP ── */}
@@ -538,8 +512,6 @@ const styles = StyleSheet.create({
   soundBtnText: { ...t.label, color: '#c8c8c8', fontSize: 10, letterSpacing: 2 },
   soundOffBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
   soundOffText: { ...t.label, color: '#c8c8c8', fontSize: 10, letterSpacing: 2 },
-  insultBox: { marginTop: 14, borderLeftWidth: 2, borderLeftColor: '#E11D48', paddingLeft: 12, paddingVertical: 4 },
-  insultText: { ...t.body, color: '#c8c8c8', fontSize: 12, lineHeight: 18, fontStyle: 'italic' },
 
   affirmation: { marginTop: 28, alignItems: 'center', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   affirmText: { ...t.body, textAlign: 'center', color: '#c8c8c8', fontSize: 13, lineHeight: 20 },

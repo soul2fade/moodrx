@@ -14,19 +14,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
 import { clearAllData } from '@/lib/storage';
+import {
+  PRESET_TIMES,
+  NOTIFICATIONS_ENABLED_KEY,
+  REMINDER_TIME_KEY,
+  scheduleSmartReminder,
+  cancelReminders,
+} from '@/lib/notifications';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
-const NOTIFICATIONS_KEY = 'notifications_enabled';
-const REMINDER_TIME_KEY = 'reminder_time';
-
-const PRESET_TIMES = [
-  { label: '8:00 AM', hour: 8, minute: 0 },
-  { label: '12:00 PM', hour: 12, minute: 0 },
-  { label: '6:00 PM', hour: 18, minute: 0 },
-  { label: '9:00 PM', hour: 21, minute: 0 },
-];
+const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
 export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -82,32 +81,14 @@ export default function SettingsScreen() {
       setNotificationsEnabled(false);
       animateToggle(0);
       await AsyncStorage.setItem(NOTIFICATIONS_KEY, 'false');
-      if (Platform.OS !== 'web') {
-        await Notifications.cancelAllScheduledNotificationsAsync();
-      }
+      await cancelReminders();
     }
   };
 
   const scheduleNotification = async (timeLabel: string) => {
-    if (Platform.OS === 'web') return;
     const preset = PRESET_TIMES.find((p) => p.label === timeLabel);
     if (!preset) return;
-    try {
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'MoodRx',
-          body: 'Time to check in. How bad is it today?',
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: preset.hour,
-          minute: preset.minute,
-        },
-      });
-    } catch {
-      // ignore
-    }
+    await scheduleSmartReminder(preset.hour, preset.minute, 0);
   };
 
   const handleSelectTime = async (timeLabel: string) => {

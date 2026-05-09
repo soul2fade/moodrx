@@ -203,6 +203,23 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Weekly prescription entry — visible after 3+ sessions */}
+        {sessionCount >= 3 && !selectedMood && (
+          <TouchableOpacity
+            style={styles.weeklyRxBanner}
+            onPress={() => router.push('/weekly-prescription' as any)}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="View your weekly prescription"
+          >
+            <View style={styles.weeklyRxLeft}>
+              <Text style={styles.weeklyRxLabel}>WEEKLY RX</Text>
+              <Text style={styles.weeklyRxSub}>Your 7-day plan is ready</Text>
+            </View>
+            <Text style={styles.weeklyRxArrow}>→</Text>
+          </TouchableOpacity>
+        )}
+
         {/* ── STREAK CONSEQUENCE — shown the day a streak breaks ── */}
         {streak === 0 && streakState.lastBrokenDate === todayDateString() && streakState.lastBrokenHwm >= 2 && (
           <View style={styles.streakBrokenBox}>
@@ -653,6 +670,36 @@ const styles = StyleSheet.create({
   stillFeelingArrow: {
     ...t.label,
     color: '#c8c8c8',
+  },
+  weeklyRxBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderLeftWidth: 3,
+    borderLeftColor: '#444444',
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: '#0d0d0d',
+  },
+  weeklyRxLeft: {
+    gap: 2,
+  },
+  weeklyRxLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#888888',
+    letterSpacing: 3,
+  },
+  weeklyRxSub: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 13,
+    color: '#c8c8c8',
+  },
+  weeklyRxArrow: {
+    fontFamily: fonts.primary.bold,
+    fontSize: 14,
+    color: '#444444',
   },
   moodList: {
     marginTop: 28,

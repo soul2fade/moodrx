@@ -19,11 +19,11 @@ import { getPersonalBest } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
-import { type as t } from '../lib/typography';
+import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { getInsult } from '@/utils/insults';
-import { fonts } from '../lib/typography';
 
 function parseRestSeconds(text: string): number | null {
   const lower = text.toLowerCase();
@@ -131,7 +131,7 @@ export default function WorkoutScreen() {
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const progressAnim = useRef(new Animated.Value(0)).current;
-  const buttonScale = useRef(new Animated.Value(1)).current;
+  const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
@@ -241,9 +241,6 @@ export default function WorkoutScreen() {
   }, [showQuitConfirm, currentStep]);
   useHardwareBack(hwBackHandler);
 
-  const onPressIn = useCallback(() => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start(), [buttonScale]);
-  const onPressOut = useCallback(() => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start(), [buttonScale]);
-
   const stopAll = () => {
     try { player.remove(); } catch {}
     try { insultPlayer.pause(); } catch {}
@@ -288,8 +285,10 @@ export default function WorkoutScreen() {
       warningAnim.setValue(0);
       Animated.timing(warningAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
       warningTimerRef.current = setTimeout(dismissTrashWarning, 2500);
+      setTimeout(() => setTrashTalkOn(true), 2700);
+    } else {
+      setTrashTalkOn(false);
     }
-    setTrashTalkOn((on) => !on);
   };
 
   const handleKeepAwake = async () => {
@@ -603,49 +602,49 @@ const styles = StyleSheet.create({
   motivational: { ...t.soft, textAlign: 'center', marginTop: 24 },
 
   restBox: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#1a1a1a', paddingVertical: 32, paddingHorizontal: 16, marginTop: 16, alignItems: 'center' },
-  restLabel: { ...t.label, color: '#888', letterSpacing: 4, fontSize: 10, marginBottom: 12 },
-  restCountdown: { fontSize: 64, fontFamily: fonts.mono.regular, lineHeight: 72 },
+  restLabel: { ...t.label, color: '#888', letterSpacing: 4, fontSize: 12, marginBottom: 12 },
+  restCountdown: { fontSize: 68, fontFamily: fonts.mono.regular, lineHeight: 76 },
   restProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 20 },
   restProgressFill: { height: 2 },
-  restSubtext: { ...t.label, color: '#555', letterSpacing: 2, fontSize: 9, marginTop: 12 },
+  restSubtext: { ...t.label, color: '#555', letterSpacing: 2, fontSize: 11, marginTop: 12 },
 
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 14,
     color: '#525252',
     marginTop: 16,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   miniMap: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 16, gap: 10 },
   miniMapRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   miniMapDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#888' },
-  miniMapText: { ...t.label, color: '#e8e8e8', fontSize: 11, flex: 1, letterSpacing: 0.3 },
+  miniMapText: { ...t.label, color: '#e8e8e8', fontSize: 13, flex: 1, letterSpacing: 0.3 },
 
   repSection: { marginTop: 28 },
-  sectionLabel: { ...t.label, color: '#888', letterSpacing: 2, fontSize: 10, marginBottom: 14 },
+  sectionLabel: { ...t.label, color: '#888', letterSpacing: 2, fontSize: 12, marginBottom: 14 },
   repHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 10, color: '#555', letterSpacing: 2 },
-  pbAlert: { fontFamily: fonts.mono.regular, fontSize: 10, letterSpacing: 3, textAlign: 'center', marginTop: 10 },
+  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 12, color: '#555', letterSpacing: 2 },
+  pbAlert: { fontFamily: fonts.mono.regular, fontSize: 12, letterSpacing: 3, textAlign: 'center', marginTop: 10 },
   repRow: { flexDirection: 'column', alignItems: 'center', gap: 12 },
   repCircle: { width: 88, height: 88, borderRadius: 44, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  repNum: { fontSize: 32, fontWeight: '600', lineHeight: 36 },
-  repLabel: { ...t.label, color: '#888', fontSize: 9, letterSpacing: 2, marginTop: 2 },
+  repNum: { fontSize: 35, fontWeight: '600', lineHeight: 39 },
+  repLabel: { ...t.label, color: '#888', fontSize: 11, letterSpacing: 2, marginTop: 2 },
   repReset: { paddingVertical: 8, paddingHorizontal: 16 },
-  repResetText: { ...t.label, color: '#c8c8c8', letterSpacing: 2, fontSize: 10 },
+  repResetText: { ...t.label, color: '#c8c8c8', letterSpacing: 2, fontSize: 12 },
 
   soundSection: { marginTop: 28 },
   soundRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   soundBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
-  soundBtnText: { ...t.label, color: '#c8c8c8', fontSize: 10, letterSpacing: 2 },
+  soundBtnText: { ...t.label, color: '#c8c8c8', fontSize: 12, letterSpacing: 2 },
   soundOffBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
-  soundOffText: { ...t.label, color: '#c8c8c8', fontSize: 10, letterSpacing: 2 },
+  soundOffText: { ...t.label, color: '#c8c8c8', fontSize: 12, letterSpacing: 2 },
 
   keepAwakeBtn: { marginTop: 16, borderWidth: 1, borderColor: '#333', paddingVertical: 10, alignItems: 'center' },
-  keepAwakeBtnText: { ...t.label, color: '#666', fontSize: 10, letterSpacing: 2 },
+  keepAwakeBtnText: { ...t.label, color: '#666', fontSize: 12, letterSpacing: 2 },
 
   affirmation: { marginTop: 28, alignItems: 'center', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
-  affirmText: { ...t.body, textAlign: 'center', color: '#c8c8c8', fontSize: 13, lineHeight: 20 },
-  affirmHint: { ...t.label, color: '#888', fontSize: 9, letterSpacing: 2, marginTop: 8 },
+  affirmText: { ...t.body, textAlign: 'center', color: '#c8c8c8', fontSize: 15, lineHeight: 22 },
+  affirmHint: { ...t.label, color: '#888', fontSize: 11, letterSpacing: 2, marginTop: 8 },
 
   warningOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, zIndex: 50 },
   warningCard: { backgroundColor: '#111', borderWidth: 1, borderColor: '#2a2a2a', padding: 24, width: '100%' },

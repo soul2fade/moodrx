@@ -27,6 +27,7 @@ import { NotificationPrompt } from '@/components/NotificationPrompt';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { getInsult } from '@/utils/insults';
 
 function getScoreContext(score: number): string {
@@ -78,7 +79,7 @@ export default function PostWorkoutScreen() {
   const postInsult = useRef(getInsult(mood, 'post')).current;
   const breakthroughRef = useRef<ViewShot>(null);
 
-  const buttonScale = useRef(new Animated.Value(1)).current;
+  const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
   const handleShare = async () => {
@@ -109,9 +110,6 @@ export default function PostWorkoutScreen() {
     return true;
   }, []);
   useHardwareBack(backHandler);
-
-  const onPressIn = () => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start();
-  const onPressOut = () => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
   const handleLog = async () => {
     if (isSubmitting) return; // prevent double-tap

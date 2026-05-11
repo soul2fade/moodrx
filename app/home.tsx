@@ -22,6 +22,7 @@ import { type as t, fonts } from '@/lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
+import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
 
@@ -34,7 +35,7 @@ export default function HomeScreen() {
   const [streakState, setStreakState] = useState<StreakState>({ hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 });
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
-  const buttonScale = useRef(new Animated.Value(1)).current;
+  const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
   const { panelAnim, backdropAnim, show: showPanel, dismiss: dismissPanelAnim } = useBottomPanel(PANEL_HEIGHT);
   const moodAnims = useRef(
     MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
@@ -104,9 +105,6 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showPanel();
   }, [showPanel]);
-
-  const onPressIn = useCallback(() => Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 0 }).start(), [buttonScale]);
-  const onPressOut = useCallback(() => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start(), [buttonScale]);
 
   const handlePrescribe = useCallback(() => {
     if (!selectedMood) return;

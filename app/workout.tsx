@@ -53,20 +53,6 @@ const MOTIVATIONAL = [
   'Last one. Mean it.',
 ];
 
-const AFFIRMATIONS = [
-  'Your body is doing the work.',
-  'One breath at a time.',
-  'Notice how you feel right now.',
-  'This moment matters.',
-  'Stronger than you think.',
-  "You're still here. That counts.",
-  'Keep it simple. Just move.',
-  'Your future self will thank you.',
-  'The hard part was showing up.',
-  'Progress, not perfection.',
-  'Every step counts.',
-  'You chose this. Own it.',
-];
 
 const INSULT_AUDIO = [
   require('../assets/audio/insults/insult_01.mp3'),
@@ -111,7 +97,6 @@ export default function WorkoutScreen() {
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [repCount, setRepCount] = useState(0);
   const [previousBest, setPreviousBest] = useState<number | null>(null);
-  const [affirmIdx, setAffirmIdx] = useState(0);
   const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
@@ -309,11 +294,6 @@ export default function WorkoutScreen() {
       Animated.spring(repScaleAnim, { toValue: 1.15, useNativeDriver: true, speed: 80, bounciness: 8 }),
       Animated.spring(repScaleAnim, { toValue: 1, useNativeDriver: true, speed: 80, bounciness: 4 }),
     ]).start();
-  };
-
-  const handleAffirmation = () => {
-    Haptics.selectionAsync();
-    setAffirmIdx((i) => (i + 1) % AFFIRMATIONS.length);
   };
 
   const handleSoundscape = (key: Soundscape) => {
@@ -528,11 +508,6 @@ export default function WorkoutScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* ── AFFIRMATION ON TAP ── */}
-        <TouchableOpacity onPress={handleAffirmation} activeOpacity={0.6} style={styles.affirmation} accessibilityRole="button" accessibilityLabel="Tap for a new affirmation">
-          <Text style={styles.affirmText}>{AFFIRMATIONS[affirmIdx]}</Text>
-          <Text style={styles.affirmHint}>tap for another</Text>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* Trash talk warning overlay */}
@@ -641,10 +616,6 @@ const styles = StyleSheet.create({
 
   keepAwakeBtn: { marginTop: 16, borderWidth: 1, borderColor: '#333', paddingVertical: 10, alignItems: 'center' },
   keepAwakeBtnText: { ...t.label, color: '#666', fontSize: 12, letterSpacing: 2 },
-
-  affirmation: { marginTop: 28, alignItems: 'center', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
-  affirmText: { ...t.body, textAlign: 'center', color: '#c8c8c8', fontSize: 15, lineHeight: 22 },
-  affirmHint: { ...t.label, color: '#888', fontSize: 11, letterSpacing: 2, marginTop: 8 },
 
   warningOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, zIndex: 50 },
   warningCard: { backgroundColor: '#111', borderWidth: 1, borderColor: '#2a2a2a', padding: 24, width: '100%' },

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { router } from 'expo-router';
-import { type as t, fonts } from '../lib/typography';
+import { fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 

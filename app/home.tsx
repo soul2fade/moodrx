@@ -349,6 +349,17 @@ export default function HomeScreen() {
             );
           })}
         </View>
+
+        {/* Safety net link */}
+        <TouchableOpacity
+          onPress={() => router.push('/crisis' as any)}
+          activeOpacity={0.6}
+          style={styles.safetyNetBtn}
+          accessibilityRole="link"
+          accessibilityLabel="Not okay enough to move? Get crisis support"
+        >
+          <Text style={styles.safetyNetText}>Not okay enough to move? →</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Backdrop */}
@@ -451,7 +462,7 @@ const styles = StyleSheet.create({
   checkInLabel: {
     ...t.label,
     color: '#c8c8c8',
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 1,
   },
   topRight: {
@@ -462,13 +473,13 @@ const styles = StyleSheet.create({
   sessionCount: {
     ...t.timestamp,
     color: '#c8c8c8',
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 1,
   },
   settingsText: {
     ...t.timestamp,
     color: '#c8c8c8',
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 1,
   },
   streakBadge: {
@@ -492,7 +503,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#E8B84B',
     letterSpacing: 2,
-    fontSize: 10,
+    fontSize: 12,
   },
   headline: {
     ...t.headline,
@@ -519,12 +530,12 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#525252',
     letterSpacing: 2,
-    fontSize: 9,
+    fontSize: 11,
   },
   prescriptionEvolvingValue: {
     ...t.label,
     color: '#525252',
-    fontSize: 9,
+    fontSize: 11,
     letterSpacing: 1,
   },
   identityRow: {
@@ -539,11 +550,11 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#525252',
     letterSpacing: 3,
-    fontSize: 9,
+    fontSize: 11,
     marginBottom: 4,
   },
   identityValue: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     fontFamily: fonts.primary.bold,
     letterSpacing: 1,
@@ -552,7 +563,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#525252',
     letterSpacing: 1,
-    fontSize: 10,
+    fontSize: 12,
     marginTop: 6,
   },
   streakBrokenBox: {
@@ -566,30 +577,30 @@ const styles = StyleSheet.create({
   },
   streakBrokenLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#8b2020',
     letterSpacing: 4,
     marginBottom: 8,
   },
   streakBrokenCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 52,
+    fontSize: 56,
     color: '#5a1515',
-    lineHeight: 56,
+    lineHeight: 60,
   },
   streakBrokenDays: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 14,
     color: '#5a1515',
     letterSpacing: 2,
     marginBottom: 10,
   },
   streakBrokenSub: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 13,
     color: '#7a2020',
     textAlign: 'center',
-    lineHeight: 17,
+    lineHeight: 19,
   },
   streakMilestoneBox: {
     marginTop: 16,
@@ -601,16 +612,16 @@ const styles = StyleSheet.create({
   },
   streakMilestoneNum: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#D97706',
     letterSpacing: 3,
     marginBottom: 6,
   },
   streakMilestoneMsg: {
     fontFamily: fonts.primary.regular,
-    fontSize: 15,
+    fontSize: 17,
     color: '#e8e8e8',
-    lineHeight: 21,
+    lineHeight: 23,
   },
   streakBox: {
     borderLeftWidth: 3,
@@ -622,7 +633,7 @@ const styles = StyleSheet.create({
   },
   streakBoxLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#D97706',
     letterSpacing: 3,
     marginBottom: 4,
@@ -687,19 +698,32 @@ const styles = StyleSheet.create({
   },
   weeklyRxLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#888888',
     letterSpacing: 3,
   },
   weeklyRxSub: {
     fontFamily: fonts.primary.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#c8c8c8',
   },
   weeklyRxArrow: {
     fontFamily: fonts.primary.bold,
-    fontSize: 14,
+    fontSize: 16,
     color: '#444444',
+  },
+  safetyNetBtn: {
+    marginTop: 32,
+    marginBottom: 8,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  safetyNetText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    color: '#ffffff',
+    opacity: 0.4,
+    letterSpacing: 0.5,
   },
   moodList: {
     marginTop: 28,
@@ -724,7 +748,7 @@ const styles = StyleSheet.create({
   },
   moodName: {
     ...t.headlineSm,
-    fontSize: 17,
+    fontSize: 19,
   },
   moodDesc: {
     ...t.label,
@@ -741,7 +765,7 @@ const styles = StyleSheet.create({
     color: '#c8c8c8',
   },
   moodChevron: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.primary.bold,
   },
   backdrop: {
@@ -780,7 +804,7 @@ const styles = StyleSheet.create({
   panelMoodName: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 11,
+    fontSize: 13,
   },
   drBox: {
     borderLeftWidth: 3,
@@ -814,12 +838,12 @@ const styles = StyleSheet.create({
   },
   intensityValue: {
     ...t.dataValue,
-    fontSize: 24,
+    fontSize: 27,
   },
   intensityMax: {
     ...t.bodyMuted,
     color: '#c8c8c8',
-    fontSize: 16,
+    fontSize: 18,
     marginLeft: 3,
   },
   slider: {
@@ -836,6 +860,6 @@ const styles = StyleSheet.create({
   },
   prescribeButtonText: {
     ...t.timer,
-    fontSize: 12,
+    fontSize: 14,
   },
 });

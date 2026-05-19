@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { clearAllData } from '@/lib/storage';
+import { clearAllData, getUserProfile, setUserProfile, UserProfile } from '@/lib/storage';
 import {
   PRESET_TIMES,
   NOTIFICATIONS_ENABLED_KEY,
@@ -33,6 +33,8 @@ export default function SettingsScreen() {
   const [selectedTime, setSelectedTime] = useState('8:00 AM');
   const [permDenied, setPermDenied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
+  const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
   const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial } = useSubscription();
   const toggleAnim = useRef(new Animated.Value(0)).current;
   const { fadeAnim, slideAnim } = useScreenAnimation();
@@ -47,13 +49,28 @@ export default function SettingsScreen() {
     Promise.all([
       AsyncStorage.getItem(NOTIFICATIONS_KEY),
       AsyncStorage.getItem(REMINDER_TIME_KEY),
-    ]).then(([notifVal, timeVal]) => {
+      getUserProfile(),
+    ]).then(([notifVal, timeVal, profile]) => {
       const enabled = notifVal === 'true';
       setNotificationsEnabled(enabled);
       toggleAnim.setValue(enabled ? 1 : 0);
       if (timeVal) setSelectedTime(timeVal);
+      if (profile.preferredTime) setPreferredTimeState(profile.preferredTime);
+      if (profile.primaryGoal) setPrimaryGoalState(profile.primaryGoal);
     });
   }, [toggleAnim]);
+
+  const handleSelectPreferredTime = async (value: UserProfile['preferredTime']) => {
+    setPreferredTimeState(value);
+    const current = await getUserProfile();
+    await setUserProfile({ ...current, preferredTime: value });
+  };
+
+  const handleSelectPrimaryGoal = async (value: UserProfile['primaryGoal']) => {
+    setPrimaryGoalState(value);
+    const current = await getUserProfile();
+    await setUserProfile({ ...current, primaryGoal: value });
+  };
 
   const animateToggle = (toValue: number) => {
     Animated.spring(toggleAnim, {
@@ -196,6 +213,47 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Training Preferences section */}
+        <Text style={styles.sectionHeader}>TRAINING PREFERENCES</Text>
+
+        <Text style={styles.prefLabel}>PREFERRED TIME</Text>
+        <View style={styles.chipRow}>
+          {(['Morning', 'Afternoon', 'Evening'] as UserProfile['preferredTime'][]).map((opt) => (
+            <TouchableOpacity
+              key={opt}
+              onPress={() => handleSelectPreferredTime(opt)}
+              activeOpacity={0.7}
+              style={[styles.chip, preferredTime === opt ? styles.chipSelected : styles.chipUnselected]}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: preferredTime === opt }}
+              accessibilityLabel={`${opt} training time`}
+            >
+              <Text style={[styles.chipText, preferredTime === opt ? styles.chipTextSelected : styles.chipTextUnselected]}>
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={[styles.prefLabel, { marginTop: 16 }]}>PRIMARY GOAL</Text>
+        <View style={styles.chipRow}>
+          {(['Stress relief', 'Energy', 'Sleep', 'Mood'] as UserProfile['primaryGoal'][]).map((opt) => (
+            <TouchableOpacity
+              key={opt}
+              onPress={() => handleSelectPrimaryGoal(opt)}
+              activeOpacity={0.7}
+              style={[styles.chip, primaryGoal === opt ? styles.chipSelected : styles.chipUnselected]}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: primaryGoal === opt }}
+              accessibilityLabel={`${opt} primary goal`}
+            >
+              <Text style={[styles.chipText, primaryGoal === opt ? styles.chipTextSelected : styles.chipTextUnselected]}>
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* Reminders section */}
         <Text style={styles.sectionHeader}>REMINDERS</Text>
@@ -410,6 +468,22 @@ const styles = StyleSheet.create({
   timeChipText: { ...t.label, letterSpacing: 1 },
   timeChipTextSelected: { color: '#ffffff' },
   timeChipTextUnselected: { color: '#c8c8c8' },
+  prefLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#888',
+    letterSpacing: 3,
+    textTransform: 'uppercase' as const,
+    marginTop: 12,
+    marginBottom: 10,
+  },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+  chip: { borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
+  chipSelected: { borderColor: '#059669' },
+  chipUnselected: { borderColor: '#2a2a2a' },
+  chipText: { fontFamily: fonts.mono.regular, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' as const },
+  chipTextSelected: { color: '#ffffff' },
+  chipTextUnselected: { color: '#666' },
   appName: { ...t.headlineSm, marginTop: 12 },
   appTagline: { ...t.bodyMuted, fontSize: 14, marginTop: 4 },
   appVersion: { ...t.label, color: '#c8c8c8', letterSpacing: 2, marginTop: 8 },

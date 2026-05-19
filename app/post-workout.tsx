@@ -133,7 +133,7 @@ export default function PostWorkoutScreen() {
         timestamp: Date.now(),
         note: note.trim() || undefined,
       });
-      getSessions().then((updated) => rescheduleAfterSession(getStreak(updated))).catch(() => {});
+      getSessions().then((updated) => rescheduleAfterSession(updated)).catch(() => {});
       const promptShown = await getNotifPromptShown();
       if (!promptShown) {
         setShowNotifPrompt(true);

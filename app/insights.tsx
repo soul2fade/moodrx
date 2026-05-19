@@ -74,6 +74,28 @@ export default function InsightsScreen() {
   const last7 = useMemo(() => sessions.slice(-7), [sessions]);
   const recent10 = useMemo(() => [...sessions].reverse().slice(0, isPremium ? 10 : 3), [sessions, isPremium]);
 
+  const workoutStats = useMemo(() => {
+    const map: Record<string, { name: string; count: number; totalChange: number }> = {};
+    for (const s of sessions) {
+      if (!s.workoutName) continue;
+      const key = s.workoutId ?? s.workoutName;
+      if (!map[key]) map[key] = { name: s.workoutName, count: 0, totalChange: 0 };
+      map[key].count += 1;
+      map[key].totalChange += (s.postScore - s.intensity);
+    }
+    const all = Object.values(map)
+      .sort((a, b) => b.count - a.count)
+      .map(w => ({ ...w, avgChange: w.totalChange / w.count }));
+    return { visible: isPremium ? all : all.slice(0, 3), total: all.length };
+  }, [sessions, isPremium]);
+
+  const sessionNotes = useMemo(() => {
+    const withNotes = [...sessions]
+      .reverse()
+      .filter(s => s.note && s.note.trim().length > 0);
+    return { visible: isPremium ? withNotes : withNotes.slice(0, 3), total: withNotes.length };
+  }, [sessions, isPremium]);
+
   const mostCommonMood = useMemo(() => sessionCount >= 3 ? getMostCommonMood(sessions) : null, [sessions, sessionCount]);
 
   const handleBurn = async () => {
@@ -280,6 +302,42 @@ export default function InsightsScreen() {
           </View>
         )}
 
+        {/* Workout History */}
+        {workoutStats.visible.length > 0 && (
+          <View style={styles.workoutHistSection}>
+            <Text style={styles.workoutHistLabel}>WORKOUT HISTORY</Text>
+            {workoutStats.visible.map((w, i) => {
+              const avgStr = w.avgChange >= 0 ? `+${w.avgChange.toFixed(1)}` : w.avgChange.toFixed(1);
+              const avgColor = w.avgChange >= 0 ? '#059669' : '#737373';
+              return (
+                <View key={i} style={styles.workoutHistRow}>
+                  <View style={styles.workoutHistInfo}>
+                    <Text style={styles.workoutHistName}>{w.name}</Text>
+                    <Text style={styles.workoutHistCount}>{w.count}×</Text>
+                  </View>
+                  <View style={styles.workoutHistRight}>
+                    <Text style={styles.workoutHistAvgLabel}>AVG</Text>
+                    <Text style={[styles.workoutHistAvgVal, { color: avgColor }]}>{avgStr}</Text>
+                  </View>
+                </View>
+              );
+            })}
+            {!isPremium && workoutStats.total > 3 && (
+              <TouchableOpacity
+                style={styles.historyUpsellRow}
+                onPress={() => setShowPremiumSheet(true)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`See all ${workoutStats.total - 3} more workouts with Pro`}
+              >
+                <Text style={styles.historyUpsellText}>
+                  +{workoutStats.total - 3} MORE — UNLOCK PRO →
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {/* Case History */}
         {recent10.length > 0 && (
           <View style={styles.recentSection}>
@@ -324,6 +382,43 @@ export default function InsightsScreen() {
               >
                 <Text style={styles.historyUpsellText}>
                   +{sessionCount - 3} MORE SESSION{sessionCount - 3 === 1 ? '' : 'S'} — UNLOCK PRO →
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Field Notes Journal */}
+        {sessionNotes.total > 0 && (
+          <View style={styles.notesSection}>
+            <Text style={styles.notesLabel}>FIELD NOTES</Text>
+            {sessionNotes.visible.map((s) => {
+              const date = new Date(s.timestamp);
+              const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
+              const moodColor = MOODS[s.mood]?.color ?? '#737373';
+              return (
+                <View key={s.id} style={styles.noteRow}>
+                  <View style={styles.noteHeader}>
+                    <Text style={[styles.noteMood, { color: moodColor }]}>
+                      {MOODS[s.mood]?.name.toUpperCase()}
+                    </Text>
+                    <Text style={styles.noteDate}>{dateStr}</Text>
+                  </View>
+                  <Text style={styles.noteWorkoutName}>{s.workoutName}</Text>
+                  <Text style={styles.noteText}>{s.note}</Text>
+                </View>
+              );
+            })}
+            {!isPremium && sessionNotes.total > 3 && (
+              <TouchableOpacity
+                style={styles.historyUpsellRow}
+                onPress={() => setShowPremiumSheet(true)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`See all ${sessionNotes.total - 3} more notes with Pro`}
+              >
+                <Text style={styles.historyUpsellText}>
+                  +{sessionNotes.total - 3} MORE NOTES — UNLOCK PRO →
                 </Text>
               </TouchableOpacity>
             )}
@@ -665,6 +760,104 @@ const styles = StyleSheet.create({
     ...t.body,
     fontSize: 16,
     marginTop: 8,
+  },
+  workoutHistSection: {
+    marginTop: 32,
+  },
+  workoutHistLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#888888',
+    letterSpacing: 3,
+    marginBottom: 8,
+  },
+  workoutHistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  workoutHistInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  workoutHistName: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 14,
+    color: '#e8e8e8',
+    flex: 1,
+  },
+  workoutHistCount: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#525252',
+    letterSpacing: 1,
+  },
+  workoutHistRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  workoutHistAvgLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    color: '#444',
+    letterSpacing: 2,
+  },
+  workoutHistAvgVal: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    letterSpacing: 1,
+    minWidth: 40,
+    textAlign: 'right',
+  },
+  notesSection: {
+    marginTop: 32,
+  },
+  notesLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#888888',
+    letterSpacing: 3,
+    marginBottom: 8,
+  },
+  noteRow: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  noteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  noteMood: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    letterSpacing: 2,
+  },
+  noteDate: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    color: '#444',
+    letterSpacing: 1,
+  },
+  noteWorkoutName: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 12,
+    color: '#555',
+    marginBottom: 6,
+  },
+  noteText: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 15,
+    color: '#c8c8c8',
+    lineHeight: 22,
   },
   recentSection: {
     marginTop: 32,

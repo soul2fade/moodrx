@@ -33,6 +33,7 @@ import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
+import { BottomNav } from '@/components/BottomNav';
 
 const CASE_PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
 
@@ -392,8 +393,8 @@ export default function InsightsScreen() {
           </View>
         )}
 
-        <View style={styles.bottomSpacer} />
       </ScrollView>
+      <BottomNav />
 
       {/* Hidden ShareCard for screenshot */}
       <ViewShot ref={shareCardRef} style={{ position: 'absolute', left: -2000, top: 0 }}>

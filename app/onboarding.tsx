@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...t.headline,
-    fontSize: 36,
+    fontSize: 39,
     textAlign: 'center',
   },
   divider: {
@@ -214,12 +214,12 @@ const styles = StyleSheet.create({
   },
   subtext: {
     ...t.bodyMuted,
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
   },
   body: {
     ...t.softMuted,
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
     marginTop: 16,
   },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     ...t.headlineSm,
-    fontSize: 15,
+    fontSize: 17,
   },
   stepSub: {
     ...t.bodySm,
@@ -264,9 +264,9 @@ const styles = StyleSheet.create({
   },
   outcomeProofLabel: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 3,
-    fontSize: 9,
+    fontSize: 11,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   },
   outcomeBlockCap: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 2,
     fontSize: 9,
     marginBottom: 4,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   outcomeBlockMood: {
     ...t.label,
-    color: '#333333',
+    color: '#c8c8c8',
     letterSpacing: 1,
     fontSize: 8,
     marginTop: 4,
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   outcomeArrow: {
     ...t.label,
-    color: '#333333',
+    color: '#c8c8c8',
     fontSize: 20,
   },
   outcomeDelta: {
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   outcomeProofSub: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     fontSize: 10,
     letterSpacing: 1,
     textAlign: 'center',
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   wellnessDisclaimer: {
     ...t.label,
-    color: '#555',
+    color: '#c8c8c8',
     fontSize: 10,
     letterSpacing: 0.5,
     lineHeight: 15,

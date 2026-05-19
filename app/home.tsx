@@ -20,6 +20,7 @@ import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '@/lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { BottomNav } from '@/components/BottomNav';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
@@ -305,19 +306,22 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Still feeling this? re-entry banner */}
+        {/* Still feeling this? quick repeat banner */}
         {showStillFeeling && lastSession && (
           <TouchableOpacity
-            style={styles.stillFeelingBanner}
+            style={[styles.stillFeelingBanner, { borderLeftColor: MOODS[lastSession.mood].color }]}
             onPress={() => router.push({ pathname: '/prescription', params: { mood: lastSession.mood, intensity: String(lastSession.intensity) } })}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={`Last time you felt ${MOODS[lastSession.mood].name}. Tap to repeat.`}
           >
-            <Text style={styles.stillFeelingText}>
-              Last time: {MOODS[lastSession.mood].name.toUpperCase()}. Still feeling it?
-            </Text>
-            <Text style={styles.stillFeelingArrow}> →</Text>
+            <View style={styles.stillFeelingContent}>
+              <Text style={styles.stillFeelingEyebrow}>QUICK REPEAT</Text>
+              <Text style={styles.stillFeelingText}>
+                Still {MOODS[lastSession.mood].name.toUpperCase()}? Start where you left off.
+              </Text>
+            </View>
+            <Text style={styles.stillFeelingArrow}>→</Text>
           </TouchableOpacity>
         )}
 
@@ -451,6 +455,8 @@ export default function HomeScreen() {
         )}
       </Animated.View>
 
+      <BottomNav />
+
       {/* Streak toast — once per app launch, non-milestone streaks only */}
       {showGreeting && (
         <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }]}>
@@ -486,7 +492,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
     paddingTop: 80,
-    paddingBottom: 24,
+    paddingBottom: 80,
   },
   topRow: {
     flexDirection: 'row',
@@ -699,22 +705,34 @@ const styles = StyleSheet.create({
   stillFeelingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-    backgroundColor: '#0f0f0f',
-    paddingVertical: 12,
+    justifyContent: 'space-between',
+    borderLeftWidth: 3,
+    borderLeftColor: '#444',
+    backgroundColor: '#0d0d0d',
+    paddingVertical: 13,
     paddingHorizontal: 16,
     marginTop: 16,
   },
-  stillFeelingText: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 1,
+  stillFeelingContent: {
     flex: 1,
+    gap: 3,
+  },
+  stillFeelingEyebrow: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#888',
+    letterSpacing: 3,
+  },
+  stillFeelingText: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 15,
+    color: '#c8c8c8',
   },
   stillFeelingArrow: {
-    ...t.label,
+    fontFamily: fonts.primary.bold,
+    fontSize: 16,
     color: '#c8c8c8',
+    marginLeft: 12,
   },
   weeklyRxBanner: {
     flexDirection: 'row',
@@ -887,7 +905,7 @@ const styles = StyleSheet.create({
   },
   greetingToast: {
     position: 'absolute',
-    bottom: 32,
+    bottom: 88,
     left: 24,
     right: 24,
     backgroundColor: '#111111',

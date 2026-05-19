@@ -295,6 +295,10 @@ export async function clearAllData(): Promise<void> {
       CUSTOM_WORKOUTS_KEY,
       FIRST_LAUNCH_KEY,
       USER_PROFILE_KEY,
+      STREAK_STATE_KEY,
+      PERSONAL_BESTS_KEY,
+      NOTIF_PROMPT_SHOWN_KEY,
+      HOME_HINT_SEEN_KEY,
     ]);
     invalidateSessionsCache();
     invalidateSupplementsCache();

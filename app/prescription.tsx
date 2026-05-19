@@ -15,13 +15,12 @@ import { getWorkoutsForMood, Workout } from '@/lib/workouts';
 import { getSupplementsForMood } from '@/lib/supplements';
 import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
-import { type as t } from '../lib/typography';
+import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { getInsult } from '@/utils/insults';
-import { fonts } from '../lib/typography';
 
 type Tab = 'workouts' | 'stack';
 

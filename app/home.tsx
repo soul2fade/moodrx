@@ -12,7 +12,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, UserProfile, Session, StreakState } from '@/lib/storage';
+import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, getHomeHintSeen, setHomeHintSeen, UserProfile, Session, StreakState } from '@/lib/storage';
 import { getWorkoutsForMood } from '@/lib/workouts';
 import { todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
@@ -41,6 +41,7 @@ export default function HomeScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
   const { panelAnim, backdropAnim, show: showPanel, dismiss: dismissPanelAnim } = useBottomPanel(PANEL_HEIGHT);
+  const [showHint, setShowHint] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const [greetingStreakLabel, setGreetingStreakLabel] = useState('');
   const [greetingStreakMsg, setGreetingStreakMsg] = useState('');
@@ -53,6 +54,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       setIsLoading(true);
+      getHomeHintSeen().then(seen => { if (!seen) setShowHint(true); });
       Promise.all([getSessions(), getUserProfile(), getStreakState()]).then(([data, profile, state]) => {
         setSessions(data);
         setUserProfile(profile);
@@ -138,7 +140,14 @@ export default function HomeScreen() {
     setIntensity(5);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showPanel();
+    setShowHint(false);
+    setHomeHintSeen();
   }, [showPanel]);
+
+  const handleDismissHint = useCallback(() => {
+    setShowHint(false);
+    setHomeHintSeen();
+  }, []);
 
   const handleQuickSession = useCallback(() => {
     if (!moodIdentity) return;
@@ -382,6 +391,21 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.stillFeelingArrow}>→</Text>
           </TouchableOpacity>
+        )}
+
+        {/* Onboarding hint — dismisses on first mood tap or ✕ */}
+        {showHint && !selectedMood && (
+          <View style={styles.hintBanner} accessibilityRole="none">
+            <Text style={styles.hintText}>TAP A MOOD BELOW TO START →</Text>
+            <TouchableOpacity
+              onPress={handleDismissHint}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss hint"
+            >
+              <Text style={styles.hintDismiss}>✕</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* Mood list */}
@@ -843,6 +867,28 @@ const styles = StyleSheet.create({
     fontFamily: fonts.primary.bold,
     fontSize: 16,
     color: '#c8c8c8',
+  },
+  hintBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#1e1e1e',
+    backgroundColor: '#0c0c0c',
+  },
+  hintText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#555',
+    letterSpacing: 2,
+  },
+  hintDismiss: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#333',
   },
   sparklineCard: {
     marginTop: 16,

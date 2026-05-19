@@ -47,13 +47,6 @@ const MOOD_COACH_MAP: Record<MoodKey, CoachId> = {
   good:     'ron',
 };
 
-const STEPS = [
-  { key: 'struggle', label: 'The Struggle' },
-  { key: 'shift',    label: 'The Shift' },
-  { key: 'glory',    label: 'The Glory' },
-  { key: 'clarity',  label: 'The Clarity' },
-];
-
 const PHRASES: Record<CoachId, string[][]> = {
   vera: [
     ["Honey, these muscles don't build THEMSELVES","The struggle is REAL and I am HERE for it","Pain is just weakness leaving the body in HEELS","This is SUFFERING, darling, but I'm FABULOUS","My body is a TEMPLE and temples need MAINTENANCE"],
@@ -142,7 +135,7 @@ export default function WorkoutCoach({
   });
 
   useEffect(() => {
-    try { player.play(); } catch (_) {}
+    try { player.play(); } catch { /* noop */ }
   }, [player]);
 
   const isControlled = controlledStep !== undefined;
@@ -150,8 +143,7 @@ export default function WorkoutCoach({
 
   useEffect(() => {
     setPhrase(getPhrase(selectedCoach, step));
-  // phraseKey triggers a fresh random pick from the same bank on every workout step
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // phraseKey triggers a fresh random pick from the same bank on every workout step
   }, [step, selectedCoach, phraseKey]);
 
   useEffect(() => {

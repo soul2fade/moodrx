@@ -19,11 +19,11 @@ function formatDate(): string {
   return `${months[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`;
 }
 
-function getDeltaLabel(delta: number): string {
-  if (delta >= 5) return 'SIGNIFICANT IMPROVEMENT';
-  if (delta >= 3) return 'NOTABLE IMPROVEMENT';
-  if (delta >= 1) return 'MILD IMPROVEMENT';
-  if (delta === 0) return 'STABLE';
+function getDeltaLabel(displayed: number): string {
+  if (displayed >= 5) return 'SIGNIFICANT IMPROVEMENT';
+  if (displayed >= 3) return 'NOTABLE IMPROVEMENT';
+  if (displayed >= 1) return 'MILD IMPROVEMENT';
+  if (displayed === 0) return 'STABLE';
   return 'UNDER OBSERVATION';
 }
 
@@ -36,18 +36,18 @@ export function BreakthroughCard({
   streak,
 }: BreakthroughCardProps) {
   const moodData = MOODS[mood];
-  const delta = postScore - intensity;
-  const deltaStr = delta > 0 ? `+${delta}` : `${delta}`;
-  const deltaColor = delta >= 2 ? '#059669' : delta >= 0 ? '#888888' : '#c8c8c8';
-  const statusColor = delta >= 1 ? '#059669' : '#888888';
-  const status = delta >= 1 ? 'TREATED' : 'LOGGED';
+  const lowerIsBetter = mood !== 'good';
+  const raw = postScore - intensity;
+  const displayed = lowerIsBetter ? -raw : raw;
+  const deltaStr = displayed > 0 ? `+${displayed}` : `${displayed}`;
+  const deltaColor = displayed >= 2 ? '#059669' : displayed >= 0 ? '#888888' : '#c8c8c8';
+  const statusColor = displayed >= 1 ? '#059669' : '#888888';
+  const status = displayed >= 1 ? 'TREATED' : 'LOGGED';
 
   return (
     <View style={styles.card}>
-      {/* Top bar — mood color */}
       <View style={[styles.topBar, { backgroundColor: moodData.color }]} />
 
-      {/* Header row */}
       <View style={styles.header}>
         <Text style={styles.appName}>MOODRX</Text>
         <View style={styles.headerRight}>
@@ -58,7 +58,6 @@ export function BreakthroughCard({
         </View>
       </View>
 
-      {/* Diagnosis */}
       <View style={styles.diagnosisBlock}>
         <Text style={styles.diagnosisLabel}>DIAGNOSIS</Text>
         <Text style={[styles.moodName, { color: moodData.color }]}>
@@ -67,13 +66,11 @@ export function BreakthroughCard({
         <Text style={styles.moodDescription}>{moodData.description}</Text>
       </View>
 
-      {/* Delta hero */}
       <View style={styles.heroBlock}>
         <Text style={[styles.deltaHero, { color: deltaColor }]}>{deltaStr}</Text>
-        <Text style={styles.deltaHeroLabel}>{getDeltaLabel(delta)}</Text>
+        <Text style={styles.deltaHeroLabel}>{getDeltaLabel(displayed)}</Text>
       </View>
 
-      {/* Numbers grid */}
       <View style={styles.numbersGrid}>
         <View style={styles.numCell}>
           <Text style={styles.numLabel}>PRE</Text>
@@ -92,7 +89,6 @@ export function BreakthroughCard({
         </View>
       </View>
 
-      {/* Treatment row */}
       <View style={styles.treatmentBlock}>
         <View style={styles.treatmentRow}>
           <Text style={styles.treatmentLabel}>TREATMENT</Text>
@@ -110,7 +106,6 @@ export function BreakthroughCard({
         )}
       </View>
 
-      {/* Footer */}
       <View style={styles.footer}>
         <View style={[styles.footerBar, { backgroundColor: moodData.color }]} />
         <Text style={styles.watermark}>moodrx.app  ·  move for your mind</Text>
@@ -152,7 +147,7 @@ const styles = StyleSheet.create({
   dateText: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#444444',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   statusBadge: {
@@ -173,7 +168,7 @@ const styles = StyleSheet.create({
   diagnosisLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#444444',
+    color: '#c8c8c8',
     letterSpacing: 4,
     marginBottom: 6,
   },
@@ -186,7 +181,7 @@ const styles = StyleSheet.create({
   moodDescription: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#525252',
+    color: '#c8c8c8',
     marginTop: 6,
     letterSpacing: 0.5,
   },
@@ -208,7 +203,7 @@ const styles = StyleSheet.create({
   deltaHeroLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#444444',
+    color: '#c8c8c8',
     letterSpacing: 4,
     marginTop: 8,
   },
@@ -235,12 +230,12 @@ const styles = StyleSheet.create({
   numSepText: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#2a2a2a',
+    color: '#c8c8c8',
   },
   numLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 7,
-    color: '#444444',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginBottom: 5,
   },
@@ -263,7 +258,7 @@ const styles = StyleSheet.create({
   treatmentLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 7,
-    color: '#444444',
+    color: '#c8c8c8',
     letterSpacing: 3,
     width: 70,
     flexShrink: 0,
@@ -271,7 +266,7 @@ const styles = StyleSheet.create({
   treatmentValue: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#aaaaaa',
+    color: '#c8c8c8',
     letterSpacing: 0.5,
     flex: 1,
   },
@@ -287,7 +282,7 @@ const styles = StyleSheet.create({
   watermark: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#333333',
+    color: '#666666',
     letterSpacing: 2,
   },
 });

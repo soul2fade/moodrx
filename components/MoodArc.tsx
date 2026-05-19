@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   sub: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#444',
+    color: '#c8c8c8',
     letterSpacing: 1,
   },
   legend: {
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   legendText: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#555',
+    color: '#c8c8c8',
     letterSpacing: 1.5,
   },
 });

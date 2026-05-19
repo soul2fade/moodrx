@@ -45,6 +45,13 @@ let supplementsCache: SupplementLog[] | null = null;
 let supplementsCacheTime = 0;
 const CACHE_TTL = 5000; // 5 seconds
 
+// Small/rarely-changing values: cache indefinitely, invalidate on write.
+let userProfileCache: UserProfile | null = null;
+let streakStateCache: StreakState | null = null;
+let personalBestsCache: Record<string, PersonalBest> | null = null;
+let notifPromptShownCache: boolean | null = null;
+let homeHintSeenCache: boolean | null = null;
+
 function invalidateSessionsCache() {
   sessionsCache = null;
   sessionsCacheTime = 0;
@@ -53,6 +60,14 @@ function invalidateSessionsCache() {
 function invalidateSupplementsCache() {
   supplementsCache = null;
   supplementsCacheTime = 0;
+}
+
+function invalidateLightCaches() {
+  userProfileCache = null;
+  streakStateCache = null;
+  personalBestsCache = null;
+  notifPromptShownCache = null;
+  homeHintSeenCache = null;
 }
 
 export async function getFirstLaunchDone(): Promise<boolean> {
@@ -283,6 +298,7 @@ export async function clearAllData(): Promise<void> {
     ]);
     invalidateSessionsCache();
     invalidateSupplementsCache();
+    invalidateLightCaches();
   } catch (e) {
     console.warn('[MoodRx] clearAllData failed:', e);
   }
@@ -296,10 +312,12 @@ export interface UserProfile {
 const USER_PROFILE_KEY = '@moodrx_user_profile';
 
 export async function getUserProfile(): Promise<UserProfile> {
+  if (userProfileCache) return userProfileCache;
   try {
     const raw = await AsyncStorage.getItem(USER_PROFILE_KEY);
-    if (!raw) return {};
-    return JSON.parse(raw) as UserProfile;
+    const parsed = raw ? (JSON.parse(raw) as UserProfile) : {};
+    userProfileCache = parsed;
+    return parsed;
   } catch (e) {
     console.warn('[MoodRx] getUserProfile failed:', e);
     return {};
@@ -309,6 +327,7 @@ export async function getUserProfile(): Promise<UserProfile> {
 export async function setUserProfile(profile: UserProfile): Promise<void> {
   try {
     await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
+    userProfileCache = profile;
   } catch (e) {
     console.warn('[MoodRx] setUserProfile failed:', e);
   }
@@ -324,10 +343,14 @@ export interface StreakState {
 }
 
 export async function getStreakState(): Promise<StreakState> {
+  if (streakStateCache) return streakStateCache;
   try {
     const raw = await AsyncStorage.getItem(STREAK_STATE_KEY);
-    if (!raw) return { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0, seenMilestones: [] };
-    return JSON.parse(raw) as StreakState;
+    const parsed = raw
+      ? (JSON.parse(raw) as StreakState)
+      : { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0, seenMilestones: [] };
+    streakStateCache = parsed;
+    return parsed;
   } catch (e) {
     console.warn('[MoodRx] getStreakState failed:', e);
     return { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 };
@@ -337,6 +360,7 @@ export async function getStreakState(): Promise<StreakState> {
 export async function saveStreakState(state: StreakState): Promise<void> {
   try {
     await AsyncStorage.setItem(STREAK_STATE_KEY, JSON.stringify(state));
+    streakStateCache = state;
   } catch (e) {
     console.warn('[MoodRx] saveStreakState failed:', e);
   }
@@ -349,24 +373,30 @@ export interface PersonalBest {
   date: string;
 }
 
-export async function getPersonalBest(workoutId: string): Promise<PersonalBest | null> {
+async function loadPersonalBests(): Promise<Record<string, PersonalBest>> {
+  if (personalBestsCache) return personalBestsCache;
   try {
     const raw = await AsyncStorage.getItem(PERSONAL_BESTS_KEY);
-    if (!raw) return null;
-    const all = JSON.parse(raw) as Record<string, PersonalBest>;
-    return all[workoutId] ?? null;
+    const parsed: Record<string, PersonalBest> = raw ? JSON.parse(raw) : {};
+    personalBestsCache = parsed;
+    return parsed;
   } catch (e) {
-    console.warn('[MoodRx] getPersonalBest failed:', e);
-    return null;
+    console.warn('[MoodRx] loadPersonalBests failed:', e);
+    return {};
   }
+}
+
+export async function getPersonalBest(workoutId: string): Promise<PersonalBest | null> {
+  const all = await loadPersonalBests();
+  return all[workoutId] ?? null;
 }
 
 export async function savePersonalBest(workoutId: string, reps: number): Promise<void> {
   try {
-    const raw = await AsyncStorage.getItem(PERSONAL_BESTS_KEY);
-    const all: Record<string, PersonalBest> = raw ? JSON.parse(raw) : {};
-    all[workoutId] = { reps, date: todayDateString() };
-    await AsyncStorage.setItem(PERSONAL_BESTS_KEY, JSON.stringify(all));
+    const all = await loadPersonalBests();
+    const updated = { ...all, [workoutId]: { reps, date: todayDateString() } };
+    await AsyncStorage.setItem(PERSONAL_BESTS_KEY, JSON.stringify(updated));
+    personalBestsCache = updated;
   } catch (e) {
     console.warn('[MoodRx] savePersonalBest failed:', e);
   }
@@ -375,9 +405,11 @@ export async function savePersonalBest(workoutId: string, reps: number): Promise
 const NOTIF_PROMPT_SHOWN_KEY = '@moodrx_notif_prompt_shown';
 
 export async function getNotifPromptShown(): Promise<boolean> {
+  if (notifPromptShownCache !== null) return notifPromptShownCache;
   try {
-    const val = await AsyncStorage.getItem(NOTIF_PROMPT_SHOWN_KEY);
-    return val === 'true';
+    const val = (await AsyncStorage.getItem(NOTIF_PROMPT_SHOWN_KEY)) === 'true';
+    notifPromptShownCache = val;
+    return val;
   } catch (e) {
     console.warn('[MoodRx] getNotifPromptShown failed:', e);
     return false;
@@ -387,6 +419,7 @@ export async function getNotifPromptShown(): Promise<boolean> {
 export async function setNotifPromptShown(): Promise<void> {
   try {
     await AsyncStorage.setItem(NOTIF_PROMPT_SHOWN_KEY, 'true');
+    notifPromptShownCache = true;
   } catch (e) {
     console.warn('[MoodRx] setNotifPromptShown failed:', e);
   }
@@ -395,8 +428,11 @@ export async function setNotifPromptShown(): Promise<void> {
 const HOME_HINT_SEEN_KEY = '@moodrx_home_hint_seen';
 
 export async function getHomeHintSeen(): Promise<boolean> {
+  if (homeHintSeenCache !== null) return homeHintSeenCache;
   try {
-    return (await AsyncStorage.getItem(HOME_HINT_SEEN_KEY)) === 'true';
+    const val = (await AsyncStorage.getItem(HOME_HINT_SEEN_KEY)) === 'true';
+    homeHintSeenCache = val;
+    return val;
   } catch {
     return false;
   }
@@ -405,6 +441,7 @@ export async function getHomeHintSeen(): Promise<boolean> {
 export async function setHomeHintSeen(): Promise<void> {
   try {
     await AsyncStorage.setItem(HOME_HINT_SEEN_KEY, 'true');
+    homeHintSeenCache = true;
   } catch {
     // non-critical
   }

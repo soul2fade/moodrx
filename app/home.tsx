@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, getHomeHintSeen, setHomeHintSeen, UserProfile, Session, StreakState } from '@/lib/storage';
+import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, getHomeHintSeen, setHomeHintSeen, getLastCarouselPage, setLastCarouselPage, UserProfile, Session, StreakState } from '@/lib/storage';
 import { getWorkoutsForMood } from '@/lib/workouts';
 import { todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
@@ -22,6 +22,7 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '@/lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { BottomNav } from '@/components/BottomNav';
+import { HomeCarousel } from '@/components/HomeCarousel';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
@@ -37,6 +38,18 @@ export default function HomeScreen() {
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const [streakState, setStreakState] = useState<StreakState>({ hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 });
+  const [carouselPage, setCarouselPage] = useState<number | null>(null);
+  const carouselFadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (carouselPage !== null) {
+      Animated.timing(carouselFadeAnim, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [carouselPage !== null]);
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
@@ -55,9 +68,10 @@ export default function HomeScreen() {
     useCallback(() => {
       setIsLoading(true);
       getHomeHintSeen().then(seen => { if (!seen) setShowHint(true); });
-      Promise.all([getSessions(), getUserProfile(), getStreakState()]).then(([data, profile, state]) => {
+      Promise.all([getSessions(), getUserProfile(), getStreakState(), getLastCarouselPage()]).then(([data, profile, state, savedPage]) => {
         setSessions(data);
         setUserProfile(profile);
+        setCarouselPage(savedPage);
         setIsLoading(false);
         const currentStreak = getStreak(data);
         const today = todayDateString();
@@ -212,201 +226,46 @@ export default function HomeScreen() {
 
         <Text style={styles.subtext}>Be honest. I&apos;m not here to judge. Much.</Text>
 
-        {/* Onboarding hint — moved to top so it's visible without scrolling. Dismisses on first mood tap or ✕ */}
-        {showHint && !selectedMood && (
-          <View style={styles.hintBanner} accessibilityRole="none">
-            <Text style={styles.hintText}>TAP A MOOD BELOW TO START →</Text>
-            <TouchableOpacity
-              onPress={handleDismissHint}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel="Dismiss hint"
-            >
-              <Text style={styles.hintDismiss}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Prescription evolving — visible after 3 sessions with profile data */}
-        {sessionCount >= 3 && !selectedMood && (userProfile.preferredTime || userProfile.primaryGoal) && (
-          <View style={styles.prescriptionEvolvingRow} accessibilityLabel="Your prescription is personalizing">
-            <Text style={styles.prescriptionEvolvingLabel}>PRESCRIPTION EVOLVING</Text>
-            <Text style={styles.prescriptionEvolvingValue}>
-              {[userProfile.preferredTime, userProfile.primaryGoal].filter(Boolean).join(' · ')}
-            </Text>
-          </View>
-        )}
-
-        {/* Mood identity — visible after 5 sessions */}
-        {moodIdentity && !selectedMood && (
-          <TouchableOpacity
-            style={styles.identityRow}
-            onPress={() => router.push('/insights')}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={`Your pattern: ${moodIdentity.label}, ${moodIdentity.sessionCount} sessions`}
-          >
-            <Text style={styles.identityLabel}>YOUR PATTERN</Text>
-            <Text style={[styles.identityValue, { color: MOODS[moodIdentity.dominantMood].color }]}>
-              {moodIdentity.label.toUpperCase()}
-            </Text>
-            <Text style={styles.identityCount}>{moodIdentity.sessionCount} sessions logged →</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* 7-day mood sparkline */}
-        {sessions.length >= 2 && !selectedMood && (() => {
-          const last7 = sessions.slice(-7);
-          const maxVal = 10;
-          const SPARK_H = 32;
-          const first = last7[0].intensity;
-          const last = last7[last7.length - 1].intensity;
-          const diff = last - first;
-          const trendLabel = Math.abs(diff) < 1
-            ? '→ HOLDING STEADY'
-            : diff < 0
-            ? `↓ TRENDING BETTER`
-            : `↑ TRENDING WORSE`;
-          const trendColor = Math.abs(diff) < 1 ? '#525252' : diff < 0 ? '#059669' : '#b45309';
-          return (
-            <View style={styles.sparklineCard} accessibilityLabel={`7-day mood trend: ${trendLabel}`}>
-              <Text style={styles.sparklineHeader}>7-DAY TREND</Text>
-              <View style={styles.sparklineBars}>
-                {last7.map((s, i) => {
-                  const barH = Math.max((s.intensity / maxVal) * SPARK_H, 3);
-                  const moodCol = MOODS[s.mood]?.color ?? '#525252';
-                  return (
-                    <View
-                      key={s.id ?? i}
-                      style={[styles.sparklineBar, { height: barH, backgroundColor: moodCol + 'aa' }]}
-                      importantForAccessibility="no"
-                    />
-                  );
-                })}
+        {/* 3-page carousel: Today / Your Pattern / Quick Actions */}
+        <View style={styles.carouselPlaceholder}>
+          {carouselPage === null ? (
+            <View style={styles.skeletonWrapper}>
+              <View style={styles.skeletonLine} />
+              <View style={[styles.skeletonLine, styles.skeletonLineSm]} />
+              <View style={[styles.skeletonLine, styles.skeletonLineMd]} />
+              <View style={styles.skeletonDots}>
+                <View style={[styles.skeletonDot, styles.skeletonDotActive]} />
+                <View style={styles.skeletonDot} />
+                <View style={styles.skeletonDot} />
               </View>
-              <Text style={[styles.sparklineTrend, { color: trendColor }]}>{trendLabel}</Text>
             </View>
-          );
-        })()}
-
-        {/* Quick session — one-tap random workout for dominant mood */}
-        {moodIdentity && !selectedMood && (
-          <TouchableOpacity
-            style={[styles.quickSessionCard, { borderLeftColor: MOODS[moodIdentity.dominantMood].color }]}
-            onPress={handleQuickSession}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={`Quick session: random ${MOODS[moodIdentity.dominantMood].name} workout`}
-          >
-            <View style={styles.quickSessionLeft}>
-              <Text style={styles.quickSessionLabel}>QUICK SESSION</Text>
-              <Text style={[styles.quickSessionSub, { color: MOODS[moodIdentity.dominantMood].color }]}>
-                Random {MOODS[moodIdentity.dominantMood].name.toUpperCase()} workout →
-              </Text>
-            </View>
-            <Text style={styles.quickSessionArrow}>⚡</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Weekly prescription entry — visible after 3+ sessions */}
-        {sessionCount >= 3 && !selectedMood && (
-          <TouchableOpacity
-            style={styles.weeklyRxBanner}
-            onPress={() => router.push('/weekly-prescription' as any)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="View your weekly prescription"
-          >
-            <View style={styles.weeklyRxLeft}>
-              <Text style={styles.weeklyRxLabel}>WEEKLY RX</Text>
-              <Text style={styles.weeklyRxSub}>Your 7-day plan is ready</Text>
-            </View>
-            <Text style={styles.weeklyRxArrow}>→</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* ── STREAK CONSEQUENCE — shown the day a streak breaks ── */}
-        {streak === 0 && streakState.lastBrokenDate === todayDateString() && streakState.lastBrokenHwm >= 2 && (
-          <View style={styles.streakBrokenBox}>
-            <Text style={styles.streakBrokenLabel}>STREAK LOST</Text>
-            <Text style={styles.streakBrokenCount}>{streakState.lastBrokenHwm}</Text>
-            <Text style={styles.streakBrokenDays}>
-              {streakState.lastBrokenHwm === 1 ? 'day' : 'days'} gone.
-            </Text>
-            <Text style={styles.streakBrokenSub}>
-              {streakState.lastBrokenHwm >= 14
-                ? 'That was real momentum. You stopped.'
-                : streakState.lastBrokenHwm >= 7
-                ? 'A whole week. You walked away from it.'
-                : streakState.lastBrokenHwm >= 4
-                ? 'You were building something. Now you\u2019re not.'
-                : 'Two days in and you quit. Impressive.'}
-            </Text>
-          </View>
-        )}
-
-        {/* ── STREAK MILESTONE — shown at 3/7/14/30 days, dismissible ── */}
-        {streak > 0 && [3, 7, 14, 30].includes(streak) && !(streakState.seenMilestones ?? []).includes(streak) && (
-          <View style={[styles.streakMilestoneBox, { borderLeftColor: '#D97706' }]}>
-            <TouchableOpacity
-              onPress={() => handleMilestoneDismiss(streak)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={styles.milestoneDismiss}
-              accessibilityRole="button"
-              accessibilityLabel="Dismiss milestone"
-            >
-              <Text style={styles.milestoneDismissText}>✕</Text>
-            </TouchableOpacity>
-            <Text style={styles.streakMilestoneNum}>{streak} DAYS</Text>
-            <Text style={styles.streakMilestoneMsg}>
-              {streak === 3
-                ? 'Three days. A habit is forming. Don\u2019t ruin it.'
-                : streak === 7
-                ? 'One week straight. That\u2019s genuinely rare.'
-                : streak === 14
-                ? 'Two weeks. You\u2019ve crossed a line most people never reach.'
-                : '30 days. This is who you are now.'}
-            </Text>
-          </View>
-        )}
-
-
-        {/* Welcome back nudge — shows when user returns after 1+ day away */}
-        {showWelcomeBack && lastSession && daysSinceLastSession !== null && (
-          <TouchableOpacity
-            style={styles.welcomeBackBanner}
-            onPress={() => router.push('/insights')}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={`Welcome back. ${daysSinceLastSession === 1 ? '1 day' : `${daysSinceLastSession} days`} since your last check-in.`}
-          >
-            <Text style={styles.welcomeBackText}>
-              {daysSinceLastSession === 1
-                ? `Yesterday you were ${MOODS[lastSession.mood].name.toUpperCase()}. Today?`
-                : `${daysSinceLastSession} days since your last check-in. What changed?`}
-            </Text>
-            <Text style={styles.welcomeBackArrow}> →</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Still feeling this? quick repeat banner */}
-        {showStillFeeling && lastSession && (
-          <TouchableOpacity
-            style={[styles.stillFeelingBanner, { borderLeftColor: MOODS[lastSession.mood].color }]}
-            onPress={() => router.push({ pathname: '/prescription', params: { mood: lastSession.mood, intensity: String(lastSession.intensity) } })}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={`Last time you felt ${MOODS[lastSession.mood].name}. Tap to repeat.`}
-          >
-            <View style={styles.stillFeelingContent}>
-              <Text style={styles.stillFeelingEyebrow}>QUICK REPEAT</Text>
-              <Text style={styles.stillFeelingText}>
-                Still {MOODS[lastSession.mood].name.toUpperCase()}? Start where you left off.
-              </Text>
-            </View>
-            <Text style={styles.stillFeelingArrow}>→</Text>
-          </TouchableOpacity>
-        )}
+          ) : (
+            <Animated.View style={{ opacity: carouselFadeAnim, flex: 1 }}>
+              <HomeCarousel
+                showHint={showHint}
+                selectedMood={selectedMood}
+                onDismissHint={handleDismissHint}
+                sessionCount={sessionCount}
+                userProfile={userProfile}
+                streak={streak}
+                streakState={streakState}
+                onMilestoneDismiss={handleMilestoneDismiss}
+                showWelcomeBack={showWelcomeBack}
+                lastSession={lastSession}
+                daysSinceLastSession={daysSinceLastSession}
+                showStillFeeling={showStillFeeling}
+                moodIdentity={moodIdentity}
+                sessions={sessions}
+                onQuickSession={handleQuickSession}
+                initialPage={carouselPage}
+                onPageChange={(page) => {
+                  setCarouselPage(page);
+                  setLastCarouselPage(page);
+                }}
+              />
+            </Animated.View>
+          )}
+        </View>
 
         {/* Mood list */}
         <View style={styles.moodList} accessibilityRole="radiogroup" accessibilityLabel="Select your mood">
@@ -655,301 +514,6 @@ const styles = StyleSheet.create({
     color: '#d4d4d4',
     marginTop: 12,
   },
-  prescriptionEvolvingRow: {
-    marginTop: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  prescriptionEvolvingLabel: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 10,
-    color: '#059669',
-    letterSpacing: 3,
-    textTransform: 'uppercase' as const,
-  },
-  prescriptionEvolvingValue: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 10,
-    color: '#888',
-    letterSpacing: 1,
-    textTransform: 'uppercase' as const,
-  },
-  identityRow: {
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: '#0d0d0d',
-  },
-  identityLabel: {
-    ...t.label,
-    color: '#525252',
-    letterSpacing: 3,
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  identityValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    fontFamily: fonts.primary.bold,
-    letterSpacing: 1,
-  },
-  identityCount: {
-    ...t.label,
-    color: '#525252',
-    letterSpacing: 1,
-    fontSize: 12,
-    marginTop: 6,
-  },
-  streakBrokenBox: {
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#3a1010',
-    backgroundColor: '#0d0808',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  streakBrokenLabel: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#8b2020',
-    letterSpacing: 4,
-    marginBottom: 8,
-  },
-  streakBrokenCount: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 56,
-    color: '#5a1515',
-    lineHeight: 60,
-  },
-  streakBrokenDays: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    color: '#5a1515',
-    letterSpacing: 2,
-    marginBottom: 10,
-  },
-  streakBrokenSub: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 13,
-    color: '#7a2020',
-    textAlign: 'center',
-    lineHeight: 19,
-  },
-  streakMilestoneBox: {
-    marginTop: 16,
-    borderLeftWidth: 3,
-    paddingLeft: 12,
-    paddingTop: 10,
-    paddingBottom: 14,
-    paddingRight: 16,
-    backgroundColor: '#0d0d00',
-  },
-  milestoneDismiss: {
-    alignSelf: 'flex-end',
-    marginBottom: 4,
-  },
-  milestoneDismissText: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#444',
-  },
-  streakMilestoneNum: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 12,
-    color: '#D97706',
-    letterSpacing: 3,
-    marginBottom: 6,
-  },
-  streakMilestoneMsg: {
-    fontFamily: fonts.primary.regular,
-    fontSize: 17,
-    color: '#e8e8e8',
-    lineHeight: 23,
-  },
-  streakBox: {
-    borderLeftWidth: 3,
-    borderLeftColor: '#D97706',
-    paddingLeft: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginTop: 16,
-  },
-  streakBoxLabel: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#D97706',
-    letterSpacing: 3,
-    marginBottom: 4,
-  },
-  streakBoxText: {
-    ...t.number,
-    color: '#c8c8c8',
-  },
-  welcomeBackBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderLeftWidth: 2,
-    borderLeftColor: '#D97706',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginTop: 16,
-    backgroundColor: '#0f0f0f',
-  },
-  welcomeBackText: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 1,
-    flex: 1,
-  },
-  welcomeBackArrow: {
-    ...t.label,
-    color: '#D97706',
-  },
-  stillFeelingBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderLeftWidth: 3,
-    borderLeftColor: '#444',
-    backgroundColor: '#0d0d0d',
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    marginTop: 16,
-  },
-  stillFeelingContent: {
-    flex: 1,
-    gap: 3,
-  },
-  stillFeelingEyebrow: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 9,
-    color: '#888',
-    letterSpacing: 3,
-  },
-  stillFeelingText: {
-    fontFamily: fonts.primary.regular,
-    fontSize: 15,
-    color: '#c8c8c8',
-  },
-  stillFeelingArrow: {
-    fontFamily: fonts.primary.bold,
-    fontSize: 16,
-    color: '#c8c8c8',
-    marginLeft: 12,
-  },
-  weeklyRxBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderLeftWidth: 3,
-    borderLeftColor: '#444444',
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    marginTop: 16,
-    backgroundColor: '#0d0d0d',
-  },
-  weeklyRxLeft: {
-    gap: 2,
-  },
-  weeklyRxLabel: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#888888',
-    letterSpacing: 3,
-  },
-  weeklyRxSub: {
-    fontFamily: fonts.primary.regular,
-    fontSize: 15,
-    color: '#c8c8c8',
-  },
-  weeklyRxArrow: {
-    fontFamily: fonts.primary.bold,
-    fontSize: 16,
-    color: '#c8c8c8',
-  },
-  hintBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#1e1e1e',
-    backgroundColor: '#0c0c0c',
-  },
-  hintText: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#555',
-    letterSpacing: 2,
-  },
-  hintDismiss: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#333',
-  },
-  sparklineCard: {
-    marginTop: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    backgroundColor: '#0a0a0a',
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-  },
-  sparklineHeader: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 10,
-    color: '#444',
-    letterSpacing: 3,
-    marginBottom: 8,
-  },
-  sparklineBars: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 4,
-    height: 32,
-  },
-  sparklineBar: {
-    flex: 1,
-    borderRadius: 1,
-  },
-  sparklineTrend: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 10,
-    letterSpacing: 2,
-    marginTop: 8,
-  },
-  quickSessionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderLeftWidth: 3,
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    marginTop: 16,
-    backgroundColor: '#0a0a0a',
-  },
-  quickSessionLeft: {
-    gap: 2,
-  },
-  quickSessionLabel: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#888888',
-    letterSpacing: 3,
-  },
-  quickSessionSub: {
-    fontFamily: fonts.primary.regular,
-    fontSize: 15,
-  },
-  quickSessionArrow: {
-    fontSize: 18,
-  },
   breatheLink: {
     marginTop: 24,
     alignItems: 'center',
@@ -973,6 +537,49 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     opacity: 0.4,
     letterSpacing: 0.5,
+  },
+  carouselPlaceholder: {
+    marginTop: 16,
+    height: 212,
+  },
+  skeletonWrapper: {
+    flex: 1,
+    paddingTop: 4,
+    paddingBottom: 10,
+    justifyContent: 'flex-start',
+  },
+  skeletonLine: {
+    height: 12,
+    borderRadius: 2,
+    backgroundColor: '#161616',
+    marginBottom: 10,
+    width: '72%',
+  },
+  skeletonLineSm: {
+    width: '45%',
+    height: 10,
+  },
+  skeletonLineMd: {
+    width: '58%',
+    height: 10,
+  },
+  skeletonDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    position: 'absolute',
+    bottom: 0,
+    alignSelf: 'center',
+  },
+  skeletonDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#1e1e1e',
+  },
+  skeletonDotActive: {
+    width: 14,
+    backgroundColor: '#252525',
   },
   moodList: {
     marginTop: 28,

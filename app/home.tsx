@@ -40,6 +40,8 @@ export default function HomeScreen() {
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
   const { panelAnim, backdropAnim, show: showPanel, dismiss: dismissPanelAnim } = useBottomPanel(PANEL_HEIGHT);
   const [showGreeting, setShowGreeting] = useState(false);
+  const [greetingStreakLabel, setGreetingStreakLabel] = useState('');
+  const [greetingStreakMsg, setGreetingStreakMsg] = useState('');
   const greetingAnim = useRef(new Animated.Value(0)).current;
   const greetingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moodAnims = useRef(
@@ -64,19 +66,33 @@ export default function HomeScreen() {
         }
         if (JSON.stringify(updated) !== JSON.stringify(state)) saveStreakState(updated);
         setStreakState(updated);
+
+        // Show streak toast once per app launch (only for non-milestone active streaks)
+        const MILESTONES = [3, 7, 14, 30];
+        if (!greetingShownThisSession && currentStreak > 0 && !MILESTONES.includes(currentStreak)) {
+          greetingShownThisSession = true;
+          const label = `${currentStreak} DAY${currentStreak !== 1 ? 'S' : ''}`;
+          const msg = currentStreak === 1
+            ? "Day one. Don\u2019t let it be the only one."
+            : currentStreak === 2
+            ? "Two days straight. Something\u2019s clicking."
+            : currentStreak < 7
+            ? "You\u2019re on a roll. Don\u2019t blow it."
+            : currentStreak < 14
+            ? "Most people stop here. Don\u2019t be most people."
+            : "You\u2019ve outlasted almost everyone.";
+          setGreetingStreakLabel(label);
+          setGreetingStreakMsg(msg);
+          if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+          greetingAnim.setValue(0);
+          setShowGreeting(true);
+          Animated.timing(greetingAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+          greetingTimerRef.current = setTimeout(() => {
+            Animated.timing(greetingAnim, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => setShowGreeting(false));
+          }, 3500);
+        }
       });
       dismissPanel();
-      // Show greeting toast once per app launch
-      if (!greetingShownThisSession) {
-        greetingShownThisSession = true;
-        if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
-        greetingAnim.setValue(0);
-        setShowGreeting(true);
-        Animated.timing(greetingAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-        greetingTimerRef.current = setTimeout(() => {
-          Animated.timing(greetingAnim, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => setShowGreeting(false));
-        }, 3500);
-      }
       // Re-stagger mood rows on every focus
       moodAnims.forEach((anim) => {
         anim.opacity.setValue(0);
@@ -188,6 +204,8 @@ export default function HomeScreen() {
 
         <View style={styles.divider} />
 
+        <Text style={styles.subtext}>Be honest. I&apos;m not here to judge. Much.</Text>
+
         {/* Prescription evolving — visible after 3 sessions with profile data */}
         {sessionCount >= 3 && !selectedMood && (userProfile.preferredTime || userProfile.primaryGoal) && (
           <View style={styles.prescriptionEvolvingRow} accessibilityLabel="Your prescription is personalizing">
@@ -268,23 +286,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ── STREAK RUNNING — normal day display ── */}
-        {streak > 0 && ![3, 7, 14, 30].includes(streak) && (
-          <View style={styles.streakBox}>
-            <Text style={styles.streakBoxLabel}>{streak} DAY{streak !== 1 ? 'S' : ''}</Text>
-            <Text style={styles.streakBoxText}>
-              {streak === 1
-                ? "Day one. Don\u2019t let it be the only one."
-                : streak === 2
-                ? "Two days straight. Something\u2019s clicking."
-                : streak < 7
-                ? "You\u2019re on a roll. Don\u2019t blow it."
-                : streak < 14
-                ? "Most people stop here. Don\u2019t be most people."
-                : "You\u2019ve outlasted almost everyone."}
-            </Text>
-          </View>
-        )}
 
         {/* Welcome back nudge — shows when user returns after 1+ day away */}
         {showWelcomeBack && lastSession && daysSinceLastSession !== null && (
@@ -450,10 +451,13 @@ export default function HomeScreen() {
         )}
       </Animated.View>
 
-      {/* Greeting toast — once per app launch */}
+      {/* Streak toast — once per app launch, non-milestone streaks only */}
       {showGreeting && (
-        <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }] }]} pointerEvents="box-none">
-          <Text style={styles.greetingText}>Be honest. I'm not here to judge. Much.</Text>
+        <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }]}>
+          <View style={styles.greetingContent}>
+            <Text style={styles.greetingLabel}>{greetingStreakLabel}</Text>
+            <Text style={styles.greetingText}>{greetingStreakMsg}</Text>
+          </View>
           <TouchableOpacity
             onPress={() => {
               if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
@@ -896,12 +900,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     zIndex: 100,
   },
+  greetingContent: {
+    flex: 1,
+    gap: 4,
+  },
+  greetingLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#E8B84B',
+    letterSpacing: 3,
+  },
   greetingText: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
     color: '#c8c8c8',
     letterSpacing: 0.3,
-    flex: 1,
     lineHeight: 20,
   },
   greetingDismiss: {

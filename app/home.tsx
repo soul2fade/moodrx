@@ -651,7 +651,8 @@ const styles = StyleSheet.create({
   },
   subtext: {
     ...t.bodyMuted,
-    color: '#c8c8c8',
+    fontSize: 18,
+    color: '#d4d4d4',
     marginTop: 12,
   },
   prescriptionEvolvingRow: {
@@ -661,16 +662,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   prescriptionEvolvingLabel: {
-    ...t.label,
-    color: '#525252',
-    letterSpacing: 2,
-    fontSize: 11,
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    color: '#059669',
+    letterSpacing: 3,
+    textTransform: 'uppercase' as const,
   },
   prescriptionEvolvingValue: {
-    ...t.label,
-    color: '#525252',
-    fontSize: 11,
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    color: '#888',
     letterSpacing: 1,
+    textTransform: 'uppercase' as const,
   },
   identityRow: {
     marginTop: 16,

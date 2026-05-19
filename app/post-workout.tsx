@@ -53,7 +53,6 @@ export default function PostWorkoutScreen() {
   const sessionReps = parseInt(params.reps || '0', 10);
 
   const [postScore, setPostScore] = useState(5);
-  const [rating, setRating] = useState<'yes' | 'somewhat' | 'no' | null>(null);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -132,7 +131,6 @@ export default function PostWorkoutScreen() {
         workoutId: workoutId || undefined,
         duration: workout?.duration ?? 0,
         timestamp: Date.now(),
-        rating: rating ?? undefined,
         note: note.trim() || undefined,
       });
       getSessions().then((updated) => rescheduleAfterSession(getStreak(updated))).catch(() => {});
@@ -203,7 +201,30 @@ export default function PostWorkoutScreen() {
             accessibilityRole="adjustable"
           />
 
-          {/* Before → After delta */}
+          {/* CHANGE — hero number */}
+          {(() => {
+            const raw = postScore - intensity;
+            const displayed = lowerIsBetter ? -raw : raw;
+            const isPositive = displayed > 0;
+            const isNegative = displayed < 0;
+            const changeColor = isPositive ? '#059669' : isNegative ? '#E11D48' : '#555555';
+            const changeSub = isPositive
+              ? 'Moving in the right direction.'
+              : isNegative
+              ? 'Rough session. Still counts.'
+              : 'Held steady.';
+            return (
+              <View style={[styles.changeHero, { borderTopColor: changeColor }]}>
+                <Text style={styles.changeHeroLabel}>CHANGE</Text>
+                <Text style={[styles.changeHeroValue, { color: changeColor }]}>
+                  {displayed > 0 ? `+${displayed}` : `${displayed}`}
+                </Text>
+                <Text style={styles.changeHeroSub}>{changeSub}</Text>
+              </View>
+            );
+          })()}
+
+          {/* Before → Now reference */}
           <View style={styles.deltaRow}>
             <View style={styles.deltaBlock}>
               <Text style={styles.deltaBlockLabel}>BEFORE</Text>
@@ -214,19 +235,6 @@ export default function PostWorkoutScreen() {
               <Text style={styles.deltaBlockLabel}>NOW</Text>
               <Text style={[styles.deltaBlockValue, { color: accentColor }]}>{postScore}</Text>
             </View>
-            <View style={[styles.deltaBlock, styles.deltaSeparated]}>
-              <Text style={styles.deltaBlockLabel}>CHANGE</Text>
-              {(() => {
-                const raw = postScore - intensity;
-                const displayed = lowerIsBetter ? -raw : raw;
-                const isGood = displayed > 0;
-                return (
-                  <Text style={[styles.deltaBlockChange, { color: isGood ? '#059669' : '#c8c8c8' }]}>
-                    {displayed > 0 ? `+${displayed}` : `${displayed}`}
-                  </Text>
-                );
-              })()}
-            </View>
           </View>
         </View>
 
@@ -236,31 +244,6 @@ export default function PostWorkoutScreen() {
             <Text style={styles.workoutName}>{workout.name}</Text>
           </View>
         )}
-
-        <View style={styles.ratingSection}>
-          <Text style={styles.ratingPrompt}>DID THIS ACTUALLY HELP?</Text>
-          <View style={styles.ratingButtons}>
-            {(['yes', 'somewhat', 'no'] as const).map((r) => {
-              const label = r === 'yes' ? 'YES' : r === 'somewhat' ? 'SOMEWHAT' : 'NOT REALLY';
-              const isSelected = rating === r;
-              return (
-                <TouchableOpacity
-                  key={r}
-                  onPress={() => setRating(r)}
-                  activeOpacity={0.7}
-                  style={[styles.ratingBtn, isSelected && { borderColor: accentColor }]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isSelected }}
-                  accessibilityLabel={label}
-                >
-                  <Text style={[styles.ratingBtnText, isSelected && { color: accentColor }]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
 
         {profileLoaded && sessionCount === 0 && !userProfile.preferredTime && (
           <View style={styles.contextQuestion}>
@@ -383,7 +366,7 @@ export default function PostWorkoutScreen() {
             accessibilityLabel="Log session"
             disabled={isSubmitting}
           >
-            <Text style={styles.logButtonText}>{isSubmitting ? 'SAVING...' : rating ? 'DONE. LOG IT. →' : 'LOG IT →'}</Text>
+            <Text style={styles.logButtonText}>{isSubmitting ? 'SAVING...' : 'LOG IT →'}</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -547,45 +530,62 @@ const styles = StyleSheet.create({
     height: 40,
     marginVertical: 16,
   },
+  changeHero: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    borderTopWidth: 3,
+    marginTop: 4,
+    width: '100%',
+  },
+  changeHeroLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 9,
+    color: '#888',
+    letterSpacing: 4,
+    marginBottom: 8,
+  },
+  changeHeroValue: {
+    fontSize: 64,
+    fontFamily: fonts.mono.regular,
+    lineHeight: 68,
+  },
+  changeHeroSub: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#555',
+    letterSpacing: 0.5,
+    marginTop: 10,
+  },
   deltaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    borderTopWidth: 1,
     borderColor: '#1a1a1a',
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingHorizontal: 8,
-    marginTop: 4,
+    marginTop: 0,
     width: '100%',
   },
   deltaBlock: {
     flex: 1,
     alignItems: 'center',
   },
-  deltaSeparated: {
-    borderLeftWidth: 1,
-    borderLeftColor: '#1a1a1a',
-  },
   deltaBlockLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#555',
     letterSpacing: 2,
     fontSize: 9,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   deltaBlockValue: {
     ...t.dataValue,
-    fontSize: 28,
-    color: '#c8c8c8',
-  },
-  deltaBlockChange: {
-    fontSize: 28,
-    fontWeight: '700',
-    fontFamily: fonts.mono.regular,
+    fontSize: 22,
+    color: '#888',
   },
   deltaArrow: {
     ...t.label,
-    color: '#c8c8c8',
-    fontSize: 16,
+    color: '#333',
+    fontSize: 14,
     marginHorizontal: 4,
   },
   workoutInfo: {

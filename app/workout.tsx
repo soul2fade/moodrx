@@ -420,9 +420,8 @@ export default function WorkoutScreen() {
                     isDone && { color: '#444' },
                     isActive && { color: accentColor },
                   ]}
-                  numberOfLines={1}
                 >
-                  {step.length > 42 ? step.slice(0, 42) + '…' : step}
+                  {step}
                 </Text>
               </View>
             );

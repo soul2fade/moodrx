@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, Line, Path, Polyline } from 'react-native-svg';
+import Svg, { Line, Path, Polyline } from 'react-native-svg';
 import { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 
@@ -22,7 +22,6 @@ interface MoodIconProps {
 
 function MoodIconImpl({ mood, size = 32, opacity = 1, color }: MoodIconProps) {
   const moodColor = color ?? MOODS[mood].color;
-  const half = size / 2;
 
   const renderIcon = () => {
     switch (mood) {

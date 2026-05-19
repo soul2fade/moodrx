@@ -230,6 +230,41 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* 7-day mood sparkline */}
+        {sessions.length >= 2 && !selectedMood && (() => {
+          const last7 = sessions.slice(-7);
+          const maxVal = 10;
+          const SPARK_H = 32;
+          const first = last7[0].intensity;
+          const last = last7[last7.length - 1].intensity;
+          const diff = last - first;
+          const trendLabel = Math.abs(diff) < 1
+            ? '→ HOLDING STEADY'
+            : diff < 0
+            ? `↓ TRENDING BETTER`
+            : `↑ TRENDING WORSE`;
+          const trendColor = Math.abs(diff) < 1 ? '#525252' : diff < 0 ? '#059669' : '#b45309';
+          return (
+            <View style={styles.sparklineCard} accessibilityLabel={`7-day mood trend: ${trendLabel}`}>
+              <Text style={styles.sparklineHeader}>7-DAY TREND</Text>
+              <View style={styles.sparklineBars}>
+                {last7.map((s, i) => {
+                  const barH = Math.max((s.intensity / maxVal) * SPARK_H, 3);
+                  const moodCol = MOODS[s.mood]?.color ?? '#525252';
+                  return (
+                    <View
+                      key={s.id ?? i}
+                      style={[styles.sparklineBar, { height: barH, backgroundColor: moodCol + 'aa' }]}
+                      importantForAccessibility="no"
+                    />
+                  );
+                })}
+              </View>
+              <Text style={[styles.sparklineTrend, { color: trendColor }]}>{trendLabel}</Text>
+            </View>
+          );
+        })()}
+
         {/* Quick session — one-tap random workout for dominant mood */}
         {moodIdentity && !selectedMood && (
           <TouchableOpacity
@@ -808,6 +843,37 @@ const styles = StyleSheet.create({
     fontFamily: fonts.primary.bold,
     fontSize: 16,
     color: '#c8c8c8',
+  },
+  sparklineCard: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#0a0a0a',
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+  },
+  sparklineHeader: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    color: '#444',
+    letterSpacing: 3,
+    marginBottom: 8,
+  },
+  sparklineBars: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 4,
+    height: 32,
+  },
+  sparklineBar: {
+    flex: 1,
+    borderRadius: 1,
+  },
+  sparklineTrend: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    letterSpacing: 2,
+    marginTop: 8,
   },
   quickSessionCard: {
     flexDirection: 'row',

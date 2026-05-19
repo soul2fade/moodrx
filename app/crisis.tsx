@@ -68,7 +68,7 @@ export default function CrisisScreen() {
       >
         {/* Header */}
         <Text style={styles.headline}>
-          THIS IS FOR WHEN MOVEMENT ISN'T THE ANSWER.
+          THIS IS FOR WHEN MOVEMENT ISN&apos;T THE ANSWER.
         </Text>
 
         <View style={styles.divider} />

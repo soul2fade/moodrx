@@ -139,6 +139,15 @@ export default function HomeScreen() {
     showPanel();
   }, [showPanel]);
 
+  const handleMilestoneDismiss = useCallback(async (milestoneDay: number) => {
+    const updated = {
+      ...streakState,
+      seenMilestones: [...(streakState.seenMilestones ?? []), milestoneDay],
+    };
+    setStreakState(updated);
+    await saveStreakState(updated);
+  }, [streakState]);
+
   const handlePrescribe = useCallback(() => {
     if (!selectedMood) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -158,43 +167,17 @@ export default function HomeScreen() {
       >
         {/* Top row */}
         <View style={styles.topRow}>
-          <Text style={styles.checkInLabel}>CHECK-IN</Text>
-          <View style={styles.topRight}>
+          {!isPremium && (
             <TouchableOpacity
-              onPress={() => router.push('/insights')}
+              onPress={() => router.push('/premium')}
               activeOpacity={0.7}
+              style={styles.proBadge}
               accessibilityRole="button"
-              accessibilityLabel={isLoading ? 'Loading sessions' : `${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}, view insights`}
+              accessibilityLabel="Upgrade to Pro"
             >
-              <Text style={styles.sessionCount}>
-                {isLoading ? '—' : `${sessionCount} ${sessionCount === 1 ? 'SESSION' : 'SESSIONS'}`}
-              </Text>
+              <Text style={styles.proBadgeText}>PRO</Text>
             </TouchableOpacity>
-            {streak >= 1 && (
-              <View style={styles.streakBadge} accessibilityLabel={`${streak} day streak`}>
-                <Text style={styles.streakBadgeText}>{streak}x</Text>
-              </View>
-            )}
-            {!isPremium && (
-              <TouchableOpacity
-                onPress={() => router.push('/premium')}
-                activeOpacity={0.7}
-                style={styles.proBadge}
-                accessibilityRole="button"
-                accessibilityLabel="Upgrade to Pro"
-              >
-                <Text style={styles.proBadgeText}>PRO</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              onPress={() => router.push('/settings')}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Settings"
-            >
-              <Text style={styles.settingsText}>SETTINGS</Text>
-            </TouchableOpacity>
-          </View>
+          )}
         </View>
 
         <Text style={styles.headline}>
@@ -271,9 +254,18 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ── STREAK MILESTONE — shown at 3/7/14/30 days ── */}
-        {streak > 0 && [3, 7, 14, 30].includes(streak) && (
+        {/* ── STREAK MILESTONE — shown at 3/7/14/30 days, dismissible ── */}
+        {streak > 0 && [3, 7, 14, 30].includes(streak) && !(streakState.seenMilestones ?? []).includes(streak) && (
           <View style={[styles.streakMilestoneBox, { borderLeftColor: '#D97706' }]}>
+            <TouchableOpacity
+              onPress={() => handleMilestoneDismiss(streak)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.milestoneDismiss}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss milestone"
+            >
+              <Text style={styles.milestoneDismissText}>✕</Text>
+            </TouchableOpacity>
             <Text style={styles.streakMilestoneNum}>{streak} DAYS</Text>
             <Text style={styles.streakMilestoneMsg}>
               {streak === 3
@@ -646,9 +638,19 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderLeftWidth: 3,
     paddingLeft: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 14,
+    paddingRight: 16,
     backgroundColor: '#0d0d00',
+  },
+  milestoneDismiss: {
+    alignSelf: 'flex-end',
+    marginBottom: 4,
+  },
+  milestoneDismissText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#444',
   },
   streakMilestoneNum: {
     fontFamily: fonts.mono.regular,

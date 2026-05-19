@@ -121,9 +121,7 @@ export default function WorkoutScreen() {
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
   const [stepBeepTrigger, setStepBeepTrigger] = useState(0);
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
-  const [restTotalSeconds, setRestTotalSeconds] = useState(0);
   const [activeSecondsLeft, setActiveSecondsLeft] = useState<number | null>(null);
-  const [activeTotalSeconds, setActiveTotalSeconds] = useState(0);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -194,7 +192,6 @@ export default function WorkoutScreen() {
     if (!resolvedWorkout) return;
     const secs = parseRestSeconds(resolvedWorkout.steps[currentStep] ?? '');
     if (!secs) { setRestSecondsLeft(null); return; }
-    setRestTotalSeconds(secs);
     setRestSecondsLeft(secs);
     restProgressAnim.setValue(1);
     Animated.timing(restProgressAnim, { toValue: 0, duration: secs * 1000, useNativeDriver: false }).start();
@@ -221,7 +218,6 @@ export default function WorkoutScreen() {
     if (!resolvedWorkout) return;
     const secs = parseActiveSeconds(resolvedWorkout.steps[currentStep] ?? '');
     if (!secs) { setActiveSecondsLeft(null); return; }
-    setActiveTotalSeconds(secs);
     setActiveSecondsLeft(secs);
     activeProgressAnim.setValue(1);
     Animated.timing(activeProgressAnim, { toValue: 0, duration: secs * 1000, useNativeDriver: false }).start();
@@ -591,7 +587,7 @@ export default function WorkoutScreen() {
         >
           <Animated.View style={[styles.warningCard, { opacity: warningAnim, transform: [{ scale: warningAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }] }]}>
             <Text style={styles.warningTitle}>HEADS UP</Text>
-            <Text style={styles.warningBody}>You're about to be roasted. It's all in good fun.</Text>
+            <Text style={styles.warningBody}>You&apos;re about to be roasted. It&apos;s all in good fun.</Text>
             <Text style={styles.warningHint}>tap anywhere to dismiss</Text>
           </Animated.View>
         </TouchableOpacity>

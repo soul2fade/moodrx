@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   groundingLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#555555',
+    color: '#c8c8c8',
     letterSpacing: 3,
     textTransform: 'uppercase',
     marginBottom: 12,

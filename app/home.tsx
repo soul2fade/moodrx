@@ -212,6 +212,21 @@ export default function HomeScreen() {
 
         <Text style={styles.subtext}>Be honest. I&apos;m not here to judge. Much.</Text>
 
+        {/* Onboarding hint — moved to top so it's visible without scrolling. Dismisses on first mood tap or ✕ */}
+        {showHint && !selectedMood && (
+          <View style={styles.hintBanner} accessibilityRole="none">
+            <Text style={styles.hintText}>TAP A MOOD BELOW TO START →</Text>
+            <TouchableOpacity
+              onPress={handleDismissHint}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss hint"
+            >
+              <Text style={styles.hintDismiss}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Prescription evolving — visible after 3 sessions with profile data */}
         {sessionCount >= 3 && !selectedMood && (userProfile.preferredTime || userProfile.primaryGoal) && (
           <View style={styles.prescriptionEvolvingRow} accessibilityLabel="Your prescription is personalizing">
@@ -391,21 +406,6 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.stillFeelingArrow}>→</Text>
           </TouchableOpacity>
-        )}
-
-        {/* Onboarding hint — dismisses on first mood tap or ✕ */}
-        {showHint && !selectedMood && (
-          <View style={styles.hintBanner} accessibilityRole="none">
-            <Text style={styles.hintText}>TAP A MOOD BELOW TO START →</Text>
-            <TouchableOpacity
-              onPress={handleDismissHint}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel="Dismiss hint"
-            >
-              <Text style={styles.hintDismiss}>✕</Text>
-            </TouchableOpacity>
-          </View>
         )}
 
         {/* Mood list */}

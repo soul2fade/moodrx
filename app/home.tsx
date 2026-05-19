@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   weeklyRxArrow: {
     fontFamily: fonts.primary.bold,
     fontSize: 16,
-    color: '#444444',
+    color: '#c8c8c8',
   },
   safetyNetBtn: {
     marginTop: 32,

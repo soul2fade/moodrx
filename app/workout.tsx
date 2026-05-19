@@ -102,6 +102,7 @@ export default function WorkoutScreen() {
   const [trashTalkOn, setTrashTalkOn] = useState(false);
   const [keepAwake, setKeepAwake] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
+  const [stepBeepTrigger, setStepBeepTrigger] = useState(0);
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const [restTotalSeconds, setRestTotalSeconds] = useState(0);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
@@ -141,6 +142,11 @@ export default function WorkoutScreen() {
       insultPlayer.play();
     }
   }, [insultAudioSrc]);
+
+  useEffect(() => {
+    if (stepBeepTrigger === 0) return;
+    try { stepCompletePlayer.seekTo(0); stepCompletePlayer.play(); } catch {}
+  }, [stepBeepTrigger]);
 
   useEffect(() => {
     return () => {
@@ -236,7 +242,7 @@ export default function WorkoutScreen() {
     if (!resolvedWorkout || isNavigating.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStep < totalSteps - 1) {
-      try { stepCompletePlayer.seekTo(0); stepCompletePlayer.play(); } catch {}
+      setStepBeepTrigger((n) => n + 1);
       setCurrentStep((s) => s + 1);
     } else {
       isNavigating.current = true;

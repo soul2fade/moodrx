@@ -30,7 +30,13 @@ import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { getInsult } from '@/utils/insults';
 
-function getScoreContext(score: number): string {
+function getScoreContext(score: number, lowerIsBetter: boolean): string {
+  if (lowerIsBetter) {
+    if (score <= 3) return 'Nearly clear.';
+    if (score <= 5) return 'Getting there.';
+    if (score <= 7) return 'Still some left. Keep going.';
+    return 'Rough one. You still showed up.';
+  }
   if (score <= 3) return 'Rough. But you moved.';
   if (score <= 5) return 'Improvement.';
   if (score <= 7) return 'Getting there.';
@@ -76,6 +82,7 @@ export default function PostWorkoutScreen() {
   }, []);
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
+  const lowerIsBetter = mood !== 'good';
   const postInsult = useRef(getInsult(mood, 'post')).current;
   const breakthroughRef = useRef<ViewShot>(null);
 
@@ -173,14 +180,14 @@ export default function PostWorkoutScreen() {
         <View style={styles.sectionDivider} />
 
         <View style={styles.scoreSection}>
-          <Text style={styles.howLabel}>HOW DO YOU FEEL NOW?</Text>
+          <Text style={styles.howLabel}>{moodData.name.toUpperCase()} LEVEL NOW?</Text>
 
           <View style={styles.scoreDisplay}>
             <Text style={[styles.scoreNumber, { color: accentColor }]}>{postScore}</Text>
             <Text style={styles.scoreDenom}>/10</Text>
           </View>
 
-          <Text style={styles.scoreContext}>{getScoreContext(postScore)}</Text>
+          <Text style={styles.scoreContext}>{getScoreContext(postScore, lowerIsBetter)}</Text>
 
           <Slider
             style={styles.slider}
@@ -209,11 +216,16 @@ export default function PostWorkoutScreen() {
             </View>
             <View style={[styles.deltaBlock, styles.deltaSeparated]}>
               <Text style={styles.deltaBlockLabel}>CHANGE</Text>
-              <Text style={[styles.deltaBlockChange, {
-                color: (postScore - intensity) >= 0 ? '#059669' : '#c8c8c8',
-              }]}>
-                {(postScore - intensity) > 0 ? `+${postScore - intensity}` : `${postScore - intensity}`}
-              </Text>
+              {(() => {
+                const raw = postScore - intensity;
+                const displayed = lowerIsBetter ? -raw : raw;
+                const isGood = displayed > 0;
+                return (
+                  <Text style={[styles.deltaBlockChange, { color: isGood ? '#059669' : '#c8c8c8' }]}>
+                    {displayed > 0 ? `+${displayed}` : `${displayed}`}
+                  </Text>
+                );
+              })()}
             </View>
           </View>
         </View>

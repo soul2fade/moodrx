@@ -26,6 +26,8 @@ import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
 
+let greetingShownThisSession = false;
+
 export default function HomeScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +39,9 @@ export default function HomeScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
   const { panelAnim, backdropAnim, show: showPanel, dismiss: dismissPanelAnim } = useBottomPanel(PANEL_HEIGHT);
+  const [showGreeting, setShowGreeting] = useState(false);
+  const greetingAnim = useRef(new Animated.Value(0)).current;
+  const greetingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moodAnims = useRef(
     MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
   ).current;
@@ -61,6 +66,17 @@ export default function HomeScreen() {
         setStreakState(updated);
       });
       dismissPanel();
+      // Show greeting toast once per app launch
+      if (!greetingShownThisSession) {
+        greetingShownThisSession = true;
+        if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+        greetingAnim.setValue(0);
+        setShowGreeting(true);
+        Animated.timing(greetingAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+        greetingTimerRef.current = setTimeout(() => {
+          Animated.timing(greetingAnim, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => setShowGreeting(false));
+        }, 3500);
+      }
       // Re-stagger mood rows on every focus
       moodAnims.forEach((anim) => {
         anim.opacity.setValue(0);
@@ -171,8 +187,6 @@ export default function HomeScreen() {
         </Text>
 
         <View style={styles.divider} />
-
-        <Text style={styles.subtext}>Be honest. I&apos;m not here to judge. Much.</Text>
 
         {/* Prescription evolving — visible after 3 sessions with profile data */}
         {sessionCount >= 3 && !selectedMood && (userProfile.preferredTime || userProfile.primaryGoal) && (
@@ -435,6 +449,24 @@ export default function HomeScreen() {
           </>
         )}
       </Animated.View>
+
+      {/* Greeting toast — once per app launch */}
+      {showGreeting && (
+        <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }] }]} pointerEvents="box-none">
+          <Text style={styles.greetingText}>Be honest. I'm not here to judge. Much.</Text>
+          <TouchableOpacity
+            onPress={() => {
+              if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+              Animated.timing(greetingAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => setShowGreeting(false));
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+          >
+            <Text style={styles.greetingDismiss}>✕</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </Animated.View>
   );
 }
@@ -848,6 +880,35 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 36,
     marginTop: 2,
+  },
+  greetingToast: {
+    position: 'absolute',
+    bottom: 32,
+    left: 24,
+    right: 24,
+    backgroundColor: '#111111',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 100,
+  },
+  greetingText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    color: '#c8c8c8',
+    letterSpacing: 0.3,
+    flex: 1,
+    lineHeight: 20,
+  },
+  greetingDismiss: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#555',
+    marginLeft: 14,
   },
   prescribeButton: {
     borderWidth: 1,

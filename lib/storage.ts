@@ -391,3 +391,21 @@ export async function setNotifPromptShown(): Promise<void> {
     console.warn('[MoodRx] setNotifPromptShown failed:', e);
   }
 }
+
+const HOME_HINT_SEEN_KEY = '@moodrx_home_hint_seen';
+
+export async function getHomeHintSeen(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(HOME_HINT_SEEN_KEY)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setHomeHintSeen(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(HOME_HINT_SEEN_KEY, 'true');
+  } catch {
+    // non-critical
+  }
+}

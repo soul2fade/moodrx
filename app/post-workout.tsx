@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
   },
   deltaBlockLabel: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 2,
     fontSize: 9,
     marginBottom: 4,
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
   },
   deltaArrow: {
     ...t.label,
-    color: '#333333',
+    color: '#c8c8c8',
     fontSize: 16,
     marginHorizontal: 4,
   },
@@ -608,13 +608,13 @@ const styles = StyleSheet.create({
   noteLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#555',
+    color: '#c8c8c8',
     letterSpacing: 3,
   },
   noteCount: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#333',
+    color: '#c8c8c8',
     letterSpacing: 1,
   },
   noteInput: {
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
   shareButtonEyebrow: {
     fontFamily: fonts.mono.regular,
     fontSize: 7,
-    color: '#555555',
+    color: '#c8c8c8',
     letterSpacing: 4,
   },
   shareButtonText: {

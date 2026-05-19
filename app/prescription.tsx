@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   insultLine: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#525252',
+    color: '#c8c8c8',
     marginTop: 12,
     textAlign: 'left',
     alignSelf: 'flex-start',
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   },
   personalizationNote: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     fontSize: 11,
     letterSpacing: 1,
     marginTop: 8,
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   },
   cantDoThatLabel: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 3,
     fontSize: 10,
     marginBottom: 8,
@@ -608,12 +608,12 @@ const styles = StyleSheet.create({
   },
   unlockProText: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   unlockProTextStack: {
     ...t.label,
-    color: '#737373',
+    color: '#c8c8c8',
     letterSpacing: 2,
     marginTop: 10,
   },

@@ -320,12 +320,13 @@ export interface StreakState {
   hwm: number;           // all-time high watermark streak
   lastBrokenDate: string | null;   // YYYY-MM-DD when last streak was broken
   lastBrokenHwm: number; // what the streak was when it broke
+  seenMilestones?: number[]; // milestones (3/7/14/30) the user has dismissed
 }
 
 export async function getStreakState(): Promise<StreakState> {
   try {
     const raw = await AsyncStorage.getItem(STREAK_STATE_KEY);
-    if (!raw) return { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 };
+    if (!raw) return { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0, seenMilestones: [] };
     return JSON.parse(raw) as StreakState;
   } catch (e) {
     console.warn('[MoodRx] getStreakState failed:', e);

@@ -41,8 +41,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#1a1a1a',
-    backgroundColor: '#0a0a0a',
+    borderTopColor: '#e5e5e5',
+    backgroundColor: '#ffffff',
     paddingBottom: 32,
     paddingTop: 14,
   },
@@ -54,15 +54,15 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: fonts.mono.regular,
     fontSize: 10,
-    color: '#3a3a3a',
+    color: '#aaaaaa',
     letterSpacing: 2,
   },
   labelActive: {
-    color: '#c8c8c8',
+    color: '#0a0a0a',
   },
   activeLine: {
     width: 16,
     height: 1,
-    backgroundColor: '#c8c8c8',
+    backgroundColor: '#0a0a0a',
   },
 });

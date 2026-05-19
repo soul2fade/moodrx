@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { getSessions } from '@/lib/storage';
 import { buildWeeklyPrescription, DayRx } from '@/lib/analytics';
 import { MOODS } from '@/lib/moods';
-import { type as t, fonts } from '@/lib/typography';
+import { fonts } from '@/lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 
 const TODAY_IDX = new Date().getDay(); // 0=Sun … 6=Sat
@@ -154,7 +154,7 @@ export default function WeeklyPrescriptionScreen() {
             accessibilityRole="button"
             accessibilityLabel="Start today's prescribed workout"
           >
-            <Text style={styles.ctaLabel}>TODAY'S PRESCRIPTION</Text>
+            <Text style={styles.ctaLabel}>TODAY&apos;S PRESCRIPTION</Text>
             <Text style={[styles.ctaWorkout, { color: MOODS[todayRx.mood].color }]}>
               {todayRx.workoutName.toUpperCase()}
             </Text>

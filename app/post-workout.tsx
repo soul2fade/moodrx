@@ -18,7 +18,7 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { addSession, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setUserProfile, UserProfile, PersonalBest, Session } from '@/lib/storage';
+import { addSession, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById } from '@/lib/workouts';

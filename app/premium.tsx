@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   },
   socialProofSub: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     fontSize: 10,
     letterSpacing: 1,
     marginTop: 6,

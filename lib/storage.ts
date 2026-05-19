@@ -430,6 +430,26 @@ export async function setNotifPromptShown(): Promise<void> {
 }
 
 const HOME_HINT_SEEN_KEY = '@moodrx_home_hint_seen';
+const CAROUSEL_PAGE_KEY = '@moodrx_carousel_page';
+
+export async function getLastCarouselPage(): Promise<number> {
+  try {
+    const val = await AsyncStorage.getItem(CAROUSEL_PAGE_KEY);
+    if (val === null) return 0;
+    const n = parseInt(val, 10);
+    return Number.isFinite(n) && n >= 0 && n <= 2 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function setLastCarouselPage(page: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(CAROUSEL_PAGE_KEY, String(page));
+  } catch {
+    // non-critical
+  }
+}
 
 export async function getHomeHintSeen(): Promise<boolean> {
   if (homeHintSeenCache !== null) return homeHintSeenCache;

@@ -204,7 +204,7 @@ export default function WorkoutCoach({
       <View style={styles.figureWrap}>
         <VideoView
           player={player}
-          style={{ width: figureSize, height: figureSize, backgroundColor: 'transparent' }}
+          style={{ width: figureSize, height: figureSize, backgroundColor: '#0a0a0a' }}
           contentFit="contain"
           nativeControls={false}
         />

@@ -24,6 +24,7 @@ import {
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { BottomNav } from '@/components/BottomNav';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
@@ -329,8 +330,9 @@ export default function SettingsScreen() {
           <Text style={styles.legalLinkText}>TERMS OF SERVICE</Text>
         </TouchableOpacity>
 
-        <View style={{ height: 48 }} />
+        <View style={{ height: 12 }} />
       </ScrollView>
+      <BottomNav />
     </Animated.View>
   );
 }
@@ -338,7 +340,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   scroll: { flex: 1 },
-  content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 32 },
+  content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 16 },
   backButton: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
   settingsLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 3, marginTop: 24 },
   headline: { ...t.headlineMd, fontSize: 24, marginTop: 8 },

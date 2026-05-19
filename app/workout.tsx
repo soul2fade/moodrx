@@ -35,6 +35,23 @@ function parseRestSeconds(text: string): number | null {
   return null;
 }
 
+function parseActiveSeconds(text: string): number | null {
+  const lower = text.toLowerCase();
+  if (lower.includes('rest') || lower.includes('recover')) return null;
+  const secMatch = lower.match(/(\d+)\s*sec/);
+  const minMatch = lower.match(/(\d+)\s*min/);
+  if (secMatch) return parseInt(secMatch[1], 10);
+  if (minMatch) return parseInt(minMatch[1], 10) * 60;
+  return null;
+}
+
+const ACTIVE_COMPLETE_LINES = [
+  "Time's up. Keep going.",
+  "Done. Hit next when ready.",
+  "That's the time. Move on.",
+  "Finished. Tap next.",
+];
+
 const REST_COMPLETE_LINES = [
   "Rest complete. Back to work.",
   "Time's up. No more lounging.",
@@ -105,11 +122,15 @@ export default function WorkoutScreen() {
   const [stepBeepTrigger, setStepBeepTrigger] = useState(0);
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const [restTotalSeconds, setRestTotalSeconds] = useState(0);
+  const [activeSecondsLeft, setActiveSecondsLeft] = useState<number | null>(null);
+  const [activeTotalSeconds, setActiveTotalSeconds] = useState(0);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restProgressAnim = useRef(new Animated.Value(1)).current;
   const restTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeProgressAnim = useRef(new Animated.Value(1)).current;
+  const activeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const insultIdxRef = useRef(0);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNavigating = useRef(false);
@@ -155,6 +176,7 @@ export default function WorkoutScreen() {
       try { stepCompletePlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
       if (restTimerRef.current) clearInterval(restTimerRef.current);
+      if (activeTimerRef.current) clearInterval(activeTimerRef.current);
       deactivateKeepAwake();
     };
   }, []);
@@ -190,6 +212,33 @@ export default function WorkoutScreen() {
       });
     }, 1000);
     return () => { if (restTimerRef.current) clearInterval(restTimerRef.current); };
+  }, [currentStep]);
+
+  // Active step timer — fires for timed non-rest steps
+  useEffect(() => {
+    if (activeTimerRef.current) { clearInterval(activeTimerRef.current); activeTimerRef.current = null; }
+    activeProgressAnim.stopAnimation();
+    if (!resolvedWorkout) return;
+    const secs = parseActiveSeconds(resolvedWorkout.steps[currentStep] ?? '');
+    if (!secs) { setActiveSecondsLeft(null); return; }
+    setActiveTotalSeconds(secs);
+    setActiveSecondsLeft(secs);
+    activeProgressAnim.setValue(1);
+    Animated.timing(activeProgressAnim, { toValue: 0, duration: secs * 1000, useNativeDriver: false }).start();
+    activeTimerRef.current = setInterval(() => {
+      setActiveSecondsLeft(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(activeTimerRef.current!);
+          activeTimerRef.current = null;
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          const line = ACTIVE_COMPLETE_LINES[Math.floor(Math.random() * ACTIVE_COMPLETE_LINES.length)];
+          Speech.speak(line, { language: 'en-GB', rate: 0.85, pitch: 0.78 });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (activeTimerRef.current) clearInterval(activeTimerRef.current); };
   }, [currentStep]);
 
   useEffect(() => {
@@ -397,6 +446,22 @@ export default function WorkoutScreen() {
             <Text style={styles.stepText} accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}: ${resolvedWorkout.steps[currentStep]}`}>
               {resolvedWorkout.steps[currentStep]}
             </Text>
+            {activeSecondsLeft !== null && (
+              <View style={styles.activeTimerBox}>
+                <Text style={[styles.activeTimerCountdown, { color: activeSecondsLeft === 0 ? '#525252' : accentColor }]}>
+                  {Math.floor(activeSecondsLeft / 60)}:{String(activeSecondsLeft % 60).padStart(2, '0')}
+                </Text>
+                <View style={styles.activeProgressBg}>
+                  <Animated.View style={[styles.activeProgressFill, {
+                    width: activeProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                    backgroundColor: activeSecondsLeft === 0 ? '#525252' : accentColor,
+                  }]} />
+                </View>
+                {activeSecondsLeft === 0 && (
+                  <Text style={styles.activeTimerDone}>DONE — HIT NEXT</Text>
+                )}
+              </View>
+            )}
           </View>
         )}
 
@@ -587,6 +652,12 @@ const styles = StyleSheet.create({
   restProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 20 },
   restProgressFill: { height: 2 },
   restSubtext: { ...t.label, color: '#555', letterSpacing: 2, fontSize: 11, marginTop: 12 },
+
+  activeTimerBox: { marginTop: 20, alignItems: 'center', width: '100%' },
+  activeTimerCountdown: { fontSize: 52, fontFamily: fonts.mono.regular, lineHeight: 58 },
+  activeProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 12 },
+  activeProgressFill: { height: 2 },
+  activeTimerDone: { ...t.label, color: '#525252', letterSpacing: 3, fontSize: 10, marginTop: 10 },
 
   insultLine: {
     fontFamily: fonts.mono.regular,

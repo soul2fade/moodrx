@@ -518,12 +518,12 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...t.headlineMd,
-    fontSize: 24,
+    fontSize: 27,
     marginTop: 8,
   },
   subtext: {
     ...t.bodyMuted,
-    fontSize: 14,
+    fontSize: 16,
     marginTop: 4,
   },
   statsRow: {
@@ -586,12 +586,12 @@ const styles = StyleSheet.create({
   noSessions: {
     ...t.headlineSm,
     color: '#c8c8c8',
-    fontSize: 14,
+    fontSize: 16,
   },
   noSessionsSub: {
     ...t.label,
-    color: '#333333',
-    fontSize: 11,
+    color: '#c8c8c8',
+    fontSize: 13,
     marginTop: 6,
     letterSpacing: 1,
     textAlign: 'center',
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#059669',
     letterSpacing: 3,
-    fontSize: 11,
+    fontSize: 13,
   },
   chart: {
     flexDirection: 'row',
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   chartDay: {
     ...t.timestamp,
     color: '#c8c8c8',
-    fontSize: 9,
+    fontSize: 11,
     letterSpacing: 1,
     marginTop: 4,
   },
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
   },
   patternText: {
     ...t.body,
-    fontSize: 14,
+    fontSize: 16,
     marginTop: 8,
   },
   recentSection: {
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
   },
   recentStar: {
     color: '#059669',
-    fontSize: 12,
+    fontSize: 14,
   },
   historyUpsellRow: {
     paddingVertical: 14,
@@ -702,13 +702,13 @@ const styles = StyleSheet.create({
   },
   historyUpsellText: {
     ...t.label,
-    color: '#525252',
+    color: '#c8c8c8',
     letterSpacing: 2,
-    fontSize: 10,
+    fontSize: 12,
   },
   recentWorkout: {
     ...t.body,
-    fontSize: 14,
+    fontSize: 16,
   },
   recentDate: {
     ...t.timestamp,
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
   },
   burnConfirmTitle: {
     ...t.body,
-    fontSize: 14,
+    fontSize: 16,
   },
   burnConfirmButtons: {
     flexDirection: 'row',
@@ -829,7 +829,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#c8c8c8',
     letterSpacing: 3,
-    fontSize: 10,
+    fontSize: 12,
     marginBottom: 14,
   },
   casePanelMoodRow: {
@@ -846,7 +846,7 @@ const styles = StyleSheet.create({
   casePanelMoodText: {
     ...t.label,
     letterSpacing: 2,
-    fontSize: 11,
+    fontSize: 13,
   },
   casePanelDate: {
     ...t.timestamp,
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
   },
   casePanelWorkoutName: {
     ...t.headlineSm,
-    fontSize: 18,
+    fontSize: 20,
     marginBottom: 16,
   },
   casePanelScores: {
@@ -868,25 +868,25 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#c8c8c8',
     letterSpacing: 2,
-    fontSize: 10,
+    fontSize: 12,
   },
   casePanelScoreVal: {
     ...t.dataValue,
-    fontSize: 20,
+    fontSize: 22,
   },
   casePanelScoreSep: {
     ...t.label,
-    color: '#333333',
+    color: '#c8c8c8',
   },
   casePanelChange: {
     ...t.dataValue,
-    fontSize: 20,
+    fontSize: 22,
     marginLeft: 4,
   },
   casePanelRating: {
     ...t.label,
     letterSpacing: 2,
-    fontSize: 10,
+    fontSize: 12,
     marginBottom: 4,
   },
   caseNoteBox: {
@@ -898,16 +898,16 @@ const styles = StyleSheet.create({
   },
   caseNoteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
-    color: '#444',
+    fontSize: 10,
+    color: '#c8c8c8',
     letterSpacing: 3,
     marginBottom: 5,
   },
   caseNoteText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 14,
     color: '#888',
-    lineHeight: 18,
+    lineHeight: 20,
   },
   casePrescribeBtn: {
     backgroundColor: '#059669',
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
   },
   caseDismissBtnText: {
     ...t.label,
-    color: '#333333',
+    color: '#c8c8c8',
     letterSpacing: 2,
   },
   statValueSessions: {
@@ -957,7 +957,7 @@ const styles = StyleSheet.create({
   },
   recentChangeValue: {
     ...t.dataValue,
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fonts.mono.regular,
   },
   shareBtn: {

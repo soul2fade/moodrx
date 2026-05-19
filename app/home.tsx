@@ -13,6 +13,7 @@ import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, UserProfile, Session, StreakState } from '@/lib/storage';
+import { getWorkoutsForMood } from '@/lib/workouts';
 import { todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
@@ -139,6 +140,18 @@ export default function HomeScreen() {
     showPanel();
   }, [showPanel]);
 
+  const handleQuickSession = useCallback(() => {
+    if (!moodIdentity) return;
+    const workouts = getWorkoutsForMood(moodIdentity.dominantMood);
+    if (workouts.length === 0) return;
+    const pick = workouts[Math.floor(Math.random() * workouts.length)];
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push({
+      pathname: '/workout',
+      params: { mood: moodIdentity.dominantMood, workoutId: pick.id, intensity: '5' },
+    });
+  }, [moodIdentity]);
+
   const handleMilestoneDismiss = useCallback(async (milestoneDay: number) => {
     const updated = {
       ...streakState,
@@ -214,6 +227,25 @@ export default function HomeScreen() {
               {moodIdentity.label.toUpperCase()}
             </Text>
             <Text style={styles.identityCount}>{moodIdentity.sessionCount} sessions logged →</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Quick session — one-tap random workout for dominant mood */}
+        {moodIdentity && !selectedMood && (
+          <TouchableOpacity
+            style={[styles.quickSessionCard, { borderLeftColor: MOODS[moodIdentity.dominantMood].color }]}
+            onPress={handleQuickSession}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Quick session: random ${MOODS[moodIdentity.dominantMood].name} workout`}
+          >
+            <View style={styles.quickSessionLeft}>
+              <Text style={styles.quickSessionLabel}>QUICK SESSION</Text>
+              <Text style={[styles.quickSessionSub, { color: MOODS[moodIdentity.dominantMood].color }]}>
+                Random {MOODS[moodIdentity.dominantMood].name.toUpperCase()} workout →
+              </Text>
+            </View>
+            <Text style={styles.quickSessionArrow}>⚡</Text>
           </TouchableOpacity>
         )}
 
@@ -358,6 +390,17 @@ export default function HomeScreen() {
             );
           })}
         </View>
+
+        {/* Breathe tool link */}
+        <TouchableOpacity
+          onPress={() => router.push('/breathe' as any)}
+          activeOpacity={0.6}
+          style={styles.breatheLink}
+          accessibilityRole="link"
+          accessibilityLabel="Open box breathing tool"
+        >
+          <Text style={styles.breatheLinkText}>Need to breathe first? →</Text>
+        </TouchableOpacity>
 
         {/* Safety net link */}
         <TouchableOpacity
@@ -766,8 +809,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#c8c8c8',
   },
+  quickSessionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderLeftWidth: 3,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: '#0a0a0a',
+  },
+  quickSessionLeft: {
+    gap: 2,
+  },
+  quickSessionLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 11,
+    color: '#888888',
+    letterSpacing: 3,
+  },
+  quickSessionSub: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 15,
+  },
+  quickSessionArrow: {
+    fontSize: 18,
+  },
+  breatheLink: {
+    marginTop: 24,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  breatheLinkText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#7EC8A0',
+    letterSpacing: 1,
+  },
   safetyNetBtn: {
-    marginTop: 32,
+    marginTop: 8,
     marginBottom: 8,
     alignItems: 'center',
     paddingVertical: 12,

@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     color: '#0a0a0a',
     fontSize: 9,
     letterSpacing: 1,
+    lineHeight: 14,
   },
   planPrice: {
     ...t.headlineSm,

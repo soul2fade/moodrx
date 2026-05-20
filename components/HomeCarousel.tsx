@@ -245,6 +245,12 @@ export function HomeCarousel({
         {/* ── PAGE 1: TODAY ── */}
         <View style={styles.page} accessibilityRole="tab" accessibilityLabel="Page 1: Today">
           <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll} contentContainerStyle={styles.pageContent}>
+          {/* Daily opener — always shown */}
+          <View style={styles.dailyOpener}>
+            <Text style={styles.dailyOpenerLabel}>{DAILY_OPENERS[new Date().getDay()].day}</Text>
+            <Text style={styles.dailyOpenerText}>{DAILY_OPENERS[new Date().getDay()].line}</Text>
+          </View>
+
           {/* Onboarding hint */}
           {showHint && !selectedMood && (
             <View style={styles.hintBanner} accessibilityRole="none">
@@ -333,13 +339,6 @@ export function HomeCarousel({
             </View>
           )}
 
-          {/* Daily opener — always visible when no other Today content */}
-          {!hasTodayContent && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateLabel}>{DAILY_OPENERS[new Date().getDay()].day}</Text>
-              <Text style={styles.emptyStateText}>{DAILY_OPENERS[new Date().getDay()].line}</Text>
-            </View>
-          )}
           </ScrollView>
         </View>
 
@@ -567,6 +566,24 @@ const styles = StyleSheet.create({
   dotBase: {
     height: 5,
     borderRadius: 3,
+  },
+  dailyOpener: {
+    paddingBottom: 20,
+    paddingHorizontal: 2,
+  },
+  dailyOpenerLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 10,
+    color: '#ffffff',
+    letterSpacing: 3,
+    marginBottom: 6,
+    lineHeight: 15,
+  },
+  dailyOpenerText: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 15,
+    color: '#ffffff',
+    lineHeight: 22,
   },
   emptyState: {
     paddingVertical: 20,

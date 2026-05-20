@@ -552,6 +552,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: 14,
   },
   dots: {
     flexDirection: 'row',
@@ -577,6 +578,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
+    lineHeight: 15,
   },
   emptyStateText: {
     fontFamily: fonts.primary.regular,
@@ -600,11 +602,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: 16,
   },
   hintDismiss: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
     color: '#333',
+    lineHeight: 16,
   },
   streakBrokenBox: {
     borderWidth: 1,
@@ -621,6 +625,7 @@ const styles = StyleSheet.create({
     color: '#8b2020',
     letterSpacing: 4,
     marginBottom: 4,
+    lineHeight: 16,
   },
   streakBrokenCount: {
     fontFamily: fonts.mono.regular,
@@ -659,6 +664,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 11,
     color: '#444',
+    lineHeight: 16,
   },
   streakMilestoneNum: {
     fontFamily: fonts.mono.regular,
@@ -666,6 +672,7 @@ const styles = StyleSheet.create({
     color: '#D97706',
     letterSpacing: 3,
     marginBottom: 4,
+    lineHeight: 18,
   },
   streakMilestoneMsg: {
     fontFamily: fonts.primary.regular,
@@ -689,11 +696,13 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 1,
     flex: 1,
+    lineHeight: 18,
   },
   welcomeBackArrow: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     color: '#D97706',
+    lineHeight: 18,
   },
   prescriptionEvolvingRow: {
     flexDirection: 'row',
@@ -707,6 +716,7 @@ const styles = StyleSheet.create({
     color: '#059669',
     letterSpacing: 3,
     textTransform: 'uppercase' as const,
+    lineHeight: 15,
   },
   prescriptionEvolvingValue: {
     fontFamily: fonts.mono.regular,
@@ -714,6 +724,7 @@ const styles = StyleSheet.create({
     color: '#888',
     letterSpacing: 1,
     textTransform: 'uppercase' as const,
+    lineHeight: 15,
   },
   identityRow: {
     borderWidth: 1,
@@ -729,6 +740,7 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     fontSize: 10,
     marginBottom: 4,
+    lineHeight: 15,
   },
   identityValue: {
     fontSize: 20,
@@ -742,6 +754,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     fontSize: 11,
     marginTop: 4,
+    lineHeight: 16,
   },
   sparklineCard: {
     paddingVertical: 10,
@@ -756,6 +769,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
+    lineHeight: 15,
   },
   sparklineBars: {
     flexDirection: 'row',
@@ -772,6 +786,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 2,
     marginTop: 6,
+    lineHeight: 15,
   },
   quickRow: {
     flexDirection: 'row',
@@ -793,6 +808,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#ffffff',
     letterSpacing: 3,
+    lineHeight: 15,
   },
   quickRowSub: {
     fontFamily: fonts.primary.regular,

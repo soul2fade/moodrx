@@ -372,7 +372,8 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 10,
+    fontSize: 12,
+    lineHeight: 17,
   },
   priorityCardHeadline: {
     ...t.headlineSm,
@@ -394,7 +395,7 @@ const styles = StyleSheet.create({
   priorityCardScience: {
     ...t.soft,
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
     marginTop: 10,
   },
@@ -457,7 +458,7 @@ const styles = StyleSheet.create({
   supplementBenefit: {
     ...t.bodyMuted,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 2,
   },
   supplementRight: {
@@ -493,7 +494,7 @@ const styles = StyleSheet.create({
   sciencePanelText: {
     ...t.soft,
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
   },
   consistencySection: {

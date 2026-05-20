@@ -5,6 +5,10 @@ import {
   SpaceGrotesk_400Regular,
   SpaceGrotesk_700Bold,
 } from "@expo-google-fonts/space-grotesk";
+import {
+  BarlowCondensed_400Regular,
+  BarlowCondensed_700Bold,
+} from "@expo-google-fonts/barlow-condensed";
 import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
@@ -50,6 +54,8 @@ export default function RootLayout() {
     SpaceGrotesk_300Light,
     SpaceGrotesk_400Regular,
     SpaceGrotesk_700Bold,
+    BarlowCondensed_400Regular,
+    BarlowCondensed_700Bold,
   });
 
   useEffect(() => {

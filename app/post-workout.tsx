@@ -469,11 +469,11 @@ const styles = StyleSheet.create({
   },
   pbLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#555',
+    fontSize: 12,
+    color: '#999',
     letterSpacing: 3,
     marginBottom: 8,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   pbReps: {
     fontSize: 52,
@@ -482,19 +482,19 @@ const styles = StyleSheet.create({
   },
   pbNewBest: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#888',
     letterSpacing: 3,
     marginTop: 8,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   pbPrev: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    color: '#444',
+    fontSize: 12,
+    color: '#999',
     letterSpacing: 2,
     marginTop: 8,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   sectionDivider: {
     height: 1,
@@ -544,11 +544,11 @@ const styles = StyleSheet.create({
   },
   changeHeroLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#888',
     letterSpacing: 4,
     marginBottom: 8,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   changeHeroValue: {
     fontSize: 64,
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
   changeHeroSub: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#555',
+    color: '#999',
     letterSpacing: 0.5,
     marginTop: 10,
   },
@@ -578,11 +578,11 @@ const styles = StyleSheet.create({
   },
   deltaBlockLabel: {
     ...t.label,
-    color: '#555',
+    color: '#999',
     letterSpacing: 2,
-    fontSize: 11,
+    fontSize: 12,
     marginBottom: 3,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   deltaBlockValue: {
     ...t.dataValue,
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   },
   deltaArrow: {
     ...t.label,
-    color: '#333',
+    color: '#999',
     fontSize: 14,
     marginHorizontal: 4,
   },
@@ -628,17 +628,17 @@ const styles = StyleSheet.create({
   },
   noteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 3,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   noteCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 1,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   noteInput: {
     borderWidth: 1,
@@ -718,10 +718,10 @@ const styles = StyleSheet.create({
   },
   shareButtonEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 4,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   shareButtonText: {
     fontFamily: fonts.mono.regular,
@@ -744,10 +744,10 @@ const styles = StyleSheet.create({
   },
   modalEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 4,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   modalShareBtn: {
     borderWidth: 1,
@@ -767,10 +767,10 @@ const styles = StyleSheet.create({
   },
   modalCloseBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 3,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   logButton: {
     marginTop: 12,

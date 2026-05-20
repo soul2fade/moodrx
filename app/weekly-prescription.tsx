@@ -107,21 +107,24 @@ export default function WeeklyPrescriptionScreen() {
                       {isToday ? '  ·  TODAY' : ''}
                     </Text>
                     {day.isDataDriven && (
-                      <Text style={[styles.dataBadge, { color: mood.color }]}>DATA</Text>
+                      <Text allowFontScaling={false} style={[styles.dataBadge, { color: mood.color }]}>DATA</Text>
                     )}
                   </View>
 
                   <Text style={styles.workoutName}>{day.workoutName}</Text>
 
                   <View style={styles.metaRow}>
-                    <Text style={[styles.moodCode, { color: mood.color }]}>
+                    <Text
+                      allowFontScaling={false}
+                      style={[styles.moodCode, { color: mood.color }]}
+                    >
                       {mood.code}
                     </Text>
-                    <Text style={styles.metaDot}>·</Text>
+                    <Text allowFontScaling={false} style={styles.metaDot}>·</Text>
                     <Text style={styles.moodName}>{mood.name.toUpperCase()}</Text>
-                    <Text style={styles.metaDot}>·</Text>
+                    <Text allowFontScaling={false} style={styles.metaDot}>·</Text>
                     <Text style={styles.duration}>{day.duration} MIN</Text>
-                    <Text style={styles.metaDot}>·</Text>
+                    <Text allowFontScaling={false} style={styles.metaDot}>·</Text>
                     <Text style={styles.intensity}>{day.intensity.toUpperCase()}</Text>
                   </View>
                 </View>
@@ -181,24 +184,27 @@ const styles = StyleSheet.create({
   },
   back: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: 18,
   },
   headerRight: {
     alignItems: 'flex-end',
   },
   headerSub: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 3,
+    lineHeight: 16,
   },
   headerDoc: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: 18,
   },
   titleRow: {
     paddingHorizontal: 20,
@@ -210,14 +216,14 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#ffffff',
     letterSpacing: -1,
-    lineHeight: 34,
+    lineHeight: 44,
   },
   titleAccent: {
     fontFamily: fonts.primary.bold,
     fontSize: 32,
     color: '#ffffff',
     letterSpacing: -1,
-    lineHeight: 40,
+    lineHeight: 44,
     opacity: 0.45,
   },
   divider: {
@@ -235,15 +241,16 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 3,
     textAlign: 'center',
     marginTop: 60,
+    lineHeight: 18,
   },
   dayRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     borderBottomWidth: 1,
     borderBottomColor: '#111111',
     paddingVertical: 16,
@@ -269,15 +276,17 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 3,
+    lineHeight: 16,
   },
   dataBadge: {
     fontFamily: fonts.mono.regular,
-    fontSize: 7,
+    fontSize: 11,
     letterSpacing: 2,
     opacity: 0.7,
+    lineHeight: 16,
   },
   workoutName: {
     fontFamily: fonts.primary.bold,
@@ -288,51 +297,61 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 5,
   },
   moodCode: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     letterSpacing: 1,
+    lineHeight: 16,
+    flexShrink: 0,
   },
   metaDot: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
+    lineHeight: 16,
+    flexShrink: 0,
   },
   moodName: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 1,
+    flexShrink: 1,
   },
   duration: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 1,
+    flexShrink: 1,
+    minWidth: 40,
   },
   intensity: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 1,
+    flexShrink: 1,
   },
   arrow: {
     fontFamily: fonts.primary.bold,
     fontSize: 14,
     color: '#ffffff',
     marginLeft: 12,
+    paddingTop: 18,
   },
   footnote: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 2,
     textAlign: 'center',
     marginTop: 28,
     marginHorizontal: 24,
-    lineHeight: 14,
+    lineHeight: 16,
   },
   ctaContainer: {
     position: 'absolute',
@@ -355,9 +374,10 @@ const styles = StyleSheet.create({
   },
   ctaLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 3,
+    lineHeight: 16,
   },
   ctaWorkout: {
     fontFamily: fonts.primary.bold,
@@ -366,9 +386,10 @@ const styles = StyleSheet.create({
   },
   ctaAction: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 2,
     marginTop: 2,
+    lineHeight: 18,
   },
 });

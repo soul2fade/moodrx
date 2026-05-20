@@ -53,12 +53,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
-    color: '#aaaaaa',
+    fontSize: 12,
+    color: '#888888',
     letterSpacing: 2,
   },
   labelActive: {
-    color: '#0a0a0a',
+    color: '#000000',
   },
   activeLine: {
     width: 16,

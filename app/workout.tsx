@@ -147,6 +147,7 @@ export default function WorkoutScreen() {
   useEffect(() => {
     if (audioSrc && activeSoundscape) {
       player.loop = true;
+      player.volume = 0.35;
       player.play();
     }
   }, [audioSrc, activeSoundscape]);
@@ -233,6 +234,8 @@ export default function WorkoutScreen() {
       try { insultPlayer.pause(); } catch {}
       return;
     }
+    // Start at a random position so every session sounds different
+    insultIdxRef.current = Math.floor(Math.random() * INSULT_AUDIO.length);
     const playNext = () => {
       const idx = insultIdxRef.current % INSULT_AUDIO.length;
       insultIdxRef.current += 1;

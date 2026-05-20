@@ -139,6 +139,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#ffffff',
     letterSpacing: 5,
+    lineHeight: 16,
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -149,6 +150,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: 14,
   },
   statusBadge: {
     borderWidth: 1,
@@ -159,6 +161,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 8,
     letterSpacing: 2,
+    lineHeight: 13,
   },
   diagnosisBlock: {
     paddingHorizontal: 24,
@@ -171,6 +174,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 4,
     marginBottom: 6,
+    lineHeight: 13,
   },
   moodName: {
     fontFamily: fonts.primary.bold,
@@ -184,6 +188,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginTop: 6,
     letterSpacing: 0.5,
+    lineHeight: 16,
   },
   heroBlock: {
     alignItems: 'center',
@@ -206,6 +211,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 4,
     marginTop: 8,
+    lineHeight: 13,
   },
   numbersGrid: {
     flexDirection: 'row',
@@ -231,6 +237,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     color: '#ffffff',
+    lineHeight: 18,
   },
   numLabel: {
     fontFamily: fonts.mono.regular,
@@ -238,6 +245,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 2,
     marginBottom: 5,
+    lineHeight: 12,
   },
   numValue: {
     fontFamily: fonts.mono.regular,
@@ -262,6 +270,7 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     width: 70,
     flexShrink: 0,
+    lineHeight: 12,
   },
   treatmentValue: {
     fontFamily: fonts.mono.regular,
@@ -269,6 +278,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 0.5,
     flex: 1,
+    lineHeight: 16,
   },
   footer: {
     paddingHorizontal: 24,
@@ -284,5 +294,6 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: 13,
   },
 });

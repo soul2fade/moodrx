@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#E8B84B',
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 13,
   },
   headline: {
     ...t.headline,
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
   },
   breatheLinkText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 13,
     color: '#7EC8A0',
     letterSpacing: 1,
   },
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   },
   safetyNetText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: '#ffffff',
     opacity: 0.4,
     letterSpacing: 0.5,
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
   panelMoodName: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 13,
+    fontSize: 14,
   },
   drBox: {
     borderLeftWidth: 3,
@@ -728,20 +728,22 @@ const styles = StyleSheet.create({
   },
   greetingLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
+    lineHeight: 15,
     color: '#E8B84B',
     letterSpacing: 3,
   },
   greetingText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: '#ffffff',
     letterSpacing: 0.3,
     lineHeight: 20,
   },
   greetingDismiss: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
+    lineHeight: 17,
     color: '#555',
     marginLeft: 14,
   },
@@ -754,6 +756,6 @@ const styles = StyleSheet.create({
   },
   prescribeButtonText: {
     ...t.timer,
-    fontSize: 14,
+    fontSize: 15,
   },
 });

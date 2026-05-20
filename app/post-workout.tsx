@@ -164,13 +164,13 @@ export default function PostWorkoutScreen() {
 
         {sessionReps > 0 && (
           <View style={styles.pbRow}>
-            <Text style={styles.pbLabel}>REPS THIS SESSION</Text>
+            <Text style={styles.pbLabel} allowFontScaling={false}>REPS THIS SESSION</Text>
             <Text style={[styles.pbReps, { color: accentColor }]}>{sessionReps}</Text>
             {previousBest !== null && sessionReps > previousBest.reps && (
-              <Text style={styles.pbNewBest}>NEW PERSONAL BEST</Text>
+              <Text style={styles.pbNewBest} allowFontScaling={false}>NEW PERSONAL BEST</Text>
             )}
             {previousBest !== null && sessionReps <= previousBest.reps && (
-              <Text style={styles.pbPrev}>prev best  {previousBest.reps}</Text>
+              <Text style={styles.pbPrev} allowFontScaling={false}>prev best  {previousBest.reps}</Text>
             )}
           </View>
         )}
@@ -178,7 +178,7 @@ export default function PostWorkoutScreen() {
         <View style={styles.sectionDivider} />
 
         <View style={styles.scoreSection}>
-          <Text style={styles.howLabel}>{moodData.name.toUpperCase()} LEVEL NOW?</Text>
+          <Text style={styles.howLabel} allowFontScaling={false}>{moodData.name.toUpperCase()} LEVEL NOW?</Text>
 
           <View style={styles.scoreDisplay}>
             <Text style={[styles.scoreNumber, { color: accentColor }]}>{postScore}</Text>
@@ -215,7 +215,7 @@ export default function PostWorkoutScreen() {
               : 'Held steady.';
             return (
               <View style={[styles.changeHero, { borderTopColor: changeColor }]}>
-                <Text style={styles.changeHeroLabel}>CHANGE</Text>
+                <Text style={styles.changeHeroLabel} allowFontScaling={false}>CHANGE</Text>
                 <Text style={[styles.changeHeroValue, { color: changeColor }]}>
                   {displayed > 0 ? `+${displayed}` : `${displayed}`}
                 </Text>
@@ -227,12 +227,12 @@ export default function PostWorkoutScreen() {
           {/* Before → Now reference */}
           <View style={styles.deltaRow}>
             <View style={styles.deltaBlock}>
-              <Text style={styles.deltaBlockLabel}>BEFORE</Text>
+              <Text style={styles.deltaBlockLabel} allowFontScaling={false}>BEFORE</Text>
               <Text style={styles.deltaBlockValue}>{intensity}</Text>
             </View>
             <Text style={styles.deltaArrow}>→</Text>
             <View style={styles.deltaBlock}>
-              <Text style={styles.deltaBlockLabel}>NOW</Text>
+              <Text style={styles.deltaBlockLabel} allowFontScaling={false}>NOW</Text>
               <Text style={[styles.deltaBlockValue, { color: accentColor }]}>{postScore}</Text>
             </View>
           </View>
@@ -240,7 +240,7 @@ export default function PostWorkoutScreen() {
 
         {workout && (
           <View style={styles.workoutInfo}>
-            <Text style={styles.completedLabel}>COMPLETED</Text>
+            <Text style={styles.completedLabel} allowFontScaling={false}>COMPLETED</Text>
             <Text style={styles.workoutName}>{workout.name}</Text>
           </View>
         )}
@@ -444,6 +444,7 @@ const styles = StyleSheet.create({
   headline: {
     ...t.headline,
     fontSize: 30,
+    lineHeight: undefined,
     textAlign: 'center',
   },
   subtext: {
@@ -468,29 +469,32 @@ const styles = StyleSheet.create({
   },
   pbLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#555',
     letterSpacing: 3,
     marginBottom: 8,
+    lineHeight: 16,
   },
   pbReps: {
     fontSize: 52,
     fontFamily: fonts.mono.regular,
-    lineHeight: 56,
+    lineHeight: undefined,
   },
   pbNewBest: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#888',
     letterSpacing: 3,
     marginTop: 8,
+    lineHeight: 16,
   },
   pbPrev: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#444',
     letterSpacing: 2,
     marginTop: 8,
+    lineHeight: 16,
   },
   sectionDivider: {
     height: 1,
@@ -516,6 +520,7 @@ const styles = StyleSheet.create({
     ...t.dataValue,
     color: '#ffffff',
     fontSize: 24,
+    lineHeight: undefined,
     fontFamily: fonts.primary.regular,
     marginLeft: 4,
   },
@@ -539,19 +544,20 @@ const styles = StyleSheet.create({
   },
   changeHeroLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#888',
     letterSpacing: 4,
     marginBottom: 8,
+    lineHeight: 16,
   },
   changeHeroValue: {
     fontSize: 64,
     fontFamily: fonts.mono.regular,
-    lineHeight: 68,
+    lineHeight: undefined,
   },
   changeHeroSub: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 13,
     color: '#555',
     letterSpacing: 0.5,
     marginTop: 10,
@@ -574,12 +580,14 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#555',
     letterSpacing: 2,
-    fontSize: 9,
+    fontSize: 11,
     marginBottom: 3,
+    lineHeight: 16,
   },
   deltaBlockValue: {
     ...t.dataValue,
     fontSize: 22,
+    lineHeight: undefined,
     color: '#888',
   },
   deltaArrow: {
@@ -603,6 +611,7 @@ const styles = StyleSheet.create({
   workoutName: {
     ...t.headlineSm,
     fontSize: 16,
+    lineHeight: undefined,
     marginTop: 4,
   },
   noteSection: {
@@ -619,15 +628,17 @@ const styles = StyleSheet.create({
   },
   noteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 3,
+    lineHeight: 16,
   },
   noteCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 1,
+    lineHeight: 16,
   },
   noteInput: {
     borderWidth: 1,
@@ -635,7 +646,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: '#ffffff',
     lineHeight: 20,
     textAlignVertical: 'top',
@@ -669,7 +680,8 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 1,
-    fontSize: 10,
+    fontSize: 12,
+    lineHeight: 18,
   },
   contextQuestion: {
     marginTop: 24,
@@ -706,9 +718,10 @@ const styles = StyleSheet.create({
   },
   shareButtonEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 4,
+    lineHeight: 16,
   },
   shareButtonText: {
     fontFamily: fonts.mono.regular,
@@ -731,9 +744,10 @@ const styles = StyleSheet.create({
   },
   modalEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 4,
+    lineHeight: 16,
   },
   modalShareBtn: {
     borderWidth: 1,
@@ -744,17 +758,19 @@ const styles = StyleSheet.create({
   },
   modalShareBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 3,
+    lineHeight: 18,
   },
   modalCloseBtn: {
     paddingVertical: 10,
   },
   modalCloseBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 11,
     color: '#ffffff',
     letterSpacing: 3,
+    lineHeight: 16,
   },
   logButton: {
     marginTop: 12,

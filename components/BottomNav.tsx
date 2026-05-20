@@ -56,6 +56,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888888',
     letterSpacing: 2,
+    lineHeight: 18,
   },
   labelActive: {
     color: '#000000',

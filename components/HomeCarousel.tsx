@@ -350,7 +350,7 @@ export function HomeCarousel({
                     <Text style={styles.quickRowLabel}>WEEKLY RX</Text>
                     <Text style={styles.quickRowSub}>Your 7-day plan is ready</Text>
                   </View>
-                  <Text style={styles.quickRowIcon}>→</Text>
+                  <Text style={styles.quickRowIcon}>›</Text>
                 </TouchableOpacity>
               )}
             </>

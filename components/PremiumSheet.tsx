@@ -141,10 +141,11 @@ const styles = StyleSheet.create({
   },
   bestValueText: {
     ...t.label,
+    // eslint-disable-next-line local/no-dark-text-color
     color: '#0a0a0a',
-    fontSize: 9,
+    fontSize: 12,
     letterSpacing: 1,
-    lineHeight: 14,
+    lineHeight: 17,
   },
   planPrice: {
     ...t.headlineSm,

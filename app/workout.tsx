@@ -11,7 +11,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Haptics from 'expo-haptics';
 import { useAudioPlayer } from 'expo-audio';
-import * as Speech from 'expo-speech';
+
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
@@ -58,6 +58,21 @@ const REST_COMPLETE_LINES = [
   "That's enough recovery. Move.",
   "Right. Off you go.",
   "Rest over. Your body is ready.",
+];
+
+const ACTIVE_COMPLETE_AUDIO = [
+  require('../assets/audio/transitions/active_complete_01.mp3'),
+  require('../assets/audio/transitions/active_complete_02.mp3'),
+  require('../assets/audio/transitions/active_complete_03.mp3'),
+  require('../assets/audio/transitions/active_complete_04.mp3'),
+];
+
+const REST_COMPLETE_AUDIO = [
+  require('../assets/audio/transitions/rest_complete_01.mp3'),
+  require('../assets/audio/transitions/rest_complete_02.mp3'),
+  require('../assets/audio/transitions/rest_complete_03.mp3'),
+  require('../assets/audio/transitions/rest_complete_04.mp3'),
+  require('../assets/audio/transitions/rest_complete_05.mp3'),
 ];
 
 const MOTIVATIONAL = [
@@ -118,6 +133,7 @@ export default function WorkoutScreen() {
   const [trashTalkOn, setTrashTalkOn] = useState(false);
   const [keepAwake, setKeepAwake] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
+  const [transitionAudioSrc, setTransitionAudioSrc] = useState<any>(null);
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const [activeSecondsLeft, setActiveSecondsLeft] = useState<number | null>(null);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
@@ -144,6 +160,7 @@ export default function WorkoutScreen() {
 
   const player = useAudioPlayer(audioSrc);
   const insultPlayer = useAudioPlayer(insultAudioSrc);
+  const transitionPlayer = useAudioPlayer(transitionAudioSrc);
   useEffect(() => {
     if (audioSrc && activeSoundscape) {
       player.loop = true;
@@ -160,9 +177,17 @@ export default function WorkoutScreen() {
   }, [insultAudioSrc]);
 
   useEffect(() => {
+    if (transitionAudioSrc) {
+      transitionPlayer.seekTo(0);
+      transitionPlayer.play();
+    }
+  }, [transitionAudioSrc]);
+
+  useEffect(() => {
     return () => {
       try { player.remove(); } catch {}
       try { insultPlayer.remove(); } catch {}
+      try { transitionPlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
       if (restTimerRef.current) clearInterval(restTimerRef.current);
       if (activeTimerRef.current) clearInterval(activeTimerRef.current);
@@ -192,8 +217,8 @@ export default function WorkoutScreen() {
           clearInterval(restTimerRef.current!);
           restTimerRef.current = null;
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          const line = REST_COMPLETE_LINES[Math.floor(Math.random() * REST_COMPLETE_LINES.length)];
-          Speech.speak(line, { language: 'en-GB', rate: 0.85, pitch: 0.78 });
+          const idx = Math.floor(Math.random() * REST_COMPLETE_AUDIO.length);
+          setTransitionAudioSrc(REST_COMPLETE_AUDIO[idx]);
           return 0;
         }
         return prev - 1;
@@ -218,8 +243,8 @@ export default function WorkoutScreen() {
           clearInterval(activeTimerRef.current!);
           activeTimerRef.current = null;
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          const line = ACTIVE_COMPLETE_LINES[Math.floor(Math.random() * ACTIVE_COMPLETE_LINES.length)];
-          Speech.speak(line, { language: 'en-GB', rate: 0.85, pitch: 0.78 });
+          const idx = Math.floor(Math.random() * ACTIVE_COMPLETE_AUDIO.length);
+          setTransitionAudioSrc(ACTIVE_COMPLETE_AUDIO[idx]);
           return 0;
         }
         return prev - 1;

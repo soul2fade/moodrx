@@ -51,6 +51,7 @@ let streakStateCache: StreakState | null = null;
 let personalBestsCache: Record<string, PersonalBest> | null = null;
 let notifPromptShownCache: boolean | null = null;
 let homeHintSeenCache: boolean | null = null;
+let carouselHintSeenCache: boolean | null = null;
 
 function invalidateSessionsCache() {
   sessionsCache = null;
@@ -68,6 +69,7 @@ function invalidateLightCaches() {
   personalBestsCache = null;
   notifPromptShownCache = null;
   homeHintSeenCache = null;
+  carouselHintSeenCache = null;
 }
 
 export async function getFirstLaunchDone(): Promise<boolean> {
@@ -299,6 +301,7 @@ export async function clearAllData(): Promise<void> {
       PERSONAL_BESTS_KEY,
       NOTIF_PROMPT_SHOWN_KEY,
       HOME_HINT_SEEN_KEY,
+      CAROUSEL_HINT_SEEN_KEY,
     ]);
     invalidateSessionsCache();
     invalidateSupplementsCache();
@@ -430,6 +433,7 @@ export async function setNotifPromptShown(): Promise<void> {
 }
 
 const HOME_HINT_SEEN_KEY = '@moodrx_home_hint_seen';
+const CAROUSEL_HINT_SEEN_KEY = '@moodrx_carousel_hint_seen';
 const CAROUSEL_PAGE_KEY = '@moodrx_carousel_page';
 
 export async function getLastCarouselPage(): Promise<number> {
@@ -466,6 +470,26 @@ export async function setHomeHintSeen(): Promise<void> {
   try {
     await AsyncStorage.setItem(HOME_HINT_SEEN_KEY, 'true');
     homeHintSeenCache = true;
+  } catch {
+    // non-critical
+  }
+}
+
+export async function getCarouselHintSeen(): Promise<boolean> {
+  if (carouselHintSeenCache !== null) return carouselHintSeenCache;
+  try {
+    const val = (await AsyncStorage.getItem(CAROUSEL_HINT_SEEN_KEY)) === 'true';
+    carouselHintSeenCache = val;
+    return val;
+  } catch {
+    return false;
+  }
+}
+
+export async function setCarouselHintSeen(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(CAROUSEL_HINT_SEEN_KEY, 'true');
+    carouselHintSeenCache = true;
   } catch {
     // non-critical
   }

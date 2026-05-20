@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '700',
     color: '#ffffff',
-    fontFamily: 'SpaceMono-Regular',
+    fontFamily: fonts.mono.bold,
   },
   outcomeBlockMood: {
     ...t.label,

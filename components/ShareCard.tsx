@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     marginTop: 4,
+    lineHeight: 18,
   },
   divider: {
     height: 1,

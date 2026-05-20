@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: '#ffffff',
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   cardDetail: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: '#ffffff',
     letterSpacing: 1,
     marginBottom: 18,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   },
   actionBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: '#000000',
     letterSpacing: 3,
     textTransform: 'uppercase',
@@ -190,7 +190,8 @@ const styles = StyleSheet.create({
   },
   groundingLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
+    lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
     textTransform: 'uppercase',

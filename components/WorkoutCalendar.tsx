@@ -167,6 +167,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 9,
     letterSpacing: 1,
+    lineHeight: 14,
   },
   grid: {
     flexDirection: 'row',
@@ -187,6 +188,7 @@ const styles = StyleSheet.create({
   dayText: {
     ...t.number,
     fontSize: 11,
+    lineHeight: 16,
   },
   dayTextActive: {
     color: '#ffffff',

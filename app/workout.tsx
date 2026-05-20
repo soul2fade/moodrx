@@ -529,7 +529,7 @@ export default function WorkoutScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`${s.label} soundscape ${isOn ? 'on' : 'off'}`}
                 >
-                  <Text style={[styles.soundBtnText, isOn && { color: accentColor }]}>{s.label}</Text>
+                  <Text style={[styles.soundBtnText, isOn && { color: accentColor }]} numberOfLines={1}>{s.label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -669,9 +669,9 @@ const styles = StyleSheet.create({
   repResetText: { ...t.label, color: '#ffffff', letterSpacing: 2, fontSize: 13 },
 
   soundSection: { marginTop: 28 },
-  soundRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  soundBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
-  soundBtnText: { ...t.label, color: '#ffffff', fontSize: 13, letterSpacing: 2 },
+  soundRow: { flexDirection: 'row', flexWrap: 'nowrap', gap: 8 },
+  soundBtn: { flex: 1, borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center' },
+  soundBtnText: { ...t.label, color: '#ffffff', fontSize: 12, lineHeight: 17, letterSpacing: 1 },
   soundOffBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
   soundOffText: { ...t.label, color: '#ffffff', fontSize: 13, letterSpacing: 2 },
 

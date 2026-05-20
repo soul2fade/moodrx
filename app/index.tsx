@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   taglineWord: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
   },
 });

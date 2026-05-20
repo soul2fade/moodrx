@@ -6,6 +6,8 @@
 
 > **BUILD RULE** — All builds triggered by the agent default to `preview` profile unless the user explicitly says "production build", "release build", or "submit to store". Preview builds produce a direct-install APK/IPA from expo.dev. Production builds go to TestFlight/Play Store and cannot be sideloaded.
 
+> **SYNC RULE** — Before triggering any build, always verify local and GitHub are in sync: check which files were changed since the last explicit push, push any missing files via the GitHub Contents API (`GITHUB_MOODRX_TOKEN`), confirm OK on each file, then trigger the build. Never trigger a build without completing this check first.
+
 A mobile-first wellness app built with Expo (React Native) that focuses on mood tracking, workouts, and mental wellness.
 
 ## Tech Stack

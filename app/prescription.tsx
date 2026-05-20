@@ -388,6 +388,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     fontSize: 12,
+    lineHeight: 17,
     letterSpacing: 1,
     marginTop: 8,
     textAlign: 'center',
@@ -500,6 +501,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     fontSize: 12,
+    lineHeight: 17,
     fontWeight: '600',
   },
   intensityBadge: {
@@ -512,6 +514,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     fontSize: 12,
+    lineHeight: 17,
     letterSpacing: 1,
     fontWeight: '600',
   },

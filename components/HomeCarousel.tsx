@@ -25,6 +25,16 @@ import { fonts } from '@/lib/typography';
 import type { MoodKey, Session, StreakState, UserProfile } from '@/lib/storage';
 import { todayDateString } from '@/lib/dateUtils';
 
+const DAILY_OPENERS = [
+  { day: 'SUNDAY',    line: "The day before Monday. Use it wisely." },
+  { day: 'MONDAY',    line: "Statistically the worst day. Let\u2019s work with that." },
+  { day: 'TUESDAY',   line: "The most forgettable day of the week. Make it count." },
+  { day: 'WEDNESDAY', line: "Halfway through. You\u2019re still here." },
+  { day: 'THURSDAY',  line: "Almost Friday. Almost." },
+  { day: 'FRIDAY',    line: "You made it. Now check in before you celebrate." },
+  { day: 'SATURDAY',  line: "The one day you have no excuse not to." },
+];
+
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 24;
 const CARD_W = SCREEN_W - H_PADDING * 2;
@@ -323,11 +333,11 @@ export function HomeCarousel({
             </View>
           )}
 
-          {/* Empty state */}
+          {/* Daily opener — always visible when no other Today content */}
           {!hasTodayContent && (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateLabel}>READY TO CHECK IN</Text>
-              <Text style={styles.emptyStateText}>Select a mood below to begin.</Text>
+              <Text style={styles.emptyStateLabel}>{DAILY_OPENERS[new Date().getDay()].day}</Text>
+              <Text style={styles.emptyStateText}>{DAILY_OPENERS[new Date().getDay()].line}</Text>
             </View>
           )}
           </ScrollView>

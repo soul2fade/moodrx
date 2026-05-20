@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   },
   checkInLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 15,
     letterSpacing: 1,
   },
@@ -465,13 +465,13 @@ const styles = StyleSheet.create({
   },
   sessionCount: {
     ...t.timestamp,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 15,
     letterSpacing: 1,
   },
   settingsText: {
     ...t.timestamp,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 15,
     letterSpacing: 1,
   },
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   },
   moodCode: {
     ...t.code,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
   moodChevron: {
     fontSize: 16,
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
   },
   intensityLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
   intensityValueRow: {
     flexDirection: 'row',
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   },
   intensityMax: {
     ...t.bodyMuted,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 18,
     marginLeft: 3,
   },
@@ -735,7 +735,7 @@ const styles = StyleSheet.create({
   greetingText: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 0.3,
     lineHeight: 20,
   },

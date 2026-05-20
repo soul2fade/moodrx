@@ -415,8 +415,24 @@ export function HomeCarousel({
           <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll} contentContainerStyle={styles.pageContent}>
           {hasQuickActions ? (
             <>
-              {/* Quick Session */}
-              {moodIdentity && !selectedMood && (
+              {/* Adaptive shortcut — Quick Repeat takes priority when within 18hr window, else Quick Session */}
+              {showStillFeeling && lastSession ? (
+                <TouchableOpacity
+                  style={[styles.quickRow, { borderLeftColor: MOODS[lastSession.mood].color }]}
+                  onPress={() => router.push({ pathname: '/prescription', params: { mood: lastSession.mood, intensity: String(lastSession.intensity) } })}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Last time you felt ${MOODS[lastSession.mood].name}. Tap to repeat.`}
+                >
+                  <View style={styles.quickRowLeft}>
+                    <Text style={styles.quickRowLabel}>LAST SESSION</Text>
+                    <Text style={styles.quickRowSub}>
+                      Still {MOODS[lastSession.mood].name.toUpperCase()}? Start where you left off.
+                    </Text>
+                  </View>
+                  <Text style={styles.quickRowIcon}>→</Text>
+                </TouchableOpacity>
+              ) : moodIdentity && !selectedMood ? (
                 <TouchableOpacity
                   style={[styles.quickRow, { borderLeftColor: MOODS[moodIdentity.dominantMood].color }]}
                   onPress={onQuickSession}
@@ -432,7 +448,7 @@ export function HomeCarousel({
                   </View>
                   <Text style={styles.quickRowIcon}>⚡</Text>
                 </TouchableOpacity>
-              )}
+              ) : null}
 
               {/* Weekly Rx */}
               {sessionCount >= 3 && !selectedMood && (
@@ -446,25 +462,6 @@ export function HomeCarousel({
                   <View style={styles.quickRowLeft}>
                     <Text style={styles.quickRowLabel}>WEEKLY RX</Text>
                     <Text style={styles.quickRowSub}>Your 7-day plan is ready</Text>
-                  </View>
-                  <Text style={styles.quickRowIcon}>→</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Quick Repeat */}
-              {showStillFeeling && lastSession && (
-                <TouchableOpacity
-                  style={[styles.quickRow, { borderLeftColor: MOODS[lastSession.mood].color }]}
-                  onPress={() => router.push({ pathname: '/prescription', params: { mood: lastSession.mood, intensity: String(lastSession.intensity) } })}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Last time you felt ${MOODS[lastSession.mood].name}. Tap to repeat.`}
-                >
-                  <View style={styles.quickRowLeft}>
-                    <Text style={styles.quickRowLabel}>QUICK REPEAT</Text>
-                    <Text style={styles.quickRowSub}>
-                      Still {MOODS[lastSession.mood].name.toUpperCase()}? Start where you left off.
-                    </Text>
                   </View>
                   <Text style={styles.quickRowIcon}>→</Text>
                 </TouchableOpacity>

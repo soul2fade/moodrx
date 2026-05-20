@@ -107,8 +107,8 @@ const INSULT_AUDIO = [
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
 
 const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
-  { key: 'rain',   label: 'RAIN',    src: require('../assets/audio/forest.mp3') },
-  { key: 'forest', label: 'FOREST',  src: require('../assets/audio/rain.mp3') },
+  { key: 'rain',   label: 'RAIN',    src: require('../assets/audio/rain.mp3') },
+  { key: 'forest', label: 'FOREST',  src: require('../assets/audio/forest.mp3') },
   { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/brownnoise.mp3') },
 ];
 
@@ -568,7 +568,7 @@ export default function WorkoutScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Trash talk mode ${trashTalkOn ? 'on' : 'off'}`}
             >
-              <Text style={[styles.soundBtnText, trashTalkOn && { color: '#E11D48' }]}>TRASH</Text>
+              <Text style={[styles.soundBtnText, trashTalkOn && { color: '#E11D48' }]}>TRASH TALK</Text>
             </TouchableOpacity>
             {(activeSoundscape || trashTalkOn) && (
               <TouchableOpacity onPress={() => { handleSoundscape(null); if (trashTalkOn) handleTrashTalk(); }} activeOpacity={0.7} style={styles.soundOffBtn}>

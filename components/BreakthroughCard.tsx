@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   dateText: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   statusBadge: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   diagnosisLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 4,
     marginBottom: 6,
   },
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   moodDescription: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#c8c8c8',
+    color: '#ffffff',
     marginTop: 6,
     letterSpacing: 0.5,
   },
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   deltaHeroLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 4,
     marginTop: 8,
   },
@@ -230,19 +230,19 @@ const styles = StyleSheet.create({
   numSepText: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
   numLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 7,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
     marginBottom: 5,
   },
   numValue: {
     fontFamily: fonts.mono.regular,
     fontSize: 26,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
   treatmentBlock: {
     paddingHorizontal: 24,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   treatmentLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 7,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     width: 70,
     flexShrink: 0,
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   treatmentValue: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 0.5,
     flex: 1,
   },
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   watermark: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#666666',
+    color: '#ffffff',
     letterSpacing: 2,
   },
 });

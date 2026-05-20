@@ -473,7 +473,7 @@ export default function WorkoutScreen() {
                 <Text
                   style={[
                     styles.miniMapText,
-                    isDone && { color: '#444' },
+                    isDone && { color: '#999' },
                     isActive && { color: accentColor },
                   ]}
                 >
@@ -636,13 +636,13 @@ const styles = StyleSheet.create({
   restCountdown: { fontSize: 68, fontFamily: fonts.mono.regular, lineHeight: 76 },
   restProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 20 },
   restProgressFill: { height: 2 },
-  restSubtext: { ...t.label, color: '#555', letterSpacing: 2, fontSize: 12, lineHeight: 17, marginTop: 12 },
+  restSubtext: { ...t.label, color: '#999', letterSpacing: 2, fontSize: 12, lineHeight: 17, marginTop: 12 },
 
   activeTimerBox: { marginTop: 20, alignItems: 'center', width: '100%' },
   activeTimerCountdown: { fontSize: 52, fontFamily: fonts.mono.regular, lineHeight: 58 },
   activeProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 12 },
   activeProgressFill: { height: 2 },
-  activeTimerDone: { ...t.label, color: '#ffffff', letterSpacing: 3, fontSize: 11, lineHeight: 15, marginTop: 10 },
+  activeTimerDone: { ...t.label, color: '#ffffff', letterSpacing: 3, fontSize: 12, lineHeight: 17, marginTop: 10 },
 
   insultLine: {
     fontFamily: fonts.mono.regular,
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   repSection: { marginTop: 28 },
   sectionLabel: { ...t.label, color: '#888', letterSpacing: 2, fontSize: 13, marginBottom: 14 },
   repHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 13, color: '#555', letterSpacing: 2 },
+  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 13, color: '#999', letterSpacing: 2 },
   pbAlert: { fontFamily: fonts.mono.regular, fontSize: 13, letterSpacing: 3, textAlign: 'center', marginTop: 10 },
   repRow: { flexDirection: 'column', alignItems: 'center', gap: 12 },
   repCircle: { width: 88, height: 88, borderRadius: 44, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
@@ -676,13 +676,13 @@ const styles = StyleSheet.create({
   soundOffText: { ...t.label, color: '#ffffff', fontSize: 13, letterSpacing: 2 },
 
   keepAwakeBtn: { marginTop: 16, borderWidth: 1, borderColor: '#333', paddingVertical: 10, alignItems: 'center' },
-  keepAwakeBtnText: { ...t.label, color: '#666', fontSize: 13, letterSpacing: 2 },
+  keepAwakeBtnText: { ...t.label, color: '#999', fontSize: 13, letterSpacing: 2 },
 
   warningOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, zIndex: 50 },
   warningCard: { backgroundColor: '#111', borderWidth: 1, borderColor: '#2a2a2a', padding: 24, width: '100%' },
-  warningTitle: { ...t.label, color: '#E11D48', letterSpacing: 3, fontSize: 11, lineHeight: 15, marginBottom: 10 },
+  warningTitle: { ...t.label, color: '#E11D48', letterSpacing: 3, fontSize: 12, lineHeight: 17, marginBottom: 10 },
   warningBody: { fontFamily: fonts.mono.regular, fontSize: 14, color: '#ffffff', lineHeight: 20 },
-  warningHint: { ...t.label, color: '#333', fontSize: 11, lineHeight: 15, letterSpacing: 2, marginTop: 14 },
+  warningHint: { ...t.label, color: '#999', fontSize: 12, lineHeight: 17, letterSpacing: 2, marginTop: 14 },
 
   bottomNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   backBtn: { borderWidth: 1, borderColor: '#1a1a1a', paddingVertical: 12, paddingHorizontal: 24 },

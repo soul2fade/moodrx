@@ -68,10 +68,10 @@ export default function HomeScreen() {
     useCallback(() => {
       setIsLoading(true);
       getHomeHintSeen().then(seen => { if (!seen) setShowHint(true); });
-      Promise.all([getSessions(), getUserProfile(), getStreakState(), getLastCarouselPage()]).then(([data, profile, state, savedPage]) => {
+      Promise.all([getSessions(), getUserProfile(), getStreakState()]).then(([data, profile, state]) => {
         setSessions(data);
         setUserProfile(profile);
-        setCarouselPage(savedPage);
+        setCarouselPage(0);
         setIsLoading(false);
         const currentStreak = getStreak(data);
         const today = todayDateString();

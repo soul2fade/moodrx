@@ -97,7 +97,6 @@ const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
   { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/brownnoise.mp3') },
 ];
 
-const STEP_COMPLETE_SRC = require('../assets/audio/step_complete.wav');
 
 export default function WorkoutScreen() {
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string }>();
@@ -119,7 +118,6 @@ export default function WorkoutScreen() {
   const [trashTalkOn, setTrashTalkOn] = useState(false);
   const [keepAwake, setKeepAwake] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
-  const [stepBeepTrigger, setStepBeepTrigger] = useState(0);
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const [activeSecondsLeft, setActiveSecondsLeft] = useState<number | null>(null);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
@@ -146,8 +144,6 @@ export default function WorkoutScreen() {
 
   const player = useAudioPlayer(audioSrc);
   const insultPlayer = useAudioPlayer(insultAudioSrc);
-  const stepCompletePlayer = useAudioPlayer(STEP_COMPLETE_SRC);
-
   useEffect(() => {
     if (audioSrc && activeSoundscape) {
       player.loop = true;
@@ -163,15 +159,9 @@ export default function WorkoutScreen() {
   }, [insultAudioSrc]);
 
   useEffect(() => {
-    if (stepBeepTrigger === 0) return;
-    try { stepCompletePlayer.seekTo(0); stepCompletePlayer.play(); } catch {}
-  }, [stepBeepTrigger]);
-
-  useEffect(() => {
     return () => {
       try { player.remove(); } catch {}
       try { insultPlayer.remove(); } catch {}
-      try { stepCompletePlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
       if (restTimerRef.current) clearInterval(restTimerRef.current);
       if (activeTimerRef.current) clearInterval(activeTimerRef.current);
@@ -287,7 +277,6 @@ export default function WorkoutScreen() {
     if (!resolvedWorkout || isNavigating.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStep < totalSteps - 1) {
-      setStepBeepTrigger((n) => n + 1);
       setCurrentStep((s) => s + 1);
     } else {
       isNavigating.current = true;

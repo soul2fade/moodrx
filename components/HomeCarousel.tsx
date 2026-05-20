@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import Animated, {
   useAnimatedStyle,
   useAnimatedScrollHandler,
   withSpring,
+  withTiming,
   interpolate,
   interpolateColor,
   Extrapolate,
@@ -23,6 +24,7 @@ import { router } from 'expo-router';
 import { MOODS } from '@/lib/moods';
 import { fonts } from '@/lib/typography';
 import type { MoodKey, Session, UserProfile } from '@/lib/storage';
+import { getCarouselHintSeen, setCarouselHintSeen } from '@/lib/storage';
 
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 24;
@@ -47,8 +49,8 @@ interface HomeCarouselProps {
   onPageChange?: (page: number) => void;
 }
 
-const DOT_INACTIVE_W = 5;
-const DOT_ACTIVE_W = 14;
+const DOT_INACTIVE_W = 6;
+const DOT_ACTIVE_W = 16;
 
 function AnimatedDot({
   index,
@@ -116,10 +118,30 @@ export function HomeCarousel({
     moodIdentity ? MOODS[moodIdentity.dominantMood].color : '#525252',
   );
   const quickActionsDotColor = useSharedValue('#059669');
+  const hintOpacity = useSharedValue(0);
+  const hintDismissed = useRef(false);
 
   useEffect(() => {
     patternDotColor.value = moodIdentity ? MOODS[moodIdentity.dominantMood].color : '#525252';
   }, [moodIdentity]);
+
+  const dismissHint = useCallback(() => {
+    if (hintDismissed.current) return;
+    hintDismissed.current = true;
+    hintOpacity.value = withTiming(0, { duration: 400 });
+    setCarouselHintSeen();
+  }, []);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    getCarouselHintSeen().then((seen) => {
+      if (!seen) {
+        hintOpacity.value = withTiming(1, { duration: 300 });
+        timer = setTimeout(dismissHint, 3000);
+      }
+    });
+    return () => { if (timer) clearTimeout(timer); };
+  }, []);
 
   useEffect(() => {
     if (initialPage === 0) return;
@@ -157,6 +179,8 @@ export function HomeCarousel({
     transform: [{ translateX: labelTranslateX.value }],
   }));
 
+  const hintStyle = useAnimatedStyle(() => ({ opacity: hintOpacity.value }));
+
   const label0Style = useAnimatedStyle(() => ({
     opacity: interpolate(scrollX.value, [0, CARD_W], [1, 0], Extrapolate.CLAMP),
     position: 'absolute',
@@ -173,6 +197,7 @@ export function HomeCarousel({
       swipeDir.current = page > activePage ? 1 : -1;
       setActivePage(page);
       onPageChange?.(page);
+      dismissHint();
     }
   };
 
@@ -367,6 +392,9 @@ export function HomeCarousel({
           ))}
         </View>
       </View>
+      <Animated.View style={[styles.swipeHintRow, hintStyle]} pointerEvents="none">
+        <Text style={styles.swipeHintText}>SWIPE TO EXPLORE →</Text>
+      </Animated.View>
     </View>
   );
 }
@@ -539,5 +567,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     color: '#ffffff',
+  },
+  swipeHintRow: {
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  swipeHintText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.45)',
+    letterSpacing: 2,
+    lineHeight: 17,
   },
 });

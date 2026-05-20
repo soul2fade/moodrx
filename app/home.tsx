@@ -242,17 +242,10 @@ export default function HomeScreen() {
           ) : (
             <Animated.View style={{ opacity: carouselFadeAnim, flex: 1 }}>
               <HomeCarousel
-                showHint={showHint}
                 selectedMood={selectedMood}
-                onDismissHint={handleDismissHint}
                 sessionCount={sessionCount}
                 userProfile={userProfile}
-                streak={streak}
-                streakState={streakState}
-                onMilestoneDismiss={handleMilestoneDismiss}
-                showWelcomeBack={showWelcomeBack}
                 lastSession={lastSession}
-                daysSinceLastSession={daysSinceLastSession}
                 showStillFeeling={showStillFeeling}
                 moodIdentity={moodIdentity}
                 sessions={sessions}

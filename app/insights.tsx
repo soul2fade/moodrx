@@ -724,8 +724,8 @@ const styles = StyleSheet.create({
   chartDay: {
     ...t.timestamp,
     color: '#ffffff',
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 17,
     letterSpacing: 1,
     marginTop: 4,
   },
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#444',
+    color: '#999',
     letterSpacing: 2,
   },
   workoutHistAvgVal: {
@@ -850,13 +850,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#444',
+    color: '#999',
     letterSpacing: 1,
   },
   noteWorkoutName: {
     fontFamily: fonts.primary.regular,
     fontSize: 13,
-    color: '#555',
+    color: '#999',
     marginBottom: 6,
   },
   noteText: {
@@ -935,7 +935,7 @@ const styles = StyleSheet.create({
   },
   burnButtonText: {
     ...t.label,
-    color: '#262626',
+    color: '#999',
     letterSpacing: 3,
   },
   burnConfirm: {

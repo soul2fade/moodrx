@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   back: {
     fontFamily: fonts.mono.regular,
     fontSize: 10,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   headerRight: {
@@ -191,13 +191,13 @@ const styles = StyleSheet.create({
   headerSub: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
   },
   headerDoc: {
     fontFamily: fonts.mono.regular,
     fontSize: 10,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   titleRow: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontFamily: fonts.mono.regular,
     fontSize: 10,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     textAlign: 'center',
     marginTop: 60,
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   dayLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
   },
   dataBadge: {
@@ -298,36 +298,36 @@ const styles = StyleSheet.create({
   metaDot: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
   moodName: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 1,
   },
   duration: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 1,
   },
   intensity: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 1,
   },
   arrow: {
     fontFamily: fonts.primary.bold,
     fontSize: 14,
-    color: '#c8c8c8',
+    color: '#ffffff',
     marginLeft: 12,
   },
   footnote: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
     textAlign: 'center',
     marginTop: 28,
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   ctaLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
   },
   ctaWorkout: {
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   ctaAction: {
     fontFamily: fonts.mono.regular,
     fontSize: 10,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
     marginTop: 2,
   },

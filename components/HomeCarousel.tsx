@@ -6,9 +6,10 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
-  AppState,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  AppState,
+  type AppStateStatus,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -132,12 +133,46 @@ export function HomeCarousel({
   onPageChange,
 }: HomeCarouselProps) {
   const [activePage, setActivePage] = useState(initialPage);
-  const [dayIndex, setDayIndex] = useState(new Date().getDay());
   const scrollX = useSharedValue(initialPage * CARD_W);
   const labelTranslateX = useSharedValue(0);
   const scrollRef = useRef<ScrollView>(null);
   const prevInitialPage = useRef(initialPage);
   const swipeDir = useRef<1 | -1>(1);
+
+  const [todayIndex, setTodayIndex] = useState(() => new Date().getDay());
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleMidnight = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(24, 0, 0, 100);
+      const ms = next.getTime() - now.getTime();
+      timeoutId = setTimeout(() => {
+        setTodayIndex(new Date().getDay());
+        scheduleMidnight();
+      }, ms);
+    };
+
+    scheduleMidnight();
+
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
+        setTodayIndex((prev) => {
+          const current = new Date().getDay();
+          return current === prev ? prev : current;
+        });
+        if (timeoutId) clearTimeout(timeoutId);
+        scheduleMidnight();
+      }
+    });
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      sub.remove();
+    };
+  }, []);
 
   const todayDotColor = useSharedValue('#D97706');
   const patternDotColor = useSharedValue(
@@ -172,13 +207,6 @@ export function HomeCarousel({
     labelTranslateX.value = swipeDir.current * 10;
     labelTranslateX.value = withSpring(0, { damping: 12, stiffness: 180, mass: 0.6 });
   }, [activePage]);
-
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') setDayIndex(new Date().getDay());
-    });
-    return () => sub.remove();
-  }, []);
 
   const PAGE_LABELS = ['TODAY', 'YOUR PATTERN', 'QUICK ACTIONS'];
 
@@ -249,8 +277,8 @@ export function HomeCarousel({
           <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll} contentContainerStyle={styles.pageContent}>
           {/* Daily opener — always shown */}
           <View style={styles.dailyOpener}>
-            <Text style={styles.dailyOpenerLabel}>{DAILY_OPENERS[dayIndex].day}</Text>
-            <Text style={styles.dailyOpenerText}>{DAILY_OPENERS[dayIndex].line}</Text>
+            <Text style={styles.dailyOpenerLabel}>{DAILY_OPENERS[todayIndex].day}</Text>
+            <Text style={styles.dailyOpenerText}>{DAILY_OPENERS[todayIndex].line}</Text>
           </View>
 
           {/* Onboarding hint */}

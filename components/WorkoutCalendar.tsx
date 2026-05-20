@@ -165,9 +165,9 @@ const styles = StyleSheet.create({
   headerText: {
     ...t.timestamp,
     color: '#ffffff',
-    fontSize: 9,
+    fontSize: 12,
     letterSpacing: 1,
-    lineHeight: 14,
+    lineHeight: 17,
   },
   grid: {
     flexDirection: 'row',
@@ -187,8 +187,8 @@ const styles = StyleSheet.create({
   },
   dayText: {
     ...t.number,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 17,
   },
   dayTextActive: {
     color: '#ffffff',

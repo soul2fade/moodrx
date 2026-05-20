@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   heroSection: {
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   },
   prescriptionLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     marginTop: 12,
   },
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   insultLine: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#c8c8c8',
+    color: '#ffffff',
     marginTop: 12,
     textAlign: 'left',
     alignSelf: 'flex-start',
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   personalizationNote: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 11,
     letterSpacing: 1,
     marginTop: 8,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   scroll: {
@@ -451,18 +451,18 @@ const styles = StyleSheet.create({
   },
   alternativesLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
     fontSize: 13,
   },
   alternativesArrow: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 18,
   },
   cantDoThatLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     fontSize: 10,
     marginBottom: 8,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   workoutDuration: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   intensityBadgeText: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 10,
     letterSpacing: 1,
     fontWeight: '600',
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   },
   workoutVibe: {
     ...t.soft,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 15,
     letterSpacing: 0.5,
     marginTop: 6,
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   },
   supplementDose: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 12,
   },
   supplementBenefitRow: {
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   },
   supplementTiming: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   tabTextActive: {
@@ -602,17 +602,17 @@ const styles = StyleSheet.create({
   },
   tabTextInactive: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   unlockProText: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   unlockProTextStack: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
     marginTop: 10,
   },
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   },
   trackStackBtnText: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
   },
 });

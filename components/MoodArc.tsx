@@ -68,9 +68,9 @@ export function MoodArc({ sessions }: MoodArcProps) {
         ))}
 
         {/* Y-axis labels */}
-        <SvgText x={PAD_L - 4} y={yOf(10) + 4} fontSize="7" fill="#333" textAnchor="end">10</SvgText>
-        <SvgText x={PAD_L - 4} y={yOf(5) + 4}  fontSize="7" fill="#333" textAnchor="end">5</SvgText>
-        <SvgText x={PAD_L - 4} y={yOf(0) + 4}  fontSize="7" fill="#333" textAnchor="end">0</SvgText>
+        <SvgText x={PAD_L - 4} y={yOf(10) + 4} fontSize="12" fill="#999" textAnchor="end">10</SvgText>
+        <SvgText x={PAD_L - 4} y={yOf(5) + 4}  fontSize="12" fill="#999" textAnchor="end">5</SvgText>
+        <SvgText x={PAD_L - 4} y={yOf(0) + 4}  fontSize="12" fill="#999" textAnchor="end">0</SvgText>
 
         {/* Shaded lift area */}
         <Polygon points={areaPoints} fill="rgba(5,150,105,0.07)" />
@@ -152,17 +152,17 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#888',
     letterSpacing: 3,
-    lineHeight: 15,
+    lineHeight: 17,
   },
   sub: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 1,
-    lineHeight: 14,
+    lineHeight: 17,
   },
   legend: {
     flexDirection: 'row',
@@ -181,9 +181,9 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 1.5,
-    lineHeight: 13,
+    lineHeight: 17,
   },
 });

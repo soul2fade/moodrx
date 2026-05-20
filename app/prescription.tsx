@@ -147,9 +147,9 @@ export default function PrescriptionScreen() {
               <View style={styles.workoutCardTop}>
                 <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>01</Text>
                 <View style={styles.workoutCardRight}>
-                  <Text style={styles.workoutDuration}>{workouts[0].duration} MIN</Text>
+                  <Text style={styles.workoutDuration} allowFontScaling={false}>{workouts[0].duration} MIN</Text>
                   <View style={styles.intensityBadge}>
-                    <Text style={styles.intensityBadgeText}>{workouts[0].intensity.toUpperCase()}</Text>
+                    <Text style={styles.intensityBadgeText} allowFontScaling={false}>{workouts[0].intensity.toUpperCase()}</Text>
                   </View>
                 </View>
               </View>
@@ -200,9 +200,9 @@ export default function PrescriptionScreen() {
                         <View style={styles.workoutCardTop}>
                           <Text style={styles.workoutNumber}>{String(index + 1).padStart(2, '0')}</Text>
                           <View style={styles.workoutCardRight}>
-                            <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
+                            <Text style={styles.workoutDuration} allowFontScaling={false}>{workout.duration} MIN</Text>
                             <View style={styles.intensityBadge}>
-                              <Text style={styles.intensityBadgeText}>{workout.intensity.toUpperCase()}</Text>
+                              <Text style={styles.intensityBadgeText} allowFontScaling={false}>{workout.intensity.toUpperCase()}</Text>
                             </View>
                           </View>
                         </View>
@@ -231,9 +231,9 @@ export default function PrescriptionScreen() {
                           {String(index + 1).padStart(2, '0')}
                         </Text>
                         <View style={styles.workoutCardRight}>
-                          <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
+                          <Text style={styles.workoutDuration} allowFontScaling={false}>{workout.duration} MIN</Text>
                           <View style={styles.intensityBadge}>
-                            <Text style={styles.intensityBadgeText}>{workout.intensity.toUpperCase()}</Text>
+                            <Text style={styles.intensityBadgeText} allowFontScaling={false}>{workout.intensity.toUpperCase()}</Text>
                           </View>
                         </View>
                       </View>
@@ -278,7 +278,7 @@ export default function PrescriptionScreen() {
                         </View>
                         <View style={styles.supplementBenefitRow}>
                           <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
-                          <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
+                          <Text style={styles.supplementTiming} allowFontScaling={false}>{supp.timing.toUpperCase()}</Text>
                         </View>
                         <Text style={styles.unlockProTextStack}>
                           UNLOCK PRO →
@@ -303,7 +303,7 @@ export default function PrescriptionScreen() {
                       </View>
                       <View style={styles.supplementBenefitRow}>
                         <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
-                        <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
+                        <Text style={styles.supplementTiming} allowFontScaling={false}>{supp.timing.toUpperCase()}</Text>
                       </View>
                     </View>
                   </View>
@@ -349,6 +349,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: undefined,
   },
   heroSection: {
     alignItems: 'center',
@@ -363,6 +364,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 3,
     marginTop: 12,
+    lineHeight: undefined,
   },
   prescriptionTitle: {
     ...t.headlineMd,
@@ -376,17 +378,16 @@ const styles = StyleSheet.create({
   },
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 13,
     color: '#ffffff',
     marginTop: 12,
     textAlign: 'left',
     alignSelf: 'flex-start',
-    lineHeight: 18,
   },
   personalizationNote: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 1,
     marginTop: 8,
     textAlign: 'center',
@@ -419,9 +420,10 @@ const styles = StyleSheet.create({
   heroRxLabel: {
     ...t.label,
     letterSpacing: 4,
-    fontSize: 10,
+    fontSize: 12,
     marginBottom: 10,
     marginTop: 4,
+    lineHeight: undefined,
   },
   heroCard: {
     backgroundColor: '#0d0d0d',
@@ -435,7 +437,8 @@ const styles = StyleSheet.create({
   startButtonText: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 11,
+    fontSize: 12,
+    lineHeight: undefined,
   },
   alternativesToggle: {
     flexDirection: 'row',
@@ -454,19 +457,22 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 2,
     fontSize: 13,
+    lineHeight: undefined,
   },
   alternativesArrow: {
     ...t.label,
     color: '#ffffff',
     fontSize: 18,
+    lineHeight: undefined,
   },
   cantDoThatLabel: {
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 10,
+    fontSize: 12,
     marginBottom: 8,
     marginTop: 4,
+    lineHeight: undefined,
   },
   workoutCard: {
     backgroundColor: '#111111',
@@ -505,7 +511,7 @@ const styles = StyleSheet.create({
   intensityBadgeText: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 10,
+    fontSize: 12,
     letterSpacing: 1,
     fontWeight: '600',
   },
@@ -516,6 +522,7 @@ const styles = StyleSheet.create({
   },
   workoutName: {
     ...t.headlineSm,
+    lineHeight: undefined,
   },
   workoutArrow: {
     fontSize: 18,
@@ -538,8 +545,9 @@ const styles = StyleSheet.create({
   scienceInlineLabel: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
+    lineHeight: undefined,
   },
   scienceInlineText: {
     ...t.bodyMuted,
@@ -549,6 +557,7 @@ const styles = StyleSheet.create({
   },
   stackTitle: {
     ...t.headlineSm,
+    lineHeight: undefined,
   },
   stackSub: {
     ...t.bodySm,
@@ -575,11 +584,12 @@ const styles = StyleSheet.create({
   supplementName: {
     ...t.headlineSm,
     fontSize: 15,
+    lineHeight: undefined,
   },
   supplementDose: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 13,
   },
   supplementBenefitRow: {
     flexDirection: 'row',
@@ -589,7 +599,7 @@ const styles = StyleSheet.create({
   },
   supplementBenefit: {
     ...t.bodyMuted,
-    fontSize: 13,
+    fontSize: 14,
   },
   supplementTiming: {
     ...t.label,
@@ -599,22 +609,26 @@ const styles = StyleSheet.create({
   tabTextActive: {
     ...t.labelBright,
     letterSpacing: 2,
+    lineHeight: undefined,
   },
   tabTextInactive: {
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: undefined,
   },
   unlockProText: {
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: undefined,
   },
   unlockProTextStack: {
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
     marginTop: 10,
+    lineHeight: undefined,
   },
   trackStackBtn: {
     borderWidth: 1,
@@ -627,5 +641,6 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
+    lineHeight: undefined,
   },
 });

@@ -317,6 +317,7 @@ const styles = StyleSheet.create({
   moodName: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
+    lineHeight: 15,
     color: '#ffffff',
     letterSpacing: 1,
     flexShrink: 1,
@@ -324,6 +325,7 @@ const styles = StyleSheet.create({
   duration: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
+    lineHeight: 15,
     color: '#ffffff',
     letterSpacing: 1,
     flexShrink: 1,
@@ -332,6 +334,7 @@ const styles = StyleSheet.create({
   intensity: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
+    lineHeight: 15,
     color: '#ffffff',
     letterSpacing: 1,
     flexShrink: 1,

@@ -263,7 +263,7 @@ export function HomeCarousel({
                   : diff < 0
                   ? '↓ TRENDING BETTER'
                   : '↑ TRENDING WORSE';
-                const trendColor = Math.abs(diff) < 1 ? '#525252' : diff < 0 ? '#059669' : '#b45309';
+                const trendColor = Math.abs(diff) < 1 ? '#999999' : diff < 0 ? '#059669' : '#b45309';
                 return (
                   <View style={styles.sparklineCard} accessibilityLabel={`7-day mood trend: ${trendLabel}`}>
                     <Text style={styles.sparklineHeader}>7-DAY TREND</Text>
@@ -438,10 +438,10 @@ const styles = StyleSheet.create({
   },
   pageLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 2,
-    lineHeight: 14,
+    lineHeight: 17,
   },
   dots: {
     flexDirection: 'row',
@@ -463,11 +463,11 @@ const styles = StyleSheet.create({
   },
   emptyStateLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
-    lineHeight: 15,
+    lineHeight: 17,
   },
   emptyStateText: {
     fontFamily: fonts.primary.regular,
@@ -487,9 +487,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 10,
+    fontSize: 12,
     marginBottom: 4,
-    lineHeight: 15,
+    lineHeight: 17,
   },
   identityValue: {
     fontSize: 20,
@@ -501,9 +501,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
     letterSpacing: 1,
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 4,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   sparklineCard: {
     paddingVertical: 10,
@@ -514,11 +514,11 @@ const styles = StyleSheet.create({
   },
   sparklineHeader: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
-    lineHeight: 15,
+    lineHeight: 17,
   },
   sparklineBars: {
     flexDirection: 'row',
@@ -532,10 +532,10 @@ const styles = StyleSheet.create({
   },
   sparklineTrend: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     letterSpacing: 2,
     marginTop: 6,
-    lineHeight: 15,
+    lineHeight: 17,
   },
   quickRow: {
     flexDirection: 'row',
@@ -554,10 +554,10 @@ const styles = StyleSheet.create({
   },
   quickRowLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 10,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 3,
-    lineHeight: 15,
+    lineHeight: 17,
   },
   quickRowSub: {
     fontFamily: fonts.primary.regular,

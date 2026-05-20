@@ -155,12 +155,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#888',
     letterSpacing: 3,
+    lineHeight: 15,
   },
   sub: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
     color: '#ffffff',
     letterSpacing: 1,
+    lineHeight: 14,
   },
   legend: {
     flexDirection: 'row',
@@ -182,5 +184,6 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#ffffff',
     letterSpacing: 1.5,
+    lineHeight: 13,
   },
 });

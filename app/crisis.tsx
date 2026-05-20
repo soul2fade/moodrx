@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   backBtnText: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   cardDetail: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#888888',
+    color: '#ffffff',
     letterSpacing: 1,
     marginBottom: 18,
   },
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   groundingLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     textTransform: 'uppercase',
     marginBottom: 12,
@@ -205,13 +205,13 @@ const styles = StyleSheet.create({
   groundingTitle: {
     fontFamily: fonts.primary.bold,
     fontSize: 15,
-    color: '#c8c8c8',
+    color: '#ffffff',
     marginBottom: 12,
   },
   groundingBody: {
     fontFamily: fonts.mono.regular,
     fontSize: 14,
-    color: '#888888',
+    color: '#ffffff',
     lineHeight: 22,
   },
 });

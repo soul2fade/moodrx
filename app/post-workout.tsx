@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   insultLine: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#525252',
+    color: '#ffffff',
     marginTop: 16,
     lineHeight: 18,
   },
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
   },
   howLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     textAlign: 'center',
   },
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
   },
   scoreDenom: {
     ...t.dataValue,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 24,
     fontFamily: fonts.primary.regular,
     marginLeft: 4,
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   },
   completedLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
   },
   workoutName: {
@@ -620,13 +620,13 @@ const styles = StyleSheet.create({
   noteLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
   },
   noteCount: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 1,
   },
   noteInput: {
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#c8c8c8',
+    color: '#ffffff',
     lineHeight: 20,
     textAlignVertical: 'top',
     minHeight: 72,
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
   },
   ratingPrompt: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     textAlign: 'center',
     marginBottom: 16,
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
   },
   ratingBtnText: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 1,
     fontSize: 10,
   },
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
   },
   contextQuestionPrompt: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     textAlign: 'center',
     marginBottom: 16,
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
   shareButtonEyebrow: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#888888',
+    color: '#ffffff',
     letterSpacing: 4,
   },
   shareButtonText: {
@@ -732,7 +732,7 @@ const styles = StyleSheet.create({
   modalEyebrow: {
     fontFamily: fonts.mono.regular,
     fontSize: 8,
-    color: '#444444',
+    color: '#ffffff',
     letterSpacing: 4,
   },
   modalShareBtn: {
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
   modalCloseBtnText: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#444444',
+    color: '#ffffff',
     letterSpacing: 3,
   },
   logButton: {

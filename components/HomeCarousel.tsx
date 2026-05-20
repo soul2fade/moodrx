@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
   welcomeBackText: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 1,
     flex: 1,
   },
@@ -791,17 +791,17 @@ const styles = StyleSheet.create({
   quickRowLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 10,
-    color: '#888888',
+    color: '#ffffff',
     letterSpacing: 3,
   },
   quickRowSub: {
     fontFamily: fonts.primary.regular,
     fontSize: 14,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
   quickRowIcon: {
     fontSize: 16,
     marginLeft: 8,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
 });

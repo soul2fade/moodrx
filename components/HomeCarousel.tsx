@@ -215,13 +215,6 @@ export function HomeCarousel({
     onPageChange?.(index);
   };
 
-  const hasTodayContent =
-    (showHint && !selectedMood) ||
-    (streak === 0 && streakState.lastBrokenDate === todayDateString() && streakState.lastBrokenHwm >= 2) ||
-    (streak > 0 && [3, 7, 14, 30].includes(streak) && !(streakState.seenMilestones ?? []).includes(streak)) ||
-    (showWelcomeBack && lastSession !== null && daysSinceLastSession !== null) ||
-    (sessionCount >= 3 && !selectedMood && (userProfile.preferredTime || userProfile.primaryGoal));
-
   const hasQuickActions =
     (moodIdentity != null && !selectedMood) ||
     (sessionCount >= 3 && !selectedMood) ||

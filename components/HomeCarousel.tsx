@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
+  AppState,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -131,6 +132,7 @@ export function HomeCarousel({
   onPageChange,
 }: HomeCarouselProps) {
   const [activePage, setActivePage] = useState(initialPage);
+  const [dayIndex, setDayIndex] = useState(new Date().getDay());
   const scrollX = useSharedValue(initialPage * CARD_W);
   const labelTranslateX = useSharedValue(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -170,6 +172,13 @@ export function HomeCarousel({
     labelTranslateX.value = swipeDir.current * 10;
     labelTranslateX.value = withSpring(0, { damping: 12, stiffness: 180, mass: 0.6 });
   }, [activePage]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setDayIndex(new Date().getDay());
+    });
+    return () => sub.remove();
+  }, []);
 
   const PAGE_LABELS = ['TODAY', 'YOUR PATTERN', 'QUICK ACTIONS'];
 
@@ -240,8 +249,8 @@ export function HomeCarousel({
           <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll} contentContainerStyle={styles.pageContent}>
           {/* Daily opener — always shown */}
           <View style={styles.dailyOpener}>
-            <Text style={styles.dailyOpenerLabel}>{DAILY_OPENERS[new Date().getDay()].day}</Text>
-            <Text style={styles.dailyOpenerText}>{DAILY_OPENERS[new Date().getDay()].line}</Text>
+            <Text style={styles.dailyOpenerLabel}>{DAILY_OPENERS[dayIndex].day}</Text>
+            <Text style={styles.dailyOpenerText}>{DAILY_OPENERS[dayIndex].line}</Text>
           </View>
 
           {/* Onboarding hint */}

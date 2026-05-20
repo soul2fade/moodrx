@@ -133,6 +133,7 @@ export function HomeCarousel({
   }, []);
 
   useEffect(() => {
+    if (sessions.length > 0) return; // only show to brand-new users
     let timer: ReturnType<typeof setTimeout> | null = null;
     getCarouselHintSeen().then((seen) => {
       if (!seen) {
@@ -197,7 +198,6 @@ export function HomeCarousel({
       swipeDir.current = page > activePage ? 1 : -1;
       setActivePage(page);
       onPageChange?.(page);
-      dismissHint();
     }
   };
 
@@ -222,6 +222,7 @@ export function HomeCarousel({
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={scrollHandler}
+        onScrollBeginDrag={dismissHint}
         onMomentumScrollEnd={handleScroll}
         scrollEventThrottle={16}
         decelerationRate="fast"

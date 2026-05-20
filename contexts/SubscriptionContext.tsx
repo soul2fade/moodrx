@@ -281,13 +281,14 @@ const styles = StyleSheet.create({
   dialogTitle: {
     color: '#E8B84B',
     fontSize: 12,
+    lineHeight: 17,
     fontWeight: '700',
     letterSpacing: 3,
     marginBottom: 12,
     fontFamily: 'SpaceGrotesk_700Bold',
   },
   dialogBody: {
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 24,
@@ -305,8 +306,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelBtnText: {
-    color: '#737373',
+    color: '#ffffff',
     fontSize: 12,
+    lineHeight: 17,
     fontWeight: '700',
     letterSpacing: 2,
     fontFamily: 'SpaceGrotesk_700Bold',
@@ -321,6 +323,7 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     color: '#E8B84B',
     fontSize: 12,
+    lineHeight: 17,
     fontWeight: '700',
     letterSpacing: 2,
     fontFamily: 'SpaceGrotesk_700Bold',

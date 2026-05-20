@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 8,
   },
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   },
   body: {
     ...t.bodyMuted,
-    color: '#c8c8c8',
+    color: '#ffffff',
     marginBottom: 24,
   },
   enableButton: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   dismissText: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
   },
 });

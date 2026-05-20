@@ -203,13 +203,13 @@ const styles = StyleSheet.create({
   backBtnText: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#555',
+    color: '#999',
     letterSpacing: 1,
   },
   screenTitle: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#2a2a2a',
+    color: '#999',
     letterSpacing: 3,
     lineHeight: 18,
   },
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   cyclesText: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#555',
+    color: '#999',
     letterSpacing: 2,
   },
   circleContainer: {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   readyLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 14,
-    color: '#333',
+    color: '#999',
     letterSpacing: 4,
   },
   phaseLabel: {
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   phaseGuide: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#444',
+    color: '#999',
     letterSpacing: 2,
     marginTop: 10,
     lineHeight: 18,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   patternNote: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#2a2a2a',
+    color: '#999',
     letterSpacing: 3,
     marginBottom: 32,
     lineHeight: 18,
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   hint: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#222',
+    color: '#999',
     letterSpacing: 1,
     marginBottom: 110,
     textAlign: 'center',

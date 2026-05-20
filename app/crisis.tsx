@@ -181,6 +181,7 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontFamily: fonts.mono.regular,
     fontSize: 14,
+    // eslint-disable-next-line local/no-dark-text-color
     color: '#000000',
     letterSpacing: 3,
     textTransform: 'uppercase',

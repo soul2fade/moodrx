@@ -108,7 +108,7 @@ export function BreakthroughCard({
 
       <View style={styles.footer}>
         <View style={[styles.footerBar, { backgroundColor: moodData.color }]} />
-        <Text style={styles.watermark}>moodrx.app  ·  move for your mind</Text>
+        <Text style={styles.watermark} numberOfLines={1}>moodrx.app  ·  move for your mind</Text>
       </View>
     </View>
   );
@@ -136,10 +136,10 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 5,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -147,10 +147,10 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 9,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 2,
-    lineHeight: 14,
+    lineHeight: 17,
   },
   statusBadge: {
     borderWidth: 1,
@@ -159,9 +159,9 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 12,
     letterSpacing: 2,
-    lineHeight: 13,
+    lineHeight: 17,
   },
   diagnosisBlock: {
     paddingHorizontal: 24,
@@ -170,11 +170,11 @@ const styles = StyleSheet.create({
   },
   diagnosisLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 4,
     marginBottom: 6,
-    lineHeight: 13,
+    lineHeight: 17,
   },
   moodName: {
     fontFamily: fonts.primary.bold,
@@ -184,11 +184,11 @@ const styles = StyleSheet.create({
   },
   moodDescription: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     marginTop: 6,
     letterSpacing: 0.5,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   heroBlock: {
     alignItems: 'center',
@@ -207,11 +207,11 @@ const styles = StyleSheet.create({
   },
   deltaHeroLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 4,
     marginTop: 8,
-    lineHeight: 13,
+    lineHeight: 17,
   },
   numbersGrid: {
     flexDirection: 'row',
@@ -241,11 +241,11 @@ const styles = StyleSheet.create({
   },
   numLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 7,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 2,
     marginBottom: 5,
-    lineHeight: 12,
+    lineHeight: 17,
   },
   numValue: {
     fontFamily: fonts.mono.regular,
@@ -265,20 +265,20 @@ const styles = StyleSheet.create({
   },
   treatmentLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 7,
+    fontSize: 12,
     color: '#ffffff',
-    letterSpacing: 3,
-    width: 70,
+    letterSpacing: 2,
+    width: 90,
     flexShrink: 0,
-    lineHeight: 12,
+    lineHeight: 17,
   },
   treatmentValue: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: '#ffffff',
     letterSpacing: 0.5,
     flex: 1,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   footer: {
     paddingHorizontal: 24,
@@ -291,9 +291,9 @@ const styles = StyleSheet.create({
   },
   watermark: {
     fontFamily: fonts.mono.regular,
-    fontSize: 8,
+    fontSize: 12,
     color: '#ffffff',
-    letterSpacing: 2,
-    lineHeight: 13,
+    letterSpacing: 1,
+    lineHeight: 17,
   },
 });

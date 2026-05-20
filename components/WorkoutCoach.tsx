@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   figureWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   bubble: { maxWidth: 300, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 6 },
   phraseText: { fontSize: 17, color: '#e0e0e0', textAlign: 'center', lineHeight: 26 },
-  coachName: { fontSize: 14, marginBottom: 10 },
+  coachName: { fontSize: 14, fontFamily: 'BarlowCondensed_700Bold', letterSpacing: 2, marginBottom: 10 },
   dotRow: { flexDirection: 'row', gap: 6, marginBottom: 4 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#2a2a2a' },
   stepLabel: { fontSize: 11, color: '#ffffff', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase', lineHeight: 16 },

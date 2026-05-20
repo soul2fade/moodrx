@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   pageLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 9,
-    color: '#525252',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   dots: {
@@ -577,14 +577,14 @@ const styles = StyleSheet.create({
   emptyStateLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 10,
-    color: '#444',
+    color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
   },
   emptyStateText: {
     fontFamily: fonts.primary.regular,
     fontSize: 15,
-    color: '#525252',
+    color: '#ffffff',
     lineHeight: 22,
   },
   hintBanner: {
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
   hintText: {
     fontFamily: fonts.mono.regular,
     fontSize: 11,
-    color: '#555',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   hintDismiss: {
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
   },
   identityLabel: {
     fontFamily: fonts.mono.regular,
-    color: '#525252',
+    color: '#ffffff',
     letterSpacing: 3,
     fontSize: 10,
     marginBottom: 4,
@@ -741,7 +741,7 @@ const styles = StyleSheet.create({
   },
   identityCount: {
     fontFamily: fonts.mono.regular,
-    color: '#525252',
+    color: '#ffffff',
     letterSpacing: 1,
     fontSize: 11,
     marginTop: 4,
@@ -756,7 +756,7 @@ const styles = StyleSheet.create({
   sparklineHeader: {
     fontFamily: fonts.mono.regular,
     fontSize: 10,
-    color: '#444',
+    color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
   },

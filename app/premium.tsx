@@ -272,7 +272,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  bestValueText: { ...t.label, color: '#0a0a0a', fontSize: 11, lineHeight: 15, letterSpacing: 1 },
+  // eslint-disable-next-line local/no-dark-text-color
+  bestValueText: { ...t.label, color: '#0a0a0a', fontSize: 12, lineHeight: 17, letterSpacing: 1 },
   yearlyPrice: { ...t.headlineMd, color: '#E8B84B' },
   yearlyPer: { ...t.bodyMuted, color: '#ffffff', fontSize: 16 },
   yearlySub: { ...t.bodySm, color: '#ffffff', marginTop: 4 },

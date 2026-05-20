@@ -189,11 +189,11 @@ export default function PremiumScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 32 },
-  backButton: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  backButton: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   proLabel: { ...t.label, color: '#E8B84B', letterSpacing: 4, marginTop: 24 },
   headline: { ...t.headline, fontSize: 32, marginTop: 8 },
   divider: { width: 32, height: 1, backgroundColor: '#333333', marginVertical: 20 },
-  subtext: { ...t.bodyMuted, color: '#c8c8c8' },
+  subtext: { ...t.bodyMuted, color: '#ffffff' },
   statusBadge: {
     borderWidth: 1,
     borderColor: '#E8B84B',
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   expiredBadge: {
     borderColor: '#737373',
   },
-  expiredBadgeText: { ...t.label, color: '#a3a3a3', letterSpacing: 2 },
+  expiredBadgeText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   socialProofBox: {
     marginTop: 20,
     borderWidth: 1,
@@ -230,14 +230,14 @@ const styles = StyleSheet.create({
   },
   socialProofLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
     fontSize: 10,
     marginTop: 4,
   },
   socialProofSub: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 10,
     letterSpacing: 1,
     marginTop: 6,
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   checkmark: { ...t.label, color: '#E8B84B', fontSize: 14, paddingTop: 1 },
   featureText: { ...t.body, flex: 1 },
-  pricingLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 3, marginTop: 24, marginBottom: 16 },
+  pricingLabel: { ...t.label, color: '#ffffff', letterSpacing: 3, marginTop: 24, marginBottom: 16 },
   yearlyCard: {
     borderWidth: 1,
     borderColor: '#E8B84B',
@@ -273,8 +273,8 @@ const styles = StyleSheet.create({
   },
   bestValueText: { ...t.label, color: '#0a0a0a', fontSize: 9, letterSpacing: 1 },
   yearlyPrice: { ...t.headlineMd, color: '#E8B84B' },
-  yearlyPer: { ...t.bodyMuted, color: '#c8c8c8', fontSize: 16 },
-  yearlySub: { ...t.bodySm, color: '#c8c8c8', marginTop: 4 },
+  yearlyPer: { ...t.bodyMuted, color: '#ffffff', fontSize: 16 },
+  yearlySub: { ...t.bodySm, color: '#ffffff', marginTop: 4 },
   monthlyCard: {
     borderWidth: 1,
     borderColor: '#333333',
@@ -282,8 +282,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
   },
-  monthlyPrice: { ...t.headlineSm, color: '#c8c8c8' },
-  monthlyPer: { ...t.bodyMuted, color: '#c8c8c8', fontSize: 14 },
+  monthlyPrice: { ...t.headlineSm, color: '#ffffff' },
+  monthlyPer: { ...t.bodyMuted, color: '#ffffff', fontSize: 14 },
   ctaButton: {
     borderWidth: 1,
     borderColor: '#ffffff',
@@ -294,5 +294,5 @@ const styles = StyleSheet.create({
   ctaText: { ...t.button, letterSpacing: 3 },
   cancelNote: { ...t.softMuted, textAlign: 'center', marginBottom: 16 },
   restoreButton: { alignItems: 'center', paddingVertical: 8 },
-  restoreText: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  restoreText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
 });

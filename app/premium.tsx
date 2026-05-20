@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { type as t } from '@/lib/typography';
+import { type as t, fonts } from '@/lib/typography';
 
 const FEATURES = [
   '18 science-backed workouts',
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '700',
     color: '#059669',
-    fontFamily: 'SpaceMono-Regular',
+    fontFamily: fonts.mono.bold,
   },
   socialProofLabel: {
     ...t.label,

@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
   miniMap: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 16, gap: 10 },
   miniMapRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   miniMapDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#888' },
-  miniMapText: { ...t.label, color: '#e8e8e8', fontSize: 14, flex: 1, letterSpacing: 0.3, lineHeight: undefined },
+  miniMapText: { ...t.label, fontFamily: fonts.mono.bold, textTransform: 'none', color: '#e8e8e8', fontSize: 15, flex: 1, letterSpacing: 0.3, lineHeight: 22 },
 
   repSection: { marginTop: 28 },
   sectionLabel: { ...t.label, color: '#888', letterSpacing: 2, fontSize: 13, marginBottom: 14 },

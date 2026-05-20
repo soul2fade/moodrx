@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   stepSub: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#ffffff',
     marginTop: 3,
   },
   outcomeProof: {
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   outcomeProofLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 3,
     fontSize: 11,
     textAlign: 'center',
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   },
   outcomeBlockCap: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 2,
     fontSize: 9,
     marginBottom: 4,
@@ -289,12 +289,12 @@ const styles = StyleSheet.create({
   outcomeBlockVal: {
     fontSize: 40,
     fontWeight: '700',
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontFamily: 'SpaceMono-Regular',
   },
   outcomeBlockMood: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     letterSpacing: 1,
     fontSize: 8,
     marginTop: 4,
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   outcomeArrow: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 20,
   },
   outcomeDelta: {
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   outcomeProofSub: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 10,
     letterSpacing: 1,
     textAlign: 'center',
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   wellnessDisclaimer: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 10,
     letterSpacing: 0.5,
     lineHeight: 15,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   trialFeatureItem: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
   trialButton: {
     borderWidth: 1,
@@ -385,13 +385,13 @@ const styles = StyleSheet.create({
   },
   freeButtonText: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#ffffff',
     letterSpacing: 2,
   },
   disclaimer: {
     ...t.label,
     fontFamily: fonts.mono.regular,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 9,
     letterSpacing: 0.5,
     lineHeight: 14,

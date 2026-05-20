@@ -721,8 +721,8 @@ const styles = StyleSheet.create({
   },
   greetingLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 17,
     color: '#E8B84B',
     letterSpacing: 3,
   },
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#555',
+    color: '#999',
     marginLeft: 14,
   },
   prescribeButton: {

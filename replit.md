@@ -4,6 +4,8 @@
 > The working process is fully documented. Do not guess, do not regenerate credentials, do not change the p12 format.
 > Cert files live in `.local/ios-cert/` — see `.local/ios-cert/README.md` for everything.
 
+> **BUILD RULE** — All builds triggered by the agent default to `preview` profile unless the user explicitly says "production build", "release build", or "submit to store". Preview builds produce a direct-install APK/IPA from expo.dev. Production builds go to TestFlight/Play Store and cannot be sideloaded.
+
 A mobile-first wellness app built with Expo (React Native) that focuses on mood tracking, workouts, and mental wellness.
 
 ## Tech Stack
@@ -127,6 +129,24 @@ P12_BASE64=$(base64 -w 0 .local/ios-cert/distribution_legacy.p12)
 # POST to EAS GraphQL: createAppleDistributionCertificate with certP12=$P12_BASE64, certPassword="MoodRx2026"
 # Then link to APP_STORE build credentials via setDistributionCertificate
 ```
+
+## Code Standards
+
+### Font size minimum: 12px
+All `fontSize` values in `app/` and `components/` must be **≥ 12**. Sub-12px text fails readability on mobile and WCAG contrast standards.
+
+**ESLint enforcement** (`eslint.config.js` + `eslint-rules/`):
+- `local/no-fontSize-below-12` — **error** on any `fontSize` value below 12 in a style object.
+- `local/no-small-fontsize-without-lineheight` — **error** when `fontSize ≤ 12` is present without an explicit `lineHeight`.
+- `local/no-dark-text-color` — **warning** when a `color` property uses a hex value darker than `#888` (average channel < 136). Minimum readable text color on dark backgrounds is `#999`.
+
+Run `npx eslint app/ components/` to check for violations before committing.
+
+### Text color minimum: #999
+On this app's dark backgrounds (`#080808`, `#0a0a0a`, `#111111`):
+- `#444`, `#555`, `#525252` are **not** readable. Replace with `#999` or lighter.
+- `#888` is the absolute floor; `#999` is the preferred minimum for secondary/muted text.
+- Border colors, background colors, and icon tints are exempt — only text `color` properties are enforced.
 
 ## Deployment
 

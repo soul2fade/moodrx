@@ -4,7 +4,7 @@
 > The working process is fully documented. Do not guess, do not regenerate credentials, do not change the p12 format.
 > Cert files live in `.local/ios-cert/` — see `.local/ios-cert/README.md` for everything.
 
-> **BUILD RULE** — All builds triggered by the agent default to `preview` profile unless the user explicitly says "production build", "release build", or "submit to store". Preview builds produce a direct-install APK/IPA from expo.dev. Production builds go to TestFlight/Play Store and cannot be sideloaded.
+> **BUILD RULE** — Never trigger a build unless the user explicitly asks for one. All builds triggered by the agent default to `preview` profile unless the user explicitly says "production build", "release build", or "submit to store". Preview builds produce a direct-install APK/IPA from expo.dev. Production builds go to TestFlight/Play Store and cannot be sideloaded.
 
 > **SYNC RULE** — Before triggering any build, always verify local and GitHub are in sync: check which files were changed since the last explicit push, push any missing files via the GitHub Contents API (`GITHUB_MOODRX_TOKEN`), confirm OK on each file, then trigger the build. Never trigger a build without completing this check first.
 

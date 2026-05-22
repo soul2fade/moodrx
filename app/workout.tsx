@@ -433,7 +433,7 @@ export default function WorkoutScreen() {
           mood={mood}
           step={Math.min(3, Math.floor((currentStep / Math.max(totalSteps, 1)) * 4))}
           phraseKey={currentStep}
-          figureSize={400}
+          figureSize={300}
           accentColor={accentColor}
         />
 

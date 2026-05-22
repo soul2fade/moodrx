@@ -46,6 +46,7 @@ interface SubscriptionContextValue {
   purchaseMonthly: () => Promise<void>;
   purchaseYearly: () => Promise<void>;
   restorePurchases: () => Promise<void>;
+  devTogglePremium: () => void;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextValue>({
@@ -59,6 +60,7 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
   purchaseMonthly: async () => {},
   purchaseYearly: async () => {},
   restorePurchases: async () => {},
+  devTogglePremium: () => {},
 });
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
@@ -142,17 +144,19 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         (p) => p.identifier === packageId
       );
 
+      // In dev/preview builds RC offerings won't load — mock the unlock directly
+      if (__DEV__ || Platform.OS === 'web') {
+        pendingPurchaseRef.current = pkg ?? null;
+        setConfirmVisible(true);
+        return;
+      }
+
       if (!pkg) {
         Alert.alert('Unavailable', 'This plan is not available right now. Please try again later.');
         return;
       }
 
-      if (__DEV__ || Platform.OS === 'web') {
-        pendingPurchaseRef.current = pkg;
-        setConfirmVisible(true);
-      } else {
-        await executePurchase(pkg);
-      }
+      await executePurchase(pkg);
     },
     [offerings, executePurchase]
   );
@@ -164,6 +168,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const purchaseYearly = useCallback(async () => {
     await triggerPurchase('$rc_annual');
   }, [triggerPurchase]);
+
+  const devTogglePremium = useCallback(() => {
+    setIsPaidPremium(prev => !prev);
+  }, []);
 
   const restorePurchases = useCallback(async () => {
     try {
@@ -186,7 +194,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     const pkg = pendingPurchaseRef.current;
     setConfirmVisible(false);
     pendingPurchaseRef.current = null;
-    if (pkg) await executePurchase(pkg);
+    if (pkg) {
+      await executePurchase(pkg);
+    } else {
+      // Dev/preview: no real package available — mock the unlock directly
+      setIsPaidPremium(true);
+    }
   }, [executePurchase]);
 
   const handleCancelPurchase = useCallback(() => {
@@ -206,6 +219,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       purchaseMonthly,
       purchaseYearly,
       restorePurchases,
+      devTogglePremium,
     }),
     [
       isPremium,
@@ -218,6 +232,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       purchaseMonthly,
       purchaseYearly,
       restorePurchases,
+      devTogglePremium,
     ]
   );
 

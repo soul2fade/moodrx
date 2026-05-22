@@ -35,7 +35,9 @@ export default function SettingsScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
-  const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial } = useSubscription();
+  const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium } = useSubscription();
+  const versionTapCount = useRef(0);
+  const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleAnim = useRef(new Animated.Value(0)).current;
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
@@ -313,7 +315,24 @@ export default function SettingsScreen() {
         <Text style={styles.sectionHeader}>ABOUT</Text>
         <Text style={styles.appName}>MoodRx</Text>
         <Text style={styles.appTagline}>Move for your mind.</Text>
-        <Text style={styles.appVersion}>Version 1.0.0</Text>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => {
+            versionTapCount.current += 1;
+            if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
+            if (versionTapCount.current >= 5) {
+              versionTapCount.current = 0;
+              devTogglePremium();
+            } else {
+              versionTapTimer.current = setTimeout(() => { versionTapCount.current = 0; }, 2000);
+            }
+          }}
+          accessibilityLabel="App version"
+        >
+          <Text style={styles.appVersion}>
+            Version 1.0.0{isPremium ? '  ★ PRO' : ''}
+          </Text>
+        </TouchableOpacity>
 
         {/* Data section */}
         <Text style={styles.sectionHeader}>DATA</Text>

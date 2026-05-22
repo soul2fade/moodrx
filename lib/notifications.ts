@@ -2,9 +2,15 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import type { Session, MoodKey } from './storage';
+import { getSessions } from './storage';
+import { getSupplementsForMood } from './supplements';
 
 export const NOTIFICATIONS_ENABLED_KEY = 'notifications_enabled';
 export const REMINDER_TIME_KEY = 'reminder_time';
+
+// Keys for storing scheduled notification identifiers so we can cancel individually
+const CHECKIN_NOTIF_ID_KEY = '@moodrx_checkin_notif_id';
+const SUPPLEMENT_NOTIF_ID_KEY = '@moodrx_supplement_notif_id';
 
 export const PRESET_TIMES = [
   { label: '8:00 AM',  hour: 8,  minute: 0 },
@@ -12,6 +18,15 @@ export const PRESET_TIMES = [
   { label: '6:00 PM',  hour: 18, minute: 0 },
   { label: '9:00 PM',  hour: 21, minute: 0 },
 ];
+
+export const SUPPLEMENT_PRESET_TIMES = [
+  { label: '7:00 AM',  hour: 7,  minute: 0 },
+  { label: '9:00 AM',  hour: 9,  minute: 0 },
+  { label: '12:00 PM', hour: 12, minute: 0 },
+  { label: '6:00 PM',  hour: 18, minute: 0 },
+];
+
+export const DEFAULT_SUPPLEMENT_TIME = '9:00 AM';
 
 const MOOD_NAMES: Record<MoodKey, string> = {
   anxious:  'ANXIOUS',
@@ -41,6 +56,35 @@ const STREAK_MESSAGES: Array<{ minStreak: number; body: string }> = [
   { minStreak: 0,  body: "Day one's done. Day two is where most people quit." },
 ];
 
+const SUPPLEMENT_REMINDER_MESSAGES = [
+  "Time for your morning stack. Don't skip it.",
+  "Your supplements are waiting. Take them.",
+  "Stack check: have you taken your supplements today?",
+  "Consistency is the dose. Take your stack.",
+];
+
+const MOOD_DISPLAY_NAMES: Record<MoodKey, string> = {
+  anxious:  'Anxious',
+  low:      'Low',
+  foggy:    'Foggy',
+  restless: 'Restless',
+  stressed: 'Stressed',
+  good:     'Good',
+};
+
+function buildSupplementMessage(sessions: Session[]): string {
+  if (sessions.length === 0) {
+    return SUPPLEMENT_REMINDER_MESSAGES[Math.floor(Math.random() * SUPPLEMENT_REMINDER_MESSAGES.length)];
+  }
+  const last = sessions[sessions.length - 1];
+  const moodName = MOOD_DISPLAY_NAMES[last.mood] ?? last.mood;
+  const supplements = getSupplementsForMood(last.mood);
+  if (supplements.length > 0) {
+    return `Time for your ${moodName} stack — ${supplements[0].name} is up first.`;
+  }
+  return `Time for your ${moodName} stack. Take your supplements.`;
+}
+
 function getStreak(sessions: Session[]): number {
   if (sessions.length === 0) return 0;
   const dates = new Set(sessions.map(s => new Date(s.timestamp).toDateString()));
@@ -65,9 +109,7 @@ function buildContextualMessage(sessions: Session[]): string {
   const moodName = MOOD_NAMES[last.mood] ?? last.mood.toUpperCase();
   const changeStr = change >= 0 ? `+${change}` : `${change}`;
 
-  // Context-aware: reference the actual last session
   if (hoursAgo >= 18 && hoursAgo < 54) {
-    // Last session was yesterday-ish
     if (change >= 2) {
       return `Yesterday you were ${moodName}. ${last.workoutName} helped (${changeStr}). Go again?`;
     } else if (change <= -1) {
@@ -78,14 +120,12 @@ function buildContextualMessage(sessions: Session[]): string {
   }
 
   if (hoursAgo >= 54 && hoursAgo < 120) {
-    // 2–5 days ago
     if (change >= 2) {
       return `${moodName} → better. You did it ${Math.round(hoursAgo / 24)} days ago. Do it again today.`;
     }
     return `Last time you checked in: ${moodName}. What's today look like?`;
   }
 
-  // Streak-based fallback
   if (streak === 0) {
     return ZERO_STREAK_MESSAGES[Math.floor(Math.random() * ZERO_STREAK_MESSAGES.length)];
   }
@@ -97,17 +137,28 @@ function inferPreferredHour(sessions: Session[]): number {
   if (sessions.length === 0) return 18;
   const recent = sessions.slice(-5);
   const avgHour = recent.reduce((sum, s) => sum + new Date(s.timestamp).getHours(), 0) / recent.length;
-  // Snap to nearest preset
   const diffs = PRESET_TIMES.map(p => ({ p, d: Math.abs(p.hour - avgHour) }));
   diffs.sort((a, b) => a.d - b.d);
   return diffs[0].p.hour;
 }
 
+async function cancelCheckinReminder(): Promise<void> {
+  try {
+    const id = await AsyncStorage.getItem(CHECKIN_NOTIF_ID_KEY);
+    if (id) {
+      await Notifications.cancelScheduledNotificationAsync(id);
+      await AsyncStorage.removeItem(CHECKIN_NOTIF_ID_KEY);
+    }
+  } catch {
+    // silently fail
+  }
+}
+
 export async function scheduleSmartReminder(hour: number, minute: number, streak = 0): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    await Notifications.scheduleNotificationAsync({
+    await cancelCheckinReminder();
+    const id = await Notifications.scheduleNotificationAsync({
       content: {
         title: 'MoodRx',
         body: STREAK_MESSAGES.find(m => streak >= m.minStreak)?.body.replace('{n}', String(streak))
@@ -119,6 +170,7 @@ export async function scheduleSmartReminder(hour: number, minute: number, streak
         minute,
       },
     });
+    await AsyncStorage.setItem(CHECKIN_NOTIF_ID_KEY, id);
   } catch {
     // silently fail — Expo Go or permissions not granted
   }
@@ -142,8 +194,8 @@ export async function rescheduleAfterSession(sessions: Session[]): Promise<void>
       hour = inferPreferredHour(sessions);
     }
 
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    await Notifications.scheduleNotificationAsync({
+    await cancelCheckinReminder();
+    const id = await Notifications.scheduleNotificationAsync({
       content: {
         title: 'MoodRx',
         body: buildContextualMessage(sessions),
@@ -154,6 +206,7 @@ export async function rescheduleAfterSession(sessions: Session[]): Promise<void>
         minute,
       },
     });
+    await AsyncStorage.setItem(CHECKIN_NOTIF_ID_KEY, id);
   } catch {
     // ignore — permissions may not be granted
   }
@@ -161,7 +214,41 @@ export async function rescheduleAfterSession(sessions: Session[]): Promise<void>
 
 export async function cancelReminders(): Promise<void> {
   if (Platform.OS === 'web') return;
+  await cancelCheckinReminder();
+}
+
+export async function scheduleSupplementReminder(hour: number, minute: number): Promise<void> {
+  if (Platform.OS === 'web') return;
   try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-  } catch {}
+    await cancelSupplementReminder();
+    const sessions = await getSessions();
+    const msg = buildSupplementMessage(sessions);
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'MoodRx — Supplements',
+        body: msg,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+      },
+    });
+    await AsyncStorage.setItem(SUPPLEMENT_NOTIF_ID_KEY, id);
+  } catch {
+    // silently fail
+  }
+}
+
+export async function cancelSupplementReminder(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const id = await AsyncStorage.getItem(SUPPLEMENT_NOTIF_ID_KEY);
+    if (id) {
+      await Notifications.cancelScheduledNotificationAsync(id);
+      await AsyncStorage.removeItem(SUPPLEMENT_NOTIF_ID_KEY);
+    }
+  } catch {
+    // silently fail
+  }
 }

@@ -26,6 +26,7 @@ export default function PremiumScreen() {
     purchaseMonthly,
     purchaseYearly,
     restorePurchases,
+    startTrial,
     isPremium,
     isInTrial,
     trialDaysLeft,
@@ -124,7 +125,21 @@ export default function PremiumScreen() {
 
         {!isPremium || isInTrial ? (
           <>
-            <Text style={styles.pricingLabel}>CHOOSE YOUR PLAN</Text>
+            {!hasUsedTrial && !isInTrial && (
+              <TouchableOpacity
+                style={styles.trialButton}
+                onPress={async () => { await startTrial(); router.back(); }}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Start 7-day free trial"
+              >
+                <Text style={styles.trialButtonText}>START 7-DAY FREE TRIAL →</Text>
+              </TouchableOpacity>
+            )}
+
+            <Text style={styles.pricingLabel}>
+              {hasUsedTrial ? 'CHOOSE YOUR PLAN' : 'OR SUBSCRIBE DIRECTLY'}
+            </Text>
 
             <TouchableOpacity
               style={styles.yearlyCard}
@@ -255,7 +270,16 @@ const styles = StyleSheet.create({
   },
   checkmark: { ...t.label, color: '#E8B84B', fontSize: 14, paddingTop: 1 },
   featureText: { ...t.body, flex: 1 },
-  pricingLabel: { ...t.label, color: '#ffffff', letterSpacing: 3, marginTop: 24, marginBottom: 16 },
+  trialButton: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  trialButtonText: { ...t.label, color: '#ffffff', letterSpacing: 3, fontSize: 13, lineHeight: 18 },
+  pricingLabel: { ...t.label, color: '#ffffff', letterSpacing: 3, marginBottom: 16 },
   yearlyCard: {
     borderWidth: 1,
     borderColor: '#E8B84B',

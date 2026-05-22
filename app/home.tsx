@@ -405,7 +405,7 @@ export default function HomeScreen() {
 
       {/* Streak toast — once per app launch, non-milestone streaks only */}
       {showGreeting && (
-        <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }]}>
+        <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }] }]}>
           <View style={styles.greetingContent}>
             <Text style={styles.greetingLabel}>{greetingStreakLabel}</Text>
             <Text style={styles.greetingText}>{greetingStreakMsg}</Text>
@@ -702,14 +702,13 @@ const styles = StyleSheet.create({
   },
   greetingToast: {
     position: 'absolute',
-    bottom: 88,
+    top: 100,
     left: 24,
     right: 24,
-    backgroundColor: '#111111',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-    paddingVertical: 14,
-    paddingHorizontal: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 0,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -721,23 +720,23 @@ const styles = StyleSheet.create({
   },
   greetingLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
-    lineHeight: 17,
-    color: '#E8B84B',
+    fontSize: 14,
+    lineHeight: 19,
+    color: '#B8860B',
     letterSpacing: 3,
   },
   greetingText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    color: '#ffffff',
-    letterSpacing: 0.3,
-    lineHeight: 20,
+    fontSize: 18,
+    color: '#111111',
+    letterSpacing: 0.2,
+    lineHeight: 26,
   },
   greetingDismiss: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
-    lineHeight: 17,
-    color: '#999',
+    fontSize: 14,
+    lineHeight: 19,
+    color: '#555555',
     marginLeft: 14,
   },
   prescribeButton: {

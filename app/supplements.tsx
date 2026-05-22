@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,11 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  Platform,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
 import { SUPPLEMENTS } from '@/lib/supplements';
 import {
   getSupplementLogs,
@@ -16,70 +18,145 @@ import {
   getSessions,
   SupplementLog,
   Session,
+  getSupplementReminderPrefs,
+  saveSupplementReminderPrefs,
 } from '@/lib/storage';
-import { MOODS } from '@/lib/moods';
+import {
+  scheduleSupplementReminder,
+  cancelSupplementReminder,
+  SUPPLEMENT_PRESET_TIMES,
+  DEFAULT_SUPPLEMENT_TIME,
+} from '@/lib/notifications';
+import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { todayDateString, formatTodayLabel, toDateString } from '@/lib/dateUtils';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
-import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { BottomNav } from '@/components/BottomNav';
 
-function buildSupplementStreakMap(logs: SupplementLog[]): Map<string, number> {
-  // Single pass: group taken dates by supplement name
-  const takenByName = new Map<string, Set<string>>();
-  for (const l of logs) {
-    if (!l.taken) continue;
-    let set = takenByName.get(l.supplementName);
-    if (!set) {
-      set = new Set();
-      takenByName.set(l.supplementName, set);
-    }
-    set.add(l.date);
-  }
+type TabKey = 'TODAY' | 'HISTORY' | 'ALL';
 
-  const streaks = new Map<string, number>();
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+interface DayAdherence {
+  taken: boolean;
+  isFuture: boolean;
+}
+
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getWeekDates(weekStart: Date): string[] {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return toDateString(d.getTime());
+  });
+}
+
+function formatWeekLabel(weekStart: Date): string {
+  const end = new Date(weekStart);
+  end.setDate(end.getDate() + 6);
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const s = `${String(weekStart.getDate()).padStart(2,'0')} ${months[weekStart.getMonth()]}`;
+  const e = `${String(end.getDate()).padStart(2,'0')} ${months[end.getMonth()]}`;
+  return `${s} – ${e}`;
+}
+
+/** Build Mon-Sun adherence for the current calendar week. Future days are flagged. */
+function buildWeekAdherence(logs: SupplementLog[]): DayAdherence[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayMs = today.getTime();
-  const dayMs = 24 * 60 * 60 * 1000;
-
-  for (const [name, dates] of takenByName) {
-    let streak = 0;
-    let t = todayMs;
-    while (dates.has(toDateString(t))) {
-      streak++;
-      t -= dayMs;
-    }
-    streaks.set(name, streak);
+  const weekStart = getWeekStart(today);
+  const result: DayAdherence[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    d.setHours(0, 0, 0, 0);
+    const dateStr = toDateString(d.getTime());
+    const isFuture = d.getTime() > todayMs;
+    const taken = !isFuture && logs.some((l) => l.date === dateStr && l.taken);
+    result.push({ taken, isFuture });
   }
-  return streaks;
+  return result;
+}
+
+function countWeekTaken(adherence: DayAdherence[]): number {
+  return adherence.filter((a) => !a.isFuture && a.taken).length;
+}
+
+/** Find the best mood for a given week from session history (used for week-level badge). */
+function getMoodForWeek(sessions: Session[], weekDates: string[]): MoodKey | null {
+  const weekDateSet = new Set(weekDates);
+  const lastDay = weekDates[6];
+  const inWeek = sessions.filter((s) => weekDateSet.has(toDateString(s.timestamp)));
+  if (inWeek.length > 0) {
+    const sorted = [...inWeek].sort((a, b) => b.timestamp - a.timestamp);
+    return sorted[0].mood as MoodKey;
+  }
+  const before = sessions.filter((s) => toDateString(s.timestamp) <= lastDay);
+  if (before.length > 0) {
+    const sorted = [...before].sort((a, b) => b.timestamp - a.timestamp);
+    return sorted[0].mood as MoodKey;
+  }
+  return null;
+}
+
+/**
+ * For a specific calendar date, find the mood from the most recent session
+ * on or before that date. Returns null if no sessions exist before/on that date.
+ */
+function getMoodForDay(sessions: Session[], dateStr: string): MoodKey | null {
+  const onOrBefore = sessions.filter((s) => toDateString(s.timestamp) <= dateStr);
+  if (onOrBefore.length === 0) return null;
+  const sorted = [...onOrBefore].sort((a, b) => b.timestamp - a.timestamp);
+  return sorted[0].mood as MoodKey;
 }
 
 export default function SupplementsScreen() {
   const [logs, setLogs] = useState<SupplementLog[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [lastMood, setLastMood] = useState<MoodKey | null>(null);
   const [expandedSupp, setExpandedSupp] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>('TODAY');
+  const [allFilterMood, setAllFilterMood] = useState<MoodKey | null>(null);
+
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState(DEFAULT_SUPPLEMENT_TIME);
+  const [reminderPermDenied, setReminderPermDenied] = useState(false);
+  const reminderToggleAnim = useRef(new Animated.Value(0)).current;
+
   const today = todayDateString();
+  const { isPremium, isInTrial } = useSubscription();
+  const canUseReminder = isPremium || isInTrial;
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
-  const backHandler = useCallback(() => {
-    router.back();
-    return true;
-  }, []);
-  useHardwareBack(backHandler);
-
   const loadData = useCallback(() => {
     getSupplementLogs().then(setLogs);
-    getSessions().then((sessions: Session[]) => {
-      if (sessions.length > 0) {
-        const sorted = [...sessions].sort((a, b) => b.timestamp - a.timestamp);
+    getSessions().then((s: Session[]) => {
+      setSessions(s);
+      if (s.length > 0) {
+        const sorted = [...s].sort((a, b) => b.timestamp - a.timestamp);
         setLastMood(sorted[0].mood as MoodKey);
       } else {
         setLastMood(null);
       }
     });
-  }, []);
+    getSupplementReminderPrefs().then((prefs) => {
+      setReminderEnabled(prefs.enabled);
+      setReminderTime(prefs.timeLabel);
+      reminderToggleAnim.setValue(prefs.enabled ? 1 : 0);
+    });
+  }, [reminderToggleAnim]);
 
   useFocusEffect(loadData);
 
@@ -104,172 +181,543 @@ export default function SupplementsScreen() {
 
   const accentColor = lastMood ? MOODS[lastMood].color : '#059669';
 
+  const weekAdherence = useMemo(() => buildWeekAdherence(logs), [logs]);
+  const weekTakenCount = useMemo(() => countWeekTaken(weekAdherence), [weekAdherence]);
+
   const handleToggle = async (supplementName: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await toggleSupplementLog(supplementName, today);
     loadData();
   };
 
+  const animateReminderToggle = (toValue: number) => {
+    Animated.spring(reminderToggleAnim, {
+      toValue,
+      useNativeDriver: false,
+      speed: 20,
+      bounciness: 4,
+    }).start();
+  };
+
+  const handleReminderToggle = async () => {
+    if (!reminderEnabled) {
+      if (Platform.OS !== 'web') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== 'granted') {
+          setReminderPermDenied(true);
+          return;
+        }
+      }
+      setReminderPermDenied(false);
+      setReminderEnabled(true);
+      animateReminderToggle(1);
+      const prefs = { enabled: true, timeLabel: reminderTime };
+      await saveSupplementReminderPrefs(prefs);
+      const preset = SUPPLEMENT_PRESET_TIMES.find((p) => p.label === reminderTime);
+      if (preset) await scheduleSupplementReminder(preset.hour, preset.minute);
+    } else {
+      setReminderEnabled(false);
+      animateReminderToggle(0);
+      await saveSupplementReminderPrefs({ enabled: false, timeLabel: reminderTime });
+      await cancelSupplementReminder();
+    }
+  };
+
+  const handleReminderTimeSelect = async (timeLabel: string) => {
+    setReminderTime(timeLabel);
+    await saveSupplementReminderPrefs({ enabled: reminderEnabled, timeLabel });
+    if (reminderEnabled) {
+      const preset = SUPPLEMENT_PRESET_TIMES.find((p) => p.label === timeLabel);
+      if (preset) await scheduleSupplementReminder(preset.hour, preset.minute);
+    }
+  };
+
+  const reminderToggleX = reminderToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [3, 25],
+  });
+
   const handleExpand = (supplementName: string) => {
     setExpandedSupp((prev) => (prev === supplementName ? null : supplementName));
   };
 
-  const supplementStreaks = useMemo(() => {
-    const streakMap = buildSupplementStreakMap(logs);
-    return visibleSupplements
-      .map((s) => ({ name: s.name, streak: streakMap.get(s.name) ?? 0 }))
-      .sort((a, b) => b.streak - a.streak)
-      .slice(0, 3);
-  }, [logs, visibleSupplements]);
+  const filteredCatalog = useMemo(() => {
+    if (!allFilterMood) return SUPPLEMENTS;
+    return SUPPLEMENTS.filter((s) => s.moods.includes(allFilterMood));
+  }, [allFilterMood]);
+
+  const historyWeeks = useMemo(() => {
+    const todayObj = new Date();
+    todayObj.setHours(0, 0, 0, 0);
+    const currentWeekStart = getWeekStart(todayObj);
+    return Array.from({ length: 4 }, (_, w) => {
+      const weekStart = new Date(currentWeekStart);
+      weekStart.setDate(weekStart.getDate() - w * 7);
+      return weekStart;
+    });
+  }, []);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.backButton}>← BACK</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.trackerLabel}>SUPPLEMENT TRACKER</Text>
-        <Text style={styles.headline}>Today&apos;s stack.</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.trackerLabel}>SUPPLEMENT PRO</Text>
+        <Text style={styles.headline}>Your stack.</Text>
         <Text style={styles.dateLabel}>{formatTodayLabel()}</Text>
+      </View>
 
-        {/* Mood filter note */}
-        {lastMood ? (
-          <View style={[styles.moodFilterBadge, { borderLeftColor: accentColor }]}>
-            <Text style={styles.moodFilterLabel}>MATCHED TO</Text>
-            <Text style={[styles.moodFilterMood, { color: accentColor }]}>
-              {MOODS[lastMood].name.toUpperCase()}
+      {/* Tab switcher */}
+      <View style={styles.tabSwitcher}>
+        {(['TODAY', 'HISTORY', 'ALL'] as TabKey[]).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            activeOpacity={0.7}
+            style={styles.tabBtn}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === tab }}
+          >
+            <Text style={[styles.tabBtnText, activeTab === tab && { color: '#ffffff' }]}>
+              {tab}
             </Text>
-          </View>
-        ) : (
-          <View style={styles.moodFilterBadge}>
-            <Text style={styles.moodFilterNote}>
-              Select a mood to see your matched stack.
-            </Text>
-          </View>
-        )}
+            {activeTab === tab && <View style={[styles.tabUnderline, { backgroundColor: accentColor }]} />}
+          </TouchableOpacity>
+        ))}
+      </View>
 
-        {/* Progress summary */}
-        <View
-          style={styles.progressRow}
-          accessible={true}
-          accessibilityLabel={`${takenCount} of ${totalCount} supplements taken today`}
+      {/* TODAY */}
+      {activeTab === 'TODAY' && (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.progressCountWrapper} importantForAccessibility="no-hide-descendants">
-            <Text style={[styles.progressCountAccent, { color: accentColor }]}>{takenCount}</Text>
-            <Text style={styles.progressCountSlash}> / {totalCount}</Text>
-          </View>
-          <Text style={styles.progressLabel}>TODAY</Text>
-        </View>
-
-        {/* TODAY'S PRIORITY card */}
-        {visibleSupplements.length > 0 && (() => {
-          const priority = visibleSupplements[0];
-          const isPriorityTaken = takenSet.has(priority.name);
-          return (
-            <View style={[styles.priorityCard, { borderLeftColor: accentColor }]}>
-              <Text style={styles.priorityCardLabel}>TODAY&apos;S PRIORITY</Text>
-              <Text style={styles.priorityCardHeadline}>One thing. Take it.</Text>
-              <Text style={styles.priorityCardName}>{priority.name}</Text>
-              <Text style={styles.priorityCardDose}>{priority.dose} · {priority.timing.toUpperCase()}</Text>
-              <Text style={styles.priorityCardScience}>{priority.science}</Text>
-              <TouchableOpacity
-                onPress={() => handleToggle(priority.name)}
-                activeOpacity={0.7}
-                style={[styles.priorityCheckBtn, isPriorityTaken && { borderColor: accentColor }]}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: isPriorityTaken }}
-                accessibilityLabel={`${priority.name}: ${isPriorityTaken ? 'taken' : 'not taken'}. Tap to toggle.`}
-              >
-                <Text style={[styles.priorityCheckBtnText, isPriorityTaken && { color: accentColor }]}>
-                  {isPriorityTaken ? 'TAKEN ✓' : 'MARK AS TAKEN'}
-                </Text>
-              </TouchableOpacity>
+          {/* Mood badge */}
+          {lastMood ? (
+            <View style={[styles.moodFilterBadge, { borderLeftColor: accentColor }]}>
+              <Text style={styles.moodFilterLabel}>MATCHED TO</Text>
+              <Text style={[styles.moodFilterMood, { color: accentColor }]}>
+                {MOODS[lastMood].name.toUpperCase()}
+              </Text>
             </View>
-          );
-        })()}
+          ) : (
+            <View style={styles.moodFilterBadge}>
+              <Text style={styles.moodFilterNote}>Select a mood to see your matched stack.</Text>
+            </View>
+          )}
 
-        {/* Supplement list */}
-        <View style={styles.supplementList}>
-          {visibleSupplements.map((supp) => {
-            const isTaken = takenSet.has(supp.name);
-            const isExpanded = expandedSupp === supp.name;
+          {/* 7-day adherence strip — Mon through Sun of current week */}
+          <View style={styles.adherenceStrip}>
+            <View style={styles.adherenceDots}>
+              {weekAdherence.map((day, i) => (
+                <View key={i} style={styles.adherenceDotCol}>
+                  <View
+                    style={[
+                      day.isFuture
+                        ? styles.adherenceDotFuture
+                        : day.taken
+                        ? [styles.adherenceDot, { backgroundColor: accentColor }]
+                        : styles.adherenceDotEmpty,
+                    ]}
+                  />
+                  <Text style={styles.adherenceDayLabel}>{DAY_LABELS[i]}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={styles.adherenceCountText}>
+              <Text style={{ color: accentColor }}>{weekTakenCount}</Text>
+              <Text style={styles.adherenceCountOf}>/7 THIS WEEK</Text>
+            </Text>
+          </View>
+
+          {/* Progress summary */}
+          <View
+            style={styles.progressRow}
+            accessible={true}
+            accessibilityLabel={`${takenCount} of ${totalCount} supplements taken today`}
+          >
+            <View style={styles.progressCountWrapper} importantForAccessibility="no-hide-descendants">
+              <Text style={[styles.progressCountAccent, { color: accentColor }]}>{takenCount}</Text>
+              <Text style={styles.progressCountSlash}> / {totalCount}</Text>
+            </View>
+            <Text style={styles.progressLabel}>TODAY</Text>
+          </View>
+
+          {/* Supplement reminder card (premium only) */}
+          {canUseReminder ? (
+            <View style={styles.reminderCard}>
+              <View style={styles.reminderHeader}>
+                <Text style={styles.reminderLabel}>DAILY REMINDER</Text>
+                <TouchableOpacity
+                  onPress={handleReminderToggle}
+                  activeOpacity={0.8}
+                  style={[styles.reminderToggle, reminderEnabled ? styles.reminderToggleOn : styles.reminderToggleOff]}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: reminderEnabled }}
+                  accessibilityLabel="Daily supplement reminder"
+                >
+                  <Animated.View style={[styles.reminderToggleCircle, { transform: [{ translateX: reminderToggleX }] }]} />
+                </TouchableOpacity>
+              </View>
+              {reminderPermDenied && (
+                <Text style={styles.reminderPermDenied}>
+                  Notifications blocked. Enable in device settings.
+                </Text>
+              )}
+              {reminderEnabled && (
+                <View style={styles.reminderTimeRow}>
+                  {SUPPLEMENT_PRESET_TIMES.map((p) => (
+                    <TouchableOpacity
+                      key={p.label}
+                      onPress={() => handleReminderTimeSelect(p.label)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.reminderTimeChip,
+                        reminderTime === p.label
+                          ? [styles.reminderTimeChipOn, { borderColor: accentColor }]
+                          : styles.reminderTimeChipOff,
+                      ]}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: reminderTime === p.label }}
+                      accessibilityLabel={`Reminder at ${p.label}`}
+                    >
+                      <Text
+                        style={[
+                          styles.reminderTimeChipText,
+                          reminderTime === p.label ? { color: '#ffffff' } : { color: '#999' },
+                        ]}
+                      >
+                        {p.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={[styles.reminderCard, styles.reminderCardLocked]}>
+              <Text style={styles.reminderLabel}>DAILY REMINDER</Text>
+              <Text style={styles.reminderLockedText}>Upgrade to Pro to set daily supplement reminders.</Text>
+            </View>
+          )}
+
+          {/* Priority card */}
+          {visibleSupplements.length > 0 && (() => {
+            const priority = visibleSupplements[0];
+            const isPriorityTaken = takenSet.has(priority.name);
             return (
-              <View key={supp.name}>
-                {/* Flat row: checkbox + expand area side by side, no nesting */}
-                <View style={styles.supplementRow}>
-                  <TouchableOpacity
-                    onPress={() => handleToggle(supp.name)}
-                    activeOpacity={0.7}
-                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: isTaken }}
-                    accessibilityLabel={`${supp.name}: ${isTaken ? 'taken' : 'not taken'}. Tap to toggle.`}
-                  >
-                    <View style={[isTaken ? styles.checkboxTaken : styles.checkboxEmpty,
-                      isTaken ? { borderColor: accentColor } : {}]}>
-                      {isTaken && <View style={[styles.checkboxFill, { backgroundColor: accentColor }]} />}
-                    </View>
-                  </TouchableOpacity>
+              <View style={[styles.priorityCard, { borderLeftColor: accentColor }]}>
+                <Text style={styles.priorityCardLabel}>TODAY&apos;S PRIORITY</Text>
+                <Text style={styles.priorityCardHeadline}>One thing. Take it.</Text>
+                <Text style={styles.priorityCardName}>{priority.name}</Text>
+                <Text style={styles.priorityCardDose}>{priority.dose} · {priority.timing.toUpperCase()}</Text>
+                <Text style={styles.priorityCardScience}>{priority.science}</Text>
+                <TouchableOpacity
+                  onPress={() => handleToggle(priority.name)}
+                  activeOpacity={0.7}
+                  style={[styles.priorityCheckBtn, isPriorityTaken && { borderColor: accentColor }]}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: isPriorityTaken }}
+                  accessibilityLabel={`${priority.name}: ${isPriorityTaken ? 'taken' : 'not taken'}. Tap to toggle.`}
+                >
+                  <Text style={[styles.priorityCheckBtnText, isPriorityTaken && { color: accentColor }]}>
+                    {isPriorityTaken ? 'TAKEN ✓' : 'MARK AS TAKEN'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })()}
 
+          {/* Supplement list */}
+          <View style={styles.supplementList}>
+            {visibleSupplements.map((supp) => {
+              const isTaken = takenSet.has(supp.name);
+              const isExpanded = expandedSupp === supp.name;
+              return (
+                <View key={supp.name}>
+                  <View style={styles.supplementRow}>
+                    <TouchableOpacity
+                      onPress={() => handleToggle(supp.name)}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: isTaken }}
+                      accessibilityLabel={`${supp.name}: ${isTaken ? 'taken' : 'not taken'}. Tap to toggle.`}
+                    >
+                      <View style={[isTaken ? styles.checkboxTaken : styles.checkboxEmpty,
+                        isTaken ? { borderColor: accentColor } : {}]}>
+                        {isTaken && <View style={[styles.checkboxFill, { backgroundColor: accentColor }]} />}
+                      </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.supplementExpandArea}
+                      onPress={() => handleExpand(supp.name)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${supp.name}, ${supp.benefit}. ${isExpanded ? 'Collapse' : 'Expand'} details`}
+                    >
+                      <View style={styles.supplementInfo}>
+                        <Text style={styles.supplementName}>{supp.name}</Text>
+                        <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
+                      </View>
+                      <View style={styles.supplementRight}>
+                        <Text style={styles.supplementDose}>{supp.dose}</Text>
+                        <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
+                        <Text style={[styles.expandChevron, { color: accentColor }]}>
+                          {isExpanded ? '▲' : '▼'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+
+                  {isExpanded && (
+                    <View style={[styles.sciencePanel, { borderLeftColor: accentColor }]}>
+                      <Text style={styles.sciencePanelLabel}>GOOD FOR</Text>
+                      <View style={styles.moodTagRow}>
+                        {supp.moods.map((m) => (
+                          <View key={m} style={[styles.moodTag, { borderColor: MOODS[m].color }]}>
+                            <Text style={[styles.moodTagText, { color: MOODS[m].color }]}>{MOODS[m].name.toUpperCase()}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>WHY THIS WORKS</Text>
+                      <Text style={styles.sciencePanelText}>{supp.science}</Text>
+                      {supp.sources.length > 0 && (
+                        <>
+                          <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>SOURCES</Text>
+                          {supp.sources.map((src, i) => (
+                            <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
+                          ))}
+                        </>
+                      )}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      )}
+
+      {/* HISTORY */}
+      {activeTab === 'HISTORY' && (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.sectionNote}>
+            Last 4 weeks · dot = taken · – = not in your stack that day
+          </Text>
+          {historyWeeks.map((weekStart, wi) => {
+            const weekDates = getWeekDates(weekStart);
+            const weekLabel = formatWeekLabel(weekStart);
+            const moodForWeek = getMoodForWeek(sessions, weekDates);
+
+            // Build per-day moods for accurate per-day supplement stacks
+            const dayMoods: (MoodKey | null)[] = weekDates.map((dateStr) =>
+              getMoodForDay(sessions, dateStr)
+            );
+
+            // Collect the union of supplements relevant across all days in the week
+            const suppSet = new Set<string>();
+            dayMoods.forEach((mood) => {
+              if (mood) {
+                SUPPLEMENTS.filter((s) => s.moods.includes(mood)).forEach((s) => suppSet.add(s.name));
+              }
+            });
+            // Fall back to a generic subset if no mood data exists for the whole week
+            const suppsForWeek = suppSet.size > 0
+              ? SUPPLEMENTS.filter((s) => suppSet.has(s.name))
+              : SUPPLEMENTS.slice(0, 6);
+
+            return (
+              <View key={wi} style={styles.weekBlock}>
+                <View style={styles.weekLabelRow}>
+                  <Text style={styles.weekLabel}>{weekLabel}</Text>
+                  {moodForWeek && (
+                    <Text style={[styles.weekMoodBadge, { color: MOODS[moodForWeek].color }]}>
+                      {MOODS[moodForWeek].name.toUpperCase()}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Day column headers */}
+                <View style={styles.historyGridRow}>
+                  <View style={styles.historyNameCell} />
+                  {weekDates.map((dateStr, di) => {
+                    const dayMood = dayMoods[di];
+                    return (
+                      <View key={di} style={styles.historyDayCell}>
+                        <Text style={styles.historyDayHeader}>{DAY_LABELS[di]}</Text>
+                        {dayMood && (
+                          <View
+                            style={[
+                              styles.historyDayMoodDot,
+                              { backgroundColor: MOODS[dayMood].color },
+                            ]}
+                          />
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {/* Supplement rows */}
+                {suppsForWeek.map((supp) => (
+                  <View key={supp.name} style={styles.historyGridRow}>
+                    <View style={styles.historyNameCell}>
+                      <Text style={styles.historySupName} numberOfLines={1}>{supp.name}</Text>
+                    </View>
+                    {weekDates.map((dateStr, di) => {
+                      const dayMood = dayMoods[di];
+                      const relevantToday = dayMood ? supp.moods.includes(dayMood) : true;
+                      const taken = logs.some(
+                        (l) => l.date === dateStr && l.supplementName === supp.name && l.taken
+                      );
+                      return (
+                        <View key={di} style={styles.historyDayCell}>
+                          {relevantToday ? (
+                            <View
+                              style={
+                                taken
+                                  ? [styles.historyDot, { backgroundColor: accentColor }]
+                                  : styles.historyDotEmpty
+                              }
+                            />
+                          ) : (
+                            <Text style={styles.historyDotNa}>–</Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      )}
+
+      {/* ALL */}
+      {activeTab === 'ALL' && (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.sectionNote}>Full catalog · tap to read the science</Text>
+
+          {/* Mood filter chips */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterRow}
+            contentContainerStyle={styles.filterRowContent}
+          >
+            <TouchableOpacity
+              onPress={() => setAllFilterMood(null)}
+              activeOpacity={0.7}
+              style={[styles.filterChip, allFilterMood === null && styles.filterChipActive]}
+            >
+              <Text style={[styles.filterChipText, allFilterMood === null && { color: '#ffffff' }]}>
+                ALL
+              </Text>
+            </TouchableOpacity>
+            {MOOD_ORDER.map((mood) => {
+              const isActive = allFilterMood === mood;
+              return (
+                <TouchableOpacity
+                  key={mood}
+                  onPress={() => setAllFilterMood(isActive ? null : mood)}
+                  activeOpacity={0.7}
+                  style={[
+                    styles.filterChip,
+                    isActive && { borderColor: MOODS[mood].color, backgroundColor: MOODS[mood].color + '22' },
+                  ]}
+                >
+                  <Text style={[styles.filterChipText, isActive && { color: MOODS[mood].color }]}>
+                    {MOODS[mood].name.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Catalog list */}
+          <View style={styles.supplementList}>
+            {filteredCatalog.map((supp) => {
+              const isExpanded = expandedSupp === supp.name;
+              return (
+                <View key={supp.name}>
                   <TouchableOpacity
-                    style={styles.supplementExpandArea}
+                    style={styles.catalogRow}
                     onPress={() => handleExpand(supp.name)}
                     activeOpacity={0.7}
                     accessibilityRole="button"
-                    accessibilityLabel={`${supp.name}, ${supp.benefit}. ${isExpanded ? 'Collapse' : 'Expand'} details`}
+                    accessibilityLabel={`${supp.name}, ${supp.benefit}. ${isExpanded ? 'Collapse' : 'Expand'}`}
                   >
                     <View style={styles.supplementInfo}>
                       <Text style={styles.supplementName}>{supp.name}</Text>
                       <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
+                      <View style={styles.moodTagRow}>
+                        {supp.moods.map((m) => (
+                          <View
+                            key={m}
+                            style={[styles.moodTag, { borderColor: MOODS[m].color }]}
+                          >
+                            <Text style={[styles.moodTagText, { color: MOODS[m].color }]}>
+                              {m.toUpperCase()}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
                     <View style={styles.supplementRight}>
                       <Text style={styles.supplementDose}>{supp.dose}</Text>
                       <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
-                      <Text style={[styles.expandChevron, { color: accentColor }]}>
+                      <Text style={[styles.expandChevron, { color: '#aaaaaa' }]}>
                         {isExpanded ? '▲' : '▼'}
                       </Text>
                     </View>
                   </TouchableOpacity>
+
+                  {isExpanded && (
+                    <View style={[styles.sciencePanel, { borderLeftColor: '#aaaaaa' }]}>
+                      <Text style={styles.sciencePanelLabel}>GOOD FOR</Text>
+                      <View style={styles.moodTagRow}>
+                        {supp.moods.map((m) => (
+                          <View key={m} style={[styles.moodTag, { borderColor: MOODS[m].color }]}>
+                            <Text style={[styles.moodTagText, { color: MOODS[m].color }]}>{MOODS[m].name.toUpperCase()}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>WHY THIS WORKS</Text>
+                      <Text style={styles.sciencePanelText}>{supp.science}</Text>
+                      {supp.sources.length > 0 && (
+                        <>
+                          <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>SOURCES</Text>
+                          {supp.sources.map((src, i) => (
+                            <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
+                          ))}
+                        </>
+                      )}
+                    </View>
+                  )}
                 </View>
+              );
+            })}
+          </View>
 
-                {isExpanded && (
-                  <View style={[styles.sciencePanel, { borderLeftColor: accentColor }]}>
-                    <Text style={styles.sciencePanelLabel}>WHY THIS WORKS</Text>
-                    <Text style={styles.sciencePanelText}>{supp.science}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      )}
 
-        {/* Consistency streaks */}
-        <View style={styles.consistencySection}>
-          <Text style={styles.consistencyLabel}>CONSISTENCY</Text>
-          {supplementStreaks.map((item) => (
-            <View key={item.name} style={styles.streakRow}>
-              <Text style={styles.streakName}>{item.name}</Text>
-              {item.streak > 0 ? (
-                <Text style={[styles.streakValue, { color: accentColor }]}>{item.streak}d streak</Text>
-              ) : (
-                <Text style={styles.streakNone}>—</Text>
-              )}
-            </View>
-          ))}
-        </View>
-
-        <View style={{ height: 32 }} />
-      </ScrollView>
+      <BottomNav />
     </Animated.View>
   );
 }
@@ -279,24 +727,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-  scroll: {
-    flex: 1,
-  },
-  content: {
+  header: {
     paddingTop: 56,
     paddingHorizontal: 24,
-    paddingBottom: 32,
-  },
-  backButton: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
+    paddingBottom: 0,
   },
   trackerLabel: {
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    marginTop: 24,
   },
   headline: {
     ...t.headlineMd,
@@ -309,20 +748,61 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     marginTop: 4,
   },
+  tabSwitcher: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    marginTop: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  tabBtn: {
+    marginRight: 28,
+    paddingBottom: 12,
+    alignItems: 'center',
+  },
+  tabBtnText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    color: '#999999',
+    letterSpacing: 2,
+    lineHeight: 20,
+  },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingTop: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  sectionNote: {
+    ...t.timestamp,
+    color: '#999999',
+    marginBottom: 16,
+  },
   moodFilterBadge: {
     borderLeftWidth: 2,
     borderLeftColor: '#333333',
     paddingLeft: 12,
     paddingVertical: 8,
-    marginTop: 16,
+    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   moodFilterLabel: {
     ...t.label,
-    color: '#ffffff',
+    color: '#999999',
     letterSpacing: 2,
+    fontSize: 13,
+    lineHeight: 18,
   },
   moodFilterMood: {
     ...t.label,
@@ -330,13 +810,70 @@ const styles = StyleSheet.create({
   },
   moodFilterNote: {
     ...t.bodySm,
-    color: '#ffffff',
+    color: '#999999',
+  },
+  adherenceStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#1a1a1a',
+    marginBottom: 16,
+  },
+  adherenceDots: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  adherenceDotCol: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  adherenceDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  adherenceDotEmpty: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#444444',
+    backgroundColor: 'transparent',
+  },
+  adherenceDotFuture: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#222222',
+  },
+  adherenceDayLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#999999',
+    letterSpacing: 0,
+  },
+  adherenceCountText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 1,
+  },
+  adherenceCountOf: {
+    color: '#999999',
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 1,
   },
   progressRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 8,
-    marginTop: 20,
+    marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
@@ -357,7 +894,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     ...t.label,
-    color: '#ffffff',
+    color: '#999999',
     letterSpacing: 3,
     marginLeft: 8,
   },
@@ -365,12 +902,11 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     backgroundColor: '#111111',
     padding: 16,
-    marginTop: 20,
     marginBottom: 8,
   },
   priorityCardLabel: {
     ...t.label,
-    color: '#ffffff',
+    color: '#999999',
     letterSpacing: 3,
     fontSize: 12,
     lineHeight: 17,
@@ -388,13 +924,13 @@ const styles = StyleSheet.create({
   },
   priorityCardDose: {
     ...t.timestamp,
-    color: '#ffffff',
+    color: '#999999',
     letterSpacing: 2,
     marginTop: 2,
   },
   priorityCardScience: {
     ...t.soft,
-    color: '#ffffff',
+    color: '#c8c8c8',
     fontSize: 14,
     lineHeight: 20,
     marginTop: 10,
@@ -421,6 +957,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
+  catalogRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
   supplementExpandArea: {
     flex: 1,
     flexDirection: 'row',
@@ -431,7 +974,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 1,
-    borderColor: '#525252',
+    borderColor: '#444444',
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
@@ -457,7 +1000,7 @@ const styles = StyleSheet.create({
   },
   supplementBenefit: {
     ...t.bodyMuted,
-    color: '#ffffff',
+    color: '#999999',
     fontSize: 13,
     marginTop: 2,
   },
@@ -466,17 +1009,22 @@ const styles = StyleSheet.create({
   },
   supplementDose: {
     ...t.label,
-    color: '#ffffff',
+    color: '#999999',
+    fontSize: 13,
+    lineHeight: 18,
   },
   supplementTiming: {
     ...t.label,
-    color: '#ffffff',
+    color: '#999999',
     letterSpacing: 2,
     marginTop: 2,
+    fontSize: 13,
+    lineHeight: 18,
   },
   expandChevron: {
     fontSize: 14,
     marginTop: 2,
+    lineHeight: 18,
   },
   sciencePanel: {
     backgroundColor: '#111111',
@@ -487,47 +1035,207 @@ const styles = StyleSheet.create({
   },
   sciencePanelLabel: {
     ...t.label,
-    color: '#ffffff',
+    color: '#999999',
     letterSpacing: 3,
     marginBottom: 8,
+    fontSize: 12,
+    lineHeight: 17,
   },
   sciencePanelText: {
     ...t.soft,
-    color: '#ffffff',
+    color: '#c8c8c8',
     fontSize: 14,
     lineHeight: 20,
   },
-  consistencySection: {
-    marginTop: 32,
-    borderTopWidth: 1,
-    borderTopColor: '#1a1a1a',
-    paddingTop: 16,
-  },
-  consistencyLabel: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 3,
-  },
-  streakRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
+  sourceText: {
+    ...t.soft,
+    color: '#aaaaaa',
+    fontSize: 12,
+    lineHeight: 18,
     marginTop: 4,
   },
-  streakName: {
-    ...t.body,
-    fontSize: 14,
+  moodTagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
   },
-  streakValue: {
-    ...t.label,
+  moodTag: {
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  moodTagText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
     letterSpacing: 1,
   },
-  streakNone: {
+  filterRow: {
+    marginBottom: 16,
+  },
+  filterRowContent: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  filterChip: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  filterChipActive: {
+    borderColor: '#ffffff',
+    backgroundColor: '#ffffff22',
+  },
+  filterChipText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#999999',
+    letterSpacing: 1.5,
+  },
+  weekBlock: {
+    marginBottom: 28,
+  },
+  weekLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  weekLabel: {
     ...t.label,
-    color: '#ffffff',
-    fontSize: 14,
+    color: '#999999',
+    letterSpacing: 2,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  weekMoodBadge: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 1.5,
+  },
+  historyGridRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  historyNameCell: {
+    width: 110,
+    paddingRight: 8,
+  },
+  historyDayCell: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  historyDayHeader: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#999999',
+    letterSpacing: 0,
+  },
+  historySupName: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#c8c8c8',
+  },
+  historyDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  historyDotEmpty: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: 'transparent',
+  },
+  historyDayMoodDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
+  },
+  historyDotNa: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 14,
+    color: '#444444',
+  },
+  reminderCard: {
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    padding: 14,
+    marginBottom: 16,
+  },
+  reminderCardLocked: {
+    borderColor: '#1a1a1a',
+    opacity: 0.6,
+  },
+  reminderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  reminderLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#999',
+    letterSpacing: 3,
+    textTransform: 'uppercase' as const,
+  },
+  reminderToggle: {
+    width: 50,
+    height: 28,
+    borderRadius: 0,
+    justifyContent: 'center',
+  },
+  reminderToggleOff: { backgroundColor: '#1a1a1a' },
+  reminderToggleOn: { backgroundColor: '#059669' },
+  reminderToggleCircle: {
+    width: 22,
+    height: 22,
+    backgroundColor: '#ffffff',
+    borderRadius: 0,
+  },
+  reminderPermDenied: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#E11D48',
+    marginTop: 8,
+  },
+  reminderLockedText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#999',
+    marginTop: 8,
+  },
+  reminderTimeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  reminderTimeChip: {
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  reminderTimeChipOn: { borderColor: '#059669' },
+  reminderTimeChipOff: { borderColor: '#1a1a1a' },
+  reminderTimeChipText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 1,
   },
 });

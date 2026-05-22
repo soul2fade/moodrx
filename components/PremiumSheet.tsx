@@ -23,7 +23,7 @@ export function PremiumSheet({
   headline = 'Unlock all 18 workouts.',
   description = '3 science-backed options for every mood state. Plus supplement tracking, full insights, and the neuroscience behind every rep.',
 }: PremiumSheetProps) {
-  const { purchaseMonthly, purchaseYearly, offerings } = useSubscription();
+  const { purchaseMonthly, purchaseYearly, offerings, startTrial, hasUsedTrial } = useSubscription();
 
   const currentOffering = offerings?.current;
   const monthlyPkg = currentOffering?.availablePackages?.find((p) => p.identifier === '$rc_monthly');
@@ -45,8 +45,22 @@ export function PremiumSheet({
         <Text style={styles.headline}>{headline}</Text>
         <Text style={styles.description}>{description}</Text>
 
+        {!hasUsedTrial && (
+          <TouchableOpacity
+            style={styles.trialButton}
+            onPress={async () => { await startTrial(); onClose(); }}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Start 7-day free trial"
+          >
+            <Text style={styles.trialButtonText}>START 7-DAY FREE TRIAL →</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.trialNote}>
-          <Text style={styles.trialLabel}>7-DAY FREE TRIAL — CANCEL ANYTIME</Text>
+          <Text style={styles.trialLabel}>
+            {hasUsedTrial ? 'SUBSCRIBE TO UNLOCK PRO' : 'OR SUBSCRIBE DIRECTLY'}
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -110,6 +124,20 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginTop: 10,
     marginBottom: 20,
+  },
+  trialButton: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  trialButtonText: {
+    ...t.label,
+    color: '#ffffff',
+    letterSpacing: 3,
+    fontSize: 13,
+    lineHeight: 18,
   },
   trialNote: {
     borderLeftWidth: 2,

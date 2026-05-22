@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   },
   greetingToast: {
     position: 'absolute',
-    top: 100,
+    top: '40%',
     left: 24,
     right: 24,
     backgroundColor: '#ffffff',

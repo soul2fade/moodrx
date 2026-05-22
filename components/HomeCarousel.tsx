@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
+  Modal,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -108,6 +109,7 @@ export function HomeCarousel({
   onPageChange,
 }: HomeCarouselProps) {
   const [activePage, setActivePage] = useState(initialPage);
+  const [showTrendSheet, setShowTrendSheet] = useState(false);
   const scrollX = useSharedValue(initialPage * CARD_W);
   const labelTranslateX = useSharedValue(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -169,6 +171,13 @@ export function HomeCarousel({
   }, [activePage]);
 
   const PAGE_LABELS = ['YOUR PATTERN', 'QUICK ACTIONS'];
+
+  const last7 = sessions.slice(-7);
+  const trendDiff = last7.length >= 2 ? last7[last7.length - 1].intensity - last7[0].intensity : 0;
+  const trendLabel = Math.abs(trendDiff) < 1 ? '→ HOLDING STEADY' : trendDiff < 0 ? '↓ TRENDING BETTER' : '↑ TRENDING WORSE';
+  const trendColor = Math.abs(trendDiff) < 1 ? '#999999' : trendDiff < 0 ? '#059669' : '#b45309';
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -251,39 +260,31 @@ export function HomeCarousel({
               </TouchableOpacity>
 
               {/* 7-day sparkline */}
-              {sessions.length >= 2 && (() => {
-                const last7 = sessions.slice(-7);
-                const maxVal = 10;
-                const SPARK_H = 32;
-                const first = last7[0].intensity;
-                const last = last7[last7.length - 1].intensity;
-                const diff = last - first;
-                const trendLabel = Math.abs(diff) < 1
-                  ? '→ HOLDING STEADY'
-                  : diff < 0
-                  ? '↓ TRENDING BETTER'
-                  : '↑ TRENDING WORSE';
-                const trendColor = Math.abs(diff) < 1 ? '#999999' : diff < 0 ? '#059669' : '#b45309';
-                return (
-                  <View style={styles.sparklineCard} accessibilityLabel={`7-day mood trend: ${trendLabel}`}>
-                    <Text style={styles.sparklineHeader}>7-DAY TREND</Text>
-                    <View style={styles.sparklineBars}>
-                      {last7.map((s, i) => {
-                        const barH = Math.max((s.intensity / maxVal) * SPARK_H, 3);
-                        const moodCol = MOODS[s.mood]?.color ?? '#525252';
-                        return (
-                          <View
-                            key={s.id ?? i}
-                            style={[styles.sparklineBar, { height: barH, backgroundColor: moodCol + 'aa' }]}
-                            importantForAccessibility="no"
-                          />
-                        );
-                      })}
-                    </View>
-                    <Text style={[styles.sparklineTrend, { color: trendColor }]}>{trendLabel}</Text>
+              {sessions.length >= 2 && (
+                <TouchableOpacity
+                  style={styles.sparklineCard}
+                  onPress={() => setShowTrendSheet(true)}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityLabel={`7-day mood trend: ${trendLabel}. Tap for day-by-day breakdown.`}
+                >
+                  <Text style={styles.sparklineHeader}>7-DAY TREND</Text>
+                  <View style={styles.sparklineBars}>
+                    {last7.map((s, i) => {
+                      const barH = Math.max((s.intensity / 10) * 32, 3);
+                      const moodCol = MOODS[s.mood]?.color ?? '#525252';
+                      return (
+                        <View
+                          key={s.id ?? i}
+                          style={[styles.sparklineBar, { height: barH, backgroundColor: moodCol + 'aa' }]}
+                          importantForAccessibility="no"
+                        />
+                      );
+                    })}
                   </View>
-                );
-              })()}
+                  <Text style={[styles.sparklineTrend, { color: trendColor }]}>{trendLabel}  ›</Text>
+                </TouchableOpacity>
+              )}
             </>
           ) : (
             <View style={styles.emptyState}>
@@ -396,6 +397,60 @@ export function HomeCarousel({
       <Animated.View style={[styles.swipeHintRow, hintStyle]} pointerEvents="none">
         <Text style={styles.swipeHintText}>SWIPE TO EXPLORE →</Text>
       </Animated.View>
+
+      {/* 7-day breakdown sheet */}
+      <Modal
+        visible={showTrendSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTrendSheet(false)}
+      >
+        <TouchableOpacity
+          style={sheet.overlay}
+          activeOpacity={1}
+          onPress={() => setShowTrendSheet(false)}
+        />
+        <View style={sheet.panel}>
+          <View style={sheet.header}>
+            <Text style={sheet.title}>7-DAY BREAKDOWN</Text>
+            <TouchableOpacity
+              onPress={() => setShowTrendSheet(false)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Text style={sheet.close}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          {last7.map((s, i) => {
+            const d    = new Date(s.timestamp);
+            const day  = DAYS[d.getDay()];
+            const date = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+            const md   = MOODS[s.mood];
+            return (
+              <View key={s.id ?? i} style={sheet.row}>
+                <View style={sheet.dateCol}>
+                  <Text style={sheet.rowDay}>{day}</Text>
+                  <Text style={sheet.rowDate}>{date}</Text>
+                </View>
+                <View style={sheet.moodCol}>
+                  <View style={[sheet.moodDot, { backgroundColor: md.color }]} />
+                  <Text style={[sheet.moodName, { color: md.color }]}>{md.name.toUpperCase()}</Text>
+                </View>
+                <View style={sheet.intensityCol}>
+                  <Text style={sheet.intensityNum}>
+                    {s.intensity}<Text style={sheet.intensityMax}>/10</Text>
+                  </Text>
+                  <View style={sheet.intensityBg}>
+                    <View style={[sheet.intensityFill, { width: `${s.intensity * 10}%` as any, backgroundColor: md.color + 'cc' }]} />
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+          <Text style={[sheet.trendSummary, { color: trendColor }]}>{trendLabel}</Text>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -578,6 +633,115 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.45)',
     letterSpacing: 2,
+    lineHeight: 17,
+  },
+});
+
+const sheet = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  panel: {
+    backgroundColor: '#111111',
+    borderTopWidth: 1,
+    borderTopColor: '#2a2a2a',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 36,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  title: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    color: '#ffffff',
+    letterSpacing: 3,
+    lineHeight: 18,
+  },
+  close: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    color: '#999',
+    lineHeight: 19,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  dateCol: {
+    width: 56,
+    gap: 2,
+  },
+  rowDay: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    color: '#ffffff',
+    letterSpacing: 1.5,
+    lineHeight: 18,
+  },
+  rowDate: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#666',
+    letterSpacing: 0.5,
+    lineHeight: 17,
+  },
+  moodCol: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  moodDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  moodName: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    letterSpacing: 1.5,
+    lineHeight: 18,
+  },
+  intensityCol: {
+    width: 72,
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  intensityNum: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 15,
+    color: '#ffffff',
+    lineHeight: 20,
+  },
+  intensityMax: {
+    fontSize: 12,
+    color: '#555',
+    lineHeight: 17,
+  },
+  intensityBg: {
+    width: 56,
+    height: 3,
+    backgroundColor: '#222',
+    borderRadius: 2,
+  },
+  intensityFill: {
+    height: 3,
+    borderRadius: 2,
+  },
+  trendSummary: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    letterSpacing: 2,
+    marginTop: 16,
     lineHeight: 17,
   },
 });

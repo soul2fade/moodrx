@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   coachDot: { width: 7, height: 7, borderRadius: 4 },
   coachLabel: { fontSize: 12, color: '#999', lineHeight: 17 },
   moodNote: { fontSize: 12, color: '#ffffff', fontStyle: 'italic', marginBottom: 10, lineHeight: 17 },
-  figureWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  figureWrap: { width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   bubble: { maxWidth: 300, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 6 },
   phraseText: { fontSize: 17, color: '#e0e0e0', textAlign: 'center', lineHeight: 26 },
   coachName: { fontSize: 14, fontFamily: 'BarlowCondensed_700Bold', letterSpacing: 2, marginBottom: 10 },

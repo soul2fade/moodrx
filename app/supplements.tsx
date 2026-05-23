@@ -146,7 +146,8 @@ export default function SupplementsScreen() {
       setSessions(s);
       if (s.length > 0) {
         const sorted = [...s].sort((a, b) => b.timestamp - a.timestamp);
-        setLastMood(sorted[0].mood as MoodKey);
+        const raw = sorted[0].mood as string;
+        setLastMood(raw in MOODS ? (raw as MoodKey) : null);
       } else {
         setLastMood(null);
       }
@@ -483,7 +484,7 @@ export default function SupplementsScreen() {
                       </View>
                       <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>WHY THIS WORKS</Text>
                       <Text style={styles.sciencePanelText}>{supp.science}</Text>
-                      {supp.sources.length > 0 && (
+                      {(supp.sources?.length ?? 0) > 0 && (
                         <>
                           <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>SOURCES</Text>
                           {supp.sources.map((src, i) => (
@@ -698,7 +699,7 @@ export default function SupplementsScreen() {
                       </View>
                       <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>WHY THIS WORKS</Text>
                       <Text style={styles.sciencePanelText}>{supp.science}</Text>
-                      {supp.sources.length > 0 && (
+                      {(supp.sources?.length ?? 0) > 0 && (
                         <>
                           <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>SOURCES</Text>
                           {supp.sources.map((src, i) => (

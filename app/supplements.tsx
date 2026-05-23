@@ -124,7 +124,7 @@ function getMoodForDay(sessions: Session[], dateStr: string): MoodKey | null {
   return raw in MOODS ? (raw as MoodKey) : null;
 }
 
-export default function SupplementsScreen() {
+function SupplementsScreenInner() {
   const [logs, setLogs] = useState<SupplementLog[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lastMood, setLastMood] = useState<MoodKey | null>(null);
@@ -1242,4 +1242,118 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     letterSpacing: 1,
   },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#080808',
+    padding: 24,
+    paddingTop: 80,
+  },
+  errorTitle: {
+    color: '#E11D48',
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    letterSpacing: 2,
+    marginBottom: 16,
+  },
+  errorHeadline: {
+    color: '#ffffff',
+    fontFamily: fonts.mono.regular,
+    fontSize: 16,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  errorBody: {
+    color: '#999',
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  errorStack: {
+    color: '#666',
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  errorBackBtn: {
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: '#999',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignSelf: 'flex-start',
+  },
+  errorBackBtnText: {
+    color: '#ffffff',
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 2,
+  },
 });
+
+interface ErrBoundaryState {
+  error: Error | null;
+  info: string | null;
+}
+
+class SupplementsErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  ErrBoundaryState
+> {
+  state: ErrBoundaryState = { error: null, info: null };
+
+  static getDerivedStateFromError(error: Error): ErrBoundaryState {
+    return { error, info: null };
+  }
+
+  componentDidCatch(error: Error, info: { componentStack?: string | null }) {
+    this.setState({ error, info: info?.componentStack ?? null });
+    // eslint-disable-next-line no-console
+    console.error('[Supplements crash]', error, info?.componentStack);
+  }
+
+  render() {
+    if (this.state.error) {
+      const e = this.state.error;
+      return (
+        <ScrollView style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>SUPPLEMENTS · CRASH CAUGHT</Text>
+          <Text style={styles.errorHeadline}>
+            Something on this screen threw. Screenshot this and send it back.
+          </Text>
+          <Text style={styles.errorBody}>NAME: {e.name || '(no name)'}</Text>
+          <Text style={styles.errorBody}>MESSAGE: {e.message || '(no message)'}</Text>
+          {e.stack && (
+            <>
+              <Text style={[styles.errorBody, { marginTop: 16 }]}>STACK:</Text>
+              <Text style={styles.errorStack}>{String(e.stack).slice(0, 2000)}</Text>
+            </>
+          )}
+          {this.state.info && (
+            <>
+              <Text style={[styles.errorBody, { marginTop: 16 }]}>COMPONENT STACK:</Text>
+              <Text style={styles.errorStack}>{String(this.state.info).slice(0, 1500)}</Text>
+            </>
+          )}
+          <TouchableOpacity
+            style={styles.errorBackBtn}
+            onPress={() => this.setState({ error: null, info: null })}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.errorBackBtnText}>TRY AGAIN</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function SupplementsScreen() {
+  return (
+    <SupplementsErrorBoundary>
+      <SupplementsScreenInner />
+    </SupplementsErrorBoundary>
+  );
+}

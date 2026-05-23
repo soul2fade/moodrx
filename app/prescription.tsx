@@ -6,13 +6,14 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  Modal,
 } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import type { MoodKey } from '@/lib/storage';
 import { getUserProfile, UserProfile } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutsForMood, Workout } from '@/lib/workouts';
-import { getSupplementsForMood } from '@/lib/supplements';
+import { getSupplementsForMood, Supplement } from '@/lib/supplements';
 import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
@@ -33,6 +34,7 @@ export default function PrescriptionScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('workouts');
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [showAlternatives, setShowAlternatives] = useState(false);
+  const [selectedSupp, setSelectedSupp] = useState<Supplement | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const { isPremium } = useSubscription();
 
@@ -259,54 +261,32 @@ export default function PrescriptionScreen() {
             <View style={styles.supplementList}>
               {supplements.map((supp, index) => {
                 const isLocked = !isPremium && index > 0;
-                if (isLocked) {
-                  return (
-                    <TouchableOpacity
-                      key={supp.name}
-                      onPress={() => setShowPremiumSheet(true)}
-                      activeOpacity={0.8}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${supp.name}, locked. Unlock with Pro.`}
-                      style={index < supplements.length - 1
-                        ? flattenStyle([styles.supplementRow, styles.supplementBorder, { opacity: 0.35 }])
-                        : flattenStyle([styles.supplementRow, { opacity: 0.35 }])}
-                    >
-                      <View style={styles.supplementLeft}>
-                        <View style={styles.supplementNameRow}>
-                          <Text style={styles.supplementName}>{supp.name}</Text>
-                          <Text style={styles.supplementDose}>{supp.dose}</Text>
-                        </View>
-                        <View style={styles.supplementBenefitRow}>
-                          <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
-                          <Text style={styles.supplementTiming} allowFontScaling={false}>{supp.timing.toUpperCase()}</Text>
-                        </View>
-                        <Text style={styles.unlockProTextStack}>
-                          UNLOCK PRO →
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                }
                 return (
-                  <View
+                  <TouchableOpacity
                     key={supp.name}
+                    onPress={() => setSelectedSupp(supp)}
+                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${supp.name}, ${supp.benefit}. Tap for details.`}
                     style={index < supplements.length - 1
-                      ? flattenStyle([styles.supplementRow, styles.supplementBorder])
-                      : styles.supplementRow}
-                    accessible={true}
-                    accessibilityLabel={`${supp.name}, ${supp.dose}, ${supp.benefit}, take ${supp.timing}`}
+                      ? flattenStyle([styles.supplementRow, styles.supplementBorder, isLocked && { opacity: 0.4 }])
+                      : flattenStyle([styles.supplementRow, isLocked && { opacity: 0.4 }])}
                   >
                     <View style={styles.supplementLeft}>
                       <View style={styles.supplementNameRow}>
                         <Text style={styles.supplementName}>{supp.name}</Text>
-                        <Text style={styles.supplementDose}>{supp.dose}</Text>
+                        <Text style={[styles.supplementDose, { color: accentColor }]}>{supp.dose}</Text>
                       </View>
                       <View style={styles.supplementBenefitRow}>
                         <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
                         <Text style={styles.supplementTiming} allowFontScaling={false}>{supp.timing.toUpperCase()}</Text>
                       </View>
+                      {isLocked && (
+                        <Text style={styles.unlockProTextStack}>UNLOCK PRO →</Text>
+                      )}
                     </View>
-                  </View>
+                    <Text style={[styles.suppDetailChevron, { color: accentColor }]}>›</Text>
+                  </TouchableOpacity>
                 );
               })}
             </View>
@@ -328,6 +308,88 @@ export default function PrescriptionScreen() {
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
       />
+
+      {/* Supplement detail bottom sheet */}
+      <Modal
+        visible={selectedSupp !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedSupp(null)}
+      >
+        <TouchableOpacity
+          style={styles.suppModalOverlay}
+          activeOpacity={1}
+          onPress={() => setSelectedSupp(null)}
+        />
+        {selectedSupp && (
+          <View style={styles.suppModalSheet}>
+            <View style={styles.suppModalHandle} />
+            <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+              {/* Header */}
+              <View style={styles.suppModalHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.suppModalName}>{selectedSupp.name}</Text>
+                  <Text style={styles.suppModalDose}>{selectedSupp.dose} · {selectedSupp.timing.toUpperCase()}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setSelectedSupp(null)}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
+                >
+                  <Text style={styles.suppModalClose}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Mood tags */}
+              <Text style={styles.suppModalSectionLabel}>GOOD FOR</Text>
+              <View style={styles.suppModalMoodRow}>
+                {selectedSupp.moods.map((m) => (
+                  <View key={m} style={[styles.suppModalMoodTag, { borderColor: MOODS[m].color }]}>
+                    <Text style={[styles.suppModalMoodTagText, { color: MOODS[m].color }]}>
+                      {MOODS[m].name.toUpperCase()}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Science */}
+              <Text style={[styles.suppModalSectionLabel, { marginTop: 20 }]}>WHY THIS WORKS</Text>
+              <Text style={styles.suppModalScience}>{selectedSupp.science}</Text>
+
+              {/* Sources */}
+              {(selectedSupp.sources?.length ?? 0) > 0 && (
+                <>
+                  <Text style={[styles.suppModalSectionLabel, { marginTop: 20 }]}>SOURCES</Text>
+                  {selectedSupp.sources.map((src, i) => (
+                    <Text key={i} style={styles.suppModalSource}>{i + 1}. {src}</Text>
+                  ))}
+                </>
+              )}
+
+              {/* Unlock CTA for locked supplements */}
+              {!isPremium && supplements.indexOf(selectedSupp) > 0 && (
+                <TouchableOpacity
+                  style={[styles.suppModalUnlockBtn, { borderColor: accentColor }]}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    setSelectedSupp(null);
+                    setShowPremiumSheet(true);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Unlock Pro to access full stack"
+                >
+                  <Text style={[styles.suppModalUnlockText, { color: accentColor }]}>
+                    UNLOCK FULL STACK WITH PRO →
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </View>
+        )}
+      </Modal>
     </Animated.View>
   );
 }
@@ -643,6 +705,104 @@ const styles = StyleSheet.create({
   trackStackBtnText: {
     ...t.label,
     color: '#ffffff',
+    letterSpacing: 2,
+    lineHeight: undefined,
+  },
+  suppDetailChevron: {
+    fontSize: 22,
+    fontWeight: '300',
+    marginLeft: 8,
+    alignSelf: 'center',
+  },
+  suppModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  suppModalSheet: {
+    backgroundColor: '#111111',
+    borderTopWidth: 1,
+    borderTopColor: '#222222',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    maxHeight: '80%',
+  },
+  suppModalHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#333333',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  suppModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  suppModalName: {
+    ...t.headlineSm,
+    fontSize: 18,
+    lineHeight: undefined,
+  },
+  suppModalDose: {
+    ...t.label,
+    color: '#999999',
+    fontSize: 13,
+    marginTop: 4,
+    lineHeight: undefined,
+  },
+  suppModalClose: {
+    fontSize: 18,
+    color: '#666666',
+    paddingLeft: 16,
+    paddingTop: 2,
+  },
+  suppModalSectionLabel: {
+    ...t.label,
+    color: '#ffffff',
+    letterSpacing: 3,
+    fontSize: 12,
+    lineHeight: undefined,
+    marginBottom: 10,
+  },
+  suppModalMoodRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  suppModalMoodTag: {
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  suppModalMoodTagText: {
+    ...t.label,
+    fontSize: 12,
+    letterSpacing: 1,
+    lineHeight: undefined,
+  },
+  suppModalScience: {
+    ...t.body,
+    color: '#cccccc',
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  suppModalSource: {
+    ...t.body,
+    color: '#888888',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  suppModalUnlockBtn: {
+    borderWidth: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 28,
+  },
+  suppModalUnlockText: {
+    ...t.label,
+    fontSize: 13,
     letterSpacing: 2,
     lineHeight: undefined,
   },

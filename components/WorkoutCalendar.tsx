@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Session } from '@/lib/storage';
 import type { MoodKey } from '@/lib/storage';
 import { type as t } from '../lib/typography';
@@ -17,18 +17,45 @@ const MOOD_COLORS: Record<MoodKey, string> = {
   good: '#059669',
 };
 
+const MOOD_NAMES: Record<MoodKey, string> = {
+  anxious: 'ANXIOUS',
+  low: 'LOW',
+  foggy: 'FOGGY',
+  restless: 'RESTLESS',
+  stressed: 'STRESSED',
+  good: 'GOOD',
+};
+
 const DAY_HEADERS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+const MONTH_NAMES = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+  'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 
 function toDateKey(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+function formatTime(timestamp: number): string {
+  const d = new Date(timestamp);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function formatChange(pre: number, post: number): string {
+  const diff = post - pre;
+  return diff >= 0 ? `+${diff}` : `${diff}`;
+}
+
 export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
   const today = new Date();
   const year = today.getFullYear();
-  const month = today.getMonth(); // 0-indexed
+  const month = today.getMonth();
 
-  // Group sessions by date key — sort each day's sessions by timestamp desc so [0] = most recent
+  const [selectedSessions, setSelectedSessions] = useState<Session[] | null>(null);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+
   const sessionsByDate = useMemo(() => {
     const map: Record<string, Session[]> = {};
     for (const s of sessions) {
@@ -39,7 +66,6 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
         map[key].push(s);
       }
     }
-    // Sort each day's sessions newest first
     for (const key of Object.keys(map)) {
       map[key].sort((a, b) => b.timestamp - a.timestamp);
     }
@@ -47,36 +73,27 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
   }, [sessions, year, month]);
 
   const firstDay = new Date(year, month, 1);
-  // getDay() returns 0=Sun..6=Sat, convert to Mon=0..Sun=6
-  const rawFirstDay = firstDay.getDay(); // 0=Sun
-  const firstDayOffset = rawFirstDay === 0 ? 6 : rawFirstDay - 1; // Mon=0..Sun=6
-
+  const rawFirstDay = firstDay.getDay();
+  const firstDayOffset = rawFirstDay === 0 ? 6 : rawFirstDay - 1;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayDate = today.getDate();
   const todayKey = toDateKey(year, month, todayDate);
 
-  // Build cells array
   const cells: { day: number | null; dateKey: string | null }[] = [];
-  // Leading empty cells
   for (let i = 0; i < firstDayOffset; i++) {
     cells.push({ day: null, dateKey: null });
   }
   for (let d = 1; d <= daysInMonth; d++) {
     cells.push({ day: d, dateKey: toDateKey(year, month, d) });
   }
-  // Pad to complete last row
   while (cells.length % 7 !== 0) {
     cells.push({ day: null, dateKey: null });
   }
-
-  const MONTH_NAMES = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
-    'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>THIS MONTH</Text>
       <Text style={styles.monthName}>{MONTH_NAMES[month]} {year}</Text>
-      {/* Day headers */}
       <View style={styles.headerRow}>
         {DAY_HEADERS.map((d) => (
           <View key={d} style={styles.headerCell}>
@@ -84,7 +101,6 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
           </View>
         ))}
       </View>
-      {/* Calendar grid */}
       <View style={styles.grid}>
         {cells.map((cell, idx) => {
           if (cell.day === null) {
@@ -97,40 +113,96 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
           const hasMultiple = sessionsForDay.length > 1;
           const secondMoodColor = hasMultiple ? (MOOD_COLORS[sessionsForDay[1].mood as MoodKey] ?? '#525252') : null;
 
+          if (hasSession) {
+            return (
+              <TouchableOpacity
+                key={cell.dateKey}
+                activeOpacity={0.75}
+                onPress={() => {
+                  setSelectedSessions(sessionsForDay);
+                  setSelectedDay(cell.day);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`${cell.day} ${MONTH_NAMES[month].toLowerCase()}, ${sessionsForDay.length} ${sessionsForDay.length === 1 ? 'session' : 'sessions'}. Tap for details.`}
+                style={[styles.cell, { backgroundColor: accentColor ?? 'transparent' }]}
+              >
+                <Text style={[styles.dayText, styles.dayTextActive]}>
+                  {String(cell.day).padStart(2, '0')}
+                </Text>
+                {hasMultiple && secondMoodColor && (
+                  <View style={[styles.dot, { backgroundColor: secondMoodColor }]} />
+                )}
+              </TouchableOpacity>
+            );
+          }
+
           return (
             <View
               key={cell.dateKey}
               accessible={true}
               accessibilityLabel={
-                hasSession
-                  ? `${cell.day} ${MONTH_NAMES[month].toLowerCase()}, ${sessionsForDay.length} ${sessionsForDay.length === 1 ? 'workout' : 'workouts'} completed`
-                  : isToday
+                isToday
                   ? `${cell.day} ${MONTH_NAMES[month].toLowerCase()}, today`
                   : `${cell.day} ${MONTH_NAMES[month].toLowerCase()}`
               }
-              style={[
-                styles.cell,
-                hasSession ? { backgroundColor: accentColor ?? 'transparent' } : null,
-                isToday && !hasSession ? styles.todayBorder : null,
-              ]}
+              style={[styles.cell, isToday ? styles.todayBorder : null]}
             >
-              <Text
-                style={[
-                  styles.dayText,
-                  hasSession ? styles.dayTextActive : null,
-                  !hasSession && !isToday ? styles.dayTextMuted : null,
-                  isToday && !hasSession ? styles.dayTextToday : null,
-                ]}
-              >
+              <Text style={[styles.dayText, isToday ? styles.dayTextToday : styles.dayTextMuted]}>
                 {String(cell.day).padStart(2, '0')}
               </Text>
-              {hasMultiple && secondMoodColor && (
-                <View style={[styles.dot, { backgroundColor: secondMoodColor }]} />
-              )}
             </View>
           );
         })}
       </View>
+
+      <Modal
+        visible={selectedSessions !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedSessions(null)}
+      >
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={() => setSelectedSessions(null)}
+        >
+          {selectedSessions && (
+            <View style={styles.sheet}>
+              <View style={styles.handle} />
+              <Text style={styles.sheetDate}>
+                {MONTH_NAMES[month]} {String(selectedDay).padStart(2, '0')}
+              </Text>
+              <Text style={styles.sheetCount}>
+                {selectedSessions.length} SESSION{selectedSessions.length > 1 ? 'S' : ''}
+              </Text>
+              <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+                {selectedSessions.map((s, i) => {
+                  const color = MOOD_COLORS[s.mood as MoodKey] ?? '#525252';
+                  const change = formatChange(s.intensity, s.postScore);
+                  const improved = s.postScore > s.intensity;
+                  return (
+                    <View key={s.id ?? i} style={[styles.sessionRow, i < selectedSessions.length - 1 && styles.sessionBorder]}>
+                      <View style={[styles.moodBar, { backgroundColor: color }]} />
+                      <View style={styles.sessionInfo}>
+                        <View style={styles.sessionTopRow}>
+                          <Text style={[styles.sessionMood, { color }]}>
+                            {MOOD_NAMES[s.mood as MoodKey] ?? s.mood.toUpperCase()}
+                          </Text>
+                          <Text style={styles.sessionTime}>{formatTime(s.timestamp)}</Text>
+                        </View>
+                        <Text style={styles.sessionWorkout}>{s.workoutName}</Text>
+                        <Text style={[styles.sessionChange, { color: improved ? '#059669' : '#E11D48' }]}>
+                          {s.intensity} → {s.postScore} ({change})
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -204,5 +276,84 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginTop: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#111111',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 36,
+    maxHeight: '60%',
+  },
+  handle: {
+    width: 36,
+    height: 3,
+    backgroundColor: '#333333',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  sheetDate: {
+    ...t.label,
+    color: '#999999',
+    letterSpacing: 2,
+    marginBottom: 2,
+  },
+  sheetCount: {
+    ...t.headlineSm,
+    color: '#ffffff',
+    marginBottom: 20,
+  },
+  sessionRow: {
+    flexDirection: 'row',
+    paddingVertical: 14,
+    alignItems: 'flex-start',
+  },
+  sessionBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#1c1c1c',
+  },
+  moodBar: {
+    width: 3,
+    borderRadius: 2,
+    alignSelf: 'stretch',
+    marginRight: 14,
+    marginTop: 2,
+  },
+  sessionInfo: {
+    flex: 1,
+  },
+  sessionTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  sessionMood: {
+    ...t.label,
+    letterSpacing: 1,
+    fontSize: 12,
+  },
+  sessionTime: {
+    ...t.timestamp,
+    color: '#666666',
+    fontSize: 12,
+  },
+  sessionWorkout: {
+    ...t.body,
+    color: '#ffffff',
+    marginBottom: 4,
+    fontSize: 14,
+  },
+  sessionChange: {
+    ...t.label,
+    fontSize: 12,
+    letterSpacing: 0.5,
   },
 });

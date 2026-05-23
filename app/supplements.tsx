@@ -100,12 +100,14 @@ function getMoodForWeek(sessions: Session[], weekDates: string[]): MoodKey | nul
   const inWeek = sessions.filter((s) => weekDateSet.has(toDateString(s.timestamp)));
   if (inWeek.length > 0) {
     const sorted = [...inWeek].sort((a, b) => b.timestamp - a.timestamp);
-    return sorted[0].mood as MoodKey;
+    const raw = sorted[0].mood as string;
+    return raw in MOODS ? (raw as MoodKey) : null;
   }
   const before = sessions.filter((s) => toDateString(s.timestamp) <= lastDay);
   if (before.length > 0) {
     const sorted = [...before].sort((a, b) => b.timestamp - a.timestamp);
-    return sorted[0].mood as MoodKey;
+    const raw = sorted[0].mood as string;
+    return raw in MOODS ? (raw as MoodKey) : null;
   }
   return null;
 }
@@ -118,7 +120,8 @@ function getMoodForDay(sessions: Session[], dateStr: string): MoodKey | null {
   const onOrBefore = sessions.filter((s) => toDateString(s.timestamp) <= dateStr);
   if (onOrBefore.length === 0) return null;
   const sorted = [...onOrBefore].sort((a, b) => b.timestamp - a.timestamp);
-  return sorted[0].mood as MoodKey;
+  const raw = sorted[0].mood as string;
+  return raw in MOODS ? (raw as MoodKey) : null;
 }
 
 export default function SupplementsScreen() {
@@ -141,7 +144,7 @@ export default function SupplementsScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
   const loadData = useCallback(() => {
-    getSupplementLogs().then(setLogs);
+    getSupplementLogs().then(setLogs).catch(() => setLogs([]));
     getSessions().then((s: Session[]) => {
       setSessions(s);
       if (s.length > 0) {
@@ -151,12 +154,12 @@ export default function SupplementsScreen() {
       } else {
         setLastMood(null);
       }
-    });
+    }).catch(() => { setSessions([]); setLastMood(null); });
     getSupplementReminderPrefs().then((prefs) => {
       setReminderEnabled(prefs.enabled);
       setReminderTime(prefs.timeLabel);
       reminderToggleAnim.setValue(prefs.enabled ? 1 : 0);
-    });
+    }).catch(() => {});
   }, [reminderToggleAnim]);
 
   useFocusEffect(loadData);

@@ -339,21 +339,25 @@ const styles = StyleSheet.create({
     ...t.label,
     letterSpacing: 1,
     fontSize: 12,
+    lineHeight: 17,
   },
   sessionTime: {
     ...t.timestamp,
-    color: '#666666',
+    color: '#999999',
     fontSize: 12,
+    lineHeight: 17,
   },
   sessionWorkout: {
     ...t.body,
     color: '#ffffff',
     marginBottom: 4,
     fontSize: 14,
+    lineHeight: 20,
   },
   sessionChange: {
     ...t.label,
     fontSize: 12,
+    lineHeight: 17,
     letterSpacing: 0.5,
   },
 });

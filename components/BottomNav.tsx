@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { fonts } from '@/lib/typography';
 
@@ -45,7 +45,7 @@ export function BottomNav() {
       ];
     });
     Animated.parallel(animations).start();
-  }, [pathname]);
+  }, [labelOpacities, pathname, underlineOpacities]);
 
   return (
     <View style={styles.container}>

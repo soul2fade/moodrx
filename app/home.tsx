@@ -12,7 +12,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, getHomeHintSeen, setHomeHintSeen, getLastCarouselPage, setLastCarouselPage, UserProfile, Session, StreakState } from '@/lib/storage';
+import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, UserProfile, Session, StreakState } from '@/lib/storage';
 import { getWorkoutsForMood } from '@/lib/workouts';
 import { todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
@@ -37,24 +37,24 @@ export default function HomeScreen() {
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
-  const [streakState, setStreakState] = useState<StreakState>({ hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 });
+  const [, setStreakState] = useState<StreakState>({ hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 });
   const [carouselPage, setCarouselPage] = useState<number | null>(null);
   const carouselFadeAnim = useRef(new Animated.Value(0)).current;
+  const carouselReady = carouselPage !== null;
 
   useEffect(() => {
-    if (carouselPage !== null) {
+    if (carouselReady) {
       Animated.timing(carouselFadeAnim, {
         toValue: 1,
         duration: 220,
         useNativeDriver: true,
       }).start();
     }
-  }, [carouselPage !== null]);
+  }, [carouselFadeAnim, carouselReady]);
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
   const { panelAnim, backdropAnim, show: showPanel, dismiss: dismissPanelAnim } = useBottomPanel(PANEL_HEIGHT);
-  const [showHint, setShowHint] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const [greetingStreakLabel, setGreetingStreakLabel] = useState('');
   const [greetingStreakMsg, setGreetingStreakMsg] = useState('');
@@ -64,10 +64,13 @@ export default function HomeScreen() {
     HOME_MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
   ).current;
 
+  const dismissPanel = useCallback(() => {
+    dismissPanelAnim(() => setSelectedMood(null));
+  }, [dismissPanelAnim]);
+
   useFocusEffect(
     useCallback(() => {
       setIsLoading(true);
-      getHomeHintSeen().then(seen => { if (!seen) setShowHint(true); });
       Promise.all([getSessions(), getUserProfile(), getStreakState()]).then(([data, profile, state]) => {
         setSessions(data);
         setUserProfile(profile);
@@ -124,43 +127,27 @@ export default function HomeScreen() {
           ]).start();
         }, 180 + i * 55);
       });
-    }, [])
+    }, [dismissPanel, greetingAnim, moodAnims])
   );
 
-  const { streak, moodIdentity, lastSession, daysSinceLastSession } = useMemo(() => {
+  const { moodIdentity, lastSession } = useMemo(() => {
     const last = sessions.length > 0 ? sessions[sessions.length - 1] : null;
     return {
-      streak: getStreak(sessions),
       moodIdentity: getMoodIdentity(sessions),
       lastSession: last,
-      daysSinceLastSession: last
-        ? Math.floor((Date.now() - last.timestamp) / (24 * 60 * 60 * 1000))
-        : null,
     };
   }, [sessions]);
 
   const sessionCount = sessions.length;
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
-  const showWelcomeBack = !isLoading && !showStillFeeling && !selectedMood && lastSession !== null && daysSinceLastSession !== null && daysSinceLastSession >= 1;
-
-  const dismissPanel = useCallback(() => {
-    dismissPanelAnim(() => setSelectedMood(null));
-  }, [dismissPanelAnim]);
 
   const handleMoodSelect = useCallback((mood: MoodKey) => {
     setSelectedMood(mood);
     setIntensity(5);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showPanel();
-    setShowHint(false);
-    setHomeHintSeen();
   }, [showPanel]);
-
-  const handleDismissHint = useCallback(() => {
-    setShowHint(false);
-    setHomeHintSeen();
-  }, []);
 
   const handleQuickSession = useCallback(() => {
     if (!moodIdentity) return;
@@ -173,15 +160,6 @@ export default function HomeScreen() {
       params: { mood: moodIdentity.dominantMood, workoutId: pick.id, intensity: '5' },
     });
   }, [moodIdentity]);
-
-  const handleMilestoneDismiss = useCallback(async (milestoneDay: number) => {
-    const updated = {
-      ...streakState,
-      seenMilestones: [...(streakState.seenMilestones ?? []), milestoneDay],
-    };
-    setStreakState(updated);
-    await saveStreakState(updated);
-  }, [streakState]);
 
   const handlePrescribe = useCallback(() => {
     if (!selectedMood) return;

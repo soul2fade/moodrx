@@ -22,6 +22,11 @@ export interface SupplementLog {
   taken: boolean;
 }
 
+export interface SupplementReminderPrefs {
+  enabled: boolean;
+  timeLabel: string;
+}
+
 export interface CustomWorkout {
   id: string;
   mood: MoodKey;
@@ -36,6 +41,7 @@ export interface CustomWorkout {
 const FIRST_LAUNCH_KEY = '@moodrx_first_launch_done';
 const SESSIONS_KEY = '@moodrx_sessions';
 const SUPPLEMENT_LOGS_KEY = 'supplement_logs';
+const SUPPLEMENT_REMINDER_PREFS_KEY = '@moodrx_supplement_reminder_prefs';
 const CUSTOM_WORKOUTS_KEY = 'custom_workouts';
 
 // ─── Simple in-memory cache to avoid redundant AsyncStorage reads ───
@@ -52,6 +58,7 @@ let personalBestsCache: Record<string, PersonalBest> | null = null;
 let notifPromptShownCache: boolean | null = null;
 let homeHintSeenCache: boolean | null = null;
 let carouselHintSeenCache: boolean | null = null;
+let supplementReminderPrefsCache: SupplementReminderPrefs | null = null;
 
 function invalidateSessionsCache() {
   sessionsCache = null;
@@ -70,6 +77,7 @@ function invalidateLightCaches() {
   notifPromptShownCache = null;
   homeHintSeenCache = null;
   carouselHintSeenCache = null;
+  supplementReminderPrefsCache = null;
 }
 
 export async function getFirstLaunchDone(): Promise<boolean> {
@@ -191,6 +199,34 @@ export async function toggleSupplementLog(supplementName: string, date: string):
   }
 }
 
+export async function getSupplementReminderPrefs(): Promise<SupplementReminderPrefs> {
+  if (supplementReminderPrefsCache) return supplementReminderPrefsCache;
+  try {
+    const raw = await AsyncStorage.getItem(SUPPLEMENT_REMINDER_PREFS_KEY);
+    const parsed = raw
+      ? (JSON.parse(raw) as Partial<SupplementReminderPrefs>)
+      : {};
+    const prefs: SupplementReminderPrefs = {
+      enabled: parsed.enabled === true,
+      timeLabel: typeof parsed.timeLabel === 'string' ? parsed.timeLabel : '9:00 AM',
+    };
+    supplementReminderPrefsCache = prefs;
+    return prefs;
+  } catch (e) {
+    console.warn('[MoodRx] getSupplementReminderPrefs failed:', e);
+    return { enabled: false, timeLabel: '9:00 AM' };
+  }
+}
+
+export async function saveSupplementReminderPrefs(prefs: SupplementReminderPrefs): Promise<void> {
+  try {
+    await AsyncStorage.setItem(SUPPLEMENT_REMINDER_PREFS_KEY, JSON.stringify(prefs));
+    supplementReminderPrefsCache = prefs;
+  } catch (e) {
+    console.warn('[MoodRx] saveSupplementReminderPrefs failed:', e);
+  }
+}
+
 export async function getCustomWorkouts(): Promise<CustomWorkout[]> {
   try {
     const raw = await AsyncStorage.getItem(CUSTOM_WORKOUTS_KEY);
@@ -294,6 +330,7 @@ export async function clearAllData(): Promise<void> {
     await AsyncStorage.multiRemove([
       SESSIONS_KEY,
       SUPPLEMENT_LOGS_KEY,
+      SUPPLEMENT_REMINDER_PREFS_KEY,
       CUSTOM_WORKOUTS_KEY,
       FIRST_LAUNCH_KEY,
       USER_PROFILE_KEY,

@@ -494,3 +494,33 @@ export async function setCarouselHintSeen(): Promise<void> {
     // non-critical
   }
 }
+
+export interface SupplementReminderPrefs {
+  enabled: boolean;
+  timeLabel: string;
+}
+
+const SUPPLEMENT_REMINDER_PREFS_KEY = '@moodrx_supplement_reminder_prefs';
+
+export async function getSupplementReminderPrefs(): Promise<SupplementReminderPrefs> {
+  try {
+    const raw = await AsyncStorage.getItem(SUPPLEMENT_REMINDER_PREFS_KEY);
+    if (!raw) return { enabled: false, timeLabel: '9:00 AM' };
+    const parsed = JSON.parse(raw) as Partial<SupplementReminderPrefs>;
+    return {
+      enabled: parsed.enabled === true,
+      timeLabel: typeof parsed.timeLabel === 'string' ? parsed.timeLabel : '9:00 AM',
+    };
+  } catch (e) {
+    console.warn('[MoodRx] getSupplementReminderPrefs failed:', e);
+    return { enabled: false, timeLabel: '9:00 AM' };
+  }
+}
+
+export async function saveSupplementReminderPrefs(prefs: SupplementReminderPrefs): Promise<void> {
+  try {
+    await AsyncStorage.setItem(SUPPLEMENT_REMINDER_PREFS_KEY, JSON.stringify(prefs));
+  } catch (e) {
+    console.warn('[MoodRx] saveSupplementReminderPrefs failed:', e);
+  }
+}

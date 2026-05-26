@@ -54,7 +54,7 @@ export function BottomNav() {
     <View style={styles.container}>
       {TABS.map((tab, i) => {
         const isActive = pathname === tab.path;
-        const isLocked = tab.requiresPremium && !isPremium;
+        const isLocked = 'requiresPremium' in tab && tab.requiresPremium && !isPremium;
 
         const handlePress = () => {
           if (isLocked) {

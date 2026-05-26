@@ -20,7 +20,6 @@ import type { MoodKey } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '@/lib/typography';
-import { useSubscription } from '@/contexts/SubscriptionContext';
 import { BottomNav } from '@/components/BottomNav';
 import { HomeCarousel } from '@/components/HomeCarousel';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
@@ -28,6 +27,7 @@ import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
+const HOME_MOOD_ORDER = MOOD_ORDER.filter((mood) => mood !== 'good');
 
 let greetingShownThisSession = false;
 
@@ -61,7 +61,7 @@ export default function HomeScreen() {
   const greetingAnim = useRef(new Animated.Value(0)).current;
   const greetingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moodAnims = useRef(
-    MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
+    HOME_MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
   ).current;
 
   useFocusEffect(
@@ -143,7 +143,6 @@ export default function HomeScreen() {
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
   const showWelcomeBack = !isLoading && !showStillFeeling && !selectedMood && lastSession !== null && daysSinceLastSession !== null && daysSinceLastSession >= 1;
-  const { isPremium } = useSubscription();
 
   const dismissPanel = useCallback(() => {
     dismissPanelAnim(() => setSelectedMood(null));
@@ -201,21 +200,6 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         scrollEnabled={!selectedMood}
       >
-        {/* Top row */}
-        <View style={styles.topRow}>
-          {!isPremium && (
-            <TouchableOpacity
-              onPress={() => router.push('/premium')}
-              activeOpacity={0.7}
-              style={styles.proBadge}
-              accessibilityRole="button"
-              accessibilityLabel="Upgrade to Pro"
-            >
-              <Text style={styles.proBadgeText}>PRO</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
         <Text style={styles.headline}>
           {moodIdentity && sessions.length >= 10
             ? `Still ${MOODS[moodIdentity.dominantMood].name.toLowerCase()}? Let\u2019s fix that.`
@@ -262,7 +246,7 @@ export default function HomeScreen() {
 
         {/* Mood list */}
         <View style={styles.moodList} accessibilityRole="radiogroup" accessibilityLabel="Select your mood">
-          {MOOD_ORDER.map((moodKey, idx) => {
+          {HOME_MOOD_ORDER.map((moodKey, idx) => {
             const mood = MOODS[moodKey];
             const isSelected = selectedMood === moodKey;
             return (
@@ -301,28 +285,6 @@ export default function HomeScreen() {
             );
           })}
         </View>
-
-        {/* Breathe tool link */}
-        <TouchableOpacity
-          onPress={() => router.push('/breathe' as any)}
-          activeOpacity={0.6}
-          style={styles.breatheLink}
-          accessibilityRole="link"
-          accessibilityLabel="Open box breathing tool"
-        >
-          <Text style={styles.breatheLinkText}>Need to breathe first? →</Text>
-        </TouchableOpacity>
-
-        {/* Safety net link */}
-        <TouchableOpacity
-          onPress={() => router.push('/crisis' as any)}
-          activeOpacity={0.6}
-          style={styles.safetyNetBtn}
-          accessibilityRole="link"
-          accessibilityLabel="Not okay enough to move? Get crisis support"
-        >
-          <Text style={styles.safetyNetText}>Not okay enough to move? →</Text>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* Backdrop */}
@@ -437,63 +399,11 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-    paddingTop: 80,
-    paddingBottom: 80,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  checkInLabel: {
-    ...t.label,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
-  },
-  topRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 18,
-  },
-  sessionCount: {
-    ...t.timestamp,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
-  },
-  settingsText: {
-    ...t.timestamp,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
-  },
-  streakBadge: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#333333',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  streakBadgeText: {
-    ...t.number,
-    color: '#E8B84B',
-  },
-  proBadge: {
-    borderWidth: 1,
-    borderColor: '#E8B84B',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  proBadgeText: {
-    ...t.label,
-    color: '#E8B84B',
-    letterSpacing: 2,
-    fontSize: 13,
+    paddingTop: 132,
+    paddingBottom: 36,
   },
   headline: {
     ...t.headline,
-    marginTop: 36,
   },
   divider: {
     width: 32,
@@ -507,33 +417,9 @@ const styles = StyleSheet.create({
     color: '#d4d4d4',
     marginTop: 12,
   },
-  breatheLink: {
-    marginTop: 24,
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  breatheLinkText: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 13,
-    color: '#7EC8A0',
-    letterSpacing: 1,
-  },
-  safetyNetBtn: {
-    marginTop: 8,
-    marginBottom: 8,
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  safetyNetText: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    color: '#ffffff',
-    opacity: 0.4,
-    letterSpacing: 0.5,
-  },
   carouselPlaceholder: {
-    marginTop: 16,
-    height: 212,
+    marginTop: 20,
+    height: 226,
   },
   skeletonWrapper: {
     flex: 1,
@@ -575,7 +461,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#252525',
   },
   moodList: {
-    marginTop: 28,
+    marginTop: 20,
   },
   moodRow: {
     flex: 1,
@@ -584,7 +470,7 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
-    minHeight: 72,
+    minHeight: 83,
   },
   moodRowSelected: {
     borderLeftWidth: 2,
@@ -593,7 +479,7 @@ const styles = StyleSheet.create({
   },
   moodTextBlock: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 18,
   },
   moodName: {
     ...t.headlineSm,

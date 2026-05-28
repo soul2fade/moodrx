@@ -23,17 +23,6 @@ export interface SupplementLog {
   taken: boolean;
 }
 
-export interface CustomWorkout {
-  id: string;
-  mood: MoodKey;
-  name: string;
-  duration: number;
-  intensity: 'Light' | 'Moderate' | 'Intense';
-  steps: string[];
-  vibe: string;
-  isCustom: true;
-}
-
 const FIRST_LAUNCH_KEY = '@moodrx_first_launch_done';
 const GUIDED_SESSION_KEY = '@moodrx_guided_done';
 const SESSIONS_KEY = '@moodrx_sessions';
@@ -52,7 +41,6 @@ let userProfileCache: UserProfile | null = null;
 let streakStateCache: StreakState | null = null;
 let personalBestsCache: Record<string, PersonalBest> | null = null;
 let notifPromptShownCache: boolean | null = null;
-let homeHintSeenCache: boolean | null = null;
 let carouselHintSeenCache: boolean | null = null;
 
 function invalidateSessionsCache() {
@@ -70,7 +58,6 @@ function invalidateLightCaches() {
   streakStateCache = null;
   personalBestsCache = null;
   notifPromptShownCache = null;
-  homeHintSeenCache = null;
   carouselHintSeenCache = null;
 }
 
@@ -207,37 +194,6 @@ export async function toggleSupplementLog(supplementName: string, date: string):
     invalidateSupplementsCache();
   } catch (e) {
     console.warn('[MoodRx] toggleSupplementLog failed:', e);
-  }
-}
-
-export async function getCustomWorkouts(): Promise<CustomWorkout[]> {
-  try {
-    const raw = await AsyncStorage.getItem(CUSTOM_WORKOUTS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as CustomWorkout[];
-  } catch (e) {
-    console.warn('[MoodRx] getCustomWorkouts failed:', e);
-    return [];
-  }
-}
-
-export async function saveCustomWorkout(workout: CustomWorkout): Promise<void> {
-  try {
-    const existing = await getCustomWorkouts();
-    existing.push(workout);
-    await AsyncStorage.setItem(CUSTOM_WORKOUTS_KEY, JSON.stringify(existing));
-  } catch (e) {
-    console.warn('[MoodRx] saveCustomWorkout failed:', e);
-  }
-}
-
-export async function deleteCustomWorkout(id: string): Promise<void> {
-  try {
-    const existing = await getCustomWorkouts();
-    const filtered = existing.filter((w) => w.id !== id);
-    await AsyncStorage.setItem(CUSTOM_WORKOUTS_KEY, JSON.stringify(filtered));
-  } catch (e) {
-    console.warn('[MoodRx] deleteCustomWorkout failed:', e);
   }
 }
 
@@ -487,26 +443,6 @@ export async function setLastCarouselPage(page: number): Promise<void> {
   }
 }
 
-export async function getHomeHintSeen(): Promise<boolean> {
-  if (homeHintSeenCache !== null) return homeHintSeenCache;
-  try {
-    const val = (await AsyncStorage.getItem(HOME_HINT_SEEN_KEY)) === 'true';
-    homeHintSeenCache = val;
-    return val;
-  } catch {
-    return false;
-  }
-}
-
-export async function setHomeHintSeen(): Promise<void> {
-  try {
-    await AsyncStorage.setItem(HOME_HINT_SEEN_KEY, 'true');
-    homeHintSeenCache = true;
-  } catch {
-    // non-critical
-  }
-}
-
 export async function getCarouselHintSeen(): Promise<boolean> {
   if (carouselHintSeenCache !== null) return carouselHintSeenCache;
   try {
@@ -554,5 +490,29 @@ export async function saveSupplementReminderPrefs(prefs: SupplementReminderPrefs
     await AsyncStorage.setItem(SUPPLEMENT_REMINDER_PREFS_KEY, JSON.stringify(prefs));
   } catch (e) {
     console.warn('[MoodRx] saveSupplementReminderPrefs failed:', e);
+  }
+}
+
+const TRASH_TALK_VOLUME_KEY = '@moodrx_trash_talk_volume';
+const DEFAULT_TRASH_TALK_VOLUME = 0.7;
+
+export async function getTrashTalkVolume(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(TRASH_TALK_VOLUME_KEY);
+    if (!raw) return DEFAULT_TRASH_TALK_VOLUME;
+    const n = parseFloat(raw);
+    if (!Number.isFinite(n)) return DEFAULT_TRASH_TALK_VOLUME;
+    return Math.min(1, Math.max(0, n));
+  } catch {
+    return DEFAULT_TRASH_TALK_VOLUME;
+  }
+}
+
+export async function setTrashTalkVolume(volume: number): Promise<void> {
+  try {
+    const clamped = Math.min(1, Math.max(0, volume));
+    await AsyncStorage.setItem(TRASH_TALK_VOLUME_KEY, String(clamped));
+  } catch {
+    // non-critical
   }
 }

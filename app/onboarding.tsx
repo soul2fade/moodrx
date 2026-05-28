@@ -96,9 +96,9 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        {/* Outcome proof — sample before/after */}
+        {/* Outcome proof — illustrative example, not aggregate stats */}
         <View style={styles.outcomeProof}>
-          <Text style={styles.outcomeProofLabel}>REAL RESULTS</Text>
+          <Text style={styles.outcomeProofLabel}>EXAMPLE SESSION</Text>
           <View style={styles.outcomeProofRow}>
             <View style={styles.outcomeBlock}>
               <Text style={styles.outcomeBlockCap}>BEFORE</Text>
@@ -116,7 +116,7 @@ export default function OnboardingScreen() {
             </View>
           </View>
           <Text style={styles.outcomeProofSub}>
-            Avg improvement: −2.8 pts per session
+            Your before/after scores build your personal evidence file.
           </Text>
         </View>
 

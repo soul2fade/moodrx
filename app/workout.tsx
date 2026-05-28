@@ -15,7 +15,7 @@ import { useAudioPlayer } from 'expo-audio';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
-import { getPersonalBest } from '@/lib/storage';
+import { getPersonalBest, getTrashTalkVolume } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -44,21 +44,6 @@ function parseActiveSeconds(text: string): number | null {
   if (minMatch) return parseInt(minMatch[1], 10) * 60;
   return null;
 }
-
-const ACTIVE_COMPLETE_LINES = [
-  "Time's up. Keep going.",
-  "Done. Hit next when ready.",
-  "That's the time. Move on.",
-  "Finished. Tap next.",
-];
-
-const REST_COMPLETE_LINES = [
-  "Rest complete. Back to work.",
-  "Time's up. No more lounging.",
-  "That's enough recovery. Move.",
-  "Right. Off you go.",
-  "Rest over. Your body is ready.",
-];
 
 const ACTIVE_COMPLETE_AUDIO = [
   require('../assets/audio/transitions/active_complete_01.mp3'),
@@ -95,13 +80,6 @@ const INSULT_AUDIO = [
   require('../assets/audio/insults/insult_06.mp3'),
   require('../assets/audio/insults/insult_07.mp3'),
   require('../assets/audio/insults/insult_08.mp3'),
-  require('../assets/audio/insults/insult_09.mp3'),
-  require('../assets/audio/insults/insult_10.mp3'),
-  require('../assets/audio/insults/insult_11.mp3'),
-  require('../assets/audio/insults/insult_12.mp3'),
-  require('../assets/audio/insults/insult_13.mp3'),
-  require('../assets/audio/insults/insult_14.mp3'),
-  require('../assets/audio/insults/insult_15.mp3'),
 ];
 
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
@@ -132,6 +110,7 @@ export default function WorkoutScreen() {
   const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
+  const [trashTalkVolume, setTrashTalkVolume] = useState(0.7);
   const [keepAwake, setKeepAwake] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
   const [transitionAudioSrc, setTransitionAudioSrc] = useState<any>(null);
@@ -157,6 +136,7 @@ export default function WorkoutScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
+  const trashTalkAllowed = resolvedWorkout?.intensity !== 'Intense';
   const midInsult = useRef(getInsult(mood, 'mid')).current;
   const midStep = Math.floor((totalSteps - 1) / 2);
 
@@ -172,11 +152,20 @@ export default function WorkoutScreen() {
   }, [audioSrc, activeSoundscape]);
 
   useEffect(() => {
+    getTrashTalkVolume().then(setTrashTalkVolume).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    insultPlayer.volume = trashTalkVolume;
+  }, [trashTalkVolume, insultPlayer]);
+
+  useEffect(() => {
     if (insultAudioSrc) {
+      insultPlayer.volume = trashTalkVolume;
       insultPlayer.seekTo(0);
       insultPlayer.play();
     }
-  }, [insultAudioSrc]);
+  }, [insultAudioSrc, trashTalkVolume]);
 
   useEffect(() => {
     if (transitionAudioSrc) {
@@ -271,7 +260,7 @@ export default function WorkoutScreen() {
       setInsultAudioSrc(INSULT_AUDIO[idx]);
     };
     playNext();
-    trashIntervalRef.current = setInterval(playNext, 40000);
+    trashIntervalRef.current = setInterval(playNext, 55000);
     return () => {
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
@@ -343,6 +332,7 @@ export default function WorkoutScreen() {
   };
 
   const handleTrashTalk = () => {
+    if (!trashTalkAllowed) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (!trashTalkOn) {
       setShowTrashWarning(true);
@@ -580,6 +570,7 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
               );
             })}
+            {trashTalkAllowed ? (
             <TouchableOpacity
               onPress={handleTrashTalk}
               activeOpacity={0.7}
@@ -589,6 +580,11 @@ export default function WorkoutScreen() {
             >
               <Text style={[styles.soundBtnText, trashTalkOn && { color: '#E11D48' }]}>TRASH TALK</Text>
             </TouchableOpacity>
+            ) : (
+              <View style={[styles.soundBtn, { opacity: 0.35 }]}>
+                <Text style={styles.soundBtnText}>TRASH TALK</Text>
+              </View>
+            )}
             {(activeSoundscape || trashTalkOn) && (
               <TouchableOpacity onPress={() => { handleSoundscape(null); if (trashTalkOn) handleTrashTalk(); }} activeOpacity={0.7} style={styles.soundOffBtn}>
                 <Text style={styles.soundOffText}>OFF</Text>

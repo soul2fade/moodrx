@@ -20,6 +20,7 @@ import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useSessions } from '@/contexts/SessionsContext';
 import { getPrescriptionWorkouts, getWorkoutBadge } from '@/lib/workout-insights';
+import { getFreeTierSummary, isSupplementUnlocked, isWorkoutUnlocked } from '@/lib/free-tier';
 import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
@@ -63,6 +64,10 @@ export default function PrescriptionScreen() {
     [mood, sessions],
   );
   const supplements = getSupplementsForMood(mood);
+  const freeTierSummary = useMemo(
+    () => getFreeTierSummary(workouts, isPremium),
+    [workouts, isPremium],
+  );
 
   const handleWorkoutTap = (workout: Workout) => {
     router.push({
@@ -150,6 +155,9 @@ export default function PrescriptionScreen() {
                 </Text>
               </View>
             )}
+            {freeTierSummary && (
+              <Text style={styles.freeTierSummary}>{freeTierSummary}</Text>
+            )}
             {/* Hero workout — today's prescription */}
             <Text style={[styles.heroRxLabel, { color: accentColor }]}>TODAY&apos;S PRESCRIPTION</Text>
             <TouchableOpacity
@@ -203,8 +211,8 @@ export default function PrescriptionScreen() {
 
                 {showAlternatives && workouts.slice(1).map((workout, idx) => {
                   const index = idx + 1;
-                  const isLocked = !isPremium && idx > 0;
-                  const isFreeAlternative = idx === 0;
+                  const isLocked = !isWorkoutUnlocked(isPremium, index, workouts.length);
+                  const isFreeAlternative = isWorkoutUnlocked(isPremium, index, workouts.length) && index > 0;
                   if (isLocked) {
                     return (
                       <TouchableOpacity
@@ -279,7 +287,7 @@ export default function PrescriptionScreen() {
 
             <View style={styles.supplementList}>
               {supplements.map((supp, index) => {
-                const isLocked = !isPremium && index > 0;
+                const isLocked = !isSupplementUnlocked(isPremium, index);
                 return (
                   <TouchableOpacity
                     key={supp.name}
@@ -387,7 +395,7 @@ export default function PrescriptionScreen() {
               )}
 
               {/* Unlock CTA for locked supplements */}
-              {!isPremium && supplements.indexOf(selectedSupp) > 0 && (
+              {!isSupplementUnlocked(isPremium, supplements.indexOf(selectedSupp)) && (
                 <TouchableOpacity
                   style={[styles.suppModalUnlockBtn, { borderColor: accentColor }]}
                   activeOpacity={0.8}
@@ -624,14 +632,16 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#E8B84B',
     letterSpacing: 1.5,
-    fontSize: 10,
+    fontSize: 12,
+    lineHeight: 17,
     marginTop: 6,
   },
   workoutBadgeMuted: {
     ...t.label,
     color: '#737373',
     letterSpacing: 1.5,
-    fontSize: 10,
+    fontSize: 12,
+    lineHeight: 17,
     marginTop: 4,
   },
   alternateBanner: {
@@ -645,6 +655,12 @@ const styles = StyleSheet.create({
   alternateBannerText: {
     ...t.bodySm,
     color: '#c8c8c8',
+    lineHeight: 20,
+  },
+  freeTierSummary: {
+    ...t.bodySm,
+    color: '#a3a3a3',
+    marginBottom: 12,
     lineHeight: 20,
   },
   scienceInline: {

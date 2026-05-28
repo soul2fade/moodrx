@@ -1,13 +1,12 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { fonts } from '@/lib/typography';
-import { useSubscription } from '@/contexts/SubscriptionContext';
 
 const TABS = [
   { label: 'HOME', path: '/home' },
   { label: 'INSIGHTS', path: '/insights' },
-  { label: 'SUPPS', path: '/supplements', requiresPremium: true },
+  { label: 'SUPPS', path: '/supplements' },
   { label: 'SETTINGS', path: '/settings' },
 ] as const;
 
@@ -17,7 +16,6 @@ const ANIMATION_DURATION = 150;
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { isPremium } = useSubscription();
 
   const labelOpacities = useRef(
     TABS.map((tab) =>
@@ -54,33 +52,21 @@ export function BottomNav() {
     <View style={styles.container}>
       {TABS.map((tab, i) => {
         const isActive = pathname === tab.path;
-        const isLocked = 'requiresPremium' in tab && tab.requiresPremium && !isPremium;
-
-        const handlePress = () => {
-          if (isLocked) {
-            router.push('/premium' as any);
-          } else {
-            router.push(tab.path as any);
-          }
-        };
 
         return (
           <TouchableOpacity
             key={tab.path}
-            onPress={handlePress}
+            onPress={() => router.push(tab.path as any)}
             activeOpacity={0.7}
             style={styles.tab}
             accessibilityRole="tab"
-            accessibilityLabel={isLocked ? `${tab.label} (Pro)` : tab.label}
+            accessibilityLabel={tab.label}
             accessibilityState={{ selected: isActive }}
           >
             <View style={styles.tabInner}>
               <Animated.Text style={[styles.label, { opacity: labelOpacities[i] }]}>
                 {tab.label}
               </Animated.Text>
-              {isLocked && (
-                <Text style={styles.lockIcon}>🔒</Text>
-              )}
             </View>
             <Animated.View style={[styles.activeLine, { opacity: underlineOpacities[i] }]} />
           </TouchableOpacity>
@@ -115,10 +101,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 1.5,
     lineHeight: 20,
-  },
-  lockIcon: {
-    fontSize: 12,
-    lineHeight: 18,
   },
   activeLine: {
     width: 16,

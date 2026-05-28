@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useSessions } from '@/contexts/SessionsContext';
+import { formatSessionDelta } from '@/lib/session-utils';
 import { type as t, fonts } from '@/lib/typography';
 
 const FEATURES = [
@@ -33,6 +35,7 @@ export default function PremiumScreen() {
     hasUsedTrial,
     offerings,
   } = useSubscription();
+  const { sessionCount, avgChange } = useSessions();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
@@ -64,6 +67,8 @@ export default function PremiumScreen() {
 
   const monthlyPrice = monthlyPkg?.product?.priceString ?? '$6.99';
   const yearlyPrice = yearlyPkg?.product?.priceString ?? '$49.99';
+  const hasPersonalStats = sessionCount >= 3;
+  const personalDeltaLabel = formatSessionDelta(5, 5 + Math.round(avgChange * 10) / 10);
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: '#0a0a0a', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -105,10 +110,16 @@ export default function PremiumScreen() {
         )}
 
         <View style={styles.socialProofBox}>
-          <Text style={styles.socialProofStat}>−2.8 pts</Text>
-          <Text style={styles.socialProofLabel}>AVERAGE IMPROVEMENT PER SESSION</Text>
+          <Text style={styles.socialProofStat}>
+            {hasPersonalStats ? personalDeltaLabel : '−3'}
+          </Text>
+          <Text style={styles.socialProofLabel}>
+            {hasPersonalStats ? 'YOUR AVG SHIFT PER SESSION' : 'EXAMPLE SHIFT (ONE SESSION)'}
+          </Text>
           <Text style={styles.socialProofSub}>
-            Based on before/after mood scores across all logged workouts.
+            {hasPersonalStats
+              ? `Based on ${sessionCount} logged sessions in your evidence file.`
+              : 'Log a few sessions to see your own average here.'}
           </Text>
         </View>
 

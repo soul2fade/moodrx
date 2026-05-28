@@ -381,7 +381,7 @@ export default function PostWorkoutScreen() {
             value={note}
             onChangeText={(t) => setNote(t.slice(0, 140))}
             placeholder="What happened in there?"
-            placeholderTextColor="#ffffff"
+            placeholderTextColor="#737373"
             multiline
             numberOfLines={3}
             maxLength={140}

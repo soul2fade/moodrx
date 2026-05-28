@@ -183,7 +183,7 @@ export default function InsightsScreen() {
         {/* Supplement Tracker button */}
         <TouchableOpacity
           style={styles.supplementBtn}
-          onPress={() => isPremium ? router.push('/supplements') : setShowPremiumSheet(true)}
+          onPress={() => router.push('/supplements')}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker with Pro'}
@@ -906,7 +906,8 @@ const styles = StyleSheet.create({
   recentLightBadge: {
     ...t.label,
     color: '#737373',
-    fontSize: 9,
+    fontSize: 12,
+    lineHeight: 17,
     letterSpacing: 1.5,
   },
   whatWorksSection: {

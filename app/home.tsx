@@ -12,7 +12,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, getHomeHintSeen, setHomeHintSeen, getLastCarouselPage, setLastCarouselPage, getGuidedSessionDone, hasSessionToday, UserProfile, StreakState } from '@/lib/storage';
+import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getGuidedSessionDone, hasSessionToday, UserProfile } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
@@ -38,7 +38,6 @@ export default function HomeScreen() {
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
-  const [streakState, setStreakState] = useState<StreakState>({ hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 });
   const [carouselPage, setCarouselPage] = useState<number | null>(null);
   const carouselFadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -55,7 +54,6 @@ export default function HomeScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
   const { panelAnim, backdropAnim, show: showPanel, dismiss: dismissPanelAnim } = useBottomPanel(PANEL_HEIGHT);
-  const [showHint, setShowHint] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const [greetingStreakLabel, setGreetingStreakLabel] = useState('');
   const [greetingStreakMsg, setGreetingStreakMsg] = useState('');
@@ -71,7 +69,6 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      getHomeHintSeen().then(seen => { if (!seen) setShowHint(true); });
       Promise.all([getUserProfile(), getStreakState()]).then(([profile, state]) => {
         setUserProfile(profile);
         setCarouselPage(0);
@@ -85,7 +82,6 @@ export default function HomeScreen() {
           updated = { ...updated, lastBrokenDate: today, lastBrokenHwm: state.hwm };
         }
         if (JSON.stringify(updated) !== JSON.stringify(state)) saveStreakState(updated);
-        setStreakState(updated);
 
         // Show streak toast once per app launch (only for non-milestone active streaks)
         const MILESTONES = [3, 7, 14, 30];
@@ -145,20 +141,13 @@ export default function HomeScreen() {
     };
   }, []);
 
-  const { moodIdentity, daysSinceLastSession } = useMemo(() => {
-    const last = lastSession;
-    return {
-      moodIdentity: getMoodIdentity(sessions),
-      daysSinceLastSession: last
-        ? Math.floor((Date.now() - last.timestamp) / (24 * 60 * 60 * 1000))
-        : null,
-    };
-  }, [sessions, lastSession]);
+  const { moodIdentity } = useMemo(() => ({
+    moodIdentity: getMoodIdentity(sessions),
+  }), [sessions]);
 
   const checkedInToday = hasSessionToday(sessions);
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
-  const showWelcomeBack = !isLoading && !showStillFeeling && !selectedMood && lastSession !== null && daysSinceLastSession !== null && daysSinceLastSession >= 1;
   const { isPremium } = useSubscription();
 
   const handleMoodSelect = useCallback((mood: MoodKey) => {
@@ -166,14 +155,7 @@ export default function HomeScreen() {
     setIntensity(5);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showPanel();
-    setShowHint(false);
-    setHomeHintSeen();
   }, [showPanel]);
-
-  const handleDismissHint = useCallback(() => {
-    setShowHint(false);
-    setHomeHintSeen();
-  }, []);
 
   const handleQuickSession = useCallback(() => {
     if (!moodIdentity) return;
@@ -186,15 +168,6 @@ export default function HomeScreen() {
       params: { mood: moodIdentity.dominantMood, workoutId: pick.id, intensity: '5' },
     });
   }, [moodIdentity]);
-
-  const handleMilestoneDismiss = useCallback(async (milestoneDay: number) => {
-    const updated = {
-      ...streakState,
-      seenMilestones: [...(streakState.seenMilestones ?? []), milestoneDay],
-    };
-    setStreakState(updated);
-    await saveStreakState(updated);
-  }, [streakState]);
 
   const handleBadDay = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -225,18 +198,60 @@ export default function HomeScreen() {
       >
         {/* Top row */}
         <View style={styles.topRow}>
-          {!isPremium && (
+          {!isPremium ? (
             <TouchableOpacity
               onPress={() => router.push('/premium')}
               activeOpacity={0.7}
-              style={styles.proBadge}
+              style={styles.tryProBadge}
               accessibilityRole="button"
-              accessibilityLabel="Upgrade to Pro"
+              accessibilityLabel="Try Pro"
             >
-              <Text style={styles.proBadgeText}>PRO</Text>
+              <Text style={styles.tryProBadgeText}>TRY PRO →</Text>
             </TouchableOpacity>
+          ) : (
+            <View style={styles.proMemberBadge}>
+              <Text style={styles.proMemberBadgeText}>PRO</Text>
+            </View>
+          )}
+          {streak > 0 && (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakBadgeText}>
+                {streak} DAY{streak !== 1 ? 'S' : ''}
+              </Text>
+            </View>
           )}
         </View>
+
+        {showGreeting && (
+          <Animated.View
+            style={[
+              styles.streakPill,
+              {
+                opacity: greetingAnim,
+                transform: [{
+                  translateY: greetingAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-6, 0],
+                  }),
+                }],
+              },
+            ]}
+          >
+            <Text style={styles.streakPillLabel}>{greetingStreakLabel}</Text>
+            <Text style={styles.streakPillText}>{greetingStreakMsg}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+                Animated.timing(greetingAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => setShowGreeting(false));
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss streak message"
+            >
+              <Text style={styles.streakPillDismiss}>✕</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         <Text style={styles.headline}>
           {moodIdentity && sessions.length >= 10
@@ -436,27 +451,6 @@ export default function HomeScreen() {
       </Animated.View>
 
       <BottomNav />
-
-      {/* Streak toast — once per app launch, non-milestone streaks only */}
-      {showGreeting && (
-        <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }] }]}>
-          <View style={styles.greetingContent}>
-            <Text style={styles.greetingLabel}>{greetingStreakLabel}</Text>
-            <Text style={styles.greetingText}>{greetingStreakMsg}</Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => {
-              if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
-              Animated.timing(greetingAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => setShowGreeting(false));
-            }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel="Dismiss"
-          >
-            <Text style={styles.greetingDismiss}>✕</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
     </Animated.View>
   );
 }
@@ -478,6 +472,63 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  tryProBadge: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  tryProBadgeText: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  proMemberBadge: {
+    borderWidth: 1,
+    borderColor: '#E8B84B',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  proMemberBadgeText: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  streakPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: '#111111',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+  streakPillLabel: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  streakPillText: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+    flex: 1,
+    fontSize: 13,
+  },
+  streakPillDismiss: {
+    ...t.label,
+    color: '#737373',
+    fontSize: 12,
+    lineHeight: 17,
   },
   checkInLabel: {
     ...t.label,
@@ -506,24 +557,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#333333',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   streakBadgeText: {
     ...t.number,
     color: '#E8B84B',
-  },
-  proBadge: {
-    borderWidth: 1,
-    borderColor: '#E8B84B',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  proBadgeText: {
-    ...t.label,
-    color: '#E8B84B',
-    letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 1,
   },
   headline: {
     ...t.headline,
@@ -622,7 +664,8 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#a3a3a3',
     letterSpacing: 1.5,
-    fontSize: 10,
+    fontSize: 12,
+    lineHeight: 17,
   },
   moodRow: {
     flex: 1,
@@ -746,45 +789,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 36,
     marginTop: 2,
-  },
-  greetingToast: {
-    position: 'absolute',
-    top: '40%',
-    left: 24,
-    right: 24,
-    backgroundColor: '#ffffff',
-    borderWidth: 0,
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 100,
-  },
-  greetingContent: {
-    flex: 1,
-    gap: 4,
-  },
-  greetingLabel: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    lineHeight: 19,
-    color: '#B8860B',
-    letterSpacing: 3,
-  },
-  greetingText: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 18,
-    color: '#111111',
-    letterSpacing: 0.2,
-    lineHeight: 26,
-  },
-  greetingDismiss: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    lineHeight: 19,
-    color: '#555555',
-    marginLeft: 14,
   },
   prescribeButton: {
     borderWidth: 1,

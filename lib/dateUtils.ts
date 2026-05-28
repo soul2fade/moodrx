@@ -22,6 +22,11 @@ export function yesterdayDateString(): string {
   return toDateString(d.getTime());
 }
 
+/** True when timestamp falls on yesterday (local calendar day) */
+export function isYesterdayTimestamp(ts: number): boolean {
+  return toDateString(ts) === yesterdayDateString();
+}
+
 /** Format today as "WED, 14 APR" */
 export function formatTodayLabel(): string {
   const d = new Date();

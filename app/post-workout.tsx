@@ -31,6 +31,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
+import { getFieldNotePlaceholder } from '@/lib/workout-ui';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react-native';
 
 function getScoreContext(score: number, lowerIsBetter: boolean): string {
@@ -90,6 +91,7 @@ export default function PostWorkoutScreen() {
   const accentColor = moodData.color;
   const lowerIsBetter = mood !== 'good';
   const postInsult = useDrMoodRxLine(mood, 'post');
+  const notePlaceholder = getFieldNotePlaceholder(cachedSessionCount);
   const breakthroughRef = useRef<ViewShot>(null);
 
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
@@ -393,7 +395,7 @@ export default function PostWorkoutScreen() {
             style={[styles.noteInput, note.length > 0 && { borderColor: '#2a2a2a' }]}
             value={note}
             onChangeText={(t) => setNote(t.slice(0, 140))}
-            placeholder="What happened in there?"
+            placeholder={notePlaceholder}
             placeholderTextColor="#999999"
             multiline
             numberOfLines={3}

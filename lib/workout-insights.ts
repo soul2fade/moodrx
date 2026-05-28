@@ -170,3 +170,15 @@ export function getTopEffectiveCombinations(
       label: `${MOODS_LABEL[combo.mood]} + ${combo.workoutName} — helped ${combo.yesCount}/${combo.ratedCount} times`,
     }));
 }
+
+export function getBestPatternCallout(
+  sessions: Session[],
+): { mood: MoodKey; workoutName: string; text: string } | null {
+  const top = getTopEffectiveCombinations(sessions, 1)[0];
+  if (!top) return null;
+  return {
+    mood: top.mood,
+    workoutName: top.workoutName,
+    text: `${MOODS_LABEL[top.mood]} lifts most after ${top.workoutName} — helped ${top.yesCount}/${top.ratedCount} times.`,
+  };
+}

@@ -26,6 +26,7 @@ import { MOODS } from '@/lib/moods';
 import { fonts } from '@/lib/typography';
 import type { MoodKey, Session, UserProfile } from '@/lib/storage';
 import { getCarouselHintSeen, setCarouselHintSeen } from '@/lib/storage';
+import { getBestPatternCallout } from '@/lib/workout-insights';
 
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 24;
@@ -176,6 +177,7 @@ export function HomeCarousel({
   const trendDiff = last7.length >= 2 ? last7[last7.length - 1].intensity - last7[0].intensity : 0;
   const trendLabel = Math.abs(trendDiff) < 1 ? '→ HOLDING STEADY' : trendDiff < 0 ? '↓ TRENDING BETTER' : '↑ TRENDING WORSE';
   const trendColor = Math.abs(trendDiff) < 1 ? '#999999' : trendDiff < 0 ? '#059669' : '#b45309';
+  const patternCallout = getBestPatternCallout(sessions);
   const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
@@ -303,6 +305,23 @@ export function HomeCarousel({
           <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll} contentContainerStyle={styles.pageContent}>
           {hasQuickActions ? (
             <>
+              {patternCallout && !selectedMood && (
+                <TouchableOpacity
+                  style={[styles.patternCallout, { borderLeftColor: MOODS[patternCallout.mood].color }]}
+                  onPress={() => router.push({
+                    pathname: '/prescription',
+                    params: { mood: patternCallout.mood, intensity: '5' },
+                  })}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Pattern insight: ${patternCallout.text}`}
+                >
+                  <Text style={styles.patternCalloutLabel}>WHAT WORKS FOR YOU</Text>
+                  <Text style={styles.patternCalloutText}>{patternCallout.text}</Text>
+                  <Text style={styles.patternCalloutAction}>TRY IT AGAIN →</Text>
+                </TouchableOpacity>
+              )}
+
               {/* Adaptive shortcut — Quick Repeat takes priority when within 18hr window, else Quick Session */}
               {showStillFeeling && lastSession ? (
                 <TouchableOpacity
@@ -590,6 +609,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 2,
     marginTop: 6,
+    lineHeight: 17,
+  },
+  patternCallout: {
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    borderLeftWidth: 3,
+    padding: 14,
+    marginBottom: 12,
+  },
+  patternCalloutLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#c8c8c8',
+    letterSpacing: 2,
+    lineHeight: 17,
+  },
+  patternCalloutText: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 14,
+    color: '#999999',
+    marginTop: 6,
+    lineHeight: 20,
+  },
+  patternCalloutAction: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#ffffff',
+    letterSpacing: 1.5,
+    marginTop: 10,
     lineHeight: 17,
   },
   quickRow: {

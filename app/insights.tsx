@@ -33,7 +33,7 @@ import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { BottomNav } from '@/components/BottomNav';
 
-const CASE_PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
+const CASE_PANEL_HEIGHT = Math.min(Dimensions.get('window').height * 0.52, Dimensions.get('window').height - 200);
 
 const BAR_MAX_HEIGHT = 60;
 const BAR_WIDTH = 18;
@@ -145,7 +145,12 @@ export default function InsightsScreen() {
         {/* Stats row */}
         {isLoading ? (
           <View style={styles.statsRow}>
-            <Text style={styles.statsLoading}>Loading your data…</Text>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={styles.statSkeleton}>
+                <View style={styles.statSkeletonBar} />
+                <View style={styles.statSkeletonLabel} />
+              </View>
+            ))}
           </View>
         ) : (
           <View style={styles.statsRow}>
@@ -641,10 +646,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statsLoading: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
+  statSkeleton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 20,
+    gap: 10,
+  },
+  statSkeletonBar: {
+    width: 48,
+    height: 28,
+    backgroundColor: '#252525',
+  },
+  statSkeletonLabel: {
+    width: 64,
+    height: 10,
+    backgroundColor: '#1a1a1a',
   },
   statItem: {
     flex: 1,

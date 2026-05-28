@@ -16,7 +16,7 @@ import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakS
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
-import { todayDateString } from '@/lib/dateUtils';
+import { isYesterdayTimestamp, todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
@@ -34,7 +34,7 @@ const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
 let greetingShownThisSession = false;
 
 export default function HomeScreen() {
-  const { sessions, isLoading, streak, sessionCount, lastSession } = useSessions();
+  const { sessions, isLoading, streak, sessionCount, lastSession, addSession } = useSessions();
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
@@ -149,6 +149,7 @@ export default function HomeScreen() {
   const checkedInToday = hasSessionToday(sessions);
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
+  const showSameAsYesterday = !isLoading && !checkedInToday && !selectedMood && lastSession != null && isYesterdayTimestamp(lastSession.timestamp);
   const { isPremium } = useSubscription();
 
   const handleMoodSelect = useCallback((mood: MoodKey) => {
@@ -188,6 +189,50 @@ export default function HomeScreen() {
       params: { mood: selectedMood, intensity: String(intensity) },
     });
   }, [selectedMood, intensity]);
+
+  const handleJustLogIt = useCallback(async () => {
+    if (!selectedMood) return;
+    const session = {
+      id: Date.now().toString(),
+      mood: selectedMood,
+      intensity,
+      postScore: intensity,
+      workoutName: 'Mood check-in',
+      duration: 0,
+      timestamp: Date.now(),
+      lightDay: true as const,
+    };
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await addSession(session);
+    await rescheduleAfterSession([...sessions, session]);
+    dismissPanel();
+  }, [selectedMood, intensity, addSession, sessions, dismissPanel]);
+
+  const handleSameAsYesterdayLog = useCallback(async () => {
+    if (!lastSession) return;
+    const session = {
+      id: Date.now().toString(),
+      mood: lastSession.mood,
+      intensity: lastSession.intensity,
+      postScore: lastSession.intensity,
+      workoutName: 'Same as yesterday',
+      duration: 0,
+      timestamp: Date.now(),
+      lightDay: true as const,
+    };
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await addSession(session);
+    await rescheduleAfterSession([...sessions, session]);
+  }, [lastSession, addSession, sessions]);
+
+  const handleSameAsYesterdayRepeat = useCallback(() => {
+    if (!lastSession) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push({
+      pathname: '/prescription',
+      params: { mood: lastSession.mood, intensity: String(lastSession.intensity) },
+    });
+  }, [lastSession]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -352,6 +397,35 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {showSameAsYesterday && lastSession && (
+          <View style={[styles.sameDayCard, { borderLeftColor: MOODS[lastSession.mood].color }]}>
+            <Text style={styles.sameDayLabel}>SAME AS YESTERDAY?</Text>
+            <Text style={styles.sameDaySub}>
+              {MOODS[lastSession.mood].name.toUpperCase()} · {lastSession.intensity}/10
+            </Text>
+            <View style={styles.sameDayActions}>
+              <TouchableOpacity
+                onPress={handleSameAsYesterdayLog}
+                style={styles.sameDayBtn}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Log same mood as yesterday without a workout"
+              >
+                <Text style={styles.sameDayBtnText}>JUST LOG IT</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSameAsYesterdayRepeat}
+                style={styles.sameDayBtnOutline}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Repeat yesterday's workout prescription"
+              >
+                <Text style={styles.sameDayBtnOutlineText}>REPEAT →</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Breathe tool link */}
         <TouchableOpacity
           onPress={() => router.push('/breathe' as any)}
@@ -430,6 +504,16 @@ export default function HomeScreen() {
               accessibilityLabel={`Mood intensity: ${intensity} out of 10`}
               accessibilityRole="adjustable"
             />
+
+            <TouchableOpacity
+              onPress={handleJustLogIt}
+              activeOpacity={0.7}
+              style={styles.justLogButton}
+              accessibilityRole="button"
+              accessibilityLabel="Log mood without a workout"
+            >
+              <Text style={styles.justLogButtonText}>JUST LOG IT — NO WORKOUT</Text>
+            </TouchableOpacity>
 
             {/* Prescribe button */}
             <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
@@ -668,6 +752,77 @@ const styles = StyleSheet.create({
   badDayText: {
     ...t.label,
     color: '#a3a3a3',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  sameDayCard: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    borderLeftWidth: 3,
+    padding: 14,
+  },
+  sameDayLabel: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  sameDaySub: {
+    ...t.bodySm,
+    color: '#999999',
+    marginTop: 6,
+    fontSize: 14,
+  },
+  sameDayActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  sameDayBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 12,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  sameDayBtnText: {
+    ...t.label,
+    color: '#ffffff',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  sameDayBtnOutline: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 12,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  sameDayBtnOutlineText: {
+    ...t.label,
+    color: '#999999',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  justLogButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  justLogButtonText: {
+    ...t.label,
+    color: '#999999',
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,

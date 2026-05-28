@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Animated,
   Platform,
+  Alert,
   Linking,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
@@ -15,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
 import { clearAllData, getTrashTalkVolume, getUserProfile, getVoiceEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { exportSessionsJson } from '@/lib/export-sessions';
 import { clearTrial } from '@/lib/subscription';
 import { useSessions } from '@/contexts/SessionsContext';
 import {
@@ -42,7 +44,7 @@ export default function SettingsScreen() {
   const [voiceEnabled, setVoiceEnabledState] = useState(true);
   const voiceToggleAnim = useRef(new Animated.Value(1)).current;
   const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium } = useSubscription();
-  const { clearSessions } = useSessions();
+  const { clearSessions, sessions } = useSessions();
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleAnim = useRef(new Animated.Value(0)).current;
@@ -148,6 +150,18 @@ export default function SettingsScreen() {
     await AsyncStorage.setItem(REMINDER_TIME_KEY, timeLabel);
     if (notificationsEnabled) {
       await scheduleNotification(timeLabel);
+    }
+  };
+
+  const handleExportSessions = async () => {
+    if (sessions.length === 0) {
+      Alert.alert('Nothing to export', 'Complete a session first.');
+      return;
+    }
+    try {
+      await exportSessionsJson(sessions);
+    } catch {
+      Alert.alert('Export failed', 'Could not create a share file on this device.');
     }
   };
 
@@ -420,6 +434,16 @@ export default function SettingsScreen() {
           accessibilityLabel="Restore purchases"
         >
           <Text style={styles.dataRowText}>RESTORE PURCHASES</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleExportSessions}
+          activeOpacity={0.7}
+          style={styles.dataRow}
+          accessibilityRole="button"
+          accessibilityLabel="Export sessions as JSON"
+        >
+          <Text style={styles.dataRowText}>EXPORT SESSIONS (JSON)</Text>
         </TouchableOpacity>
 
         {!showDeleteConfirm ? (

@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Modal,
   ScrollView,
   StyleSheet,
   Animated,
@@ -24,6 +25,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
+import { stepHasReps } from '@/lib/workout-ui';
 
 function parseRestSeconds(text: string): number | null {
   const lower = text.toLowerCase();
@@ -398,6 +400,8 @@ export default function WorkoutScreen() {
   const isLastStep = currentStep === totalSteps - 1;
   const motivationalMsg = MOTIVATIONAL[Math.min(currentStep, MOTIVATIONAL.length - 1)];
   const progressWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
+  const currentStepText = resolvedWorkout.steps[currentStep] ?? '';
+  const showRepCounter = stepHasReps(currentStepText);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -414,20 +418,27 @@ export default function WorkoutScreen() {
         <Text style={styles.stepCounter} allowFontScaling={false}>{currentStep + 1} / {totalSteps}</Text>
       </View>
 
-      {/* Quit confirmation */}
-      {showQuitConfirm && (
-        <View style={styles.quitConfirm} accessibilityRole="alert">
-          <Text style={styles.quitConfirmText}>Abandon this workout?</Text>
-          <View style={styles.quitConfirmButtons}>
-            <TouchableOpacity onPress={() => setShowQuitConfirm(false)} activeOpacity={0.7} style={styles.keepGoingBtn} accessibilityRole="button">
-              <Text style={styles.keepGoingText}>Keep going</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleQuit} activeOpacity={0.7} style={styles.quitConfirmBtn} accessibilityRole="button">
-              <Text style={styles.quitConfirmBtnText}>Quit</Text>
-            </TouchableOpacity>
+      {/* Quit confirmation modal */}
+      <Modal
+        visible={showQuitConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowQuitConfirm(false)}
+      >
+        <View style={styles.quitModalBackdrop}>
+          <View style={styles.quitModalCard} accessibilityRole="alert">
+            <Text style={styles.quitConfirmText}>Abandon this workout?</Text>
+            <View style={styles.quitConfirmButtons}>
+              <TouchableOpacity onPress={() => setShowQuitConfirm(false)} activeOpacity={0.7} style={styles.keepGoingBtn} accessibilityRole="button">
+                <Text style={styles.keepGoingText}>Keep going</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleQuit} activeOpacity={0.7} style={styles.quitConfirmBtn} accessibilityRole="button">
+                <Text style={styles.quitConfirmBtnText}>Quit</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      )}
+      </Modal>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Icon + title */}
@@ -522,6 +533,7 @@ export default function WorkoutScreen() {
         </View>
 
         {/* ── REP COUNTER ── */}
+        {showRepCounter && (
         <View style={styles.repSection}>
           <View style={styles.repHeaderRow}>
             <Text style={[styles.sectionLabel, { marginBottom: 0, fontSize: 16 }]}>REP COUNTER</Text>
@@ -550,6 +562,7 @@ export default function WorkoutScreen() {
             <Text style={[styles.pbAlert, { color: accentColor }]}>NEW BEST</Text>
           )}
         </View>
+        )}
 
         {/* ── SOUNDSCAPE ── */}
         <View style={styles.soundSection}>
@@ -659,6 +672,18 @@ const styles = StyleSheet.create({
   quitText: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
   stepCounter: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
   quitConfirm: { marginHorizontal: 24, borderWidth: 1, borderColor: '#E11D48', padding: 16, marginBottom: 8 },
+  quitModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  quitModalCard: {
+    borderWidth: 1,
+    borderColor: '#E11D48',
+    backgroundColor: '#0a0a0a',
+    padding: 20,
+  },
   quitConfirmText: { ...t.body, fontSize: 15 },
   quitConfirmButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
   keepGoingBtn: { paddingVertical: 8 },

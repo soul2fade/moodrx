@@ -30,7 +30,8 @@ import { BreakthroughCard } from '@/components/BreakthroughCard';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
-import { getInsult } from '@/utils/insults';
+import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
+import { Minus, TrendingDown, TrendingUp } from 'lucide-react-native';
 
 function getScoreContext(score: number, lowerIsBetter: boolean): string {
   if (lowerIsBetter) {
@@ -88,7 +89,7 @@ export default function PostWorkoutScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const lowerIsBetter = mood !== 'good';
-  const postInsult = useRef(getInsult(mood, 'post')).current;
+  const postInsult = useDrMoodRxLine(mood, 'post');
   const breakthroughRef = useRef<ViewShot>(null);
 
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
@@ -256,9 +257,21 @@ export default function PostWorkoutScreen() {
             return (
               <View style={[styles.changeHero, { borderTopColor: changeColor }]}>
                 <Text style={styles.changeHeroLabel} allowFontScaling={false}>CHANGE</Text>
-                <Text style={[styles.changeHeroValue, { color: changeColor }]}>
-                  {displayed > 0 ? `+${displayed}` : `${displayed}`}
-                </Text>
+                <View style={styles.changeHeroValueRow}>
+                  {isPositive ? (
+                    <TrendingUp size={28} color={changeColor} accessibilityElementsHidden importantForAccessibility="no" />
+                  ) : isNegative ? (
+                    <TrendingDown size={28} color={changeColor} accessibilityElementsHidden importantForAccessibility="no" />
+                  ) : (
+                    <Minus size={28} color={changeColor} accessibilityElementsHidden importantForAccessibility="no" />
+                  )}
+                  <Text
+                    style={[styles.changeHeroValue, { color: changeColor }]}
+                    accessibilityLabel={`Change ${displayed > 0 ? 'up' : displayed < 0 ? 'down' : 'unchanged'} ${Math.abs(displayed)} points`}
+                  >
+                    {displayed > 0 ? `+${displayed}` : `${displayed}`}
+                  </Text>
+                </View>
                 <Text style={styles.changeHeroSub}>{changeSub}</Text>
               </View>
             );
@@ -381,7 +394,7 @@ export default function PostWorkoutScreen() {
             value={note}
             onChangeText={(t) => setNote(t.slice(0, 140))}
             placeholder="What happened in there?"
-            placeholderTextColor="#737373"
+            placeholderTextColor="#999999"
             multiline
             numberOfLines={3}
             maxLength={140}
@@ -629,6 +642,11 @@ const styles = StyleSheet.create({
     fontSize: 64,
     fontFamily: fonts.mono.regular,
     lineHeight: undefined,
+  },
+  changeHeroValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   changeHeroSub: {
     fontFamily: fonts.mono.regular,

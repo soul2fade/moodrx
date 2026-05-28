@@ -207,5 +207,5 @@ const styles = StyleSheet.create({
   },
   startButtonText: { ...t.button, letterSpacing: 2, fontSize: 12, lineHeight: 17 },
   skipButton: { paddingVertical: 16, alignItems: 'center', marginTop: 4 },
-  skipText: { ...t.label, color: '#737373', letterSpacing: 2, lineHeight: 17 },
+  skipText: { ...t.label, color: '#999999', letterSpacing: 2, lineHeight: 17 },
 });

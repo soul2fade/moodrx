@@ -5,7 +5,7 @@ export const INSULTS: Record<InsultMood, Record<WorkoutMoment, string[]>> = {
   anxious: {
     pre: [
       "You're anxious about starting the thing that treats the anxiety. That's a you problem. Start anyway.",
-      "Your brain has filed seventeen objections to this workout. All denied. Let's go.",
+      "Your brain has objections. Expected. Start with one small step.",
       "The spiral isn't productive. This is. Pick one.",
     ],
     mid: [
@@ -34,7 +34,7 @@ export const INSULTS: Record<InsultMood, Record<WorkoutMoment, string[]>> = {
     post: [
       "You did the hardest version of this workout — the one where you didn't want to.",
       "Doesn't fix everything. Fixes some things. Come back tomorrow for the rest.",
-      "Your brain chemistry is marginally less against you now. Take the win.",
+      "Your baseline is a little better than when you started. Take the win.",
     ],
   },
 
@@ -68,7 +68,7 @@ export const INSULTS: Record<InsultMood, Record<WorkoutMoment, string[]>> = {
       "Channel it or waste it. Those are the only two options.",
     ],
     post: [
-      "Edge: gone. You: slightly less unlivable. Progress.",
+      "Edge: spent. You: a little more settled. Progress.",
       "The restlessness had to go somewhere. Here works. Remember that next time you're climbing the walls.",
       "You're not cured. But you're not pacing around the apartment anymore either. Net positive.",
     ],

@@ -40,16 +40,17 @@ export default function HomeScreen() {
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const [carouselPage, setCarouselPage] = useState<number | null>(null);
   const carouselFadeAnim = useRef(new Animated.Value(0)).current;
+  const carouselVisible = carouselPage !== null;
 
   useEffect(() => {
-    if (carouselPage !== null) {
+    if (carouselVisible) {
       Animated.timing(carouselFadeAnim, {
         toValue: 1,
         duration: 220,
         useNativeDriver: true,
       }).start();
     }
-  }, [carouselPage !== null]);
+  }, [carouselVisible, carouselFadeAnim]);
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
@@ -123,7 +124,7 @@ export default function HomeScreen() {
           ]).start();
         }, 180 + i * 55);
       });
-    }, [dismissPanel, sessions])
+    }, [dismissPanel, sessions, greetingAnim, moodAnims])
   );
 
   useEffect(() => {
@@ -356,7 +357,7 @@ export default function HomeScreen() {
           onPress={() => router.push('/breathe' as any)}
           activeOpacity={0.6}
           style={styles.breatheLink}
-          accessibilityRole="link"
+          accessibilityRole="button"
           accessibilityLabel="Open box breathing tool"
         >
           <Text style={styles.breatheLinkText}>Need to breathe first? →</Text>
@@ -367,7 +368,7 @@ export default function HomeScreen() {
           onPress={() => router.push('/crisis' as any)}
           activeOpacity={0.6}
           style={styles.safetyNetBtn}
-          accessibilityRole="link"
+          accessibilityRole="button"
           accessibilityLabel="Not okay enough to move? Get crisis support"
         >
           <Text style={styles.safetyNetText}>Not okay enough to move? →</Text>
@@ -526,7 +527,7 @@ const styles = StyleSheet.create({
   },
   streakPillDismiss: {
     ...t.label,
-    color: '#737373',
+    color: '#999999',
     fontSize: 12,
     lineHeight: 17,
   },
@@ -586,7 +587,9 @@ const styles = StyleSheet.create({
   breatheLink: {
     marginTop: 24,
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 14,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   breatheLinkText: {
     fontFamily: fonts.mono.regular,
@@ -598,7 +601,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   safetyNetText: {
     fontFamily: fonts.mono.regular,

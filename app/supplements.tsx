@@ -1170,7 +1170,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 14,
-    color: '#444444',
+    color: '#999999',
   },
   reminderCard: {
     borderWidth: 1,

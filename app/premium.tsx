@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   trialBadgeText: { ...t.label, color: '#E8B84B', letterSpacing: 2 },
   expiredBadge: {
-    borderColor: '#737373',
+    borderColor: '#999999',
   },
   expiredBadgeText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   socialProofBox: {

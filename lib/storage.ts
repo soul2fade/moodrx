@@ -516,3 +516,23 @@ export async function setTrashTalkVolume(volume: number): Promise<void> {
     // non-critical
   }
 }
+
+const VOICE_ENABLED_KEY = '@moodrx_voice_enabled';
+
+export async function getVoiceEnabled(): Promise<boolean> {
+  try {
+    const raw = await AsyncStorage.getItem(VOICE_ENABLED_KEY);
+    if (raw === null) return true;
+    return raw === 'true';
+  } catch {
+    return true;
+  }
+}
+
+export async function setVoiceEnabled(enabled: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(VOICE_ENABLED_KEY, enabled ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
+}

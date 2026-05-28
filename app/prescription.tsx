@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ import { getFreeTierSummary, isSupplementUnlocked, isWorkoutUnlocked } from '@/l
 import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
-import { getInsult } from '@/utils/insults';
+import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 
 type Tab = 'workouts' | 'stack';
 
@@ -58,7 +58,7 @@ export default function PrescriptionScreen() {
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
-  const preInsult = useRef(getInsult(mood, 'pre')).current;
+  const preInsult = useDrMoodRxLine(mood, 'pre');
   const { ordered: workouts, alternateNote } = useMemo(
     () => getPrescriptionWorkouts(getWorkoutsForMood(mood), sessions),
     [mood, sessions],
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
   },
   workoutBadgeMuted: {
     ...t.label,
-    color: '#737373',
+    color: '#999999',
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
   },
   suppModalClose: {
     fontSize: 18,
-    color: '#666666',
+    color: '#999999',
     paddingLeft: 16,
     paddingTop: 2,
   },

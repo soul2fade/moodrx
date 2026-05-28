@@ -314,7 +314,7 @@ export default function InsightsScreen() {
             <Text style={styles.workoutHistLabel}>WORKOUT HISTORY</Text>
             {workoutStats.visible.map((w, i) => {
               const avgStr = w.avgChange >= 0 ? `+${w.avgChange.toFixed(1)}` : w.avgChange.toFixed(1);
-              const avgColor = w.avgChange >= 0 ? '#059669' : '#737373';
+              const avgColor = w.avgChange >= 0 ? '#059669' : '#999999';
               return (
                 <View key={i} style={styles.workoutHistRow}>
                   <View style={styles.workoutHistInfo}>
@@ -351,8 +351,8 @@ export default function InsightsScreen() {
             {recent10.map((session) => {
               const change = session.postScore - session.intensity;
               const changeStr = change >= 0 ? `+${change}` : `${change}`;
-              const changeColor = change >= 0 ? '#059669' : '#737373';
-              const moodColor = MOODS[session.mood]?.color ?? '#737373';
+              const changeColor = change >= 0 ? '#059669' : '#999999';
+              const moodColor = MOODS[session.mood]?.color ?? '#999999';
               const date = new Date(session.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
               return (
@@ -404,7 +404,7 @@ export default function InsightsScreen() {
             {sessionNotes.visible.map((s) => {
               const date = new Date(s.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
-              const moodColor = MOODS[s.mood]?.color ?? '#737373';
+              const moodColor = MOODS[s.mood]?.color ?? '#999999';
               return (
                 <View key={s.id} style={styles.noteRow}>
                   <View style={styles.noteHeader}>
@@ -526,8 +526,8 @@ export default function InsightsScreen() {
           const cs = caseSession;
           const change = cs.postScore - cs.intensity;
           const changeStr = change >= 0 ? `+${change}` : `${change}`;
-          const changeColor = change >= 0 ? '#059669' : '#737373';
-          const moodColor = MOODS[cs.mood]?.color ?? '#737373';
+          const changeColor = change >= 0 ? '#059669' : '#999999';
+          const moodColor = MOODS[cs.mood]?.color ?? '#999999';
           const date = new Date(cs.timestamp);
           const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
           const ratingLabel = cs.rating === 'yes' ? 'YES ★' : cs.rating === 'somewhat' ? 'SOMEWHAT' : cs.rating === 'no' ? 'NOT REALLY' : null;
@@ -905,7 +905,7 @@ const styles = StyleSheet.create({
   },
   recentLightBadge: {
     ...t.label,
-    color: '#737373',
+    color: '#999999',
     fontSize: 12,
     lineHeight: 17,
     letterSpacing: 1.5,

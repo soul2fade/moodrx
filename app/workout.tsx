@@ -23,7 +23,7 @@ import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
-import { getInsult } from '@/utils/insults';
+import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 
 function parseRestSeconds(text: string): number | null {
   const lower = text.toLowerCase();
@@ -137,7 +137,7 @@ export default function WorkoutScreen() {
   const accentColor = moodData.color;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
   const trashTalkAllowed = resolvedWorkout?.intensity !== 'Intense';
-  const midInsult = useRef(getInsult(mood, 'mid')).current;
+  const midInsult = useDrMoodRxLine(mood, 'mid');
   const midStep = Math.floor((totalSteps - 1) / 2);
 
   const player = useAudioPlayer(audioSrc);

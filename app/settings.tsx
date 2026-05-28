@@ -14,7 +14,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { clearAllData, getTrashTalkVolume, getUserProfile, setTrashTalkVolume, setUserProfile, UserProfile } from '@/lib/storage';
+import { clearAllData, getTrashTalkVolume, getUserProfile, getVoiceEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
 import { clearTrial } from '@/lib/subscription';
 import { useSessions } from '@/contexts/SessionsContext';
 import {
@@ -39,6 +39,8 @@ export default function SettingsScreen() {
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
   const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
+  const [voiceEnabled, setVoiceEnabledState] = useState(true);
+  const voiceToggleAnim = useRef(new Animated.Value(1)).current;
   const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium } = useSubscription();
   const { clearSessions } = useSessions();
   const versionTapCount = useRef(0);
@@ -58,7 +60,8 @@ export default function SettingsScreen() {
       AsyncStorage.getItem(REMINDER_TIME_KEY),
       getUserProfile(),
       getTrashTalkVolume(),
-    ]).then(([notifVal, timeVal, profile, volume]) => {
+      getVoiceEnabled(),
+    ]).then(([notifVal, timeVal, profile, volume, voiceOn]) => {
       const enabled = notifVal === 'true';
       setNotificationsEnabled(enabled);
       toggleAnim.setValue(enabled ? 1 : 0);
@@ -66,13 +69,31 @@ export default function SettingsScreen() {
       if (profile.preferredTime) setPreferredTimeState(profile.preferredTime);
       if (profile.primaryGoal) setPrimaryGoalState(profile.primaryGoal);
       setTrashTalkVolumeState(volume);
+      setVoiceEnabledState(voiceOn);
+      voiceToggleAnim.setValue(voiceOn ? 1 : 0);
     });
-  }, [toggleAnim]);
+  }, [toggleAnim, voiceToggleAnim]);
 
   const handleTrashTalkVolumeChange = async (value: number) => {
     setTrashTalkVolumeState(value);
     await setTrashTalkVolume(value);
   };
+
+  const handleVoiceToggle = async () => {
+    const next = !voiceEnabled;
+    setVoiceEnabledState(next);
+    await setVoiceEnabled(next);
+    Animated.timing(voiceToggleAnim, {
+      toValue: next ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const voiceTranslateX = voiceToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
 
   const handleSelectPreferredTime = async (value: UserProfile['preferredTime']) => {
     setPreferredTimeState(value);
@@ -271,6 +292,23 @@ export default function SettingsScreen() {
         </View>
 
         <Text style={styles.sectionHeader}>WORKOUT</Text>
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLabelBlock}>
+            <Text style={styles.toggleLabel}>Dr. MoodRx copy</Text>
+            <Text style={styles.prefHint}>Pre/post lines on prescription and post-workout. Softer tone for anxious and low moods.</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleVoiceToggle}
+            activeOpacity={0.8}
+            style={[styles.toggle, voiceEnabled ? styles.toggleOn : styles.toggleOff]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: voiceEnabled }}
+            accessibilityLabel="Dr MoodRx copy"
+          >
+            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: voiceTranslateX }] }]} />
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.prefLabel}>TRASH TALK VOLUME</Text>
         <Text style={styles.prefHint}>Only plays when you turn on trash talk during a workout.</Text>
         <View style={styles.volumeRow}>
@@ -504,6 +542,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
+  toggleLabelBlock: { flex: 1, marginRight: 12 },
   toggleLabel: { ...t.body, fontSize: 15 },
   toggle: { width: 50, height: 28, borderRadius: 0, justifyContent: 'center' },
   toggleOff: { backgroundColor: '#1a1a1a' },

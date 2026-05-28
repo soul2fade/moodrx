@@ -8,8 +8,9 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import {
@@ -32,6 +33,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { BottomNav } from '@/components/BottomNav';
+import { getHealthSnapshot, type HealthSnapshot } from '@/lib/health';
 
 const CASE_PANEL_HEIGHT = Math.min(Dimensions.get('window').height * 0.52, Dimensions.get('window').height - 200);
 
@@ -50,6 +52,7 @@ export default function InsightsScreen() {
   const [showBurnConfirm, setShowBurnConfirm] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [caseSession, setCaseSession] = useState<Session | null>(null);
+  const [healthSnapshot, setHealthSnapshot] = useState<HealthSnapshot | null>(null);
   const shareCardRef = useRef<ViewShot>(null);
   const { panelAnim: casePanelAnim, backdropAnim: caseBackdropAnim, show: showCasePanelAnim, dismiss: dismissCasePanelAnim } = useBottomPanel(CASE_PANEL_HEIGHT);
   const { isPremium } = useSubscription();
@@ -60,6 +63,13 @@ export default function InsightsScreen() {
     return true;
   }, []);
   useHardwareBack(backHandler);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'ios') return;
+      getHealthSnapshot().then(setHealthSnapshot).catch(() => {});
+    }, []),
+  );
 
   const effectiveCombos = useMemo(
     () => getTopEffectiveCombinations(sessions),
@@ -182,6 +192,27 @@ export default function InsightsScreen() {
               <Text style={styles.statValueStreak}>{streak}</Text>
               <Text style={styles.statLabel}>DAY STREAK</Text>
             </View>
+          </View>
+        )}
+
+        {healthSnapshot?.connected && (healthSnapshot.stepsToday !== null || healthSnapshot.sleepHoursLastNight !== null) && (
+          <View style={styles.healthCard}>
+            <Text style={styles.healthCardLabel}>APPLE HEALTH</Text>
+            <View style={styles.healthRow}>
+              {healthSnapshot.stepsToday !== null && (
+                <View style={styles.healthStat}>
+                  <Text style={styles.healthStatValue}>{healthSnapshot.stepsToday.toLocaleString()}</Text>
+                  <Text style={styles.healthStatLabel}>STEPS TODAY</Text>
+                </View>
+              )}
+              {healthSnapshot.sleepHoursLastNight !== null && (
+                <View style={styles.healthStat}>
+                  <Text style={styles.healthStatValue}>{healthSnapshot.sleepHoursLastNight}h</Text>
+                  <Text style={styles.healthStatLabel}>SLEEP LAST NIGHT</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.healthHint}>Cross-reference with your mood sessions below.</Text>
           </View>
         )}
 
@@ -1190,6 +1221,45 @@ const styles = StyleSheet.create({
   statValueStreak: {
     ...t.dataValue,
     color: colors.warning,
+  },
+  healthCard: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    borderLeftWidth: 3,
+    borderLeftColor: '#E11D48',
+    padding: 14,
+  },
+  healthCardLabel: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 3,
+    marginBottom: 10,
+  },
+  healthRow: {
+    flexDirection: 'row',
+    gap: 24,
+  },
+  healthStat: {
+    flex: 1,
+  },
+  healthStatValue: {
+    ...t.dataValue,
+    fontSize: 22,
+    color: colors.text,
+  },
+  healthStatLabel: {
+    ...t.label,
+    color: '#999999',
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+    letterSpacing: 1.5,
+  },
+  healthHint: {
+    ...t.bodySm,
+    color: '#999999',
+    marginTop: 10,
   },
   supplementBtn: {
     borderWidth: 1,

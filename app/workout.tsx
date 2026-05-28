@@ -16,7 +16,7 @@ import { useAudioPlayer } from 'expo-audio';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
-import { getPersonalBest, getTrashTalkVolume, getWorkoutFocusMode, setWorkoutFocusMode } from '@/lib/storage';
+import { getPersonalBest, getTrashTalkVolume, getWorkoutFocusMode, getWorkoutVoiceMode, setWorkoutFocusMode, setWorkoutVoiceMode } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -26,6 +26,13 @@ import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { stepHasReps } from '@/lib/workout-ui';
+import {
+  buildActiveSpeech,
+  buildRestSpeech,
+  buildStepSpeech,
+  speakWorkoutLine,
+  stopWorkoutSpeech,
+} from '@/lib/workout-speech';
 
 function parseRestSeconds(text: string): number | null {
   const lower = text.toLowerCase();
@@ -120,6 +127,7 @@ export default function WorkoutScreen() {
   const [activeSecondsLeft, setActiveSecondsLeft] = useState<number | null>(null);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trashTalkArmRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -160,12 +168,28 @@ export default function WorkoutScreen() {
 
   useEffect(() => {
     getWorkoutFocusMode().then(setFocusMode).catch(() => {});
+    getWorkoutVoiceMode().then(setVoiceMode).catch(() => {});
   }, []);
 
   const handleFocusToggle = useCallback(() => {
     setFocusMode((prev) => {
       const next = !prev;
       void setWorkoutFocusMode(next);
+      return next;
+    });
+    Haptics.selectionAsync();
+  }, []);
+
+  const handleVoiceToggle = useCallback(() => {
+    setVoiceMode((prev) => {
+      const next = !prev;
+      void setWorkoutVoiceMode(next);
+      if (next) {
+        setFocusMode(true);
+        void setWorkoutFocusMode(true);
+      } else {
+        stopWorkoutSpeech();
+      }
       return next;
     });
     Haptics.selectionAsync();
@@ -201,6 +225,7 @@ export default function WorkoutScreen() {
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
       deactivateKeepAwake();
+      stopWorkoutSpeech();
     };
   }, []);
 
@@ -296,6 +321,24 @@ export default function WorkoutScreen() {
     setRepCount(0);
   }, [currentStep]);
 
+  useEffect(() => {
+    if (!voiceMode || !resolvedWorkout) return;
+    speakWorkoutLine(buildStepSpeech(currentStep, totalSteps, resolvedWorkout.steps[currentStep] ?? ''));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceMode, currentStep]);
+
+  useEffect(() => {
+    if (!voiceMode || restSecondsLeft === null) return;
+    const line = buildRestSpeech(restSecondsLeft);
+    if (line) speakWorkoutLine(line, 0.88);
+  }, [voiceMode, restSecondsLeft]);
+
+  useEffect(() => {
+    if (!voiceMode || activeSecondsLeft === null) return;
+    const line = buildActiveSpeech(activeSecondsLeft);
+    if (line) speakWorkoutLine(line, 1.05);
+  }, [voiceMode, activeSecondsLeft]);
+
   const hwBackHandler = useCallback(() => {
     if (showQuitConfirm) { setShowQuitConfirm(false); return true; }
     if (currentStep > 0) { setCurrentStep((s) => s - 1); return true; }
@@ -308,6 +351,7 @@ export default function WorkoutScreen() {
     try { player.remove(); } catch {}
     try { insultPlayer.pause(); } catch {}
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
+    stopWorkoutSpeech();
   };
 
   const handleNext = () => {
@@ -430,6 +474,16 @@ export default function WorkoutScreen() {
           <Text style={styles.quitText} allowFontScaling={false}>X QUIT</Text>
         </TouchableOpacity>
         <View style={styles.topRowRight}>
+          <TouchableOpacity
+            onPress={handleVoiceToggle}
+            activeOpacity={0.7}
+            style={[styles.focusBtn, voiceMode && { borderColor: accentColor, backgroundColor: accentColor + '18' }]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: voiceMode }}
+            accessibilityLabel={`Voice mode ${voiceMode ? 'on' : 'off'}`}
+          >
+            <Text style={[styles.focusBtnText, voiceMode && { color: accentColor }]} allowFontScaling={false}>VOICE</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={handleFocusToggle}
             activeOpacity={0.7}

@@ -537,6 +537,7 @@ export async function setVoiceEnabled(enabled: boolean): Promise<void> {
 }
 
 const WORKOUT_FOCUS_MODE_KEY = '@moodrx_workout_focus_mode';
+const WORKOUT_VOICE_MODE_KEY = '@moodrx_workout_voice_mode';
 
 export async function getWorkoutFocusMode(): Promise<boolean> {
   try {
@@ -549,6 +550,22 @@ export async function getWorkoutFocusMode(): Promise<boolean> {
 export async function setWorkoutFocusMode(enabled: boolean): Promise<void> {
   try {
     await AsyncStorage.setItem(WORKOUT_FOCUS_MODE_KEY, enabled ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
+}
+
+export async function getWorkoutVoiceMode(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(WORKOUT_VOICE_MODE_KEY)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setWorkoutVoiceMode(enabled: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(WORKOUT_VOICE_MODE_KEY, enabled ? 'true' : 'false');
   } catch {
     // non-critical
   }

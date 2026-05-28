@@ -22,6 +22,7 @@ import { getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserPr
 import { useSessions } from '@/contexts/SessionsContext';
 import { SessionWinCard } from '@/components/SessionWinCard';
 import { rescheduleAfterSession } from '@/lib/notifications';
+import { saveWorkoutToHealth } from '@/lib/health';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
@@ -155,6 +156,12 @@ export default function PostWorkoutScreen() {
         rating: rating ?? undefined,
       });
       getSessions().then((updated) => rescheduleAfterSession(updated)).catch(() => {});
+      void saveWorkoutToHealth({
+        name: workout?.name ?? workoutId,
+        durationMinutes: workout?.duration ?? 0,
+        startMs: Date.now() - (workout?.duration ?? 0) * 60 * 1000,
+        endMs: Date.now(),
+      });
       setShowWinCard(true);
     } catch {
       setIsSubmitting(false);

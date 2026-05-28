@@ -32,6 +32,12 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { BottomNav } from '@/components/BottomNav';
+import {
+  getHealthSyncEnabled,
+  isHealthKitAvailable,
+  requestHealthPermissions,
+  setHealthSyncEnabled,
+} from '@/lib/health';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
@@ -48,7 +54,10 @@ export default function SettingsScreen() {
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
   const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
   const [voiceEnabled, setVoiceEnabledState] = useState(true);
+  const [healthAvailable, setHealthAvailable] = useState(false);
+  const [healthEnabled, setHealthEnabledState] = useState(false);
   const voiceToggleAnim = useRef(new Animated.Value(1)).current;
+  const healthToggleAnim = useRef(new Animated.Value(0)).current;
   const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium } = useSubscription();
   const { clearSessions, sessions } = useSessions();
   const versionTapCount = useRef(0);
@@ -80,7 +89,14 @@ export default function SettingsScreen() {
       setVoiceEnabledState(voiceOn);
       voiceToggleAnim.setValue(voiceOn ? 1 : 0);
     });
-  }, [toggleAnim, voiceToggleAnim]);
+    if (Platform.OS === 'ios') {
+      setHealthAvailable(isHealthKitAvailable());
+      getHealthSyncEnabled().then((on) => {
+        setHealthEnabledState(on);
+        healthToggleAnim.setValue(on ? 1 : 0);
+      }).catch(() => {});
+    }
+  }, [toggleAnim, voiceToggleAnim, healthToggleAnim]);
 
   const handleTrashTalkVolumeChange = async (value: number) => {
     setTrashTalkVolumeState(value);
@@ -97,6 +113,26 @@ export default function SettingsScreen() {
       useNativeDriver: true,
     }).start();
   };
+
+  const handleHealthToggle = async () => {
+    if (!healthEnabled) {
+      const granted = await requestHealthPermissions();
+      setHealthEnabledState(granted);
+      healthToggleAnim.setValue(granted ? 1 : 0);
+      if (!granted) {
+        Alert.alert('Health access needed', 'Enable MoodRx in Settings → Health to sync workouts and read steps/sleep.');
+      }
+      return;
+    }
+    await setHealthSyncEnabled(false);
+    setHealthEnabledState(false);
+    Animated.timing(healthToggleAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+  };
+
+  const healthTranslateX = healthToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [3, 25],
+  });
 
   const voiceTranslateX = voiceToggleAnim.interpolate({
     inputRange: [0, 1],
@@ -357,6 +393,28 @@ export default function SettingsScreen() {
             accessibilityRole="adjustable"
           />
         </View>
+
+        {Platform.OS === 'ios' && healthAvailable && (
+          <>
+            <Text style={styles.sectionHeader}>APPLE HEALTH</Text>
+            <Text style={styles.prefHint}>
+              Saves workouts and breathing sessions. Reads steps and sleep for Insights. Requires a device rebuild with HealthKit enabled.
+            </Text>
+            <View style={styles.toggleRow}>
+              <Text style={styles.toggleLabel}>Sync with Apple Health</Text>
+              <TouchableOpacity
+                onPress={handleHealthToggle}
+                activeOpacity={0.8}
+                style={[styles.toggle, healthEnabled ? styles.toggleOn : styles.toggleOff]}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: healthEnabled }}
+                accessibilityLabel="Apple Health sync"
+              >
+                <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: healthTranslateX }] }]} />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         {/* Reminders section */}
         <Text style={styles.sectionHeader}>REMINDERS</Text>

@@ -25,6 +25,7 @@ import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
+import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 
 type Tab = 'workouts' | 'stack';
 
@@ -58,6 +59,7 @@ export default function PrescriptionScreen() {
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
+  const drMoodRxLine = useMemo(() => getDrMoodRxLine(mood, intensity), [mood, intensity]);
   const preInsult = useDrMoodRxLine(mood, 'pre');
   const { ordered: workouts, alternateNote } = useMemo(
     () => getPrescriptionWorkouts(getWorkoutsForMood(mood), sessions),
@@ -101,6 +103,10 @@ export default function PrescriptionScreen() {
           <Text style={styles.prescriptionLabel}>YOUR PRESCRIPTION</Text>
           <Text style={styles.prescriptionTitle}>Dr. MoodRx recommends the following.</Text>
           <Text style={styles.prescriptionSub}>Don&apos;t argue.</Text>
+          <View style={flattenStyle([styles.drBox, { borderLeftColor: accentColor }])}>
+            <Text style={styles.drLabel}>DR. MOODRX SAYS</Text>
+            <Text style={styles.drText}>{drMoodRxLine}</Text>
+          </View>
           {preInsult !== '' && (
             <Text style={styles.insultLine}>{preInsult}</Text>
           )}
@@ -464,6 +470,24 @@ const styles = StyleSheet.create({
     ...t.bodyMuted,
     fontSize: 14,
     marginTop: 4,
+  },
+  drBox: {
+    borderLeftWidth: 3,
+    backgroundColor: '#0a0a0a',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    alignSelf: 'stretch',
+  },
+  drLabel: {
+    ...t.label,
+    color: '#d4d4d4',
+    letterSpacing: 2,
+  },
+  drText: {
+    ...t.soft,
+    color: '#ffffff',
+    marginTop: 6,
   },
   insultLine: {
     fontFamily: fonts.mono.regular,

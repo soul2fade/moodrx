@@ -8,7 +8,7 @@ import {
   Animated,
 } from 'react-native';
 import { router } from 'expo-router';
-import Slider from '@react-native-community/slider';
+import { IntensityPicker } from '@/components/IntensityPicker';
 import * as Haptics from 'expo-haptics';
 import type { MoodKey } from '@/lib/storage';
 import { getGuidedSessionDone, setGuidedSessionDone } from '@/lib/storage';
@@ -106,18 +106,11 @@ export default function GuidedScreen() {
             <Text style={styles.intensityLabel}>HOW BAD IS IT?</Text>
             <Text style={[styles.intensityValue, { color: accentColor }]}>{intensity}/10</Text>
           </View>
-          <Slider
-            style={styles.slider}
-            minimumValue={1}
-            maximumValue={10}
-            step={1}
+          <IntensityPicker
             value={intensity}
-            onValueChange={setIntensity}
-            minimumTrackTintColor={accentColor}
-            maximumTrackTintColor="#1a1a1a"
-            thumbTintColor={accentColor}
-            accessibilityLabel={`Intensity: ${intensity} out of 10`}
-            accessibilityRole="adjustable"
+            onChange={setIntensity}
+            accentColor={accentColor}
+            accessibilityPrefix="Intensity"
           />
         </View>
 
@@ -188,7 +181,6 @@ const styles = StyleSheet.create({
   intensityRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   intensityLabel: { ...t.label, color: '#c8c8c8' },
   intensityValue: { ...t.dataValue, fontSize: 24 },
-  slider: { width: '100%', height: 36, marginTop: 8 },
   workoutPreview: {
     marginTop: 24,
     borderLeftWidth: 3,

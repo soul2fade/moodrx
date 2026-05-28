@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { toDateString, todayDateString, yesterdayDateString } from './dateUtils';
+import { clearUiState, invalidateUiStateCache, loadUiState, patchUiState } from './ui-state';
 
 export type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
@@ -43,6 +44,8 @@ let personalBestsCache: Record<string, PersonalBest> | null = null;
 let notifPromptShownCache: boolean | null = null;
 let carouselHintSeenCache: boolean | null = null;
 
+let sessionWriteChain: Promise<void> = Promise.resolve();
+
 function invalidateSessionsCache() {
   sessionsCache = null;
   sessionsCacheTime = 0;
@@ -59,6 +62,7 @@ function invalidateLightCaches() {
   personalBestsCache = null;
   notifPromptShownCache = null;
   carouselHintSeenCache = null;
+  invalidateUiStateCache();
 }
 
 export async function getFirstLaunchDone(): Promise<boolean> {
@@ -91,6 +95,7 @@ export async function getGuidedSessionDone(): Promise<boolean> {
 export async function setGuidedSessionDone(): Promise<void> {
   try {
     await AsyncStorage.setItem(GUIDED_SESSION_KEY, 'true');
+    await patchUiState({ navHintPending: true });
   } catch {
     // ignore
   }
@@ -119,10 +124,14 @@ export async function getSessions(): Promise<Session[]> {
 }
 
 export async function addSession(session: Session): Promise<void> {
-  const existing = await getSessions();
-  existing.push(session);
-  await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(existing));
-  invalidateSessionsCache();
+  sessionWriteChain = sessionWriteChain.then(async () => {
+    invalidateSessionsCache();
+    const existing = await getSessions();
+    existing.push(session);
+    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(existing));
+    invalidateSessionsCache();
+  });
+  return sessionWriteChain;
 }
 
 export async function clearSessions(): Promise<void> {
@@ -287,10 +296,8 @@ export async function clearAllData(): Promise<void> {
       USER_PROFILE_KEY,
       STREAK_STATE_KEY,
       PERSONAL_BESTS_KEY,
-      NOTIF_PROMPT_SHOWN_KEY,
-      HOME_HINT_SEEN_KEY,
-      CAROUSEL_HINT_SEEN_KEY,
     ]);
+    await clearUiState();
     invalidateSessionsCache();
     invalidateSupplementsCache();
     invalidateLightCaches();
@@ -397,14 +404,12 @@ export async function savePersonalBest(workoutId: string, reps: number): Promise
   }
 }
 
-const NOTIF_PROMPT_SHOWN_KEY = '@moodrx_notif_prompt_shown';
-
 export async function getNotifPromptShown(): Promise<boolean> {
   if (notifPromptShownCache !== null) return notifPromptShownCache;
   try {
-    const val = (await AsyncStorage.getItem(NOTIF_PROMPT_SHOWN_KEY)) === 'true';
-    notifPromptShownCache = val;
-    return val;
+    const state = await loadUiState();
+    notifPromptShownCache = state.notifPromptShown;
+    return state.notifPromptShown;
   } catch (e) {
     console.warn('[MoodRx] getNotifPromptShown failed:', e);
     return false;
@@ -413,23 +418,17 @@ export async function getNotifPromptShown(): Promise<boolean> {
 
 export async function setNotifPromptShown(): Promise<void> {
   try {
-    await AsyncStorage.setItem(NOTIF_PROMPT_SHOWN_KEY, 'true');
+    await patchUiState({ notifPromptShown: true });
     notifPromptShownCache = true;
   } catch (e) {
     console.warn('[MoodRx] setNotifPromptShown failed:', e);
   }
 }
 
-const HOME_HINT_SEEN_KEY = '@moodrx_home_hint_seen';
-const CAROUSEL_HINT_SEEN_KEY = '@moodrx_carousel_hint_seen';
-const CAROUSEL_PAGE_KEY = '@moodrx_carousel_page';
-
 export async function getLastCarouselPage(): Promise<number> {
   try {
-    const val = await AsyncStorage.getItem(CAROUSEL_PAGE_KEY);
-    if (val === null) return 0;
-    const n = parseInt(val, 10);
-    return Number.isFinite(n) && n >= 0 && n <= 2 ? n : 0;
+    const state = await loadUiState();
+    return state.lastCarouselPage;
   } catch {
     return 0;
   }
@@ -437,7 +436,7 @@ export async function getLastCarouselPage(): Promise<number> {
 
 export async function setLastCarouselPage(page: number): Promise<void> {
   try {
-    await AsyncStorage.setItem(CAROUSEL_PAGE_KEY, String(page));
+    await patchUiState({ lastCarouselPage: page });
   } catch {
     // non-critical
   }
@@ -446,9 +445,9 @@ export async function setLastCarouselPage(page: number): Promise<void> {
 export async function getCarouselHintSeen(): Promise<boolean> {
   if (carouselHintSeenCache !== null) return carouselHintSeenCache;
   try {
-    const val = (await AsyncStorage.getItem(CAROUSEL_HINT_SEEN_KEY)) === 'true';
-    carouselHintSeenCache = val;
-    return val;
+    const state = await loadUiState();
+    carouselHintSeenCache = state.carouselHintSeen;
+    return state.carouselHintSeen;
   } catch {
     return false;
   }
@@ -456,7 +455,7 @@ export async function getCarouselHintSeen(): Promise<boolean> {
 
 export async function setCarouselHintSeen(): Promise<void> {
   try {
-    await AsyncStorage.setItem(CAROUSEL_HINT_SEEN_KEY, 'true');
+    await patchUiState({ carouselHintSeen: true });
     carouselHintSeenCache = true;
   } catch {
     // non-critical
@@ -532,6 +531,45 @@ export async function getVoiceEnabled(): Promise<boolean> {
 export async function setVoiceEnabled(enabled: boolean): Promise<void> {
   try {
     await AsyncStorage.setItem(VOICE_ENABLED_KEY, enabled ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
+}
+
+const WORKOUT_FOCUS_MODE_KEY = '@moodrx_workout_focus_mode';
+
+export async function getWorkoutFocusMode(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(WORKOUT_FOCUS_MODE_KEY)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setWorkoutFocusMode(enabled: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(WORKOUT_FOCUS_MODE_KEY, enabled ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
+}
+
+export async function consumeNavHintPending(): Promise<boolean> {
+  try {
+    const state = await loadUiState();
+    if (state.navHintPending && !state.navHintSeen) return true;
+    if (state.navHintPending) {
+      await patchUiState({ navHintPending: false });
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export async function setNavHintSeen(): Promise<void> {
+  try {
+    await patchUiState({ navHintSeen: true, navHintPending: false });
   } catch {
     // non-critical
   }

@@ -22,9 +22,11 @@ import { useSessions } from '@/contexts/SessionsContext';
 import {
   PRESET_TIMES,
   NOTIFICATIONS_ENABLED_KEY,
-  REMINDER_TIME_KEY,
-  scheduleSmartReminder,
+  scheduleCheckinReminders,
   cancelReminders,
+  getReminderSchedule,
+  saveReminderSchedule,
+  type ReminderSchedule,
 } from '@/lib/notifications';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
@@ -35,7 +37,11 @@ const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
 export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [selectedTime, setSelectedTime] = useState('8:00 AM');
+  const [reminderSchedule, setReminderSchedule] = useState<ReminderSchedule>({
+    weekdayLabel: '8:00 AM',
+    weekendLabel: '10:00 AM',
+    splitWeekends: false,
+  });
   const [permDenied, setPermDenied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
@@ -59,15 +65,15 @@ export default function SettingsScreen() {
   useEffect(() => {
     Promise.all([
       AsyncStorage.getItem(NOTIFICATIONS_KEY),
-      AsyncStorage.getItem(REMINDER_TIME_KEY),
+      getReminderSchedule(),
       getUserProfile(),
       getTrashTalkVolume(),
       getVoiceEnabled(),
-    ]).then(([notifVal, timeVal, profile, volume, voiceOn]) => {
+    ]).then(([notifVal, schedule, profile, volume, voiceOn]) => {
       const enabled = notifVal === 'true';
       setNotificationsEnabled(enabled);
       toggleAnim.setValue(enabled ? 1 : 0);
-      if (timeVal) setSelectedTime(timeVal);
+      setReminderSchedule(schedule);
       if (profile.preferredTime) setPreferredTimeState(profile.preferredTime);
       if (profile.primaryGoal) setPrimaryGoalState(profile.primaryGoal);
       setTrashTalkVolumeState(volume);
@@ -131,7 +137,7 @@ export default function SettingsScreen() {
       setNotificationsEnabled(true);
       animateToggle(1);
       await AsyncStorage.setItem(NOTIFICATIONS_KEY, 'true');
-      await scheduleNotification(selectedTime);
+      await scheduleCheckinReminders(reminderSchedule);
     } else {
       setNotificationsEnabled(false);
       animateToggle(0);
@@ -140,17 +146,27 @@ export default function SettingsScreen() {
     }
   };
 
-  const scheduleNotification = async (timeLabel: string) => {
-    const preset = PRESET_TIMES.find((p) => p.label === timeLabel) ?? PRESET_TIMES[0];
-    await scheduleSmartReminder(preset.hour, preset.minute, 0);
+  const applyReminderSchedule = async (schedule: ReminderSchedule) => {
+    setReminderSchedule(schedule);
+    await saveReminderSchedule(schedule);
+    if (notificationsEnabled) {
+      await scheduleCheckinReminders(schedule);
+    }
   };
 
-  const handleSelectTime = async (timeLabel: string) => {
-    setSelectedTime(timeLabel);
-    await AsyncStorage.setItem(REMINDER_TIME_KEY, timeLabel);
-    if (notificationsEnabled) {
-      await scheduleNotification(timeLabel);
-    }
+  const handleSelectWeekdayTime = async (timeLabel: string) => {
+    await applyReminderSchedule({ ...reminderSchedule, weekdayLabel: timeLabel });
+  };
+
+  const handleSelectWeekendTime = async (timeLabel: string) => {
+    await applyReminderSchedule({ ...reminderSchedule, weekendLabel: timeLabel });
+  };
+
+  const handleToggleSplitWeekends = async () => {
+    await applyReminderSchedule({
+      ...reminderSchedule,
+      splitWeekends: !reminderSchedule.splitWeekends,
+    });
   };
 
   const handleExportSessions = async () => {
@@ -367,25 +383,27 @@ export default function SettingsScreen() {
 
         {notificationsEnabled && (
           <View style={styles.timeSection}>
-            <Text style={styles.timeSectionLabel}>REMINDER TIME</Text>
+            <Text style={styles.timeSectionLabel}>
+              {reminderSchedule.splitWeekends ? 'WEEKDAY REMINDER' : 'REMINDER TIME'}
+            </Text>
             <View style={styles.timeChips}>
               {PRESET_TIMES.map((p) => (
                 <TouchableOpacity
                   key={p.label}
-                  onPress={() => handleSelectTime(p.label)}
+                  onPress={() => handleSelectWeekdayTime(p.label)}
                   activeOpacity={0.7}
                   style={[
                     styles.timeChip,
-                    selectedTime === p.label ? styles.timeChipSelected : styles.timeChipUnselected,
+                    reminderSchedule.weekdayLabel === p.label ? styles.timeChipSelected : styles.timeChipUnselected,
                   ]}
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedTime === p.label }}
-                  accessibilityLabel={`Reminder at ${p.label}`}
+                  accessibilityState={{ selected: reminderSchedule.weekdayLabel === p.label }}
+                  accessibilityLabel={`Weekday reminder at ${p.label}`}
                 >
                   <Text
                     style={[
                       styles.timeChipText,
-                      selectedTime === p.label ? styles.timeChipTextSelected : styles.timeChipTextUnselected,
+                      reminderSchedule.weekdayLabel === p.label ? styles.timeChipTextSelected : styles.timeChipTextUnselected,
                     ]}
                   >
                     {p.label}
@@ -393,6 +411,51 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            <TouchableOpacity
+              onPress={handleToggleSplitWeekends}
+              activeOpacity={0.7}
+              style={styles.splitWeekendsRow}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: reminderSchedule.splitWeekends }}
+              accessibilityLabel="Different reminder time on weekends"
+            >
+              <Text style={styles.splitWeekendsLabel}>DIFFERENT ON WEEKENDS</Text>
+              <View style={[styles.splitWeekendsToggle, reminderSchedule.splitWeekends && styles.splitWeekendsToggleOn]}>
+                <Text style={styles.splitWeekendsToggleText}>{reminderSchedule.splitWeekends ? 'ON' : 'OFF'}</Text>
+              </View>
+            </TouchableOpacity>
+
+            {reminderSchedule.splitWeekends && (
+              <>
+                <Text style={[styles.timeSectionLabel, { marginTop: 16 }]}>WEEKEND REMINDER</Text>
+                <View style={styles.timeChips}>
+                  {PRESET_TIMES.map((p) => (
+                    <TouchableOpacity
+                      key={`weekend-${p.label}`}
+                      onPress={() => handleSelectWeekendTime(p.label)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.timeChip,
+                        reminderSchedule.weekendLabel === p.label ? styles.timeChipSelected : styles.timeChipUnselected,
+                      ]}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: reminderSchedule.weekendLabel === p.label }}
+                      accessibilityLabel={`Weekend reminder at ${p.label}`}
+                    >
+                      <Text
+                        style={[
+                          styles.timeChipText,
+                          reminderSchedule.weekendLabel === p.label ? styles.timeChipTextSelected : styles.timeChipTextUnselected,
+                        ]}
+                      >
+                        {p.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
           </View>
         )}
 
@@ -587,6 +650,24 @@ const styles = StyleSheet.create({
   timeChipText: { ...t.label, letterSpacing: 1 },
   timeChipTextSelected: { color: '#ffffff' },
   timeChipTextUnselected: { color: '#a3a3a3' },
+  splitWeekendsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+  },
+  splitWeekendsLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2, fontSize: 12, lineHeight: 17 },
+  splitWeekendsToggle: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  splitWeekendsToggleOn: { borderColor: '#059669', backgroundColor: '#05966918' },
+  splitWeekendsToggleText: { ...t.label, color: '#999999', fontSize: 12, letterSpacing: 1.5, lineHeight: 17 },
   prefLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,

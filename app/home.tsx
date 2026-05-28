@@ -10,9 +10,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getGuidedSessionDone, hasSessionToday, UserProfile } from '@/lib/storage';
+import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
@@ -25,11 +24,13 @@ import { type as t, fonts } from '@/lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { BottomNav } from '@/components/BottomNav';
 import { HomeCarousel } from '@/components/HomeCarousel';
+import { IntensityPicker } from '@/components/IntensityPicker';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 
-const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
+const PANEL_HEIGHT = Dimensions.get('window').height * 0.58;
 
 let greetingShownThisSession = false;
 
@@ -39,6 +40,7 @@ export default function HomeScreen() {
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const [carouselPage, setCarouselPage] = useState<number | null>(null);
+  const [showNavHint, setShowNavHint] = useState(false);
   const carouselFadeAnim = useRef(new Animated.Value(0)).current;
   const carouselVisible = carouselPage !== null;
 
@@ -70,6 +72,9 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      consumeNavHintPending().then((show) => {
+        if (show) setShowNavHint(true);
+      });
       Promise.all([getUserProfile(), getStreakState()]).then(([profile, state]) => {
         setUserProfile(profile);
         setCarouselPage(0);
@@ -146,11 +151,21 @@ export default function HomeScreen() {
     moodIdentity: getMoodIdentity(sessions),
   }), [sessions]);
 
+  const drMoodRxLine = useMemo(
+    () => (selectedMood ? getDrMoodRxLine(selectedMood, intensity) : ''),
+    [selectedMood, intensity],
+  );
+
   const checkedInToday = hasSessionToday(sessions);
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
   const showSameAsYesterday = !isLoading && !checkedInToday && !selectedMood && lastSession != null && isYesterdayTimestamp(lastSession.timestamp);
   const { isPremium } = useSubscription();
+
+  const handleDismissNavHint = useCallback(async () => {
+    setShowNavHint(false);
+    await setNavHintSeen();
+  }, []);
 
   const handleMoodSelect = useCallback((mood: MoodKey) => {
     setSelectedMood(mood);
@@ -480,7 +495,7 @@ export default function HomeScreen() {
             {/* Dr. MoodRx says */}
             <View style={flattenStyle([styles.drBox, { borderLeftColor: accentColor }])}>
               <Text style={styles.drLabel}>DR. MOODRX SAYS</Text>
-              <Text style={styles.drText}>{MOODS[selectedMood].drMoodRx}</Text>
+              <Text style={styles.drText}>{drMoodRxLine}</Text>
             </View>
 
             {/* Intensity */}
@@ -491,18 +506,10 @@ export default function HomeScreen() {
                 <Text style={styles.intensityMax}>/10</Text>
               </View>
             </View>
-            <Slider
-              style={styles.slider}
-              minimumValue={1}
-              maximumValue={10}
-              step={1}
+            <IntensityPicker
               value={intensity}
-              onValueChange={setIntensity}
-              minimumTrackTintColor={accentColor}
-              maximumTrackTintColor="#1a1a1a"
-              thumbTintColor={accentColor}
-              accessibilityLabel={`Mood intensity: ${intensity} out of 10`}
-              accessibilityRole="adjustable"
+              onChange={setIntensity}
+              accentColor={accentColor}
             />
 
             <TouchableOpacity
@@ -534,6 +541,20 @@ export default function HomeScreen() {
           </>
         )}
       </Animated.View>
+
+      {showNavHint && (
+        <View style={styles.navHintPill}>
+          <Text style={styles.navHintText}>Insights · Supps · Settings live in the bar below</Text>
+          <TouchableOpacity
+            onPress={handleDismissNavHint}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss navigation hint"
+          >
+            <Text style={styles.navHintDismiss}>GOT IT</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <BottomNav />
     </Animated.View>
@@ -827,6 +848,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
+  navHintPill: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 96,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: '#111111',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  navHintText: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  navHintDismiss: {
+    ...t.label,
+    color: '#999999',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
   moodRow: {
     flex: 1,
     flexDirection: 'row',
@@ -944,11 +994,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     marginLeft: 3,
-  },
-  slider: {
-    width: '100%',
-    height: 36,
-    marginTop: 2,
   },
   prescribeButton: {
     borderWidth: 1,

@@ -16,7 +16,7 @@ import { useAudioPlayer } from 'expo-audio';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
-import { getPersonalBest, getTrashTalkVolume } from '@/lib/storage';
+import { getPersonalBest, getTrashTalkVolume, getWorkoutFocusMode, setWorkoutFocusMode } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -119,6 +119,7 @@ export default function WorkoutScreen() {
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const [activeSecondsLeft, setActiveSecondsLeft] = useState<number | null>(null);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trashTalkArmRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -155,6 +156,19 @@ export default function WorkoutScreen() {
 
   useEffect(() => {
     getTrashTalkVolume().then(setTrashTalkVolume).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getWorkoutFocusMode().then(setFocusMode).catch(() => {});
+  }, []);
+
+  const handleFocusToggle = useCallback(() => {
+    setFocusMode((prev) => {
+      const next = !prev;
+      void setWorkoutFocusMode(next);
+      return next;
+    });
+    Haptics.selectionAsync();
   }, []);
 
   useEffect(() => {
@@ -415,7 +429,19 @@ export default function WorkoutScreen() {
         <TouchableOpacity onPress={() => setShowQuitConfirm(true)} activeOpacity={0.7} style={styles.quitButton} accessibilityRole="button" accessibilityLabel="Quit workout">
           <Text style={styles.quitText} allowFontScaling={false}>X QUIT</Text>
         </TouchableOpacity>
-        <Text style={styles.stepCounter} allowFontScaling={false}>{currentStep + 1} / {totalSteps}</Text>
+        <View style={styles.topRowRight}>
+          <TouchableOpacity
+            onPress={handleFocusToggle}
+            activeOpacity={0.7}
+            style={[styles.focusBtn, focusMode && { borderColor: accentColor, backgroundColor: accentColor + '18' }]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: focusMode }}
+            accessibilityLabel={`Focus mode ${focusMode ? 'on' : 'off'}`}
+          >
+            <Text style={[styles.focusBtnText, focusMode && { color: accentColor }]} allowFontScaling={false}>FOCUS</Text>
+          </TouchableOpacity>
+          <Text style={styles.stepCounter} allowFontScaling={false}>{currentStep + 1} / {totalSteps}</Text>
+        </View>
       </View>
 
       {/* Quit confirmation modal */}
@@ -449,6 +475,7 @@ export default function WorkoutScreen() {
         <Text style={styles.stepLabel}>STEP {currentStep + 1} OF {totalSteps}</Text>
 
         {/* Workout Coach */}
+        {!focusMode && (
         <WorkoutCoach
           mood={mood}
           step={Math.min(3, Math.floor((currentStep / Math.max(totalSteps, 1)) * 4))}
@@ -456,6 +483,7 @@ export default function WorkoutScreen() {
           figureSize={300}
           accentColor={accentColor}
         />
+        )}
 
         {/* Step text box / Rest timer */}
         {restSecondsLeft !== null ? (
@@ -502,10 +530,12 @@ export default function WorkoutScreen() {
         {restSecondsLeft === null && <Text style={styles.motivational}>{motivationalMsg}</Text>}
 
         {/* Mid-workout insult — only when trash talk is off to avoid overlap */}
-        {currentStep === midStep && midInsult !== '' && !trashTalkOn && (
+        {!focusMode && currentStep === midStep && midInsult !== '' && !trashTalkOn && (
           <Text style={styles.insultLine}>{midInsult}</Text>
         )}
 
+        {!focusMode && (
+        <>
         {/* ── STEP MINI-MAP ── */}
         <View style={styles.miniMap}>
           {resolvedWorkout.steps.map((step, idx) => {
@@ -619,6 +649,9 @@ export default function WorkoutScreen() {
           </Text>
         </TouchableOpacity>
 
+        </>
+        )}
+
       </ScrollView>
 
       {/* Trash talk warning overlay */}
@@ -668,6 +701,9 @@ const styles = StyleSheet.create({
   errorText: { ...t.label, color: '#ffffff', textAlign: 'center', marginTop: 80 },
   progressBarBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 48, paddingBottom: 12 },
+  topRowRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  focusBtn: { borderWidth: 1, borderColor: '#333333', paddingHorizontal: 10, paddingVertical: 6 },
+  focusBtnText: { ...t.label, color: '#999999', letterSpacing: 1.5, fontSize: 12, lineHeight: 17 },
   quitButton: { paddingVertical: 4 },
   quitText: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
   stepCounter: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },

@@ -7,35 +7,62 @@ import {
   StyleSheet,
   Animated,
   Platform,
+  Alert,
   Linking,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { clearAllData, getUserProfile, setUserProfile, UserProfile } from '@/lib/storage';
+import { getTrashTalkVolume, getUserProfile, getVoiceEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { exportSessionsJson } from '@/lib/export-sessions';
+import { resetAllAppData } from '@/lib/reset-app';
+import { useSessions } from '@/contexts/SessionsContext';
 import {
   PRESET_TIMES,
   NOTIFICATIONS_ENABLED_KEY,
-  REMINDER_TIME_KEY,
-  scheduleSmartReminder,
+  scheduleCheckinReminders,
   cancelReminders,
+  getReminderSchedule,
+  saveReminderSchedule,
+  type ReminderSchedule,
 } from '@/lib/notifications';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { BottomNav } from '@/components/BottomNav';
+import {
+  getHealthPlatformLabel,
+  getHealthSyncEnabled,
+  isHealthBackendReady,
+  isHealthSyncAvailable,
+  requestHealthPermissions,
+  setHealthSyncEnabled,
+} from '@/lib/health';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
 export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [selectedTime, setSelectedTime] = useState('8:00 AM');
+  const [reminderSchedule, setReminderSchedule] = useState<ReminderSchedule>({
+    weekdayLabel: '8:00 AM',
+    weekendLabel: '10:00 AM',
+    splitWeekends: false,
+  });
   const [permDenied, setPermDenied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
+  const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
+  const [voiceEnabled, setVoiceEnabledState] = useState(true);
+  const [healthAvailable, setHealthAvailable] = useState(false);
+  const [healthPlatformLabel, setHealthPlatformLabel] = useState('Health');
+  const [healthEnabled, setHealthEnabledState] = useState(false);
+  const voiceToggleAnim = useRef(new Animated.Value(1)).current;
+  const healthToggleAnim = useRef(new Animated.Value(0)).current;
   const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium } = useSubscription();
+  const { clearSessions, sessions } = useSessions();
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleAnim = useRef(new Animated.Value(0)).current;
@@ -50,17 +77,78 @@ export default function SettingsScreen() {
   useEffect(() => {
     Promise.all([
       AsyncStorage.getItem(NOTIFICATIONS_KEY),
-      AsyncStorage.getItem(REMINDER_TIME_KEY),
+      getReminderSchedule(),
       getUserProfile(),
-    ]).then(([notifVal, timeVal, profile]) => {
+      getTrashTalkVolume(),
+      getVoiceEnabled(),
+    ]).then(([notifVal, schedule, profile, volume, voiceOn]) => {
       const enabled = notifVal === 'true';
       setNotificationsEnabled(enabled);
       toggleAnim.setValue(enabled ? 1 : 0);
-      if (timeVal) setSelectedTime(timeVal);
+      setReminderSchedule(schedule);
       if (profile.preferredTime) setPreferredTimeState(profile.preferredTime);
       if (profile.primaryGoal) setPrimaryGoalState(profile.primaryGoal);
+      setTrashTalkVolumeState(volume);
+      setVoiceEnabledState(voiceOn);
+      voiceToggleAnim.setValue(voiceOn ? 1 : 0);
     });
-  }, [toggleAnim]);
+    if (isHealthSyncAvailable()) {
+      void isHealthBackendReady().then((ready) => {
+        setHealthAvailable(ready);
+        if (ready) setHealthPlatformLabel(getHealthPlatformLabel());
+      });
+      getHealthSyncEnabled().then((on) => {
+        setHealthEnabledState(on);
+        healthToggleAnim.setValue(on ? 1 : 0);
+      }).catch(() => {});
+    }
+  }, [toggleAnim, voiceToggleAnim, healthToggleAnim]);
+
+  const handleTrashTalkVolumeChange = async (value: number) => {
+    setTrashTalkVolumeState(value);
+    await setTrashTalkVolume(value);
+  };
+
+  const handleVoiceToggle = async () => {
+    const next = !voiceEnabled;
+    setVoiceEnabledState(next);
+    await setVoiceEnabled(next);
+    Animated.timing(voiceToggleAnim, {
+      toValue: next ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleHealthToggle = async () => {
+    if (!healthEnabled) {
+      const granted = await requestHealthPermissions();
+      setHealthEnabledState(granted);
+      healthToggleAnim.setValue(granted ? 1 : 0);
+      if (!granted) {
+        Alert.alert(
+          'Health access needed',
+          Platform.OS === 'android'
+            ? 'Install or update Health Connect, then allow MoodRx to read steps/sleep and write workouts.'
+            : 'Enable MoodRx in Settings → Health to sync workouts and read steps/sleep.',
+        );
+      }
+      return;
+    }
+    await setHealthSyncEnabled(false);
+    setHealthEnabledState(false);
+    Animated.timing(healthToggleAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+  };
+
+  const healthTranslateX = healthToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [3, 25],
+  });
+
+  const voiceTranslateX = voiceToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
 
   const handleSelectPreferredTime = async (value: UserProfile['preferredTime']) => {
     setPreferredTimeState(value);
@@ -96,7 +184,7 @@ export default function SettingsScreen() {
       setNotificationsEnabled(true);
       animateToggle(1);
       await AsyncStorage.setItem(NOTIFICATIONS_KEY, 'true');
-      await scheduleNotification(selectedTime);
+      await scheduleCheckinReminders(reminderSchedule);
     } else {
       setNotificationsEnabled(false);
       animateToggle(0);
@@ -105,22 +193,44 @@ export default function SettingsScreen() {
     }
   };
 
-  const scheduleNotification = async (timeLabel: string) => {
-    const preset = PRESET_TIMES.find((p) => p.label === timeLabel);
-    if (!preset) return;
-    await scheduleSmartReminder(preset.hour, preset.minute, 0);
+  const applyReminderSchedule = async (schedule: ReminderSchedule) => {
+    setReminderSchedule(schedule);
+    await saveReminderSchedule(schedule);
+    if (notificationsEnabled) {
+      await scheduleCheckinReminders(schedule);
+    }
   };
 
-  const handleSelectTime = async (timeLabel: string) => {
-    setSelectedTime(timeLabel);
-    await AsyncStorage.setItem(REMINDER_TIME_KEY, timeLabel);
-    if (notificationsEnabled) {
-      await scheduleNotification(timeLabel);
+  const handleSelectWeekdayTime = async (timeLabel: string) => {
+    await applyReminderSchedule({ ...reminderSchedule, weekdayLabel: timeLabel });
+  };
+
+  const handleSelectWeekendTime = async (timeLabel: string) => {
+    await applyReminderSchedule({ ...reminderSchedule, weekendLabel: timeLabel });
+  };
+
+  const handleToggleSplitWeekends = async () => {
+    await applyReminderSchedule({
+      ...reminderSchedule,
+      splitWeekends: !reminderSchedule.splitWeekends,
+    });
+  };
+
+  const handleExportSessions = async () => {
+    if (sessions.length === 0) {
+      Alert.alert('Nothing to export', 'Complete a session first.');
+      return;
+    }
+    try {
+      await exportSessionsJson(sessions);
+    } catch {
+      Alert.alert('Export failed', 'Could not create a share file on this device.');
     }
   };
 
   const handleDeleteAll = async () => {
-    await clearAllData();
+    await resetAllAppData();
+    await clearSessions();
     setShowDeleteConfirm(false);
     router.replace('/onboarding');
   };
@@ -257,6 +367,67 @@ export default function SettingsScreen() {
           ))}
         </View>
 
+        <Text style={styles.sectionHeader}>WORKOUT</Text>
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLabelBlock}>
+            <Text style={styles.toggleLabel}>Dr. MoodRx copy</Text>
+            <Text style={styles.prefHint}>Pre/post lines on prescription and post-workout. Softer tone for anxious and low moods.</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleVoiceToggle}
+            activeOpacity={0.8}
+            style={[styles.toggle, voiceEnabled ? styles.toggleOn : styles.toggleOff]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: voiceEnabled }}
+            accessibilityLabel="Dr MoodRx copy"
+          >
+            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: voiceTranslateX }] }]} />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.prefLabel}>TRASH TALK VOLUME</Text>
+        <Text style={styles.prefHint}>Only plays when you turn on trash talk during a workout.</Text>
+        <View style={styles.volumeRow}>
+          <Text style={styles.volumeValue}>{Math.round(trashTalkVolume * 100)}%</Text>
+          <Slider
+            style={styles.volumeSlider}
+            minimumValue={0}
+            maximumValue={1}
+            step={0.05}
+            value={trashTalkVolume}
+            onValueChange={handleTrashTalkVolumeChange}
+            minimumTrackTintColor="#E8B84B"
+            maximumTrackTintColor="#1a1a1a"
+            thumbTintColor="#E8B84B"
+            accessibilityLabel={`Trash talk volume ${Math.round(trashTalkVolume * 100)} percent`}
+            accessibilityRole="adjustable"
+          />
+        </View>
+
+        {healthAvailable && (
+          <>
+            <Text style={styles.sectionHeader}>{healthPlatformLabel.toUpperCase()}</Text>
+            <Text style={styles.prefHint}>
+              {Platform.OS === 'android'
+                ? 'Saves workouts and breathing sessions. Reads steps and sleep for Insights. Requires Health Connect and a native Android build.'
+                : 'Saves workouts and breathing sessions. Reads steps and sleep for Insights. Requires a device rebuild with HealthKit enabled.'}
+            </Text>
+            <View style={styles.toggleRow}>
+              <Text style={styles.toggleLabel}>Sync with {healthPlatformLabel}</Text>
+              <TouchableOpacity
+                onPress={handleHealthToggle}
+                activeOpacity={0.8}
+                style={[styles.toggle, healthEnabled ? styles.toggleOn : styles.toggleOff]}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: healthEnabled }}
+                accessibilityLabel={`${healthPlatformLabel} sync`}
+              >
+                <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: healthTranslateX }] }]} />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
         {/* Reminders section */}
         <Text style={styles.sectionHeader}>REMINDERS</Text>
 
@@ -282,25 +453,27 @@ export default function SettingsScreen() {
 
         {notificationsEnabled && (
           <View style={styles.timeSection}>
-            <Text style={styles.timeSectionLabel}>REMINDER TIME</Text>
+            <Text style={styles.timeSectionLabel}>
+              {reminderSchedule.splitWeekends ? 'WEEKDAY REMINDER' : 'REMINDER TIME'}
+            </Text>
             <View style={styles.timeChips}>
               {PRESET_TIMES.map((p) => (
                 <TouchableOpacity
                   key={p.label}
-                  onPress={() => handleSelectTime(p.label)}
+                  onPress={() => handleSelectWeekdayTime(p.label)}
                   activeOpacity={0.7}
                   style={[
                     styles.timeChip,
-                    selectedTime === p.label ? styles.timeChipSelected : styles.timeChipUnselected,
+                    reminderSchedule.weekdayLabel === p.label ? styles.timeChipSelected : styles.timeChipUnselected,
                   ]}
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedTime === p.label }}
-                  accessibilityLabel={`Reminder at ${p.label}`}
+                  accessibilityState={{ selected: reminderSchedule.weekdayLabel === p.label }}
+                  accessibilityLabel={`Weekday reminder at ${p.label}`}
                 >
                   <Text
                     style={[
                       styles.timeChipText,
-                      selectedTime === p.label ? styles.timeChipTextSelected : styles.timeChipTextUnselected,
+                      reminderSchedule.weekdayLabel === p.label ? styles.timeChipTextSelected : styles.timeChipTextUnselected,
                     ]}
                   >
                     {p.label}
@@ -308,6 +481,51 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            <TouchableOpacity
+              onPress={handleToggleSplitWeekends}
+              activeOpacity={0.7}
+              style={styles.splitWeekendsRow}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: reminderSchedule.splitWeekends }}
+              accessibilityLabel="Different reminder time on weekends"
+            >
+              <Text style={styles.splitWeekendsLabel}>DIFFERENT ON WEEKENDS</Text>
+              <View style={[styles.splitWeekendsToggle, reminderSchedule.splitWeekends && styles.splitWeekendsToggleOn]}>
+                <Text style={styles.splitWeekendsToggleText}>{reminderSchedule.splitWeekends ? 'ON' : 'OFF'}</Text>
+              </View>
+            </TouchableOpacity>
+
+            {reminderSchedule.splitWeekends && (
+              <>
+                <Text style={[styles.timeSectionLabel, { marginTop: 16 }]}>WEEKEND REMINDER</Text>
+                <View style={styles.timeChips}>
+                  {PRESET_TIMES.map((p) => (
+                    <TouchableOpacity
+                      key={`weekend-${p.label}`}
+                      onPress={() => handleSelectWeekendTime(p.label)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.timeChip,
+                        reminderSchedule.weekendLabel === p.label ? styles.timeChipSelected : styles.timeChipUnselected,
+                      ]}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: reminderSchedule.weekendLabel === p.label }}
+                      accessibilityLabel={`Weekend reminder at ${p.label}`}
+                    >
+                      <Text
+                        style={[
+                          styles.timeChipText,
+                          reminderSchedule.weekendLabel === p.label ? styles.timeChipTextSelected : styles.timeChipTextUnselected,
+                        ]}
+                      >
+                        {p.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
           </View>
         )}
 
@@ -318,6 +536,7 @@ export default function SettingsScreen() {
         <TouchableOpacity
           activeOpacity={1}
           onPress={() => {
+            if (!__DEV__) return;
             versionTapCount.current += 1;
             if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
             if (versionTapCount.current >= 5) {
@@ -329,10 +548,13 @@ export default function SettingsScreen() {
           }}
           accessibilityLabel="App version"
         >
-          <Text style={styles.appVersion}>
-            Version 1.0.0{isPremium ? '  ★ PRO' : ''}
-          </Text>
+          <Text style={styles.appVersion}>Version 1.0.0</Text>
         </TouchableOpacity>
+        {isPremium && !isInTrial && (
+          <View style={[styles.subStatusBadge, styles.proBadge, styles.versionProBadge]}>
+            <Text style={styles.proBadgeText}>PRO MEMBER</Text>
+          </View>
+        )}
 
         {/* Data section */}
         <Text style={styles.sectionHeader}>DATA</Text>
@@ -345,6 +567,16 @@ export default function SettingsScreen() {
           accessibilityLabel="Restore purchases"
         >
           <Text style={styles.dataRowText}>RESTORE PURCHASES</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleExportSessions}
+          activeOpacity={0.7}
+          style={styles.dataRow}
+          accessibilityRole="button"
+          accessibilityLabel="Export sessions as JSON"
+        >
+          <Text style={styles.dataRowText}>EXPORT SESSIONS (JSON)</Text>
         </TouchableOpacity>
 
         {!showDeleteConfirm ? (
@@ -467,6 +699,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
+  toggleLabelBlock: { flex: 1, marginRight: 12 },
   toggleLabel: { ...t.body, fontSize: 15 },
   toggle: { width: 50, height: 28, borderRadius: 0, justifyContent: 'center' },
   toggleOff: { backgroundColor: '#1a1a1a' },
@@ -486,7 +719,25 @@ const styles = StyleSheet.create({
   timeChipUnselected: { borderColor: '#1a1a1a' },
   timeChipText: { ...t.label, letterSpacing: 1 },
   timeChipTextSelected: { color: '#ffffff' },
-  timeChipTextUnselected: { color: '#ffffff' },
+  timeChipTextUnselected: { color: '#a3a3a3' },
+  splitWeekendsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+  },
+  splitWeekendsLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2, fontSize: 12, lineHeight: 17 },
+  splitWeekendsToggle: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  splitWeekendsToggleOn: { borderColor: '#059669', backgroundColor: '#05966918' },
+  splitWeekendsToggleText: { ...t.label, color: '#999999', fontSize: 12, letterSpacing: 1.5, lineHeight: 17 },
   prefLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
@@ -497,6 +748,31 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 10,
   },
+  prefHint: {
+    ...t.bodySm,
+    color: '#a3a3a3',
+    marginBottom: 8,
+  },
+  volumeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  volumeValue: {
+    ...t.label,
+    color: '#E8B84B',
+    width: 44,
+    letterSpacing: 1,
+  },
+  volumeSlider: {
+    flex: 1,
+    height: 36,
+  },
+  versionProBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+  },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   chip: { borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   chipSelected: { borderColor: '#059669' },
@@ -506,7 +782,7 @@ const styles = StyleSheet.create({
   chipTextUnselected: { color: '#999' },
   appName: { ...t.headlineSm, marginTop: 12 },
   appTagline: { ...t.bodyMuted, fontSize: 14, marginTop: 4 },
-  appVersion: { ...t.label, color: '#ffffff', letterSpacing: 2, marginTop: 8 },
+  appVersion: { ...t.label, color: '#c8c8c8', letterSpacing: 2, marginTop: 8 },
   dataRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1a1a1a' },
   dataRowText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   deleteRowText: { ...t.label, color: '#E11D48', letterSpacing: 2 },

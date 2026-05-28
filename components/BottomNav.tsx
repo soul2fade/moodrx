@@ -52,14 +52,10 @@ export function BottomNav() {
       {TABS.map((tab, i) => {
         const isActive = pathname === tab.path;
 
-        const handlePress = () => {
-          router.push(tab.path as any);
-        };
-
         return (
           <TouchableOpacity
             key={tab.path}
-            onPress={handlePress}
+            onPress={() => router.push(tab.path as any)}
             activeOpacity={0.7}
             style={styles.tab}
             accessibilityRole="tab"

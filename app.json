@@ -29,7 +29,15 @@
         "backgroundColor": "#0a0a0a"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.WRITE_STEPS",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.WRITE_SLEEP",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.WRITE_EXERCISE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -57,7 +65,26 @@
           "backgroundColor": "#0a0a0a"
         }
       ],
-      "expo-video"
+      "expo-video",
+      "expo-asset",
+      [
+        "@kayzmann/expo-healthkit",
+        {
+          "healthShareUsageDescription": "MoodRx reads steps and sleep to show how movement and rest relate to your mood trends.",
+          "healthUpdateUsageDescription": "MoodRx saves workouts and breathing sessions to Apple Health."
+        }
+      ],
+      "expo-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

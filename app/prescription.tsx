@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,10 +18,14 @@ import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useSessions } from '@/contexts/SessionsContext';
+import { getPrescriptionWorkouts, getWorkoutBadge } from '@/lib/workout-insights';
+import { getFreeTierSummary, isSupplementUnlocked, isWorkoutUnlocked } from '@/lib/free-tier';
 import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
-import { getInsult } from '@/utils/insults';
+import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
+import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 
 type Tab = 'workouts' | 'stack';
 
@@ -37,6 +41,7 @@ export default function PrescriptionScreen() {
   const [selectedSupp, setSelectedSupp] = useState<Supplement | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const { isPremium } = useSubscription();
+  const { sessions } = useSessions();
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
@@ -54,9 +59,17 @@ export default function PrescriptionScreen() {
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
-  const preInsult = useRef(getInsult(mood, 'pre')).current;
-  const workouts = getWorkoutsForMood(mood);
+  const drMoodRxLine = useMemo(() => getDrMoodRxLine(mood, intensity), [mood, intensity]);
+  const preInsult = useDrMoodRxLine(mood, 'pre');
+  const { ordered: workouts, alternateNote } = useMemo(
+    () => getPrescriptionWorkouts(getWorkoutsForMood(mood), sessions),
+    [mood, sessions],
+  );
   const supplements = getSupplementsForMood(mood);
+  const freeTierSummary = useMemo(
+    () => getFreeTierSummary(workouts, isPremium),
+    [workouts, isPremium],
+  );
 
   const handleWorkoutTap = (workout: Workout) => {
     router.push({
@@ -90,6 +103,10 @@ export default function PrescriptionScreen() {
           <Text style={styles.prescriptionLabel}>YOUR PRESCRIPTION</Text>
           <Text style={styles.prescriptionTitle}>Dr. MoodRx recommends the following.</Text>
           <Text style={styles.prescriptionSub}>Don&apos;t argue.</Text>
+          <View style={flattenStyle([styles.drBox, { borderLeftColor: accentColor }])}>
+            <Text style={styles.drLabel}>DR. MOODRX SAYS</Text>
+            <Text style={styles.drText}>{drMoodRxLine}</Text>
+          </View>
           {preInsult !== '' && (
             <Text style={styles.insultLine}>{preInsult}</Text>
           )}
@@ -137,6 +154,16 @@ export default function PrescriptionScreen() {
       >
         {activeTab === 'workouts' && workouts.length > 0 && (
           <View>
+            {alternateNote && (
+              <View style={styles.alternateBanner}>
+                <Text style={styles.alternateBannerText}>
+                  {alternateNote.demotedName} didn&apos;t land twice. Try {alternateNote.suggestedName} first.
+                </Text>
+              </View>
+            )}
+            {freeTierSummary && (
+              <Text style={styles.freeTierSummary}>{freeTierSummary}</Text>
+            )}
             {/* Hero workout — today's prescription */}
             <Text style={[styles.heroRxLabel, { color: accentColor }]}>TODAY&apos;S PRESCRIPTION</Text>
             <TouchableOpacity
@@ -159,6 +186,9 @@ export default function PrescriptionScreen() {
                 <Text style={flattenStyle([styles.workoutName, { flex: 1, fontSize: 20 }])}>{workouts[0].name}</Text>
                 <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
               </View>
+              {getWorkoutBadge(sessions, workouts[0]) && (
+                <Text style={styles.workoutBadge}>{getWorkoutBadge(sessions, workouts[0])}</Text>
+              )}
               <Text style={styles.workoutVibe}>{workouts[0].vibe}</Text>
               <View style={styles.scienceInline}>
                 <Text style={flattenStyle([styles.scienceInlineLabel, { color: accentColor }])}>THE SCIENCE</Text>
@@ -187,8 +217,8 @@ export default function PrescriptionScreen() {
 
                 {showAlternatives && workouts.slice(1).map((workout, idx) => {
                   const index = idx + 1;
-                  const isLocked = !isPremium && idx > 0;
-                  const isFreeAlternative = idx === 0;
+                  const isLocked = !isWorkoutUnlocked(isPremium, index, workouts.length);
+                  const isFreeAlternative = isWorkoutUnlocked(isPremium, index, workouts.length) && index > 0;
                   if (isLocked) {
                     return (
                       <TouchableOpacity
@@ -243,6 +273,9 @@ export default function PrescriptionScreen() {
                         <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
                         <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
                       </View>
+                      {getWorkoutBadge(sessions, workout) && (
+                        <Text style={styles.workoutBadgeMuted}>{getWorkoutBadge(sessions, workout)}</Text>
+                      )}
                       <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                     </TouchableOpacity>
                     </React.Fragment>
@@ -260,7 +293,7 @@ export default function PrescriptionScreen() {
 
             <View style={styles.supplementList}>
               {supplements.map((supp, index) => {
-                const isLocked = !isPremium && index > 0;
+                const isLocked = !isSupplementUnlocked(isPremium, index);
                 return (
                   <TouchableOpacity
                     key={supp.name}
@@ -368,7 +401,7 @@ export default function PrescriptionScreen() {
               )}
 
               {/* Unlock CTA for locked supplements */}
-              {!isPremium && supplements.indexOf(selectedSupp) > 0 && (
+              {!isSupplementUnlocked(isPremium, supplements.indexOf(selectedSupp)) && (
                 <TouchableOpacity
                   style={[styles.suppModalUnlockBtn, { borderColor: accentColor }]}
                   activeOpacity={0.8}
@@ -437,6 +470,24 @@ const styles = StyleSheet.create({
     ...t.bodyMuted,
     fontSize: 14,
     marginTop: 4,
+  },
+  drBox: {
+    borderLeftWidth: 3,
+    backgroundColor: '#0a0a0a',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    alignSelf: 'stretch',
+  },
+  drLabel: {
+    ...t.label,
+    color: '#d4d4d4',
+    letterSpacing: 2,
+  },
+  drText: {
+    ...t.soft,
+    color: '#ffffff',
+    marginTop: 6,
   },
   insultLine: {
     fontFamily: fonts.mono.regular,
@@ -601,6 +652,41 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 6,
   },
+  workoutBadge: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 6,
+  },
+  workoutBadgeMuted: {
+    ...t.label,
+    color: '#999999',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  alternateBanner: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: '#111111',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+  },
+  alternateBannerText: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+    lineHeight: 20,
+  },
+  freeTierSummary: {
+    ...t.bodySm,
+    color: '#a3a3a3',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
   scienceInline: {
     borderTopWidth: 1,
     borderTopColor: '#1a1a1a',
@@ -753,7 +839,7 @@ const styles = StyleSheet.create({
   },
   suppModalClose: {
     fontSize: 18,
-    color: '#666666',
+    color: '#999999',
     paddingLeft: 16,
     paddingTop: 2,
   },

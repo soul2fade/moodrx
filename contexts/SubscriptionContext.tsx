@@ -17,14 +17,16 @@ import {
   Platform,
 } from 'react-native';
 import Purchases, {
+  type CustomerInfo,
   type PurchasesOfferings,
   type PurchasesPackage,
 } from 'react-native-purchases';
 import { REVENUECAT_ENTITLEMENT_IDENTIFIER } from '@/lib/revenuecat';
 import {
-  startTrial as startTrialStorage,
-  getTrialInfo,
+  hasLegacyTrialAnchor,
+  setTrialNudgeAnchor,
 } from '@/lib/subscription';
+import { scheduleTrialNudges } from '@/lib/notifications';
 
 interface RCPurchaseError {
   userCancelled?: boolean | null;
@@ -33,6 +35,47 @@ interface RCPurchaseError {
 
 function isRCPurchaseError(err: unknown): err is RCPurchaseError {
   return typeof err === 'object' && err !== null;
+}
+
+interface SubscriptionSnapshot {
+  isPaidPremium: boolean;
+  isInTrial: boolean;
+  trialDaysLeft: number;
+  hasUsedTrial: boolean;
+}
+
+function deriveSubscriptionState(
+  customerInfo: CustomerInfo,
+  legacyTrialUsed: boolean,
+): SubscriptionSnapshot {
+  const activeEntitlement = customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER];
+  const allEntitlement = customerInfo.entitlements.all[REVENUECAT_ENTITLEMENT_IDENTIFIER];
+  const isPaidPremium = activeEntitlement !== undefined;
+  const isInTrial =
+    isPaidPremium &&
+    (activeEntitlement.periodType === 'TRIAL' || activeEntitlement.periodType === 'INTRO');
+
+  let trialDaysLeft = 0;
+  if (isInTrial && activeEntitlement.expirationDateMillis) {
+    trialDaysLeft = Math.max(
+      0,
+      Math.ceil((activeEntitlement.expirationDateMillis - Date.now()) / (1000 * 60 * 60 * 24)),
+    );
+  }
+
+  const hasUsedTrial = allEntitlement !== undefined || legacyTrialUsed;
+
+  return { isPaidPremium, isInTrial, trialDaysLeft, hasUsedTrial };
+}
+
+async function maybeScheduleTrialNudges(customerInfo: CustomerInfo): Promise<void> {
+  const entitlement = customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER];
+  if (!entitlement) return;
+  if (entitlement.periodType !== 'TRIAL' && entitlement.periodType !== 'INTRO') return;
+
+  const anchorMs = entitlement.originalPurchaseDateMillis || Date.now();
+  await setTrialNudgeAnchor(anchorMs);
+  await scheduleTrialNudges(anchorMs);
 }
 
 interface SubscriptionContextValue {
@@ -73,27 +116,28 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   const [confirmVisible, setConfirmVisible] = useState(false);
   const pendingPurchaseRef = useRef<PurchasesPackage | null>(null);
+  const legacyTrialUsedRef = useRef(false);
 
-  const isPremium = isPaidPremium || isInTrial;
+  const isPremium = isPaidPremium;
 
-  const loadTrialInfo = useCallback(async () => {
-    const info = await getTrialInfo();
-    setIsInTrial(info.isInTrial);
-    setTrialDaysLeft(info.daysLeft);
-    setHasUsedTrial(info.hasUsedTrial);
+  const applyCustomerInfo = useCallback(async (customerInfo: CustomerInfo) => {
+    const snapshot = deriveSubscriptionState(customerInfo, legacyTrialUsedRef.current);
+    setIsPaidPremium(snapshot.isPaidPremium);
+    setIsInTrial(snapshot.isInTrial);
+    setTrialDaysLeft(snapshot.trialDaysLeft);
+    setHasUsedTrial(snapshot.hasUsedTrial);
+    await maybeScheduleTrialNudges(customerInfo);
   }, []);
 
   useEffect(() => {
     let mounted = true;
+    const onCustomerInfoUpdate = (info: CustomerInfo) => {
+      if (mounted) void applyCustomerInfo(info);
+    };
 
     async function init() {
       try {
-        const trialInfo = await getTrialInfo();
-        if (mounted) {
-          setIsInTrial(trialInfo.isInTrial);
-          setTrialDaysLeft(trialInfo.daysLeft);
-          setHasUsedTrial(trialInfo.hasUsedTrial);
-        }
+        legacyTrialUsedRef.current = await hasLegacyTrialAnchor();
 
         const [customerInfo, rcOfferings] = await Promise.all([
           Purchases.getCustomerInfo(),
@@ -101,11 +145,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         ]);
 
         if (mounted) {
-          const hasEntitlement =
-            customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
-          setIsPaidPremium(hasEntitlement);
+          await applyCustomerInfo(customerInfo);
           setOfferings(rcOfferings);
         }
+
+        Purchases.addCustomerInfoUpdateListener(onCustomerInfoUpdate);
       } catch (err: unknown) {
         console.warn('SubscriptionContext init error:', isRCPurchaseError(err) ? err.message : String(err));
       } finally {
@@ -117,26 +161,20 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     return () => {
       mounted = false;
+      Purchases.removeCustomerInfoUpdateListener(onCustomerInfoUpdate);
     };
-  }, []);
-
-  const startTrial = useCallback(async () => {
-    await startTrialStorage();
-    await loadTrialInfo();
-  }, [loadTrialInfo]);
+  }, [applyCustomerInfo]);
 
   const executePurchase = useCallback(async (pkg: PurchasesPackage) => {
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
-      const hasEntitlement =
-        customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
-      setIsPaidPremium(hasEntitlement);
+      await applyCustomerInfo(customerInfo);
     } catch (err: unknown) {
       if (isRCPurchaseError(err) && err.userCancelled) return;
       const msg = isRCPurchaseError(err) ? (err.message ?? 'Something went wrong.') : 'Something went wrong.';
       Alert.alert('Purchase failed', msg);
     }
-  }, []);
+  }, [applyCustomerInfo]);
 
   const triggerPurchase = useCallback(
     async (packageId: string) => {
@@ -144,10 +182,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         (p) => p.identifier === packageId
       );
 
-      // In dev/preview builds RC offerings won't load — mock the unlock directly
-      if (__DEV__ || Platform.OS === 'web') {
+      if (__DEV__) {
         pendingPurchaseRef.current = pkg ?? null;
         setConfirmVisible(true);
+        return;
+      }
+
+      if (Platform.OS === 'web') {
+        Alert.alert('Unavailable', 'Purchases are only available in the iOS and Android apps.');
         return;
       }
 
@@ -169,16 +211,20 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     await triggerPurchase('$rc_annual');
   }, [triggerPurchase]);
 
+  /** Starts the App Store / Play free trial via the annual subscription. */
+  const startTrial = purchaseYearly;
+
   const devTogglePremium = useCallback(() => {
+    if (!__DEV__) return;
     setIsPaidPremium(prev => !prev);
   }, []);
 
   const restorePurchases = useCallback(async () => {
     try {
       const customerInfo = await Purchases.restorePurchases();
+      await applyCustomerInfo(customerInfo);
       const hasEntitlement =
         customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
-      setIsPaidPremium(hasEntitlement);
       if (hasEntitlement) {
         Alert.alert('Restored', 'Your Pro subscription has been restored.');
       } else {
@@ -188,7 +234,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const msg = isRCPurchaseError(err) ? (err.message ?? 'Could not connect to the store. Please try again.') : 'Could not connect to the store. Please try again.';
       Alert.alert('Restore failed', msg);
     }
-  }, []);
+  }, [applyCustomerInfo]);
 
   const handleConfirmPurchase = useCallback(async () => {
     const pkg = pendingPurchaseRef.current;
@@ -199,6 +245,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     } else {
       // Dev/preview: no real package available — mock the unlock directly
       setIsPaidPremium(true);
+      setIsInTrial(true);
+      setTrialDaysLeft(7);
+      setHasUsedTrial(true);
+      const anchorMs = Date.now();
+      await setTrialNudgeAnchor(anchorMs);
+      await scheduleTrialNudges(anchorMs);
     }
   }, [executePurchase]);
 

@@ -6,8 +6,8 @@
  */
 
 import React from "react";
+import { View } from "react-native";
 import { WatchErrorBoundary } from "@catdoes/watch";
-import { Box } from "./ui/box";
 import { VStack } from "./ui/vstack";
 import { Text } from "./ui/text";
 import { AlertTriangle } from "lucide-react-native";
@@ -23,7 +23,7 @@ interface ErrorFallbackProps {
  */
 function ErrorFallback({ error }: ErrorFallbackProps) {
   return (
-    <Box className="flex-1 bg-background-50 items-center justify-center p-6">
+    <View className="flex-1 bg-background-50 items-center justify-center p-6">
       <VStack space="lg" className="items-center max-w-md">
         <AlertTriangle size={48} className="text-red-500" />
         <Text className="text-xl font-semibold text-center">
@@ -33,7 +33,7 @@ function ErrorFallback({ error }: ErrorFallbackProps) {
           {error?.message || "An unexpected error occurred"}
         </Text>
       </VStack>
-    </Box>
+    </View>
   );
 }
 

@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { fonts } from '../lib/typography';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { saveMindfulMinutesToHealth } from '@/lib/health';
 
 const PHASES = [
   { label: 'INHALE',  guide: 'breathe in',  duration: 4, toValue: 1 },
@@ -32,6 +33,7 @@ export default function BreatheScreen() {
   const phaseRef = useRef(0);
   const secondsRef = useRef(PHASES[0].duration);
   const runningRef = useRef(false);
+  const cyclesRef = useRef(0);
 
   const backHandler = useCallback(() => {
     router.back();
@@ -53,6 +55,9 @@ export default function BreatheScreen() {
       clearInterval(countdownRef.current);
       countdownRef.current = null;
     }
+    if (cyclesRef.current > 0) {
+      void saveMindfulMinutesToHealth(cyclesRef.current);
+    }
     runningRef.current = false;
     setRunning(false);
     setPhaseIdx(0);
@@ -64,6 +69,10 @@ export default function BreatheScreen() {
       useNativeDriver: true,
     }).start();
   }, [circleAnim]);
+
+  useEffect(() => {
+    cyclesRef.current = cycles;
+  }, [cycles]);
 
   const startBreathing = useCallback(() => {
     if (countdownRef.current) clearInterval(countdownRef.current);

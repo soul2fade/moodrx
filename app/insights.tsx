@@ -13,12 +13,10 @@ import { router, useFocusEffect } from 'expo-router';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import {
-  getSessions,
-  clearSessions,
-  getStreak,
-  getAverageChange,
   Session,
 } from '@/lib/storage';
+import { getTopEffectiveCombinations } from '@/lib/workout-insights';
+import { useSessions } from '@/contexts/SessionsContext';
 import { MOODS } from '@/lib/moods';
 import { MoodIcon } from '@/components/MoodIcon';
 import { WorkoutCalendar } from '@/components/WorkoutCalendar';
@@ -34,18 +32,26 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { BottomNav } from '@/components/BottomNav';
+import { getHealthPlatformLabel, getHealthSnapshot, isHealthSyncAvailable, type HealthSnapshot } from '@/lib/health';
 
-const CASE_PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
+const CASE_PANEL_HEIGHT = Math.min(Dimensions.get('window').height * 0.52, Dimensions.get('window').height - 200);
 
 const BAR_MAX_HEIGHT = 60;
 const BAR_WIDTH = 18;
 
 export default function InsightsScreen() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    sessions,
+    isLoading,
+    streak,
+    avgChange,
+    sessionCount,
+    clearSessions,
+  } = useSessions();
   const [showBurnConfirm, setShowBurnConfirm] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [caseSession, setCaseSession] = useState<Session | null>(null);
+  const [healthSnapshot, setHealthSnapshot] = useState<HealthSnapshot | null>(null);
   const shareCardRef = useRef<ViewShot>(null);
   const { panelAnim: casePanelAnim, backdropAnim: caseBackdropAnim, show: showCasePanelAnim, dismiss: dismissCasePanelAnim } = useBottomPanel(CASE_PANEL_HEIGHT);
   const { isPremium } = useSubscription();
@@ -57,19 +63,17 @@ export default function InsightsScreen() {
   }, []);
   useHardwareBack(backHandler);
 
-  const loadSessions = useCallback(() => {
-    setIsLoading(true);
-    getSessions().then((data) => {
-      setSessions(data);
-      setIsLoading(false);
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      if (!isHealthSyncAvailable()) return;
+      getHealthSnapshot().then(setHealthSnapshot).catch(() => {});
+    }, []),
+  );
 
-  useFocusEffect(loadSessions);
-
-  const streak = useMemo(() => getStreak(sessions), [sessions]);
-  const avgChange = useMemo(() => getAverageChange(sessions), [sessions]);
-  const sessionCount = sessions.length;
+  const effectiveCombos = useMemo(
+    () => getTopEffectiveCombinations(sessions),
+    [sessions],
+  );
 
   const last7 = useMemo(() => sessions.slice(-7), [sessions]);
   const recent10 = useMemo(() => [...sessions].reverse().slice(0, isPremium ? 10 : 3), [sessions, isPremium]);
@@ -100,7 +104,6 @@ export default function InsightsScreen() {
 
   const handleBurn = async () => {
     await clearSessions();
-    setSessions([]);
     setShowBurnConfirm(false);
   };
 
@@ -151,7 +154,12 @@ export default function InsightsScreen() {
         {/* Stats row */}
         {isLoading ? (
           <View style={styles.statsRow}>
-            <Text style={styles.statsLoading}>Loading your data…</Text>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={styles.statSkeleton}>
+                <View style={styles.statSkeletonBar} />
+                <View style={styles.statSkeletonLabel} />
+              </View>
+            ))}
           </View>
         ) : (
           <View style={styles.statsRow}>
@@ -186,10 +194,33 @@ export default function InsightsScreen() {
           </View>
         )}
 
+        {healthSnapshot?.connected && (healthSnapshot.stepsToday !== null || healthSnapshot.sleepHoursLastNight !== null) && (
+          <View style={styles.healthCard}>
+            <Text style={styles.healthCardLabel}>
+              {(healthSnapshot.platform ? getHealthPlatformLabel(healthSnapshot.platform) : 'HEALTH').toUpperCase()}
+            </Text>
+            <View style={styles.healthRow}>
+              {healthSnapshot.stepsToday !== null && (
+                <View style={styles.healthStat}>
+                  <Text style={styles.healthStatValue}>{healthSnapshot.stepsToday.toLocaleString()}</Text>
+                  <Text style={styles.healthStatLabel}>STEPS TODAY</Text>
+                </View>
+              )}
+              {healthSnapshot.sleepHoursLastNight !== null && (
+                <View style={styles.healthStat}>
+                  <Text style={styles.healthStatValue}>{healthSnapshot.sleepHoursLastNight}h</Text>
+                  <Text style={styles.healthStatLabel}>SLEEP LAST NIGHT</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.healthHint}>Cross-reference with your mood sessions below.</Text>
+          </View>
+        )}
+
         {/* Supplement Tracker button */}
         <TouchableOpacity
           style={styles.supplementBtn}
-          onPress={() => isPremium ? router.push('/supplements') : setShowPremiumSheet(true)}
+          onPress={() => router.push('/supplements')}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker with Pro'}
@@ -302,13 +333,25 @@ export default function InsightsScreen() {
           </View>
         )}
 
+        {/* What works for you */}
+        {effectiveCombos.length > 0 && (
+          <View style={styles.whatWorksSection}>
+            <Text style={styles.whatWorksLabel}>WHAT WORKS FOR YOU</Text>
+            {effectiveCombos.map((combo) => (
+              <Text key={`${combo.mood}:${combo.workoutName}`} style={styles.whatWorksItem}>
+                {combo.label}
+              </Text>
+            ))}
+          </View>
+        )}
+
         {/* Workout History */}
         {workoutStats.visible.length > 0 && (
           <View style={styles.workoutHistSection}>
             <Text style={styles.workoutHistLabel}>WORKOUT HISTORY</Text>
             {workoutStats.visible.map((w, i) => {
               const avgStr = w.avgChange >= 0 ? `+${w.avgChange.toFixed(1)}` : w.avgChange.toFixed(1);
-              const avgColor = w.avgChange >= 0 ? '#059669' : '#737373';
+              const avgColor = w.avgChange >= 0 ? '#059669' : '#999999';
               return (
                 <View key={i} style={styles.workoutHistRow}>
                   <View style={styles.workoutHistInfo}>
@@ -345,8 +388,8 @@ export default function InsightsScreen() {
             {recent10.map((session) => {
               const change = session.postScore - session.intensity;
               const changeStr = change >= 0 ? `+${change}` : `${change}`;
-              const changeColor = change >= 0 ? '#059669' : '#737373';
-              const moodColor = MOODS[session.mood]?.color ?? '#737373';
+              const changeColor = change >= 0 ? '#059669' : '#999999';
+              const moodColor = MOODS[session.mood]?.color ?? '#999999';
               const date = new Date(session.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
               return (
@@ -364,6 +407,9 @@ export default function InsightsScreen() {
                     <Text style={styles.recentDate}>{dateStr}</Text>
                   </View>
                   <View style={styles.recentRight}>
+                    {session.lightDay && (
+                      <Text style={styles.recentLightBadge}>LIGHT</Text>
+                    )}
                     {session.rating === 'yes' && (
                       <Text style={styles.recentStar}>★</Text>
                     )}
@@ -395,7 +441,7 @@ export default function InsightsScreen() {
             {sessionNotes.visible.map((s) => {
               const date = new Date(s.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
-              const moodColor = MOODS[s.mood]?.color ?? '#737373';
+              const moodColor = MOODS[s.mood]?.color ?? '#999999';
               return (
                 <View key={s.id} style={styles.noteRow}>
                   <View style={styles.noteHeader}>
@@ -517,8 +563,8 @@ export default function InsightsScreen() {
           const cs = caseSession;
           const change = cs.postScore - cs.intensity;
           const changeStr = change >= 0 ? `+${change}` : `${change}`;
-          const changeColor = change >= 0 ? '#059669' : '#737373';
-          const moodColor = MOODS[cs.mood]?.color ?? '#737373';
+          const changeColor = change >= 0 ? '#059669' : '#999999';
+          const moodColor = MOODS[cs.mood]?.color ?? '#999999';
           const date = new Date(cs.timestamp);
           const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
           const ratingLabel = cs.rating === 'yes' ? 'YES ★' : cs.rating === 'somewhat' ? 'SOMEWHAT' : cs.rating === 'no' ? 'NOT REALLY' : null;
@@ -632,10 +678,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statsLoading: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
+  statSkeleton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 20,
+    gap: 10,
+  },
+  statSkeletonBar: {
+    width: 48,
+    height: 28,
+    backgroundColor: '#252525',
+  },
+  statSkeletonLabel: {
+    width: 64,
+    height: 10,
+    backgroundColor: '#1a1a1a',
   },
   statItem: {
     flex: 1,
@@ -894,6 +951,31 @@ const styles = StyleSheet.create({
     color: '#059669',
     fontSize: 14,
   },
+  recentLightBadge: {
+    ...t.label,
+    color: '#999999',
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 1.5,
+  },
+  whatWorksSection: {
+    marginTop: 32,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingTop: 20,
+  },
+  whatWorksLabel: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 3,
+    marginBottom: 12,
+  },
+  whatWorksItem: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
   historyUpsellRow: {
     paddingVertical: 14,
     alignItems: 'center',
@@ -1140,6 +1222,45 @@ const styles = StyleSheet.create({
   statValueStreak: {
     ...t.dataValue,
     color: colors.warning,
+  },
+  healthCard: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    borderLeftWidth: 3,
+    borderLeftColor: '#E11D48',
+    padding: 14,
+  },
+  healthCardLabel: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 3,
+    marginBottom: 10,
+  },
+  healthRow: {
+    flexDirection: 'row',
+    gap: 24,
+  },
+  healthStat: {
+    flex: 1,
+  },
+  healthStatValue: {
+    ...t.dataValue,
+    fontSize: 22,
+    color: colors.text,
+  },
+  healthStatLabel: {
+    ...t.label,
+    color: '#999999',
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+    letterSpacing: 1.5,
+  },
+  healthHint: {
+    ...t.bodySm,
+    color: '#999999',
+    marginTop: 10,
   },
   supplementBtn: {
     borderWidth: 1,

@@ -13,12 +13,11 @@ A mobile-first wellness app built with Expo (React Native) that focuses on mood 
 ## Tech Stack
 
 - **Framework**: Expo SDK 54 with Expo Router (file-based routing)
-- **UI**: NativeWind (TailwindCSS for React Native) + Gluestack UI
-- **State**: React Query (@tanstack/react-query) + React Context
-- **Backend/DB**: Supabase (@supabase/supabase-js)
+- **UI**: React Native StyleSheet + custom components (Gluestack UI primitives in `components/ui/` — mostly unused)
+- **State**: React Context + AsyncStorage (`lib/storage.ts`, `contexts/SessionsContext.tsx`)
 - **Payments**: react-native-purchases (RevenueCat)
 - **Font**: Space Grotesk (@expo-google-fonts/space-grotesk)
-- **Animations**: react-native-reanimated, @legendapp/motion
+- **Animations**: react-native-reanimated
 - **Monitoring**: @catdoes/watch (error tracking)
 
 ## Project Structure
@@ -61,14 +60,15 @@ RevenueCat is fully integrated for real in-app purchases.
 
 **Key files:**
 - `lib/revenuecat.tsx` — initialization logic (`initializeRevenueCat`)
-- `contexts/SubscriptionContext.tsx` — RC purchases + 7-day local trial
+- `contexts/SubscriptionContext.tsx` — RC purchases, store trial via annual package
 - `scripts/revenueCatClient.ts` — server-side RC API client (uses Replit connectors)
 - `scripts/seedRevenueCat.ts` — seed script (run once to set up RC entities)
 
 **Key flows:**
 - `initializeRevenueCat()` called top-level in `app/_layout.tsx`
-- `isPremium` derived from RC `CustomerInfo` entitlement (`premium`)
-- 7-day free trial logic (AsyncStorage) preserved alongside RC
+- `isPremium` derived solely from RC `CustomerInfo` entitlement (`premium`)
+- 7-day free trial starts via App Store / Play intro offer on the annual package
+- `Purchases.addCustomerInfoUpdateListener` keeps subscription state in sync
 - In `__DEV__` mode, purchases show a confirmation modal before executing
 - `app/premium.tsx` reads prices from RC offerings (no hardcoded strings)
 
@@ -77,11 +77,10 @@ RevenueCat is fully integrated for real in-app purchases.
 ## Environment Variables
 
 - `EXPO_PUBLIC_CATDOES_WATCH_KEY` — Error tracking API key (in `.env`)
-- `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY` — RC test store public key
-- `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` — RC App Store public key
-- `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` — RC Play Store public key
-- `REVENUECAT_PROJECT_ID` — RC project ID
-- `REVENUECAT_TEST_STORE_APP_ID`, `REVENUECAT_APPLE_APP_STORE_APP_ID`, `REVENUECAT_GOOGLE_PLAY_STORE_APP_ID` — RC app IDs
+- `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY` — RC test store public key (EAS / Replit Secrets — not in git)
+- `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` — RC App Store public key (EAS / Replit Secrets)
+- `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` — RC Play Store public key (EAS / Replit Secrets)
+- `REVENUECAT_PROJECT_ID` — RC project ID (optional, for seed scripts)
 
 ## Installed Packages (beyond package.json originals)
 

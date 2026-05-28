@@ -19,7 +19,7 @@ export const colors = {
   textSubtle: '#a3a3a3',
   textDim: '#525252',
   textGhost: '#262626',
-  textDimmer: '#737373',
+  textDimmer: '#999999',
   textDark: '#3a3a3a',
 
   // Semantic

@@ -14,7 +14,6 @@ import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
-import { Alert } from "react-native";
 
 // Show notifications while app is in the foreground
 Notifications.setNotificationHandler({
@@ -32,18 +31,9 @@ import GluestackInitializer from "@/components/GluestackInitializer";
 import useColorScheme from "@/hooks/useColorScheme";
 import { Stack } from "expo-router";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { SessionsProvider } from "@/contexts/SessionsContext";
 import { initializeRevenueCat } from "@/lib/revenuecat";
-
-// Initialize CatDoes Watch for error tracking
-// Set EXPO_PUBLIC_CATDOES_WATCH_KEY in your environment to enable
 import { initCatDoesWatch } from "@/catdoes.watch";
-initCatDoesWatch();
-
-try {
-  initializeRevenueCat();
-} catch (err: unknown) {
-  Alert.alert("RevenueCat Unavailable", err instanceof Error ? err.message : "Unknown error");
-}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -59,6 +49,18 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    initCatDoesWatch();
+    try {
+      initializeRevenueCat();
+    } catch (err: unknown) {
+      console.warn(
+        "RevenueCat init failed:",
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }, []);
+
+  useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
     }
@@ -72,6 +74,7 @@ export default function RootLayout() {
    * IMPORTANT: DO NOT REMOVE GluestackInitializer OR ErrorBoundary */
   return (
     <SubscriptionProvider>
+      <SessionsProvider>
       <ErrorBoundary>
         <GluestackInitializer colorScheme={colorScheme}>
           <Stack
@@ -87,6 +90,7 @@ export default function RootLayout() {
           <StatusBar style="auto" />
         </GluestackInitializer>
       </ErrorBoundary>
+      </SessionsProvider>
     </SubscriptionProvider>
   );
 }

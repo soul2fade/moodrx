@@ -26,6 +26,7 @@ import { MOODS } from '@/lib/moods';
 import { fonts } from '@/lib/typography';
 import type { MoodKey, Session, UserProfile } from '@/lib/storage';
 import { getCarouselHintSeen, setCarouselHintSeen } from '@/lib/storage';
+import { getBestPatternCallout } from '@/lib/workout-insights';
 
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 24;
@@ -176,6 +177,7 @@ export function HomeCarousel({
   const trendDiff = last7.length >= 2 ? last7[last7.length - 1].intensity - last7[0].intensity : 0;
   const trendLabel = Math.abs(trendDiff) < 1 ? '→ HOLDING STEADY' : trendDiff < 0 ? '↓ TRENDING BETTER' : '↑ TRENDING WORSE';
   const trendColor = Math.abs(trendDiff) < 1 ? '#999999' : trendDiff < 0 ? '#059669' : '#b45309';
+  const patternCallout = getBestPatternCallout(sessions);
   const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
@@ -285,6 +287,19 @@ export function HomeCarousel({
                   <Text style={[styles.sparklineTrend, { color: trendColor }]}>{trendLabel}  ›</Text>
                 </TouchableOpacity>
               )}
+
+              {sessionCount >= 2 && !selectedMood && (
+                <TouchableOpacity
+                  style={styles.weeklyRxTeaser}
+                  onPress={() => router.push('/weekly-prescription' as any)}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open your weekly prescription"
+                >
+                  <Text style={styles.weeklyRxTeaserLabel}>WEEKLY RX READY</Text>
+                  <Text style={styles.weeklyRxTeaserText}>7-day plan based on your sessions →</Text>
+                </TouchableOpacity>
+              )}
             </>
           ) : (
             <View style={styles.emptyState}>
@@ -303,6 +318,39 @@ export function HomeCarousel({
           <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll} contentContainerStyle={styles.pageContent}>
           {hasQuickActions ? (
             <>
+              {patternCallout && !selectedMood && (
+                <TouchableOpacity
+                  style={[styles.patternCallout, { borderLeftColor: MOODS[patternCallout.mood].color }]}
+                  onPress={() => router.push({
+                    pathname: '/prescription',
+                    params: { mood: patternCallout.mood, intensity: '5' },
+                  })}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Pattern insight: ${patternCallout.text}`}
+                >
+                  <Text style={styles.patternCalloutLabel}>WHAT WORKS FOR YOU</Text>
+                  <Text style={styles.patternCalloutText}>{patternCallout.text}</Text>
+                  <Text style={styles.patternCalloutAction}>TRY IT AGAIN →</Text>
+                </TouchableOpacity>
+              )}
+
+              {sessionCount >= 2 && !selectedMood && (
+                <TouchableOpacity
+                  style={[styles.quickRow, styles.weeklyRxRow]}
+                  onPress={() => router.push('/weekly-prescription' as any)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="View your weekly prescription"
+                >
+                  <View style={styles.quickRowLeft}>
+                    <Text style={styles.quickRowLabel}>WEEKLY RX</Text>
+                    <Text style={styles.quickRowSub}>Your 7-day plan — tap to open</Text>
+                  </View>
+                  <Text style={styles.quickRowIcon}>›</Text>
+                </TouchableOpacity>
+              )}
+
               {/* Adaptive shortcut — Quick Repeat takes priority when within 18hr window, else Quick Session */}
               {showStillFeeling && lastSession ? (
                 <TouchableOpacity
@@ -338,22 +386,6 @@ export function HomeCarousel({
                 </TouchableOpacity>
               ) : null}
 
-              {/* Weekly Rx */}
-              {sessionCount >= 3 && !selectedMood && (
-                <TouchableOpacity
-                  style={styles.quickRow}
-                  onPress={() => router.push('/weekly-prescription' as any)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel="View your weekly prescription"
-                >
-                  <View style={styles.quickRowLeft}>
-                    <Text style={styles.quickRowLabel}>WEEKLY RX</Text>
-                    <Text style={styles.quickRowSub}>Your 7-day plan is ready</Text>
-                  </View>
-                  <Text style={styles.quickRowIcon}>›</Text>
-                </TouchableOpacity>
-              )}
             </>
           ) : (
             <View style={styles.emptyState}>
@@ -592,6 +624,56 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 17,
   },
+  weeklyRxTeaser: {
+    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#05966944',
+    backgroundColor: '#05966910',
+  },
+  weeklyRxTeaserLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#059669',
+    letterSpacing: 3,
+    lineHeight: 17,
+  },
+  weeklyRxTeaserText: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 14,
+    color: '#ffffff',
+    marginTop: 4,
+  },
+  patternCallout: {
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    borderLeftWidth: 3,
+    padding: 14,
+    marginBottom: 12,
+  },
+  patternCalloutLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#c8c8c8',
+    letterSpacing: 2,
+    lineHeight: 17,
+  },
+  patternCalloutText: {
+    fontFamily: fonts.primary.regular,
+    fontSize: 14,
+    color: '#999999',
+    marginTop: 6,
+    lineHeight: 20,
+  },
+  patternCalloutAction: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: '#ffffff',
+    letterSpacing: 1.5,
+    marginTop: 10,
+    lineHeight: 17,
+  },
   quickRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -602,6 +684,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginBottom: 8,
     backgroundColor: '#0a0a0a',
+  },
+  weeklyRxRow: {
+    borderLeftColor: '#059669',
   },
   quickRowLeft: {
     flex: 1,

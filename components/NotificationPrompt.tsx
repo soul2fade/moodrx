@@ -6,11 +6,10 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Platform,
 } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import { setNotifPromptShown } from '@/lib/storage';
-import { getTrialStartMs } from '@/lib/subscription';
+import { getTrialNudgeAnchorMs } from '@/lib/subscription';
+import { enableRemindersFromPrompt } from '@/lib/notifications';
 import { type as t } from '@/lib/typography';
 
 interface NotificationPromptProps {
@@ -21,51 +20,8 @@ interface NotificationPromptProps {
 export function NotificationPrompt({ visible, onClose }: NotificationPromptProps) {
   const handleEnable = async () => {
     await setNotifPromptShown();
-    if (Platform.OS !== 'web') {
-      try {
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status === 'granted') {
-          // Daily check-in reminder at 9am
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: 'MoodRx',
-              body: 'Time to check in. How bad is it today?',
-            },
-            trigger: {
-              type: Notifications.SchedulableTriggerInputTypes.DAILY,
-              hour: 9,
-              minute: 0,
-            },
-          });
-
-          // Trial nurture notifications — scheduled to specific dates
-          const trialStartMs = await getTrialStartMs();
-          if (trialStartMs) {
-            const now = Date.now();
-            const nudges: Array<{ offsetDays: number; body: string }> = [
-              { offsetDays: 2, body: "Day 2. Your brain's trying to trick you again. Check in." },
-              { offsetDays: 5, body: "5 sessions deep. The data doesn't lie. Keep going." },
-              { offsetDays: 6, body: "1 day left on your trial. Don't let momentum die here." },
-            ];
-            for (const nudge of nudges) {
-              const triggerDate = new Date(trialStartMs + nudge.offsetDays * 24 * 60 * 60 * 1000);
-              triggerDate.setHours(18, 0, 0, 0);
-              if (triggerDate.getTime() > now) {
-                await Notifications.scheduleNotificationAsync({
-                  content: { title: 'MoodRx', body: nudge.body },
-                  trigger: {
-                    type: Notifications.SchedulableTriggerInputTypes.DATE,
-                    date: triggerDate,
-                  },
-                });
-              }
-            }
-          }
-        }
-      } catch {
-        // ignore — may not work in Expo Go
-      }
-    }
+    const trialStartMs = await getTrialNudgeAnchorMs();
+    await enableRemindersFromPrompt(trialStartMs);
     onClose();
   };
 

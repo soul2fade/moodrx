@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Modal,
   ScrollView,
   StyleSheet,
   Animated,
@@ -15,7 +16,7 @@ import { useAudioPlayer } from 'expo-audio';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
-import { getPersonalBest } from '@/lib/storage';
+import { getPersonalBest, getTrashTalkVolume, getWorkoutFocusMode, getWorkoutVoiceMode, setWorkoutFocusMode, setWorkoutVoiceMode } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -23,7 +24,12 @@ import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
-import { getInsult } from '@/utils/insults';
+import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
+import { stepHasReps } from '@/lib/workout-ui';
+import {
+  pickWorkoutGuideCue,
+  pickWorkoutGuideTimerCue,
+} from '@/lib/workout-voice';
 
 function parseRestSeconds(text: string): number | null {
   const lower = text.toLowerCase();
@@ -45,36 +51,6 @@ function parseActiveSeconds(text: string): number | null {
   return null;
 }
 
-const ACTIVE_COMPLETE_LINES = [
-  "Time's up. Keep going.",
-  "Done. Hit next when ready.",
-  "That's the time. Move on.",
-  "Finished. Tap next.",
-];
-
-const REST_COMPLETE_LINES = [
-  "Rest complete. Back to work.",
-  "Time's up. No more lounging.",
-  "That's enough recovery. Move.",
-  "Right. Off you go.",
-  "Rest over. Your body is ready.",
-];
-
-const ACTIVE_COMPLETE_AUDIO = [
-  require('../assets/audio/transitions/active_complete_01.mp3'),
-  require('../assets/audio/transitions/active_complete_02.mp3'),
-  require('../assets/audio/transitions/active_complete_03.mp3'),
-  require('../assets/audio/transitions/active_complete_04.mp3'),
-];
-
-const REST_COMPLETE_AUDIO = [
-  require('../assets/audio/transitions/rest_complete_01.mp3'),
-  require('../assets/audio/transitions/rest_complete_02.mp3'),
-  require('../assets/audio/transitions/rest_complete_03.mp3'),
-  require('../assets/audio/transitions/rest_complete_04.mp3'),
-  require('../assets/audio/transitions/rest_complete_05.mp3'),
-];
-
 const MOTIVATIONAL = [
   "Let's go.",
   "You showed up. Most didn't.",
@@ -95,13 +71,6 @@ const INSULT_AUDIO = [
   require('../assets/audio/insults/insult_06.mp3'),
   require('../assets/audio/insults/insult_07.mp3'),
   require('../assets/audio/insults/insult_08.mp3'),
-  require('../assets/audio/insults/insult_09.mp3'),
-  require('../assets/audio/insults/insult_10.mp3'),
-  require('../assets/audio/insults/insult_11.mp3'),
-  require('../assets/audio/insults/insult_12.mp3'),
-  require('../assets/audio/insults/insult_13.mp3'),
-  require('../assets/audio/insults/insult_14.mp3'),
-  require('../assets/audio/insults/insult_15.mp3'),
 ];
 
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
@@ -114,12 +83,13 @@ const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
 
 
 export default function WorkoutScreen() {
-  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string }>();
+  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
     : (Object.keys(MOODS)[0] as MoodKey);
   const workoutId = params.workoutId ?? '';
   const intensity = params.intensity || '5';
+  const isGuided = params.guided === '1';
 
   const workout = workoutId ? getWorkoutById(workoutId) : getWorkoutsForMood(mood)[0];
   const resolvedWorkout = workout ?? getWorkoutsForMood(mood)[0];
@@ -131,14 +101,18 @@ export default function WorkoutScreen() {
   const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
+  const [trashTalkVolume, setTrashTalkVolume] = useState(0.7);
   const [keepAwake, setKeepAwake] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
   const [transitionAudioSrc, setTransitionAudioSrc] = useState<any>(null);
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const [activeSecondsLeft, setActiveSecondsLeft] = useState<number | null>(null);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trashTalkArmRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restProgressAnim = useRef(new Animated.Value(1)).current;
   const restTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeProgressAnim = useRef(new Animated.Value(1)).current;
@@ -155,7 +129,8 @@ export default function WorkoutScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
-  const midInsult = useRef(getInsult(mood, 'mid')).current;
+  const trashTalkAllowed = resolvedWorkout?.intensity !== 'Intense';
+  const midInsult = useDrMoodRxLine(mood, 'mid');
   const midStep = Math.floor((totalSteps - 1) / 2);
 
   const player = useAudioPlayer(audioSrc);
@@ -170,11 +145,50 @@ export default function WorkoutScreen() {
   }, [audioSrc, activeSoundscape]);
 
   useEffect(() => {
+    getTrashTalkVolume().then(setTrashTalkVolume).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getWorkoutFocusMode().then(setFocusMode).catch(() => {});
+    getWorkoutVoiceMode().then(setVoiceMode).catch(() => {});
+  }, []);
+
+  const handleFocusToggle = useCallback(() => {
+    setFocusMode((prev) => {
+      const next = !prev;
+      void setWorkoutFocusMode(next);
+      return next;
+    });
+    Haptics.selectionAsync();
+  }, []);
+
+  const handleVoiceToggle = useCallback(() => {
+    setVoiceMode((prev) => {
+      const next = !prev;
+      void setWorkoutVoiceMode(next);
+      if (next) {
+        setFocusMode(true);
+        void setWorkoutFocusMode(true);
+      } else {
+        try { transitionPlayer.pause(); } catch {}
+        try { insultPlayer.pause(); } catch {}
+      }
+      return next;
+    });
+    Haptics.selectionAsync();
+  }, [transitionPlayer, insultPlayer]);
+
+  useEffect(() => {
+    insultPlayer.volume = trashTalkVolume;
+  }, [trashTalkVolume, insultPlayer]);
+
+  useEffect(() => {
     if (insultAudioSrc) {
+      insultPlayer.volume = trashTalkVolume;
       insultPlayer.seekTo(0);
       insultPlayer.play();
     }
-  }, [insultAudioSrc]);
+  }, [insultAudioSrc, trashTalkVolume]);
 
   useEffect(() => {
     if (transitionAudioSrc) {
@@ -191,6 +205,8 @@ export default function WorkoutScreen() {
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
       if (restTimerRef.current) clearInterval(restTimerRef.current);
       if (activeTimerRef.current) clearInterval(activeTimerRef.current);
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
       deactivateKeepAwake();
     };
   }, []);
@@ -217,8 +233,7 @@ export default function WorkoutScreen() {
           clearInterval(restTimerRef.current!);
           restTimerRef.current = null;
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          const idx = Math.floor(Math.random() * REST_COMPLETE_AUDIO.length);
-          setTransitionAudioSrc(REST_COMPLETE_AUDIO[idx]);
+          setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, true));
           return 0;
         }
         return prev - 1;
@@ -243,8 +258,7 @@ export default function WorkoutScreen() {
           clearInterval(activeTimerRef.current!);
           activeTimerRef.current = null;
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          const idx = Math.floor(Math.random() * ACTIVE_COMPLETE_AUDIO.length);
-          setTransitionAudioSrc(ACTIVE_COMPLETE_AUDIO[idx]);
+          setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, false));
           return 0;
         }
         return prev - 1;
@@ -267,7 +281,7 @@ export default function WorkoutScreen() {
       setInsultAudioSrc(INSULT_AUDIO[idx]);
     };
     playNext();
-    trashIntervalRef.current = setInterval(playNext, 40000);
+    trashIntervalRef.current = setInterval(playNext, 55000);
     return () => {
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
@@ -287,6 +301,14 @@ export default function WorkoutScreen() {
     setRepCount(0);
   }, [currentStep]);
 
+  useEffect(() => {
+    if (!voiceMode || !resolvedWorkout) return;
+    const stepText = resolvedWorkout.steps[currentStep] ?? '';
+    const isRest = parseRestSeconds(stepText) !== null;
+    setTransitionAudioSrc(pickWorkoutGuideCue(currentStep, isRest));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceMode, currentStep]);
+
   const hwBackHandler = useCallback(() => {
     if (showQuitConfirm) { setShowQuitConfirm(false); return true; }
     if (currentStep > 0) { setCurrentStep((s) => s - 1); return true; }
@@ -298,6 +320,7 @@ export default function WorkoutScreen() {
   const stopAll = () => {
     try { player.remove(); } catch {}
     try { insultPlayer.pause(); } catch {}
+    try { transitionPlayer.pause(); } catch {}
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
   };
 
@@ -310,7 +333,10 @@ export default function WorkoutScreen() {
       isNavigating.current = true;
       stopAll();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.push({ pathname: '/post-workout', params: { mood, workoutId, intensity, reps: String(repCount) } });
+      router.push({
+        pathname: '/post-workout',
+        params: { mood, workoutId, intensity, reps: String(repCount), ...(isGuided ? { guided: '1' } : {}) },
+      });
     }
   };
 
@@ -326,20 +352,33 @@ export default function WorkoutScreen() {
 
   const dismissTrashWarning = () => {
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+    if (trashTalkArmRef.current) {
+      clearTimeout(trashTalkArmRef.current);
+      trashTalkArmRef.current = null;
+    }
     Animated.timing(warningAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
       setShowTrashWarning(false);
     });
   };
 
   const handleTrashTalk = () => {
+    if (!trashTalkAllowed) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (!trashTalkOn) {
       setShowTrashWarning(true);
       warningAnim.setValue(0);
       Animated.timing(warningAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
       warningTimerRef.current = setTimeout(dismissTrashWarning, 2500);
-      setTimeout(() => setTrashTalkOn(true), 2700);
+      if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
+      trashTalkArmRef.current = setTimeout(() => {
+        trashTalkArmRef.current = null;
+        setTrashTalkOn(true);
+      }, 2700);
     } else {
+      if (trashTalkArmRef.current) {
+        clearTimeout(trashTalkArmRef.current);
+        trashTalkArmRef.current = null;
+      }
       setTrashTalkOn(false);
     }
   };
@@ -389,6 +428,8 @@ export default function WorkoutScreen() {
   const isLastStep = currentStep === totalSteps - 1;
   const motivationalMsg = MOTIVATIONAL[Math.min(currentStep, MOTIVATIONAL.length - 1)];
   const progressWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
+  const currentStepText = resolvedWorkout.steps[currentStep] ?? '';
+  const showRepCounter = stepHasReps(currentStepText);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -402,23 +443,52 @@ export default function WorkoutScreen() {
         <TouchableOpacity onPress={() => setShowQuitConfirm(true)} activeOpacity={0.7} style={styles.quitButton} accessibilityRole="button" accessibilityLabel="Quit workout">
           <Text style={styles.quitText} allowFontScaling={false}>X QUIT</Text>
         </TouchableOpacity>
-        <Text style={styles.stepCounter} allowFontScaling={false}>{currentStep + 1} / {totalSteps}</Text>
+        <View style={styles.topRowRight}>
+          <TouchableOpacity
+            onPress={handleVoiceToggle}
+            activeOpacity={0.7}
+            style={[styles.focusBtn, voiceMode && { borderColor: accentColor, backgroundColor: accentColor + '18' }]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: voiceMode }}
+            accessibilityLabel={`Voice mode ${voiceMode ? 'on' : 'off'}. Audio-only with the workout guide voice.`}
+          >
+            <Text style={[styles.focusBtnText, voiceMode && { color: accentColor }]} allowFontScaling={false}>VOICE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleFocusToggle}
+            activeOpacity={0.7}
+            style={[styles.focusBtn, focusMode && { borderColor: accentColor, backgroundColor: accentColor + '18' }]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: focusMode }}
+            accessibilityLabel={`Focus mode ${focusMode ? 'on' : 'off'}`}
+          >
+            <Text style={[styles.focusBtnText, focusMode && { color: accentColor }]} allowFontScaling={false}>FOCUS</Text>
+          </TouchableOpacity>
+          <Text style={styles.stepCounter} allowFontScaling={false}>{currentStep + 1} / {totalSteps}</Text>
+        </View>
       </View>
 
-      {/* Quit confirmation */}
-      {showQuitConfirm && (
-        <View style={styles.quitConfirm} accessibilityRole="alert">
-          <Text style={styles.quitConfirmText}>Abandon this workout?</Text>
-          <View style={styles.quitConfirmButtons}>
-            <TouchableOpacity onPress={() => setShowQuitConfirm(false)} activeOpacity={0.7} style={styles.keepGoingBtn} accessibilityRole="button">
-              <Text style={styles.keepGoingText}>Keep going</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleQuit} activeOpacity={0.7} style={styles.quitConfirmBtn} accessibilityRole="button">
-              <Text style={styles.quitConfirmBtnText}>Quit</Text>
-            </TouchableOpacity>
+      {/* Quit confirmation modal */}
+      <Modal
+        visible={showQuitConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowQuitConfirm(false)}
+      >
+        <View style={styles.quitModalBackdrop}>
+          <View style={styles.quitModalCard} accessibilityRole="alert">
+            <Text style={styles.quitConfirmText}>Abandon this workout?</Text>
+            <View style={styles.quitConfirmButtons}>
+              <TouchableOpacity onPress={() => setShowQuitConfirm(false)} activeOpacity={0.7} style={styles.keepGoingBtn} accessibilityRole="button">
+                <Text style={styles.keepGoingText}>Keep going</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleQuit} activeOpacity={0.7} style={styles.quitConfirmBtn} accessibilityRole="button">
+                <Text style={styles.quitConfirmBtnText}>Quit</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      )}
+      </Modal>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Icon + title */}
@@ -429,6 +499,7 @@ export default function WorkoutScreen() {
         <Text style={styles.stepLabel}>STEP {currentStep + 1} OF {totalSteps}</Text>
 
         {/* Workout Coach */}
+        {!focusMode && (
         <WorkoutCoach
           mood={mood}
           step={Math.min(3, Math.floor((currentStep / Math.max(totalSteps, 1)) * 4))}
@@ -436,6 +507,7 @@ export default function WorkoutScreen() {
           figureSize={300}
           accentColor={accentColor}
         />
+        )}
 
         {/* Step text box / Rest timer */}
         {restSecondsLeft !== null ? (
@@ -482,10 +554,12 @@ export default function WorkoutScreen() {
         {restSecondsLeft === null && <Text style={styles.motivational}>{motivationalMsg}</Text>}
 
         {/* Mid-workout insult — only when trash talk is off to avoid overlap */}
-        {currentStep === midStep && midInsult !== '' && !trashTalkOn && (
+        {!focusMode && currentStep === midStep && midInsult !== '' && !trashTalkOn && (
           <Text style={styles.insultLine}>{midInsult}</Text>
         )}
 
+        {!focusMode && (
+        <>
         {/* ── STEP MINI-MAP ── */}
         <View style={styles.miniMap}>
           {resolvedWorkout.steps.map((step, idx) => {
@@ -513,6 +587,7 @@ export default function WorkoutScreen() {
         </View>
 
         {/* ── REP COUNTER ── */}
+        {showRepCounter && (
         <View style={styles.repSection}>
           <View style={styles.repHeaderRow}>
             <Text style={[styles.sectionLabel, { marginBottom: 0, fontSize: 16 }]}>REP COUNTER</Text>
@@ -541,6 +616,7 @@ export default function WorkoutScreen() {
             <Text style={[styles.pbAlert, { color: accentColor }]}>NEW BEST</Text>
           )}
         </View>
+        )}
 
         {/* ── SOUNDSCAPE ── */}
         <View style={styles.soundSection}>
@@ -561,6 +637,7 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
               );
             })}
+            {trashTalkAllowed ? (
             <TouchableOpacity
               onPress={handleTrashTalk}
               activeOpacity={0.7}
@@ -570,6 +647,11 @@ export default function WorkoutScreen() {
             >
               <Text style={[styles.soundBtnText, trashTalkOn && { color: '#E11D48' }]}>TRASH TALK</Text>
             </TouchableOpacity>
+            ) : (
+              <View style={[styles.soundBtn, { opacity: 0.35 }]}>
+                <Text style={styles.soundBtnText}>TRASH TALK</Text>
+              </View>
+            )}
             {(activeSoundscape || trashTalkOn) && (
               <TouchableOpacity onPress={() => { handleSoundscape(null); if (trashTalkOn) handleTrashTalk(); }} activeOpacity={0.7} style={styles.soundOffBtn}>
                 <Text style={styles.soundOffText}>OFF</Text>
@@ -590,6 +672,9 @@ export default function WorkoutScreen() {
             {keepAwake ? 'SCREEN ON  ●' : 'KEEP SCREEN ON'}
           </Text>
         </TouchableOpacity>
+
+        </>
+        )}
 
       </ScrollView>
 
@@ -640,10 +725,25 @@ const styles = StyleSheet.create({
   errorText: { ...t.label, color: '#ffffff', textAlign: 'center', marginTop: 80 },
   progressBarBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 48, paddingBottom: 12 },
+  topRowRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  focusBtn: { borderWidth: 1, borderColor: '#333333', paddingHorizontal: 10, paddingVertical: 6 },
+  focusBtnText: { ...t.label, color: '#999999', letterSpacing: 1.5, fontSize: 12, lineHeight: 17 },
   quitButton: { paddingVertical: 4 },
   quitText: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
   stepCounter: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
   quitConfirm: { marginHorizontal: 24, borderWidth: 1, borderColor: '#E11D48', padding: 16, marginBottom: 8 },
+  quitModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  quitModalCard: {
+    borderWidth: 1,
+    borderColor: '#E11D48',
+    backgroundColor: '#0a0a0a',
+    padding: 20,
+  },
   quitConfirmText: { ...t.body, fontSize: 15 },
   quitConfirmButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
   keepGoingBtn: { paddingVertical: 8 },

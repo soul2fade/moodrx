@@ -352,3 +352,11 @@ export function getWorkoutsForMood(mood: MoodKey): Workout[] {
 export function getWorkoutById(id: string): Workout | undefined {
   return WORKOUTS.find((w) => w.id === id);
 }
+
+export function getShortestWorkoutForMood(mood: MoodKey): Workout | undefined {
+  const moodWorkouts = getWorkoutsForMood(mood);
+  if (moodWorkouts.length === 0) return undefined;
+  return moodWorkouts.reduce((shortest, w) =>
+    w.duration < shortest.duration ? w : shortest
+  );
+}

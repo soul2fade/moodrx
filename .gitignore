@@ -24,6 +24,12 @@ build-status.txt
 github-debug.txt
 *.log
 .DS_Store
+.env
+.env.local
+.env.*.local
+*.p12
+*.pem
+distribution.p12
 
 # CatDoes metadata (managed automatically)
 .catdoes/

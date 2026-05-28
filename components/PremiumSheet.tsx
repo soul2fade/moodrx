@@ -23,7 +23,7 @@ export function PremiumSheet({
   headline = 'Unlock all 18 workouts.',
   description = '3 science-backed options for every mood state. Plus supplement tracking, full insights, and the neuroscience behind every rep.',
 }: PremiumSheetProps) {
-  const { purchaseMonthly, purchaseYearly, offerings, startTrial, hasUsedTrial } = useSubscription();
+  const { purchaseMonthly, purchaseYearly, offerings, hasUsedTrial } = useSubscription();
 
   const currentOffering = offerings?.current;
   const monthlyPkg = currentOffering?.availablePackages?.find((p) => p.identifier === '$rc_monthly');
@@ -48,10 +48,10 @@ export function PremiumSheet({
         {!hasUsedTrial && (
           <TouchableOpacity
             style={styles.trialButton}
-            onPress={async () => { await startTrial(); onClose(); }}
+            onPress={async () => { await purchaseYearly(); onClose(); }}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Start 7-day free trial"
+            accessibilityLabel="Start 7-day free trial via annual subscription"
           >
             <Text style={styles.trialButtonText}>START 7-DAY FREE TRIAL →</Text>
           </TouchableOpacity>

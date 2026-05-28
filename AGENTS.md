@@ -56,9 +56,13 @@ CatDoes Watch SDK (`@catdoes/watch`) is integrated via `catdoes.watch.ts`. Enabl
 
 Add custom plugins in `babel.plugins.js` (not `babel.config.js`). The `react-native-worklets/plugin` must remain last in the plugins array.
 
-### Data Fetching
+### Data Layer
 
-TanStack React Query (`@tanstack/react-query`) is included as a dependency.
+All app data is stored locally via AsyncStorage (`lib/storage.ts`). There is no backend or remote database in the mobile app.
+
+### Subscriptions
+
+RevenueCat (`react-native-purchases`) handles iOS/Android IAP. Public keys are set via `EXPO_PUBLIC_REVENUECAT_*` env vars (local `.env` and EAS environment variables).
 
 ### Icons
 

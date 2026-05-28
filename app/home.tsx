@@ -10,9 +10,10 @@ import {
   Dimensions,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, UserProfile, Session, StreakState } from '@/lib/storage';
+import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
+import { rescheduleAfterSession } from '@/lib/notifications';
+import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
 import { todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
@@ -22,7 +23,9 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '@/lib/typography';
 import { BottomNav } from '@/components/BottomNav';
 import { HomeCarousel } from '@/components/HomeCarousel';
+import { IntensityPicker } from '@/components/IntensityPicker';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 
@@ -32,25 +35,24 @@ const HOME_MOOD_ORDER = MOOD_ORDER.filter((mood) => mood !== 'good');
 let greetingShownThisSession = false;
 
 export default function HomeScreen() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { sessions, isLoading, sessionCount, lastSession, addSession } = useSessions();
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
-  const [, setStreakState] = useState<StreakState>({ hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 });
   const [carouselPage, setCarouselPage] = useState<number | null>(null);
+  const [showNavHint, setShowNavHint] = useState(false);
   const carouselFadeAnim = useRef(new Animated.Value(0)).current;
-  const carouselReady = carouselPage !== null;
+  const carouselVisible = carouselPage !== null;
 
   useEffect(() => {
-    if (carouselReady) {
+    if (carouselVisible) {
       Animated.timing(carouselFadeAnim, {
         toValue: 1,
         duration: 220,
         useNativeDriver: true,
       }).start();
     }
-  }, [carouselFadeAnim, carouselReady]);
+  }, [carouselVisible, carouselFadeAnim]);
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const { buttonScale, onPressIn, onPressOut } = useButtonAnimation();
@@ -60,6 +62,7 @@ export default function HomeScreen() {
   const [greetingStreakMsg, setGreetingStreakMsg] = useState('');
   const greetingAnim = useRef(new Animated.Value(0)).current;
   const greetingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastRescheduledSessionCountRef = useRef(-1);
   const moodAnims = useRef(
     HOME_MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
   ).current;
@@ -70,13 +73,13 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      setIsLoading(true);
-      Promise.all([getSessions(), getUserProfile(), getStreakState()]).then(([data, profile, state]) => {
-        setSessions(data);
+      consumeNavHintPending().then((show) => {
+        if (show) setShowNavHint(true);
+      });
+      Promise.all([getUserProfile(), getStreakState(), getLastCarouselPage()]).then(([profile, state, lastPage]) => {
         setUserProfile(profile);
-        setCarouselPage(0);
-        setIsLoading(false);
-        const currentStreak = getStreak(data);
+        setCarouselPage(lastPage);
+        const currentStreak = getStreak(sessions);
         const today = todayDateString();
         let updated = { ...state };
         if (currentStreak > state.hwm) {
@@ -86,7 +89,6 @@ export default function HomeScreen() {
           updated = { ...updated, lastBrokenDate: today, lastBrokenHwm: state.hwm };
         }
         if (JSON.stringify(updated) !== JSON.stringify(state)) saveStreakState(updated);
-        setStreakState(updated);
 
         // Show streak toast once per app launch (only for non-milestone active streaks)
         const MILESTONES = [3, 7, 14, 30];
@@ -113,6 +115,10 @@ export default function HomeScreen() {
           }, 3500);
         }
       });
+      if (sessions.length !== lastRescheduledSessionCountRef.current) {
+        lastRescheduledSessionCountRef.current = sessions.length;
+        void rescheduleAfterSession(sessions);
+      }
       dismissPanel();
       // Re-stagger mood rows on every focus
       moodAnims.forEach((anim) => {
@@ -127,20 +133,40 @@ export default function HomeScreen() {
           ]).start();
         }, 180 + i * 55);
       });
-    }, [dismissPanel, greetingAnim, moodAnims])
+    }, [dismissPanel, sessions, greetingAnim, moodAnims])
   );
 
-  const { moodIdentity, lastSession } = useMemo(() => {
-    const last = sessions.length > 0 ? sessions[sessions.length - 1] : null;
-    return {
-      moodIdentity: getMoodIdentity(sessions),
-      lastSession: last,
-    };
-  }, [sessions]);
+  useEffect(() => {
+    if (isLoading) return;
+    void getGuidedSessionDone().then((done) => {
+      if (!done && sessionCount === 0) {
+        router.replace('/guided');
+      }
+    });
+  }, [isLoading, sessionCount]);
 
-  const sessionCount = sessions.length;
+  useEffect(() => {
+    return () => {
+      if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+    };
+  }, []);
+
+  const { moodIdentity } = useMemo(() => ({
+    moodIdentity: getMoodIdentity(sessions),
+  }), [sessions]);
+
+  const drMoodRxLine = useMemo(
+    () => (selectedMood ? getDrMoodRxLine(selectedMood, intensity) : ''),
+    [selectedMood, intensity],
+  );
+
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
+
+  const handleDismissNavHint = useCallback(async () => {
+    setShowNavHint(false);
+    await setNavHintSeen();
+  }, []);
 
   const handleMoodSelect = useCallback((mood: MoodKey) => {
     setSelectedMood(mood);
@@ -169,6 +195,24 @@ export default function HomeScreen() {
       params: { mood: selectedMood, intensity: String(intensity) },
     });
   }, [selectedMood, intensity]);
+
+  const handleJustLogIt = useCallback(async () => {
+    if (!selectedMood) return;
+    const session = {
+      id: Date.now().toString(),
+      mood: selectedMood,
+      intensity,
+      postScore: intensity,
+      workoutName: 'Mood check-in',
+      duration: 0,
+      timestamp: Date.now(),
+      lightDay: true as const,
+    };
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await addSession(session);
+    await rescheduleAfterSession([...sessions, session]);
+    dismissPanel();
+  }, [selectedMood, intensity, addSession, sessions, dismissPanel]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -296,7 +340,7 @@ export default function HomeScreen() {
             {/* Dr. MoodRx says */}
             <View style={flattenStyle([styles.drBox, { borderLeftColor: accentColor }])}>
               <Text style={styles.drLabel}>DR. MOODRX SAYS</Text>
-              <Text style={styles.drText}>{MOODS[selectedMood].drMoodRx}</Text>
+              <Text style={styles.drText}>{drMoodRxLine}</Text>
             </View>
 
             {/* Intensity */}
@@ -307,19 +351,21 @@ export default function HomeScreen() {
                 <Text style={styles.intensityMax}>/10</Text>
               </View>
             </View>
-            <Slider
-              style={styles.slider}
-              minimumValue={1}
-              maximumValue={10}
-              step={1}
+            <IntensityPicker
               value={intensity}
-              onValueChange={setIntensity}
-              minimumTrackTintColor={accentColor}
-              maximumTrackTintColor="#1a1a1a"
-              thumbTintColor={accentColor}
-              accessibilityLabel={`Mood intensity: ${intensity} out of 10`}
-              accessibilityRole="adjustable"
+              onChange={setIntensity}
+              accentColor={accentColor}
             />
+
+            <TouchableOpacity
+              onPress={handleJustLogIt}
+              activeOpacity={0.7}
+              style={styles.justLogButton}
+              accessibilityRole="button"
+              accessibilityLabel="Log mood without a workout"
+            >
+              <Text style={styles.justLogButtonText}>JUST LOG IT — NO WORKOUT</Text>
+            </TouchableOpacity>
 
             {/* Prescribe button */}
             <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
@@ -341,9 +387,20 @@ export default function HomeScreen() {
         )}
       </Animated.View>
 
-      <BottomNav />
+      {showNavHint && (
+        <View style={styles.navHintPill}>
+          <Text style={styles.navHintText}>Insights · Settings live in the bar below</Text>
+          <TouchableOpacity
+            onPress={handleDismissNavHint}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss navigation hint"
+          >
+            <Text style={styles.navHintDismiss}>GOT IT</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-      {/* Streak toast — once per app launch, non-milestone streaks only */}
       {showGreeting && (
         <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }] }]}>
           <View style={styles.greetingContent}>
@@ -363,6 +420,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Animated.View>
       )}
+
+      <BottomNav />
     </Animated.View>
   );
 }
@@ -380,8 +439,108 @@ const styles = StyleSheet.create({
     paddingTop: 132,
     paddingBottom: 36,
   },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  tryProBadge: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  tryProBadgeText: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  proMemberBadge: {
+    borderWidth: 1,
+    borderColor: '#E8B84B',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  proMemberBadgeText: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  streakPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: '#111111',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+  streakPillLabel: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  streakPillText: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+    flex: 1,
+    fontSize: 13,
+  },
+  streakPillDismiss: {
+    ...t.label,
+    color: '#999999',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  checkInLabel: {
+    ...t.label,
+    color: '#ffffff',
+    fontSize: 15,
+    letterSpacing: 1,
+  },
+  topRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+  },
+  sessionCount: {
+    ...t.timestamp,
+    color: '#ffffff',
+    fontSize: 15,
+    letterSpacing: 1,
+  },
+  settingsText: {
+    ...t.timestamp,
+    color: '#ffffff',
+    fontSize: 15,
+    letterSpacing: 1,
+  },
+  streakBadge: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  streakBadgeText: {
+    ...t.number,
+    color: '#E8B84B',
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 1,
+  },
   headline: {
     ...t.headline,
+    marginTop: 36,
   },
   divider: {
     width: 32,
@@ -395,9 +554,37 @@ const styles = StyleSheet.create({
     color: '#d4d4d4',
     marginTop: 12,
   },
+  breatheLink: {
+    marginTop: 24,
+    alignItems: 'center',
+    paddingVertical: 14,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  breatheLinkText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    color: '#7EC8A0',
+    letterSpacing: 1,
+  },
+  safetyNetBtn: {
+    marginTop: 8,
+    marginBottom: 8,
+    alignItems: 'center',
+    paddingVertical: 14,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  safetyNetText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    color: '#ffffff',
+    opacity: 0.4,
+    letterSpacing: 0.5,
+  },
   carouselPlaceholder: {
-    marginTop: 20,
-    height: 226,
+    marginTop: 16,
+    height: 212,
   },
   skeletonWrapper: {
     flex: 1,
@@ -439,7 +626,121 @@ const styles = StyleSheet.create({
     backgroundColor: '#252525',
   },
   moodList: {
+    marginTop: 28,
+  },
+  badDayButton: {
     marginTop: 20,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#333333',
+    alignItems: 'center',
+  },
+  badDayText: {
+    ...t.label,
+    color: '#a3a3a3',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  sameDayCard: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+    borderLeftWidth: 3,
+    padding: 14,
+  },
+  sameDayLabel: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  sameDaySub: {
+    ...t.bodySm,
+    color: '#999999',
+    marginTop: 6,
+    fontSize: 14,
+  },
+  sameDayActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  sameDayBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 12,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  sameDayBtnText: {
+    ...t.label,
+    color: '#ffffff',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  sameDayBtnOutline: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 12,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  sameDayBtnOutlineText: {
+    ...t.label,
+    color: '#999999',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  justLogButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  justLogButtonText: {
+    ...t.label,
+    color: '#999999',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  navHintPill: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 96,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: '#111111',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  navHintText: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  navHintDismiss: {
+    ...t.label,
+    color: '#999999',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
   },
   moodRow: {
     flex: 1,
@@ -448,7 +749,7 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
-    minHeight: 83,
+    minHeight: 72,
   },
   moodRowSelected: {
     borderLeftWidth: 2,
@@ -457,7 +758,7 @@ const styles = StyleSheet.create({
   },
   moodTextBlock: {
     flex: 1,
-    marginLeft: 18,
+    marginLeft: 12,
   },
   moodName: {
     ...t.headlineSm,
@@ -559,10 +860,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginLeft: 3,
   },
-  slider: {
-    width: '100%',
-    height: 36,
-    marginTop: 2,
+  prescribeButton: {
+    borderWidth: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 16,
+    borderRadius: 0,
+  },
+  prescribeButtonText: {
+    ...t.timer,
+    fontSize: 15,
   },
   greetingToast: {
     position: 'absolute',
@@ -570,7 +877,6 @@ const styles = StyleSheet.create({
     left: 24,
     right: 24,
     backgroundColor: '#ffffff',
-    borderWidth: 0,
     paddingVertical: 18,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -598,20 +904,8 @@ const styles = StyleSheet.create({
   },
   greetingDismiss: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    lineHeight: 19,
-    color: '#555555',
-    marginLeft: 14,
-  },
-  prescribeButton: {
-    borderWidth: 1,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 16,
-    borderRadius: 0,
-  },
-  prescribeButtonText: {
-    ...t.timer,
-    fontSize: 15,
+    fontSize: 16,
+    color: '#111111',
+    marginLeft: 12,
   },
 });

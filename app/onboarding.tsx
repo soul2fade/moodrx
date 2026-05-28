@@ -40,7 +40,7 @@ const TRIAL_FEATURES = [
 export default function OnboardingScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const trialScale = useRef(new Animated.Value(1)).current;
-  const { startTrial, hasUsedTrial } = useSubscription();
+  const { purchaseYearly, hasUsedTrial } = useSubscription();
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -54,14 +54,14 @@ export default function OnboardingScreen() {
     Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
   const handleStartTrial = useCallback(async () => {
-    await startTrial();
+    await purchaseYearly();
     await setFirstLaunchDone();
-    router.replace('/home');
-  }, [startTrial]);
+    router.replace('/guided');
+  }, [purchaseYearly]);
 
   const handleFreeVersion = useCallback(async () => {
     await setFirstLaunchDone();
-    router.replace('/home');
+    router.replace('/guided');
   }, []);
 
   return (
@@ -96,9 +96,9 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        {/* Outcome proof — sample before/after */}
+        {/* Outcome proof — illustrative example, not aggregate stats */}
         <View style={styles.outcomeProof}>
-          <Text style={styles.outcomeProofLabel}>REAL RESULTS</Text>
+          <Text style={styles.outcomeProofLabel}>EXAMPLE SESSION</Text>
           <View style={styles.outcomeProofRow}>
             <View style={styles.outcomeBlock}>
               <Text style={styles.outcomeBlockCap}>BEFORE</Text>
@@ -116,7 +116,7 @@ export default function OnboardingScreen() {
             </View>
           </View>
           <Text style={styles.outcomeProofSub}>
-            Avg improvement: −2.8 pts per session
+            Your before/after scores build your personal evidence file.
           </Text>
         </View>
 

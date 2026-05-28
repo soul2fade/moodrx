@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,10 @@ import {
   ScrollView,
   StyleSheet,
   Linking,
-  Clipboard,
   Animated,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
@@ -31,6 +32,7 @@ const RESOURCES = [
 
 export default function CrisisScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
+  const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
 
   const backHandler = useCallback(() => {
     router.back();
@@ -38,12 +40,15 @@ export default function CrisisScreen() {
   }, []);
   useHardwareBack(backHandler);
 
-  const handleAction = (resource: typeof RESOURCES[number]) => {
+  const handleAction = async (resource: typeof RESOURCES[number]) => {
     if (resource.action === 'CALL') {
       Linking.openURL(`tel:${resource.number}`);
-    } else {
-      Clipboard.setString(resource.number);
+      return;
     }
+    await Clipboard.setStringAsync(resource.number);
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setCopiedNumber(resource.number);
+    setTimeout(() => setCopiedNumber(null), 2000);
   };
 
   return (
@@ -85,7 +90,9 @@ export default function CrisisScreen() {
               accessibilityRole="button"
               accessibilityLabel={`${resource.action} ${resource.number}`}
             >
-              <Text style={styles.actionBtnText}>{resource.action}</Text>
+              <Text style={styles.actionBtnText}>
+                {copiedNumber === resource.number ? 'COPIED ✓' : resource.action}
+              </Text>
             </TouchableOpacity>
           </View>
         ))}

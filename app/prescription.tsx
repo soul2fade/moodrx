@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,8 @@ import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useSessions } from '@/contexts/SessionsContext';
+import { getPrescriptionWorkouts, getWorkoutBadge } from '@/lib/workout-insights';
 import { PremiumSheet } from '@/components/PremiumSheet';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
@@ -37,6 +39,7 @@ export default function PrescriptionScreen() {
   const [selectedSupp, setSelectedSupp] = useState<Supplement | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const { isPremium } = useSubscription();
+  const { sessions } = useSessions();
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
@@ -55,7 +58,10 @@ export default function PrescriptionScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const preInsult = useRef(getInsult(mood, 'pre')).current;
-  const workouts = getWorkoutsForMood(mood);
+  const { ordered: workouts, alternateNote } = useMemo(
+    () => getPrescriptionWorkouts(getWorkoutsForMood(mood), sessions),
+    [mood, sessions],
+  );
   const supplements = getSupplementsForMood(mood);
 
   const handleWorkoutTap = (workout: Workout) => {
@@ -137,6 +143,13 @@ export default function PrescriptionScreen() {
       >
         {activeTab === 'workouts' && workouts.length > 0 && (
           <View>
+            {alternateNote && (
+              <View style={styles.alternateBanner}>
+                <Text style={styles.alternateBannerText}>
+                  {alternateNote.demotedName} didn&apos;t land twice. Try {alternateNote.suggestedName} first.
+                </Text>
+              </View>
+            )}
             {/* Hero workout — today's prescription */}
             <Text style={[styles.heroRxLabel, { color: accentColor }]}>TODAY&apos;S PRESCRIPTION</Text>
             <TouchableOpacity
@@ -159,6 +172,9 @@ export default function PrescriptionScreen() {
                 <Text style={flattenStyle([styles.workoutName, { flex: 1, fontSize: 20 }])}>{workouts[0].name}</Text>
                 <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
               </View>
+              {getWorkoutBadge(sessions, workouts[0]) && (
+                <Text style={styles.workoutBadge}>{getWorkoutBadge(sessions, workouts[0])}</Text>
+              )}
               <Text style={styles.workoutVibe}>{workouts[0].vibe}</Text>
               <View style={styles.scienceInline}>
                 <Text style={flattenStyle([styles.scienceInlineLabel, { color: accentColor }])}>THE SCIENCE</Text>
@@ -243,6 +259,9 @@ export default function PrescriptionScreen() {
                         <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
                         <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
                       </View>
+                      {getWorkoutBadge(sessions, workout) && (
+                        <Text style={styles.workoutBadgeMuted}>{getWorkoutBadge(sessions, workout)}</Text>
+                      )}
                       <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                     </TouchableOpacity>
                     </React.Fragment>
@@ -600,6 +619,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     letterSpacing: 0.5,
     marginTop: 6,
+  },
+  workoutBadge: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 1.5,
+    fontSize: 10,
+    marginTop: 6,
+  },
+  workoutBadgeMuted: {
+    ...t.label,
+    color: '#737373',
+    letterSpacing: 1.5,
+    fontSize: 10,
+    marginTop: 4,
+  },
+  alternateBanner: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: '#111111',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+  },
+  alternateBannerText: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+    lineHeight: 20,
   },
   scienceInline: {
     borderTopWidth: 1,

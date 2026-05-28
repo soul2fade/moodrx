@@ -55,3 +55,11 @@ export async function getTrialInfo(): Promise<TrialInfo> {
     return { isInTrial: false, daysLeft: 0, hasUsedTrial: false };
   }
 }
+
+export async function clearTrial(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(TRIAL_KEY);
+  } catch {
+    // ignore
+  }
+}

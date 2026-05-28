@@ -14,6 +14,7 @@ export interface Session {
   timestamp: number;
   rating?: 'yes' | 'somewhat' | 'no';
   note?: string;
+  lightDay?: boolean;
 }
 
 export interface SupplementLog {
@@ -34,6 +35,7 @@ export interface CustomWorkout {
 }
 
 const FIRST_LAUNCH_KEY = '@moodrx_first_launch_done';
+const GUIDED_SESSION_KEY = '@moodrx_guided_done';
 const SESSIONS_KEY = '@moodrx_sessions';
 const SUPPLEMENT_LOGS_KEY = 'supplement_logs';
 const CUSTOM_WORKOUTS_KEY = 'custom_workouts';
@@ -87,6 +89,23 @@ export async function setFirstLaunchDone(): Promise<void> {
     await AsyncStorage.setItem(FIRST_LAUNCH_KEY, 'true');
   } catch (e) {
     console.warn('[MoodRx] setFirstLaunchDone failed:', e);
+  }
+}
+
+export async function getGuidedSessionDone(): Promise<boolean> {
+  try {
+    const value = await AsyncStorage.getItem(GUIDED_SESSION_KEY);
+    return value === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setGuidedSessionDone(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(GUIDED_SESSION_KEY, 'true');
+  } catch {
+    // ignore
   }
 }
 
@@ -222,6 +241,18 @@ export async function deleteCustomWorkout(id: string): Promise<void> {
   }
 }
 
+export function hasSessionToday(sessions: Session[]): boolean {
+  const today = todayDateString();
+  return sessions.some((s) => toDateString(s.timestamp) === today);
+}
+
+export function getStreakEncouragement(streak: number): string | null {
+  if (streak === 1) return 'Day 1 in the books. Come back tomorrow.';
+  if (streak === 2) return "Two days straight. That's momentum.";
+  if (streak >= 3) return "You're on a roll. Don't blow it.";
+  return null;
+}
+
 export function getStreak(sessions: Session[]): number {
   if (sessions.length === 0) return 0;
 
@@ -296,6 +327,7 @@ export async function clearAllData(): Promise<void> {
       SUPPLEMENT_LOGS_KEY,
       CUSTOM_WORKOUTS_KEY,
       FIRST_LAUNCH_KEY,
+      GUIDED_SESSION_KEY,
       USER_PROFILE_KEY,
       STREAK_STATE_KEY,
       PERSONAL_BESTS_KEY,
@@ -360,7 +392,7 @@ export async function getStreakState(): Promise<StreakState> {
     return parsed;
   } catch (e) {
     console.warn('[MoodRx] getStreakState failed:', e);
-    return { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0 };
+    return { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0, seenMilestones: [] };
   }
 }
 

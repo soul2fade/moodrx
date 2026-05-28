@@ -144,10 +144,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         (p) => p.identifier === packageId
       );
 
-      // In dev/preview builds RC offerings won't load — mock the unlock directly
-      if (__DEV__ || Platform.OS === 'web') {
+      if (__DEV__) {
         pendingPurchaseRef.current = pkg ?? null;
         setConfirmVisible(true);
+        return;
+      }
+
+      if (Platform.OS === 'web') {
+        Alert.alert('Unavailable', 'Purchases are only available in the iOS and Android apps.');
         return;
       }
 
@@ -170,6 +174,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [triggerPurchase]);
 
   const devTogglePremium = useCallback(() => {
+    if (!__DEV__) return;
     setIsPaidPremium(prev => !prev);
   }, []);
 

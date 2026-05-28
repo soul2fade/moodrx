@@ -9,16 +9,14 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import {
-  getSessions,
-  clearSessions,
-  getStreak,
-  getAverageChange,
   Session,
 } from '@/lib/storage';
+import { getTopEffectiveCombinations } from '@/lib/workout-insights';
+import { useSessions } from '@/contexts/SessionsContext';
 import { MOODS } from '@/lib/moods';
 import { MoodIcon } from '@/components/MoodIcon';
 import { WorkoutCalendar } from '@/components/WorkoutCalendar';
@@ -41,8 +39,14 @@ const BAR_MAX_HEIGHT = 60;
 const BAR_WIDTH = 18;
 
 export default function InsightsScreen() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    sessions,
+    isLoading,
+    streak,
+    avgChange,
+    sessionCount,
+    clearSessions,
+  } = useSessions();
   const [showBurnConfirm, setShowBurnConfirm] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [caseSession, setCaseSession] = useState<Session | null>(null);
@@ -57,19 +61,10 @@ export default function InsightsScreen() {
   }, []);
   useHardwareBack(backHandler);
 
-  const loadSessions = useCallback(() => {
-    setIsLoading(true);
-    getSessions().then((data) => {
-      setSessions(data);
-      setIsLoading(false);
-    });
-  }, []);
-
-  useFocusEffect(loadSessions);
-
-  const streak = useMemo(() => getStreak(sessions), [sessions]);
-  const avgChange = useMemo(() => getAverageChange(sessions), [sessions]);
-  const sessionCount = sessions.length;
+  const effectiveCombos = useMemo(
+    () => getTopEffectiveCombinations(sessions),
+    [sessions],
+  );
 
   const last7 = useMemo(() => sessions.slice(-7), [sessions]);
   const recent10 = useMemo(() => [...sessions].reverse().slice(0, isPremium ? 10 : 3), [sessions, isPremium]);
@@ -100,7 +95,6 @@ export default function InsightsScreen() {
 
   const handleBurn = async () => {
     await clearSessions();
-    setSessions([]);
     setShowBurnConfirm(false);
   };
 
@@ -302,6 +296,18 @@ export default function InsightsScreen() {
           </View>
         )}
 
+        {/* What works for you */}
+        {effectiveCombos.length > 0 && (
+          <View style={styles.whatWorksSection}>
+            <Text style={styles.whatWorksLabel}>WHAT WORKS FOR YOU</Text>
+            {effectiveCombos.map((combo) => (
+              <Text key={`${combo.mood}:${combo.workoutName}`} style={styles.whatWorksItem}>
+                {combo.label}
+              </Text>
+            ))}
+          </View>
+        )}
+
         {/* Workout History */}
         {workoutStats.visible.length > 0 && (
           <View style={styles.workoutHistSection}>
@@ -364,6 +370,9 @@ export default function InsightsScreen() {
                     <Text style={styles.recentDate}>{dateStr}</Text>
                   </View>
                   <View style={styles.recentRight}>
+                    {session.lightDay && (
+                      <Text style={styles.recentLightBadge}>LIGHT</Text>
+                    )}
                     {session.rating === 'yes' && (
                       <Text style={styles.recentStar}>★</Text>
                     )}
@@ -893,6 +902,30 @@ const styles = StyleSheet.create({
   recentStar: {
     color: '#059669',
     fontSize: 14,
+  },
+  recentLightBadge: {
+    ...t.label,
+    color: '#737373',
+    fontSize: 9,
+    letterSpacing: 1.5,
+  },
+  whatWorksSection: {
+    marginTop: 32,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingTop: 20,
+  },
+  whatWorksLabel: {
+    ...t.label,
+    color: '#E8B84B',
+    letterSpacing: 3,
+    marginBottom: 12,
+  },
+  whatWorksItem: {
+    ...t.bodySm,
+    color: '#c8c8c8',
+    marginBottom: 8,
+    lineHeight: 20,
   },
   historyUpsellRow: {
     paddingVertical: 14,

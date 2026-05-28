@@ -114,12 +114,13 @@ const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
 
 
 export default function WorkoutScreen() {
-  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string }>();
+  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
     : (Object.keys(MOODS)[0] as MoodKey);
   const workoutId = params.workoutId ?? '';
   const intensity = params.intensity || '5';
+  const isGuided = params.guided === '1';
 
   const workout = workoutId ? getWorkoutById(workoutId) : getWorkoutsForMood(mood)[0];
   const resolvedWorkout = workout ?? getWorkoutsForMood(mood)[0];
@@ -139,6 +140,7 @@ export default function WorkoutScreen() {
   const [showTrashWarning, setShowTrashWarning] = useState(false);
   const warningAnim = useRef(new Animated.Value(0)).current;
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trashTalkArmRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restProgressAnim = useRef(new Animated.Value(1)).current;
   const restTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeProgressAnim = useRef(new Animated.Value(1)).current;
@@ -191,6 +193,8 @@ export default function WorkoutScreen() {
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
       if (restTimerRef.current) clearInterval(restTimerRef.current);
       if (activeTimerRef.current) clearInterval(activeTimerRef.current);
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
       deactivateKeepAwake();
     };
   }, []);
@@ -310,7 +314,10 @@ export default function WorkoutScreen() {
       isNavigating.current = true;
       stopAll();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.push({ pathname: '/post-workout', params: { mood, workoutId, intensity, reps: String(repCount) } });
+      router.push({
+        pathname: '/post-workout',
+        params: { mood, workoutId, intensity, reps: String(repCount), ...(isGuided ? { guided: '1' } : {}) },
+      });
     }
   };
 
@@ -326,6 +333,10 @@ export default function WorkoutScreen() {
 
   const dismissTrashWarning = () => {
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+    if (trashTalkArmRef.current) {
+      clearTimeout(trashTalkArmRef.current);
+      trashTalkArmRef.current = null;
+    }
     Animated.timing(warningAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
       setShowTrashWarning(false);
     });
@@ -338,8 +349,16 @@ export default function WorkoutScreen() {
       warningAnim.setValue(0);
       Animated.timing(warningAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
       warningTimerRef.current = setTimeout(dismissTrashWarning, 2500);
-      setTimeout(() => setTrashTalkOn(true), 2700);
+      if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
+      trashTalkArmRef.current = setTimeout(() => {
+        trashTalkArmRef.current = null;
+        setTrashTalkOn(true);
+      }, 2700);
     } else {
+      if (trashTalkArmRef.current) {
+        clearTimeout(trashTalkArmRef.current);
+        trashTalkArmRef.current = null;
+      }
       setTrashTalkOn(false);
     }
   };

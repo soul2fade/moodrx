@@ -18,10 +18,12 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { addSession, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { useSessions } from '@/contexts/SessionsContext';
+import { SessionWinCard } from '@/components/SessionWinCard';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { MOODS } from '@/lib/moods';
-import { getWorkoutById } from '@/lib/workouts';
+import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
 import { NotificationPrompt } from '@/components/NotificationPrompt';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
@@ -44,15 +46,19 @@ function getScoreContext(score: number, lowerIsBetter: boolean): string {
 }
 
 export default function PostWorkoutScreen() {
-  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string }>();
+  const { addSession: addSessionToContext, sessionCount: cachedSessionCount } = useSessions();
+  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
     : (Object.keys(MOODS)[0] as MoodKey);
-  const workoutId = params.workoutId || '';
+  const workoutId = params.workoutId || getWorkoutsForMood(mood)[0]?.id || '';
   const intensity = parseInt(params.intensity || '5', 10);
   const sessionReps = parseInt(params.reps || '0', 10);
+  const isGuided = params.guided === '1';
 
   const [postScore, setPostScore] = useState(5);
+  const [rating, setRating] = useState<'yes' | 'somewhat' | 'no' | null>(null);
+  const [showWinCard, setShowWinCard] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -63,7 +69,7 @@ export default function PostWorkoutScreen() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [previousBest, setPreviousBest] = useState<PersonalBest | null>(null);
   const [note, setNote] = useState('');
-  const workout = getWorkoutById(workoutId);
+  const workout = getWorkoutById(workoutId) ?? getWorkoutsForMood(mood)[0];
 
   useEffect(() => {
     Promise.all([getSessions(), getUserProfile(), getPersonalBest(workoutId)]).then(([sessions, profile, pb]) => {
@@ -112,9 +118,20 @@ export default function PostWorkoutScreen() {
 
   // Prevent Android back button from going back to workout mid-flow
   const backHandler = useCallback(() => {
+    if (note.trim()) {
+      Alert.alert(
+        'Discard note?',
+        'Your field note will be lost if you leave without logging.',
+        [
+          { text: 'Stay', style: 'cancel' },
+          { text: 'Leave', style: 'destructive', onPress: () => router.replace('/home') },
+        ],
+      );
+      return true;
+    }
     router.replace('/home');
     return true;
-  }, []);
+  }, [note]);
   useHardwareBack(backHandler);
 
   const handleLog = async () => {
@@ -122,7 +139,7 @@ export default function PostWorkoutScreen() {
     setIsSubmitting(true);
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await addSession({
+      await addSessionToContext({
         id: Date.now().toString(),
         mood,
         intensity,
@@ -132,19 +149,42 @@ export default function PostWorkoutScreen() {
         duration: workout?.duration ?? 0,
         timestamp: Date.now(),
         note: note.trim() || undefined,
+        rating: rating ?? undefined,
       });
       getSessions().then((updated) => rescheduleAfterSession(updated)).catch(() => {});
-      const promptShown = await getNotifPromptShown();
-      if (!promptShown) {
-        setShowNotifPrompt(true);
-      } else {
-        router.replace('/home');
-      }
+      setShowWinCard(true);
     } catch {
       setIsSubmitting(false);
       Alert.alert('Save failed', 'Your session could not be saved. Please try again.');
     }
   };
+
+  const finishFlow = useCallback(async () => {
+    if (isGuided) {
+      await setGuidedSessionDone();
+    }
+    const promptShown = await getNotifPromptShown();
+    if (!promptShown) {
+      setShowNotifPrompt(true);
+    } else {
+      router.replace('/home');
+    }
+  }, [isGuided]);
+
+  const handleViewEvidence = async () => {
+    setShowWinCard(false);
+    if (isGuided) {
+      await setGuidedSessionDone();
+    }
+    router.replace('/insights');
+  };
+
+  const handleWinDone = async () => {
+    setShowWinCard(false);
+    await finishFlow();
+  };
+
+  const isFirstSession = isGuided || cachedSessionCount === 0;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -305,6 +345,31 @@ export default function PostWorkoutScreen() {
           </View>
         )}
 
+        <View style={styles.ratingSection}>
+          <Text style={styles.ratingPrompt}>DID THIS ACTUALLY HELP?</Text>
+          <View style={styles.ratingButtons}>
+            {(['yes', 'somewhat', 'no'] as const).map((r) => {
+              const label = r === 'yes' ? 'YES' : r === 'somewhat' ? 'SOMEWHAT' : 'NOT REALLY';
+              const isSelected = rating === r;
+              return (
+                <TouchableOpacity
+                  key={r}
+                  onPress={() => setRating(r)}
+                  activeOpacity={0.7}
+                  style={[styles.ratingBtn, isSelected && { borderColor: accentColor }]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={label}
+                >
+                  <Text style={[styles.ratingBtnText, isSelected && { color: accentColor }]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* Field note */}
         <View style={styles.noteSection}>
           <View style={styles.noteHeader}>
@@ -370,6 +435,16 @@ export default function PostWorkoutScreen() {
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
+      <SessionWinCard
+        visible={showWinCard}
+        mood={mood}
+        intensity={intensity}
+        postScore={postScore}
+        workoutName={workout?.name ?? 'Workout'}
+        isFirstSession={isFirstSession}
+        onViewEvidence={handleViewEvidence}
+        onDone={handleWinDone}
+      />
       <NotificationPrompt
         visible={showNotifPrompt}
         onClose={() => {

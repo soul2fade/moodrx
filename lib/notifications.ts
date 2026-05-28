@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import type { Session, MoodKey } from './storage';
-import { getSessions } from './storage';
+import { getSessions, getStreak } from './storage';
 import { getSupplementsForMood } from './supplements';
 
 export const NOTIFICATIONS_ENABLED_KEY = 'notifications_enabled';
@@ -44,17 +44,24 @@ const ZERO_STREAK_MESSAGES = [
   "The data doesn't care how you feel. Neither do I. Check in.",
 ];
 
-const STREAK_MESSAGES: Array<{ minStreak: number; body: string }> = [
-  { minStreak: 30, body: "Day {n}. The app can barely keep up with you." },
-  { minStreak: 14, body: "Day {n}. This is becoming who you are." },
-  { minStreak: 7,  body: "Day {n}. Still here. Good." },
-  { minStreak: 6,  body: "One week straight. That's not luck. That's discipline." },
-  { minStreak: 4,  body: "{n} days in a row. You're not most people." },
-  { minStreak: 3,  body: "{n}-day streak. Keep the momentum going." },
-  { minStreak: 2,  body: "Three days straight. Don't blow it now." },
-  { minStreak: 1,  body: "Two days in. Day two is where most people quit." },
-  { minStreak: 0,  body: "Day one's done. Day two is where most people quit." },
+const STREAK_MESSAGES: { minStreak: number; body: string }[] = [
+  { minStreak: 30, body: 'Day {n}. The app can barely keep up with you.' },
+  { minStreak: 14, body: 'Day {n}. This is becoming who you are.' },
+  { minStreak: 7, body: 'Day {n}. Still here. Good.' },
+  { minStreak: 6, body: 'One week straight. That\'s not luck. That\'s discipline.' },
+  { minStreak: 4, body: '{n} days in a row. You\'re not most people.' },
+  { minStreak: 3, body: '{n}-day streak. Keep the momentum going.' },
+  { minStreak: 2, body: 'Two days straight. Don\'t blow it now.' },
+  { minStreak: 1, body: 'Day one\'s done. Day two is where most people quit.' },
 ];
+
+function getStreakMessage(streak: number): string {
+  if (streak <= 0) {
+    return ZERO_STREAK_MESSAGES[Math.floor(Math.random() * ZERO_STREAK_MESSAGES.length)];
+  }
+  const entry = STREAK_MESSAGES.find((m) => streak >= m.minStreak) ?? STREAK_MESSAGES[STREAK_MESSAGES.length - 1];
+  return entry.body.replace('{n}', String(streak));
+}
 
 const SUPPLEMENT_REMINDER_MESSAGES = [
   "Time for your morning stack. Don't skip it.",
@@ -83,18 +90,6 @@ function buildSupplementMessage(sessions: Session[]): string {
     return `Time for your ${moodName} stack — ${supplements[0].name} is up first.`;
   }
   return `Time for your ${moodName} stack. Take your supplements.`;
-}
-
-function getStreak(sessions: Session[]): number {
-  if (sessions.length === 0) return 0;
-  const dates = new Set(sessions.map(s => new Date(s.timestamp).toDateString()));
-  let streak = 0;
-  const d = new Date();
-  while (dates.has(d.toDateString())) {
-    streak++;
-    d.setDate(d.getDate() - 1);
-  }
-  return streak;
 }
 
 function buildContextualMessage(sessions: Session[]): string {
@@ -129,8 +124,7 @@ function buildContextualMessage(sessions: Session[]): string {
   if (streak === 0) {
     return ZERO_STREAK_MESSAGES[Math.floor(Math.random() * ZERO_STREAK_MESSAGES.length)];
   }
-  const entry = STREAK_MESSAGES.find(m => streak >= m.minStreak) ?? STREAK_MESSAGES[STREAK_MESSAGES.length - 1];
-  return entry.body.replace('{n}', String(streak));
+  return getStreakMessage(streak);
 }
 
 function inferPreferredHour(sessions: Session[]): number {
@@ -161,8 +155,7 @@ export async function scheduleSmartReminder(hour: number, minute: number, streak
     const id = await Notifications.scheduleNotificationAsync({
       content: {
         title: 'MoodRx',
-        body: STREAK_MESSAGES.find(m => streak >= m.minStreak)?.body.replace('{n}', String(streak))
-          ?? ZERO_STREAK_MESSAGES[0],
+        body: getStreakMessage(streak),
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,

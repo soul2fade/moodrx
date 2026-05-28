@@ -14,6 +14,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
 import { clearAllData, getUserProfile, setUserProfile, UserProfile } from '@/lib/storage';
+import { clearTrial } from '@/lib/subscription';
+import { useSessions } from '@/contexts/SessionsContext';
 import {
   PRESET_TIMES,
   NOTIFICATIONS_ENABLED_KEY,
@@ -36,6 +38,7 @@ export default function SettingsScreen() {
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
   const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium } = useSubscription();
+  const { clearSessions } = useSessions();
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleAnim = useRef(new Animated.Value(0)).current;
@@ -106,8 +109,7 @@ export default function SettingsScreen() {
   };
 
   const scheduleNotification = async (timeLabel: string) => {
-    const preset = PRESET_TIMES.find((p) => p.label === timeLabel);
-    if (!preset) return;
+    const preset = PRESET_TIMES.find((p) => p.label === timeLabel) ?? PRESET_TIMES[0];
     await scheduleSmartReminder(preset.hour, preset.minute, 0);
   };
 
@@ -121,6 +123,8 @@ export default function SettingsScreen() {
 
   const handleDeleteAll = async () => {
     await clearAllData();
+    await clearTrial();
+    await clearSessions();
     setShowDeleteConfirm(false);
     router.replace('/onboarding');
   };
@@ -318,6 +322,7 @@ export default function SettingsScreen() {
         <TouchableOpacity
           activeOpacity={1}
           onPress={() => {
+            if (!__DEV__) return;
             versionTapCount.current += 1;
             if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
             if (versionTapCount.current >= 5) {

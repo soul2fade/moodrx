@@ -12,7 +12,9 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { getSessions, getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, getHomeHintSeen, setHomeHintSeen, getLastCarouselPage, setLastCarouselPage, UserProfile, Session, StreakState } from '@/lib/storage';
+import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, getHomeHintSeen, setHomeHintSeen, getLastCarouselPage, setLastCarouselPage, getGuidedSessionDone, hasSessionToday, UserProfile, StreakState } from '@/lib/storage';
+import { rescheduleAfterSession } from '@/lib/notifications';
+import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
 import { todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
@@ -32,8 +34,7 @@ const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
 let greetingShownThisSession = false;
 
 export default function HomeScreen() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { sessions, isLoading, streak, sessionCount, lastSession } = useSessions();
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
@@ -64,16 +65,17 @@ export default function HomeScreen() {
     MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
   ).current;
 
+  const dismissPanel = useCallback(() => {
+    dismissPanelAnim(() => setSelectedMood(null));
+  }, [dismissPanelAnim]);
+
   useFocusEffect(
     useCallback(() => {
-      setIsLoading(true);
       getHomeHintSeen().then(seen => { if (!seen) setShowHint(true); });
-      Promise.all([getSessions(), getUserProfile(), getStreakState()]).then(([data, profile, state]) => {
-        setSessions(data);
+      Promise.all([getUserProfile(), getStreakState()]).then(([profile, state]) => {
         setUserProfile(profile);
         setCarouselPage(0);
-        setIsLoading(false);
-        const currentStreak = getStreak(data);
+        const currentStreak = getStreak(sessions);
         const today = todayDateString();
         let updated = { ...state };
         if (currentStreak > state.hwm) {
@@ -110,6 +112,7 @@ export default function HomeScreen() {
           }, 3500);
         }
       });
+      void rescheduleAfterSession(sessions);
       dismissPanel();
       // Re-stagger mood rows on every focus
       moodAnims.forEach((anim) => {
@@ -124,30 +127,39 @@ export default function HomeScreen() {
           ]).start();
         }, 180 + i * 55);
       });
-    }, [])
+    }, [dismissPanel, sessions])
   );
 
-  const { streak, moodIdentity, lastSession, daysSinceLastSession } = useMemo(() => {
-    const last = sessions.length > 0 ? sessions[sessions.length - 1] : null;
+  useEffect(() => {
+    if (isLoading) return;
+    void getGuidedSessionDone().then((done) => {
+      if (!done && sessionCount === 0) {
+        router.replace('/guided');
+      }
+    });
+  }, [isLoading, sessionCount]);
+
+  useEffect(() => {
+    return () => {
+      if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+    };
+  }, []);
+
+  const { moodIdentity, daysSinceLastSession } = useMemo(() => {
+    const last = lastSession;
     return {
-      streak: getStreak(sessions),
       moodIdentity: getMoodIdentity(sessions),
-      lastSession: last,
       daysSinceLastSession: last
         ? Math.floor((Date.now() - last.timestamp) / (24 * 60 * 60 * 1000))
         : null,
     };
-  }, [sessions]);
+  }, [sessions, lastSession]);
 
-  const sessionCount = sessions.length;
+  const checkedInToday = hasSessionToday(sessions);
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
   const showWelcomeBack = !isLoading && !showStillFeeling && !selectedMood && lastSession !== null && daysSinceLastSession !== null && daysSinceLastSession >= 1;
   const { isPremium } = useSubscription();
-
-  const dismissPanel = useCallback(() => {
-    dismissPanelAnim(() => setSelectedMood(null));
-  }, [dismissPanelAnim]);
 
   const handleMoodSelect = useCallback((mood: MoodKey) => {
     setSelectedMood(mood);
@@ -183,6 +195,16 @@ export default function HomeScreen() {
     setStreakState(updated);
     await saveStreakState(updated);
   }, [streakState]);
+
+  const handleBadDay = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({
+      pathname: '/bad-day',
+      params: lastSession
+        ? { mood: lastSession.mood, intensity: String(lastSession.intensity) }
+        : {},
+    });
+  }, [lastSession]);
 
   const handlePrescribe = useCallback(() => {
     if (!selectedMood) return;
@@ -301,6 +323,18 @@ export default function HomeScreen() {
             );
           })}
         </View>
+
+        {!isLoading && !selectedMood && !checkedInToday && (
+          <TouchableOpacity
+            style={styles.badDayButton}
+            onPress={handleBadDay}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Bad day minimum workout, two minutes"
+          >
+            <Text style={styles.badDayText}>I CAN&apos;T TODAY — 2 MIN MINIMUM →</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Breathe tool link */}
         <TouchableOpacity
@@ -576,6 +610,19 @@ const styles = StyleSheet.create({
   },
   moodList: {
     marginTop: 28,
+  },
+  badDayButton: {
+    marginTop: 20,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#333333',
+    alignItems: 'center',
+  },
+  badDayText: {
+    ...t.label,
+    color: '#a3a3a3',
+    letterSpacing: 1.5,
+    fontSize: 10,
   },
   moodRow: {
     flex: 1,

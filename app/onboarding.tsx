@@ -56,12 +56,12 @@ export default function OnboardingScreen() {
   const handleStartTrial = useCallback(async () => {
     await startTrial();
     await setFirstLaunchDone();
-    router.replace('/home');
+    router.replace('/guided');
   }, [startTrial]);
 
   const handleFreeVersion = useCallback(async () => {
     await setFirstLaunchDone();
-    router.replace('/home');
+    router.replace('/guided');
   }, []);
 
   return (

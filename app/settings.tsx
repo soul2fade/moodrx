@@ -33,8 +33,10 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { BottomNav } from '@/components/BottomNav';
 import {
+  getHealthPlatformLabel,
   getHealthSyncEnabled,
-  isHealthKitAvailable,
+  isHealthBackendReady,
+  isHealthSyncAvailable,
   requestHealthPermissions,
   setHealthSyncEnabled,
 } from '@/lib/health';
@@ -55,6 +57,7 @@ export default function SettingsScreen() {
   const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
   const [voiceEnabled, setVoiceEnabledState] = useState(true);
   const [healthAvailable, setHealthAvailable] = useState(false);
+  const [healthPlatformLabel, setHealthPlatformLabel] = useState('Health');
   const [healthEnabled, setHealthEnabledState] = useState(false);
   const voiceToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
@@ -89,8 +92,11 @@ export default function SettingsScreen() {
       setVoiceEnabledState(voiceOn);
       voiceToggleAnim.setValue(voiceOn ? 1 : 0);
     });
-    if (Platform.OS === 'ios') {
-      setHealthAvailable(isHealthKitAvailable());
+    if (isHealthSyncAvailable()) {
+      void isHealthBackendReady().then((ready) => {
+        setHealthAvailable(ready);
+        if (ready) setHealthPlatformLabel(getHealthPlatformLabel());
+      });
       getHealthSyncEnabled().then((on) => {
         setHealthEnabledState(on);
         healthToggleAnim.setValue(on ? 1 : 0);
@@ -120,7 +126,12 @@ export default function SettingsScreen() {
       setHealthEnabledState(granted);
       healthToggleAnim.setValue(granted ? 1 : 0);
       if (!granted) {
-        Alert.alert('Health access needed', 'Enable MoodRx in Settings → Health to sync workouts and read steps/sleep.');
+        Alert.alert(
+          'Health access needed',
+          Platform.OS === 'android'
+            ? 'Install or update Health Connect, then allow MoodRx to read steps/sleep and write workouts.'
+            : 'Enable MoodRx in Settings → Health to sync workouts and read steps/sleep.',
+        );
       }
       return;
     }
@@ -393,21 +404,23 @@ export default function SettingsScreen() {
           />
         </View>
 
-        {Platform.OS === 'ios' && healthAvailable && (
+        {healthAvailable && (
           <>
-            <Text style={styles.sectionHeader}>APPLE HEALTH</Text>
+            <Text style={styles.sectionHeader}>{healthPlatformLabel.toUpperCase()}</Text>
             <Text style={styles.prefHint}>
-              Saves workouts and breathing sessions. Reads steps and sleep for Insights. Requires a device rebuild with HealthKit enabled.
+              {Platform.OS === 'android'
+                ? 'Saves workouts and breathing sessions. Reads steps and sleep for Insights. Requires Health Connect and a native Android build.'
+                : 'Saves workouts and breathing sessions. Reads steps and sleep for Insights. Requires a device rebuild with HealthKit enabled.'}
             </Text>
             <View style={styles.toggleRow}>
-              <Text style={styles.toggleLabel}>Sync with Apple Health</Text>
+              <Text style={styles.toggleLabel}>Sync with {healthPlatformLabel}</Text>
               <TouchableOpacity
                 onPress={handleHealthToggle}
                 activeOpacity={0.8}
                 style={[styles.toggle, healthEnabled ? styles.toggleOn : styles.toggleOff]}
                 accessibilityRole="switch"
                 accessibilityState={{ checked: healthEnabled }}
-                accessibilityLabel="Apple Health sync"
+                accessibilityLabel={`${healthPlatformLabel} sync`}
               >
                 <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: healthTranslateX }] }]} />
               </TouchableOpacity>

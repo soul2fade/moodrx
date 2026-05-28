@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
-  Platform,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import ViewShot from 'react-native-view-shot';
@@ -33,7 +32,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { BottomNav } from '@/components/BottomNav';
-import { getHealthSnapshot, type HealthSnapshot } from '@/lib/health';
+import { getHealthPlatformLabel, getHealthSnapshot, isHealthSyncAvailable, type HealthSnapshot } from '@/lib/health';
 
 const CASE_PANEL_HEIGHT = Math.min(Dimensions.get('window').height * 0.52, Dimensions.get('window').height - 200);
 
@@ -66,7 +65,7 @@ export default function InsightsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (Platform.OS !== 'ios') return;
+      if (!isHealthSyncAvailable()) return;
       getHealthSnapshot().then(setHealthSnapshot).catch(() => {});
     }, []),
   );
@@ -197,7 +196,9 @@ export default function InsightsScreen() {
 
         {healthSnapshot?.connected && (healthSnapshot.stepsToday !== null || healthSnapshot.sleepHoursLastNight !== null) && (
           <View style={styles.healthCard}>
-            <Text style={styles.healthCardLabel}>APPLE HEALTH</Text>
+            <Text style={styles.healthCardLabel}>
+              {(healthSnapshot.platform ? getHealthPlatformLabel(healthSnapshot.platform) : 'HEALTH').toUpperCase()}
+            </Text>
             <View style={styles.healthRow}>
               {healthSnapshot.stepsToday !== null && (
                 <View style={styles.healthStat}>

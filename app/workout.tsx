@@ -74,6 +74,7 @@ const INSULT_AUDIO = [
 ];
 
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
+type StepTimerKind = 'rest' | 'active';
 
 const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
   { key: 'rain',   label: 'RAIN',    src: require('../assets/audio/rain.mp3') },
@@ -105,8 +106,10 @@ export default function WorkoutScreen() {
   const [keepAwake, setKeepAwake] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
   const [transitionAudioSrc, setTransitionAudioSrc] = useState<any>(null);
-  const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
-  const [activeSecondsLeft, setActiveSecondsLeft] = useState<number | null>(null);
+  const [stepTimerKind, setStepTimerKind] = useState<StepTimerKind | null>(null);
+  const [stepTimerTotal, setStepTimerTotal] = useState(0);
+  const [stepTimerRemaining, setStepTimerRemaining] = useState(0);
+  const [stepTimerRunning, setStepTimerRunning] = useState(false);
   const [showTrashWarning, setShowTrashWarning] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
@@ -114,9 +117,9 @@ export default function WorkoutScreen() {
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trashTalkArmRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restProgressAnim = useRef(new Animated.Value(1)).current;
-  const restTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeProgressAnim = useRef(new Animated.Value(1)).current;
-  const activeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stepTimerRemainingRef = useRef(0);
   const insultIdxRef = useRef(0);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNavigating = useRef(false);
@@ -203,8 +206,7 @@ export default function WorkoutScreen() {
       try { insultPlayer.remove(); } catch {}
       try { transitionPlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
-      if (restTimerRef.current) clearInterval(restTimerRef.current);
-      if (activeTimerRef.current) clearInterval(activeTimerRef.current);
+      if (stepTimerRef.current) clearInterval(stepTimerRef.current);
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
       deactivateKeepAwake();
@@ -218,54 +220,117 @@ export default function WorkoutScreen() {
     });
   }, [resolvedWorkout?.id]);
 
-  useEffect(() => {
-    if (restTimerRef.current) { clearInterval(restTimerRef.current); restTimerRef.current = null; }
-    restProgressAnim.stopAnimation();
-    if (!resolvedWorkout) return;
-    const secs = parseRestSeconds(resolvedWorkout.steps[currentStep] ?? '');
-    if (!secs) { setRestSecondsLeft(null); return; }
-    setRestSecondsLeft(secs);
-    restProgressAnim.setValue(1);
-    Animated.timing(restProgressAnim, { toValue: 0, duration: secs * 1000, useNativeDriver: false }).start();
-    restTimerRef.current = setInterval(() => {
-      setRestSecondsLeft(prev => {
-        if (prev === null || prev <= 1) {
-          clearInterval(restTimerRef.current!);
-          restTimerRef.current = null;
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, true));
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => { if (restTimerRef.current) clearInterval(restTimerRef.current); };
-  }, [currentStep]);
+  const clearStepTimerInterval = useCallback(() => {
+    if (stepTimerRef.current) {
+      clearInterval(stepTimerRef.current);
+      stepTimerRef.current = null;
+    }
+  }, []);
 
-  // Active step timer — fires for timed non-rest steps
-  useEffect(() => {
-    if (activeTimerRef.current) { clearInterval(activeTimerRef.current); activeTimerRef.current = null; }
+  const stopStepTimerProgress = useCallback(() => {
+    restProgressAnim.stopAnimation();
     activeProgressAnim.stopAnimation();
-    if (!resolvedWorkout) return;
-    const secs = parseActiveSeconds(resolvedWorkout.steps[currentStep] ?? '');
-    if (!secs) { setActiveSecondsLeft(null); return; }
-    setActiveSecondsLeft(secs);
+  }, [restProgressAnim, activeProgressAnim]);
+
+  useEffect(() => {
+    stepTimerRemainingRef.current = stepTimerRemaining;
+  }, [stepTimerRemaining]);
+
+  // Initialize timer for timed steps — does not auto-start
+  useEffect(() => {
+    setStepTimerRunning(false);
+    clearStepTimerInterval();
+    stopStepTimerProgress();
+    if (!resolvedWorkout) {
+      setStepTimerKind(null);
+      return;
+    }
+    const text = resolvedWorkout.steps[currentStep] ?? '';
+    const restSecs = parseRestSeconds(text);
+    const activeSecs = parseActiveSeconds(text);
+    restProgressAnim.setValue(1);
     activeProgressAnim.setValue(1);
-    Animated.timing(activeProgressAnim, { toValue: 0, duration: secs * 1000, useNativeDriver: false }).start();
-    activeTimerRef.current = setInterval(() => {
-      setActiveSecondsLeft(prev => {
-        if (prev === null || prev <= 1) {
-          clearInterval(activeTimerRef.current!);
-          activeTimerRef.current = null;
+    if (restSecs) {
+      setStepTimerKind('rest');
+      setStepTimerTotal(restSecs);
+      setStepTimerRemaining(restSecs);
+      stepTimerRemainingRef.current = restSecs;
+    } else if (activeSecs) {
+      setStepTimerKind('active');
+      setStepTimerTotal(activeSecs);
+      setStepTimerRemaining(activeSecs);
+      stepTimerRemainingRef.current = activeSecs;
+    } else {
+      setStepTimerKind(null);
+    }
+  }, [currentStep, resolvedWorkout, clearStepTimerInterval, stopStepTimerProgress, restProgressAnim, activeProgressAnim]);
+
+  useEffect(() => {
+    if (!stepTimerRunning || stepTimerKind === null) {
+      clearStepTimerInterval();
+      return;
+    }
+
+    stepTimerRef.current = setInterval(() => {
+      setStepTimerRemaining((prev) => {
+        if (prev <= 1) {
+          clearStepTimerInterval();
+          setStepTimerRunning(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, false));
+          setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, stepTimerKind === 'rest'));
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-    return () => { if (activeTimerRef.current) clearInterval(activeTimerRef.current); };
-  }, [currentStep]);
+
+    return clearStepTimerInterval;
+  }, [stepTimerRunning, stepTimerKind, currentStep, clearStepTimerInterval]);
+
+  useEffect(() => {
+    if (!stepTimerRunning || stepTimerKind === null) return;
+    const remaining = stepTimerRemainingRef.current;
+    if (remaining <= 0 || stepTimerTotal <= 0) return;
+    const anim = stepTimerKind === 'rest' ? restProgressAnim : activeProgressAnim;
+    anim.stopAnimation();
+    anim.setValue(remaining / stepTimerTotal);
+    Animated.timing(anim, {
+      toValue: 0,
+      duration: remaining * 1000,
+      useNativeDriver: false,
+    }).start();
+  }, [stepTimerRunning, stepTimerKind, stepTimerTotal, restProgressAnim, activeProgressAnim]);
+
+  const handleTimerStart = useCallback(() => {
+    if (stepTimerKind === null) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (stepTimerRemaining <= 0) {
+      setStepTimerRemaining(stepTimerTotal);
+      stepTimerRemainingRef.current = stepTimerTotal;
+      const anim = stepTimerKind === 'rest' ? restProgressAnim : activeProgressAnim;
+      anim.setValue(1);
+    }
+    setStepTimerRunning(true);
+  }, [stepTimerKind, stepTimerRemaining, stepTimerTotal, restProgressAnim, activeProgressAnim]);
+
+  const handleTimerStop = useCallback(() => {
+    if (!stepTimerRunning) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStepTimerRunning(false);
+    clearStepTimerInterval();
+    stopStepTimerProgress();
+  }, [stepTimerRunning, clearStepTimerInterval, stopStepTimerProgress]);
+
+  const handleTimerReset = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStepTimerRunning(false);
+    clearStepTimerInterval();
+    stopStepTimerProgress();
+    setStepTimerRemaining(stepTimerTotal);
+    stepTimerRemainingRef.current = stepTimerTotal;
+    restProgressAnim.setValue(1);
+    activeProgressAnim.setValue(1);
+  }, [stepTimerTotal, clearStepTimerInterval, stopStepTimerProgress, restProgressAnim, activeProgressAnim]);
 
   useEffect(() => {
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
@@ -510,48 +575,79 @@ export default function WorkoutScreen() {
         )}
 
         {/* Step text box / Rest timer */}
-        {restSecondsLeft !== null ? (
+        {stepTimerKind === 'rest' ? (
           <View style={styles.restBox}>
             <Text style={styles.restLabel} allowFontScaling={false}>REST</Text>
-            <Text style={[styles.restCountdown, { color: accentColor }]} allowFontScaling={false}>
-              {Math.floor(restSecondsLeft / 60)}:{String(restSecondsLeft % 60).padStart(2, '0')}
+            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? '#525252' : accentColor }]} allowFontScaling={false}>
+              {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
             </Text>
             <View style={styles.restProgressBg}>
               <Animated.View style={[styles.restProgressFill, {
                 width: restProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                backgroundColor: restSecondsLeft === 0 ? '#525252' : accentColor,
+                backgroundColor: stepTimerRemaining === 0 ? '#525252' : accentColor,
               }]} />
             </View>
             <Text style={styles.restSubtext} allowFontScaling={false}>
-              {restSecondsLeft === 0 ? 'get ready.' : 'breathe.'}
+              {stepTimerRemaining === 0 ? 'get ready.' : stepTimerRunning ? 'breathe.' : 'tap start when ready.'}
             </Text>
+            <View style={styles.timerControlsRow}>
+              {stepTimerRunning ? (
+                <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Stop timer">
+                  <Text style={[styles.timerControlBtnText, { color: accentColor }]}>STOP</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Start timer">
+                  <Text style={[styles.timerControlBtnText, { color: accentColor }]}>START</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={handleTimerReset} activeOpacity={0.7} style={styles.timerControlBtn} accessibilityRole="button" accessibilityLabel="Reset timer">
+                <Text style={styles.timerControlBtnText}>RESET</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <View style={styles.stepBox}>
             <Text style={styles.stepText} accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}: ${resolvedWorkout.steps[currentStep]}`}>
               {resolvedWorkout.steps[currentStep]}
             </Text>
-            {activeSecondsLeft !== null && (
+            {stepTimerKind === 'active' && (
               <View style={styles.activeTimerBox}>
-                <Text style={[styles.activeTimerCountdown, { color: activeSecondsLeft === 0 ? '#525252' : accentColor }]} allowFontScaling={false}>
-                  {Math.floor(activeSecondsLeft / 60)}:{String(activeSecondsLeft % 60).padStart(2, '0')}
+                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? '#525252' : accentColor }]} allowFontScaling={false}>
+                  {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
                 </Text>
                 <View style={styles.activeProgressBg}>
                   <Animated.View style={[styles.activeProgressFill, {
                     width: activeProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                    backgroundColor: activeSecondsLeft === 0 ? '#525252' : accentColor,
+                    backgroundColor: stepTimerRemaining === 0 ? '#525252' : accentColor,
                   }]} />
                 </View>
-                {activeSecondsLeft === 0 && (
+                {stepTimerRemaining === 0 && (
                   <Text style={styles.activeTimerDone} allowFontScaling={false}>DONE — HIT NEXT</Text>
                 )}
+                {!stepTimerRunning && stepTimerRemaining > 0 && (
+                  <Text style={styles.activeTimerHint} allowFontScaling={false}>tap start when ready.</Text>
+                )}
+                <View style={styles.timerControlsRow}>
+                  {stepTimerRunning ? (
+                    <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Stop timer">
+                      <Text style={[styles.timerControlBtnText, { color: accentColor }]}>STOP</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Start timer">
+                      <Text style={[styles.timerControlBtnText, { color: accentColor }]}>START</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity onPress={handleTimerReset} activeOpacity={0.7} style={styles.timerControlBtn} accessibilityRole="button" accessibilityLabel="Reset timer">
+                    <Text style={styles.timerControlBtnText}>RESET</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           </View>
         )}
 
         {/* Motivational */}
-        {restSecondsLeft === null && <Text style={styles.motivational}>{motivationalMsg}</Text>}
+        {stepTimerKind !== 'rest' && <Text style={styles.motivational}>{motivationalMsg}</Text>}
 
         {/* Mid-workout insult — only when trash talk is off to avoid overlap */}
         {!focusMode && currentStep === midStep && midInsult !== '' && !trashTalkOn && (
@@ -771,6 +867,11 @@ const styles = StyleSheet.create({
   activeProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 12 },
   activeProgressFill: { height: 2 },
   activeTimerDone: { ...t.label, color: '#ffffff', letterSpacing: 3, fontSize: 12, lineHeight: 17, marginTop: 10 },
+  activeTimerHint: { ...t.label, color: '#999', letterSpacing: 2, fontSize: 12, lineHeight: 17, marginTop: 10 },
+
+  timerControlsRow: { flexDirection: 'row', gap: 12, marginTop: 20 },
+  timerControlBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 10, paddingHorizontal: 20 },
+  timerControlBtnText: { ...t.label, color: '#ffffff', letterSpacing: 2, fontSize: 13 },
 
   insultLine: {
     fontFamily: fonts.mono.regular,

@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { fonts } from '@/lib/typography';
+import { View, StyleSheet } from 'react-native';
+import Slider from '@react-native-community/slider';
 
 interface IntensityPickerProps {
   value: number;
@@ -10,8 +9,6 @@ interface IntensityPickerProps {
   accessibilityPrefix?: string;
 }
 
-const VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
-
 export function IntensityPicker({
   value,
   onChange,
@@ -19,52 +16,30 @@ export function IntensityPicker({
   accessibilityPrefix = 'Intensity',
 }: IntensityPickerProps) {
   return (
-    <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel={`${accessibilityPrefix}: ${value} out of 10`}>
-      {VALUES.map((n) => {
-        const selected = value === n;
-        return (
-          <TouchableOpacity
-            key={n}
-            onPress={() => {
-              onChange(n);
-              Haptics.selectionAsync();
-            }}
-            activeOpacity={0.75}
-            style={[
-              styles.chip,
-              selected && { borderColor: accentColor, backgroundColor: accentColor + '22' },
-            ]}
-            accessibilityRole="radio"
-            accessibilityState={{ selected }}
-            accessibilityLabel={`${accessibilityPrefix} ${n} out of 10`}
-          >
-            <Text style={[styles.chipText, selected && { color: accentColor }]}>{n}</Text>
-          </TouchableOpacity>
-        );
-      })}
+    <View style={styles.container}>
+      <Slider
+        style={styles.slider}
+        minimumValue={1}
+        maximumValue={10}
+        step={1}
+        value={value}
+        onValueChange={onChange}
+        minimumTrackTintColor={accentColor}
+        maximumTrackTintColor="#1a1a1a"
+        thumbTintColor={accentColor}
+        accessibilityLabel={`${accessibilityPrefix}: ${value} out of 10`}
+        accessibilityRole="adjustable"
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
+  container: {
+    marginTop: 8,
   },
-  chip: {
-    width: 44,
-    height: 44,
-    borderWidth: 1,
-    borderColor: '#333333',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chipText: {
-    fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    color: '#999999',
-    lineHeight: 18,
+  slider: {
+    width: '100%',
+    height: 36,
   },
 });

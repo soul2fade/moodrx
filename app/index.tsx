@@ -25,12 +25,6 @@ export default function Index() {
     let cancelled = false;
 
     const run = async () => {
-      const done = await getFirstLaunchDone();
-      if (cancelled) return;
-
-      const navDelay = done ? 350 : 1520;
-      const fadeDuration = done ? 150 : 280;
-
       try {
         const sessions = await getSessions();
         if (sessions.length > 0) {
@@ -39,58 +33,57 @@ export default function Index() {
         }
       } catch {}
 
-      if (!done) {
-        // Phase 1 — Rx scales down + fades in (0–350ms)
-        Animated.parallel([
-          Animated.timing(rxOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-          Animated.timing(rxScale,   { toValue: 1, duration: 350, useNativeDriver: true }),
-        ]).start();
+      // Phase 1 — Rx scales down + fades in (0–350ms)
+      Animated.parallel([
+        Animated.timing(rxOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+        Animated.timing(rxScale,   { toValue: 1, duration: 350, useNativeDriver: true }),
+      ]).start();
 
-        // Phase 2 — Mood slides in from left (180ms)
-        setTimeout(() => {
-          Animated.parallel([
-            Animated.timing(moodOpacity, { toValue: 1, duration: 220, useNativeDriver: true }),
-            Animated.spring(moodX, { toValue: 0, useNativeDriver: true, speed: 22, bounciness: 0 }),
-          ]).start();
-        }, 180);
-
-        // Divider fades in after Mood lands
-        setTimeout(() => {
-          Animated.timing(lineOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-        }, 400);
-
-        // Phase 3 — Heartbeat pulse ring expands (350ms)
-        setTimeout(() => {
-          Animated.parallel([
-            Animated.timing(pulseScale, { toValue: 3.8, duration: 800, useNativeDriver: true }),
-            Animated.sequence([
-              Animated.timing(pulseOpacity, { toValue: 0.45, duration: 120, useNativeDriver: true }),
-              Animated.timing(pulseOpacity, { toValue: 0,    duration: 680, useNativeDriver: true }),
-            ]),
-          ]).start();
-        }, 350);
-
-        // Phase 4 — Tagline words stagger in (520ms+)
-        WORDS.forEach((_, i) => {
-          setTimeout(() => {
-            Animated.timing(wordAnims[i], { toValue: 1, duration: 160, useNativeDriver: true }).start();
-          }, 520 + i * 100);
-        });
-      } else {
-        Animated.parallel([
-          Animated.timing(rxOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
-          Animated.timing(rxScale, { toValue: 1, duration: 150, useNativeDriver: true }),
-          Animated.timing(moodOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
-          Animated.timing(lineOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
-        ]).start();
-      }
-
+      // Phase 2 — Mood slides in from left (180ms)
       setTimeout(() => {
-        Animated.timing(screenOpacity, { toValue: 0, duration: fadeDuration, useNativeDriver: true })
-          .start(() => {
-            if (!cancelled) router.replace(done ? '/home' : '/onboarding');
+        if (cancelled) return;
+        Animated.parallel([
+          Animated.timing(moodOpacity, { toValue: 1, duration: 220, useNativeDriver: true }),
+          Animated.spring(moodX, { toValue: 0, useNativeDriver: true, speed: 22, bounciness: 0 }),
+        ]).start();
+      }, 180);
+
+      // Divider fades in after Mood lands
+      setTimeout(() => {
+        if (cancelled) return;
+        Animated.timing(lineOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+      }, 400);
+
+      // Phase 3 — Heartbeat pulse ring expands (350ms)
+      setTimeout(() => {
+        if (cancelled) return;
+        Animated.parallel([
+          Animated.timing(pulseScale, { toValue: 3.8, duration: 800, useNativeDriver: true }),
+          Animated.sequence([
+            Animated.timing(pulseOpacity, { toValue: 0.45, duration: 120, useNativeDriver: true }),
+            Animated.timing(pulseOpacity, { toValue: 0,    duration: 680, useNativeDriver: true }),
+          ]),
+        ]).start();
+      }, 350);
+
+      // Phase 4 — Tagline words stagger in (520ms+)
+      WORDS.forEach((_, i) => {
+        setTimeout(() => {
+          if (cancelled) return;
+          Animated.timing(wordAnims[i], { toValue: 1, duration: 160, useNativeDriver: true }).start();
+        }, 520 + i * 100);
+      });
+
+      // Phase 5 — Fade out + navigate (1520ms)
+      setTimeout(() => {
+        if (cancelled) return;
+        Animated.timing(screenOpacity, { toValue: 0, duration: 280, useNativeDriver: true })
+          .start(async () => {
+            if (cancelled) return;
+            const done = await getFirstLaunchDone();
+            router.replace(done ? '/home' : '/onboarding');
           });
-      }, navDelay);
+      }, 1520);
     };
 
     run();

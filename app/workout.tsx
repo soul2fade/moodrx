@@ -110,12 +110,8 @@ export default function WorkoutScreen() {
   const [stepTimerTotal, setStepTimerTotal] = useState(0);
   const [stepTimerRemaining, setStepTimerRemaining] = useState(0);
   const [stepTimerRunning, setStepTimerRunning] = useState(false);
-  const [showTrashWarning, setShowTrashWarning] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
-  const warningAnim = useRef(new Animated.Value(0)).current;
-  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const trashTalkArmRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restProgressAnim = useRef(new Animated.Value(1)).current;
   const activeProgressAnim = useRef(new Animated.Value(1)).current;
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -132,7 +128,6 @@ export default function WorkoutScreen() {
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
-  const trashTalkAllowed = resolvedWorkout?.intensity !== 'Intense';
   const midInsult = useDrMoodRxLine(mood, 'mid');
   const midStep = Math.floor((totalSteps - 1) / 2);
 
@@ -207,8 +202,6 @@ export default function WorkoutScreen() {
       try { transitionPlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
       if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-      if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
       deactivateKeepAwake();
     };
   }, []);
@@ -415,37 +408,9 @@ export default function WorkoutScreen() {
     router.replace('/home');
   };
 
-  const dismissTrashWarning = () => {
-    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-    if (trashTalkArmRef.current) {
-      clearTimeout(trashTalkArmRef.current);
-      trashTalkArmRef.current = null;
-    }
-    Animated.timing(warningAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
-      setShowTrashWarning(false);
-    });
-  };
-
   const handleTrashTalk = () => {
-    if (!trashTalkAllowed) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!trashTalkOn) {
-      setShowTrashWarning(true);
-      warningAnim.setValue(0);
-      Animated.timing(warningAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
-      warningTimerRef.current = setTimeout(dismissTrashWarning, 2500);
-      if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
-      trashTalkArmRef.current = setTimeout(() => {
-        trashTalkArmRef.current = null;
-        setTrashTalkOn(true);
-      }, 2700);
-    } else {
-      if (trashTalkArmRef.current) {
-        clearTimeout(trashTalkArmRef.current);
-        trashTalkArmRef.current = null;
-      }
-      setTrashTalkOn(false);
-    }
+    setTrashTalkOn((on) => !on);
   };
 
   const handleKeepAwake = async () => {
@@ -733,7 +698,6 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
               );
             })}
-            {trashTalkAllowed ? (
             <TouchableOpacity
               onPress={handleTrashTalk}
               activeOpacity={0.7}
@@ -743,11 +707,6 @@ export default function WorkoutScreen() {
             >
               <Text style={[styles.soundBtnText, trashTalkOn && { color: '#E11D48' }]}>TRASH TALK</Text>
             </TouchableOpacity>
-            ) : (
-              <View style={[styles.soundBtn, { opacity: 0.35 }]}>
-                <Text style={styles.soundBtnText}>TRASH TALK</Text>
-              </View>
-            )}
             {(activeSoundscape || trashTalkOn) && (
               <TouchableOpacity onPress={() => { handleSoundscape(null); if (trashTalkOn) handleTrashTalk(); }} activeOpacity={0.7} style={styles.soundOffBtn}>
                 <Text style={styles.soundOffText}>OFF</Text>
@@ -773,23 +732,6 @@ export default function WorkoutScreen() {
         )}
 
       </ScrollView>
-
-      {/* Trash talk warning overlay */}
-      {showTrashWarning && (
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={dismissTrashWarning}
-          style={styles.warningOverlay}
-          accessibilityRole="button"
-          accessibilityLabel="Dismiss warning"
-        >
-          <Animated.View style={[styles.warningCard, { opacity: warningAnim, transform: [{ scale: warningAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }] }]}>
-            <Text style={styles.warningTitle}>HEADS UP</Text>
-            <Text style={styles.warningBody}>You&apos;re about to be roasted. It&apos;s all in good fun.</Text>
-            <Text style={styles.warningHint}>tap anywhere to dismiss</Text>
-          </Animated.View>
-        </TouchableOpacity>
-      )}
 
       {/* Bottom nav */}
       <View style={styles.bottomNav}>
@@ -906,12 +848,6 @@ const styles = StyleSheet.create({
 
   keepAwakeBtn: { marginTop: 16, borderWidth: 1, borderColor: '#333', paddingVertical: 10, alignItems: 'center' },
   keepAwakeBtnText: { ...t.label, color: '#999', fontSize: 13, letterSpacing: 2 },
-
-  warningOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, zIndex: 50 },
-  warningCard: { backgroundColor: '#111', borderWidth: 1, borderColor: '#2a2a2a', padding: 24, width: '100%' },
-  warningTitle: { ...t.label, color: '#E11D48', letterSpacing: 3, fontSize: 12, lineHeight: 17, marginBottom: 10 },
-  warningBody: { fontFamily: fonts.mono.regular, fontSize: 14, color: '#ffffff', lineHeight: 20 },
-  warningHint: { ...t.label, color: '#999', fontSize: 12, lineHeight: 17, letterSpacing: 2, marginTop: 14 },
 
   bottomNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   backBtn: { borderWidth: 1, borderColor: '#1a1a1a', paddingVertical: 12, paddingHorizontal: 24 },

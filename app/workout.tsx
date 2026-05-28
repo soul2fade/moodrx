@@ -27,12 +27,9 @@ import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { stepHasReps } from '@/lib/workout-ui';
 import {
-  buildActiveSpeech,
-  buildRestSpeech,
-  buildStepSpeech,
-  speakWorkoutLine,
-  stopWorkoutSpeech,
-} from '@/lib/workout-speech';
+  pickWorkoutGuideCue,
+  pickWorkoutGuideTimerCue,
+} from '@/lib/workout-voice';
 
 function parseRestSeconds(text: string): number | null {
   const lower = text.toLowerCase();
@@ -53,21 +50,6 @@ function parseActiveSeconds(text: string): number | null {
   if (minMatch) return parseInt(minMatch[1], 10) * 60;
   return null;
 }
-
-const ACTIVE_COMPLETE_AUDIO = [
-  require('../assets/audio/transitions/active_complete_01.mp3'),
-  require('../assets/audio/transitions/active_complete_02.mp3'),
-  require('../assets/audio/transitions/active_complete_03.mp3'),
-  require('../assets/audio/transitions/active_complete_04.mp3'),
-];
-
-const REST_COMPLETE_AUDIO = [
-  require('../assets/audio/transitions/rest_complete_01.mp3'),
-  require('../assets/audio/transitions/rest_complete_02.mp3'),
-  require('../assets/audio/transitions/rest_complete_03.mp3'),
-  require('../assets/audio/transitions/rest_complete_04.mp3'),
-  require('../assets/audio/transitions/rest_complete_05.mp3'),
-];
 
 const MOTIVATIONAL = [
   "Let's go.",
@@ -188,12 +170,13 @@ export default function WorkoutScreen() {
         setFocusMode(true);
         void setWorkoutFocusMode(true);
       } else {
-        stopWorkoutSpeech();
+        try { transitionPlayer.pause(); } catch {}
+        try { insultPlayer.pause(); } catch {}
       }
       return next;
     });
     Haptics.selectionAsync();
-  }, []);
+  }, [transitionPlayer, insultPlayer]);
 
   useEffect(() => {
     insultPlayer.volume = trashTalkVolume;
@@ -225,7 +208,6 @@ export default function WorkoutScreen() {
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (trashTalkArmRef.current) clearTimeout(trashTalkArmRef.current);
       deactivateKeepAwake();
-      stopWorkoutSpeech();
     };
   }, []);
 
@@ -251,8 +233,7 @@ export default function WorkoutScreen() {
           clearInterval(restTimerRef.current!);
           restTimerRef.current = null;
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          const idx = Math.floor(Math.random() * REST_COMPLETE_AUDIO.length);
-          setTransitionAudioSrc(REST_COMPLETE_AUDIO[idx]);
+          setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, true));
           return 0;
         }
         return prev - 1;
@@ -277,8 +258,7 @@ export default function WorkoutScreen() {
           clearInterval(activeTimerRef.current!);
           activeTimerRef.current = null;
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          const idx = Math.floor(Math.random() * ACTIVE_COMPLETE_AUDIO.length);
-          setTransitionAudioSrc(ACTIVE_COMPLETE_AUDIO[idx]);
+          setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, false));
           return 0;
         }
         return prev - 1;
@@ -323,21 +303,11 @@ export default function WorkoutScreen() {
 
   useEffect(() => {
     if (!voiceMode || !resolvedWorkout) return;
-    speakWorkoutLine(buildStepSpeech(currentStep, totalSteps, resolvedWorkout.steps[currentStep] ?? ''));
+    const stepText = resolvedWorkout.steps[currentStep] ?? '';
+    const isRest = parseRestSeconds(stepText) !== null;
+    setTransitionAudioSrc(pickWorkoutGuideCue(currentStep, isRest));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voiceMode, currentStep]);
-
-  useEffect(() => {
-    if (!voiceMode || restSecondsLeft === null) return;
-    const line = buildRestSpeech(restSecondsLeft);
-    if (line) speakWorkoutLine(line, 0.88);
-  }, [voiceMode, restSecondsLeft]);
-
-  useEffect(() => {
-    if (!voiceMode || activeSecondsLeft === null) return;
-    const line = buildActiveSpeech(activeSecondsLeft);
-    if (line) speakWorkoutLine(line, 1.05);
-  }, [voiceMode, activeSecondsLeft]);
 
   const hwBackHandler = useCallback(() => {
     if (showQuitConfirm) { setShowQuitConfirm(false); return true; }
@@ -350,8 +320,8 @@ export default function WorkoutScreen() {
   const stopAll = () => {
     try { player.remove(); } catch {}
     try { insultPlayer.pause(); } catch {}
+    try { transitionPlayer.pause(); } catch {}
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
-    stopWorkoutSpeech();
   };
 
   const handleNext = () => {
@@ -480,7 +450,7 @@ export default function WorkoutScreen() {
             style={[styles.focusBtn, voiceMode && { borderColor: accentColor, backgroundColor: accentColor + '18' }]}
             accessibilityRole="switch"
             accessibilityState={{ checked: voiceMode }}
-            accessibilityLabel={`Voice mode ${voiceMode ? 'on' : 'off'}`}
+            accessibilityLabel={`Voice mode ${voiceMode ? 'on' : 'off'}. Audio-only with the workout guide voice.`}
           >
             <Text style={[styles.focusBtnText, voiceMode && { color: accentColor }]} allowFontScaling={false}>VOICE</Text>
           </TouchableOpacity>

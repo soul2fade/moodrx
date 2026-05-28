@@ -296,6 +296,18 @@ export async function clearAllData(): Promise<void> {
       USER_PROFILE_KEY,
       STREAK_STATE_KEY,
       PERSONAL_BESTS_KEY,
+      SUPPLEMENT_REMINDER_PREFS_KEY,
+      TRASH_TALK_VOLUME_KEY,
+      VOICE_ENABLED_KEY,
+      WORKOUT_FOCUS_MODE_KEY,
+      WORKOUT_VOICE_MODE_KEY,
+      'notifications_enabled',
+      'reminder_time',
+      '@moodrx_reminder_schedule',
+      '@moodrx_checkin_notif_id',
+      '@moodrx_checkin_notif_ids',
+      '@moodrx_supplement_notif_id',
+      '@moodrx_trial_notif_ids',
     ]);
     await clearUiState();
     invalidateSessionsCache();

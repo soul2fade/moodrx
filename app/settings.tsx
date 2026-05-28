@@ -15,9 +15,9 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { clearAllData, getTrashTalkVolume, getUserProfile, getVoiceEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { getTrashTalkVolume, getUserProfile, getVoiceEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
 import { exportSessionsJson } from '@/lib/export-sessions';
-import { clearTrial } from '@/lib/subscription';
+import { resetAllAppData } from '@/lib/reset-app';
 import { useSessions } from '@/contexts/SessionsContext';
 import {
   PRESET_TIMES,
@@ -218,8 +218,7 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAll = async () => {
-    await clearAllData();
-    await clearTrial();
+    await resetAllAppData();
     await clearSessions();
     setShowDeleteConfirm(false);
     router.replace('/onboarding');

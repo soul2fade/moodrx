@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
+import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
@@ -62,6 +62,7 @@ export default function HomeScreen() {
   const [greetingStreakMsg, setGreetingStreakMsg] = useState('');
   const greetingAnim = useRef(new Animated.Value(0)).current;
   const greetingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastRescheduledSessionCountRef = useRef(-1);
   const moodAnims = useRef(
     MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
   ).current;
@@ -75,9 +76,9 @@ export default function HomeScreen() {
       consumeNavHintPending().then((show) => {
         if (show) setShowNavHint(true);
       });
-      Promise.all([getUserProfile(), getStreakState()]).then(([profile, state]) => {
+      Promise.all([getUserProfile(), getStreakState(), getLastCarouselPage()]).then(([profile, state, lastPage]) => {
         setUserProfile(profile);
-        setCarouselPage(0);
+        setCarouselPage(lastPage);
         const currentStreak = getStreak(sessions);
         const today = todayDateString();
         let updated = { ...state };
@@ -114,7 +115,10 @@ export default function HomeScreen() {
           }, 3500);
         }
       });
-      void rescheduleAfterSession(sessions);
+      if (sessions.length !== lastRescheduledSessionCountRef.current) {
+        lastRescheduledSessionCountRef.current = sessions.length;
+        void rescheduleAfterSession(sessions);
+      }
       dismissPanel();
       // Re-stagger mood rows on every focus
       moodAnims.forEach((anim) => {

@@ -28,7 +28,6 @@ export default function PremiumScreen() {
     purchaseMonthly,
     purchaseYearly,
     restorePurchases,
-    startTrial,
     isPremium,
     isInTrial,
     trialDaysLeft,
@@ -139,10 +138,10 @@ export default function PremiumScreen() {
             {!hasUsedTrial && !isInTrial && (
               <TouchableOpacity
                 style={styles.trialButton}
-                onPress={async () => { await startTrial(); router.back(); }}
+                onPress={purchaseYearly}
                 activeOpacity={0.8}
                 accessibilityRole="button"
-                accessibilityLabel="Start 7-day free trial"
+                accessibilityLabel="Start 7-day free trial via annual subscription"
               >
                 <Text style={styles.trialButtonText}>START 7-DAY FREE TRIAL →</Text>
               </TouchableOpacity>

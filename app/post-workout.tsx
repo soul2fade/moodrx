@@ -19,6 +19,7 @@ import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
 import { getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { todayDateString } from '@/lib/dateUtils';
 import { useSessions } from '@/contexts/SessionsContext';
 import { SessionWinCard } from '@/components/SessionWinCard';
 import { rescheduleAfterSession } from '@/lib/notifications';
@@ -82,10 +83,6 @@ export default function PostWorkoutScreen() {
       setUserProfileState(profile);
       setProfileLoaded(true);
       setPreviousBest(pb);
-      if (sessionReps > 0) {
-        const isNewBest = pb === null || sessionReps > pb.reps;
-        if (isNewBest) savePersonalBest(workoutId, sessionReps);
-      }
     });
   }, []);
   const moodData = MOODS[mood];
@@ -155,6 +152,13 @@ export default function PostWorkoutScreen() {
         note: note.trim() || undefined,
         rating: rating ?? undefined,
       });
+      if (sessionReps > 0) {
+        const isNewBest = previousBest === null || sessionReps > previousBest.reps;
+        if (isNewBest) {
+          await savePersonalBest(workoutId, sessionReps);
+          setPreviousBest({ reps: sessionReps, date: todayDateString() });
+        }
+      }
       getSessions().then((updated) => rescheduleAfterSession(updated)).catch(() => {});
       void saveWorkoutToHealth({
         name: workout?.name ?? workoutId,

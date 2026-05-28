@@ -29,6 +29,7 @@ const WEEKEND_NUMBERS = [7, 1] as const;
 const CHECKIN_NOTIF_ID_KEY = '@moodrx_checkin_notif_id';
 const CHECKIN_NOTIF_IDS_KEY = '@moodrx_checkin_notif_ids';
 const SUPPLEMENT_NOTIF_ID_KEY = '@moodrx_supplement_notif_id';
+const TRIAL_NOTIF_IDS_KEY = '@moodrx_trial_notif_ids';
 
 export const PRESET_TIMES = [
   { label: '8:00 AM',  hour: 8,  minute: 0 },
@@ -287,6 +288,89 @@ export async function rescheduleAfterSession(sessions: Session[]): Promise<void>
 export async function cancelReminders(): Promise<void> {
   if (Platform.OS === 'web') return;
   await cancelCheckinReminder();
+}
+
+const TRIAL_NUDGES: { offsetDays: number; body: string }[] = [
+  { offsetDays: 2, body: "Day 2. Your brain's trying to trick you again. Check in." },
+  { offsetDays: 5, body: "5 sessions deep. The data doesn't lie. Keep going." },
+  { offsetDays: 6, body: "1 day left on your trial. Don't let momentum die here." },
+];
+
+export async function scheduleTrialNudges(trialStartMs: number): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelTrialNudges();
+    const now = Date.now();
+    const ids: string[] = [];
+    for (const nudge of TRIAL_NUDGES) {
+      const triggerDate = new Date(trialStartMs + nudge.offsetDays * 24 * 60 * 60 * 1000);
+      triggerDate.setHours(18, 0, 0, 0);
+      if (triggerDate.getTime() > now) {
+        const id = await Notifications.scheduleNotificationAsync({
+          content: { title: 'MoodRx', body: nudge.body },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: triggerDate,
+          },
+        });
+        ids.push(id);
+      }
+    }
+    if (ids.length > 0) {
+      await AsyncStorage.setItem(TRIAL_NOTIF_IDS_KEY, JSON.stringify(ids));
+    }
+  } catch {
+    // permissions may not be granted
+  }
+}
+
+export async function cancelTrialNudges(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const idsRaw = await AsyncStorage.getItem(TRIAL_NOTIF_IDS_KEY);
+    if (idsRaw) {
+      const ids = JSON.parse(idsRaw) as string[];
+      await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => {})));
+      await AsyncStorage.removeItem(TRIAL_NOTIF_IDS_KEY);
+    }
+  } catch {
+    // silently fail
+  }
+}
+
+export async function enableRemindersFromPrompt(trialStartMs?: number | null): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') return false;
+
+    await AsyncStorage.setItem(NOTIFICATIONS_ENABLED_KEY, 'true');
+    const schedule = await getReminderSchedule();
+    await scheduleCheckinReminders(schedule);
+
+    if (trialStartMs) {
+      await scheduleTrialNudges(trialStartMs);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function cancelAllNotifications(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  await cancelReminders();
+  await cancelSupplementReminder();
+  await cancelTrialNudges();
+  try {
+    await AsyncStorage.multiRemove([
+      NOTIFICATIONS_ENABLED_KEY,
+      REMINDER_TIME_KEY,
+      REMINDER_SCHEDULE_KEY,
+    ]);
+  } catch {
+    // non-critical
+  }
 }
 
 export async function scheduleSupplementReminder(hour: number, minute: number): Promise<void> {

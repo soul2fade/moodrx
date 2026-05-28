@@ -65,11 +65,24 @@ export async function requestHealthPermissions(): Promise<boolean> {
       ['Steps', 'SleepAnalysis', 'Workout'],
       ['Workout'],
     );
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    await mod.getSteps(startOfDay, now);
     await setHealthSyncEnabled(true);
     return true;
   } catch (e) {
+    await setHealthSyncEnabled(false);
     console.warn('[MoodRx] HealthKit authorization failed:', e);
     return false;
+  }
+}
+
+export async function clearHealthSyncPref(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(HEALTH_ENABLED_KEY);
+  } catch {
+    // non-critical
   }
 }
 

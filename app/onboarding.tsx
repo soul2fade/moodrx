@@ -40,7 +40,7 @@ const TRIAL_FEATURES = [
 export default function OnboardingScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const trialScale = useRef(new Animated.Value(1)).current;
-  const { startTrial, hasUsedTrial } = useSubscription();
+  const { purchaseYearly, hasUsedTrial } = useSubscription();
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -54,10 +54,10 @@ export default function OnboardingScreen() {
     Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
   const handleStartTrial = useCallback(async () => {
-    await startTrial();
+    await purchaseYearly();
     await setFirstLaunchDone();
     router.replace('/guided');
-  }, [startTrial]);
+  }, [purchaseYearly]);
 
   const handleFreeVersion = useCallback(async () => {
     await setFirstLaunchDone();

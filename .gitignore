@@ -30,6 +30,7 @@ github-debug.txt
 *.p12
 *.pem
 distribution.p12
+distribution.csr.txt
 
 # CatDoes metadata (managed automatically)
 .catdoes/

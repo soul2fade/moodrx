@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import * as Haptics from 'expo-haptics';
 
 /**
  * Encapsulates workout step timer logic:
@@ -53,7 +52,6 @@ export function useWorkoutTimer(onTimerEnd: () => void) {
         intervalRef.current = null;
         timerEndRef.current = null;
         setTimerSeconds(null);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setTimeout(() => onTimerEndRef.current(), 700);
       } else {
         setTimerSeconds(remaining);

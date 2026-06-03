@@ -8,7 +8,6 @@ import {
   Animated,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { getSessions } from '@/lib/storage';
 import { buildWeeklyPrescription, DayRx } from '@/lib/analytics';
 import { MOODS } from '@/lib/moods';
@@ -34,7 +33,6 @@ export default function WeeklyPrescriptionScreen() {
   const todayRx = plan.find((d) => d.dayIndex === TODAY_IDX);
 
   const handleDayPress = (day: DayRx) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({
       pathname: '/prescription',
       params: { mood: day.mood, intensity: '5' },
@@ -43,7 +41,6 @@ export default function WeeklyPrescriptionScreen() {
 
   const handleFillToday = () => {
     if (!todayRx) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/prescription',
       params: { mood: todayRx.mood, intensity: '5' },

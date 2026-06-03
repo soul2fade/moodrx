@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
-import * as Haptics from 'expo-haptics';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import {
@@ -52,7 +51,6 @@ export default function BadDayScreen() {
   useHardwareBack(backHandler);
 
   const handleNext = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (!onLastStep) {
       setStep((s) => s + 1);
     }
@@ -62,7 +60,6 @@ export default function BadDayScreen() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await addSession({
         id: Date.now().toString(),
         mood,

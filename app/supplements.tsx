@@ -9,7 +9,6 @@ import {
   Platform,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import { SUPPLEMENTS } from '@/lib/supplements';
 import {
@@ -189,7 +188,6 @@ function SupplementsScreen() {
   const weekTakenCount = useMemo(() => countWeekTaken(weekAdherence), [weekAdherence]);
 
   const handleToggle = async (supplementName: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await toggleSupplementLog(supplementName, today);
     loadData();
   };

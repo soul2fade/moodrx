@@ -10,7 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -174,7 +173,6 @@ export default function HomeScreen() {
   const handleMoodSelect = useCallback((mood: MoodKey) => {
     setSelectedMood(mood);
     setIntensity(5);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showPanel();
   }, [showPanel]);
 
@@ -183,7 +181,6 @@ export default function HomeScreen() {
     const workouts = getWorkoutsForMood(moodIdentity.dominantMood);
     if (workouts.length === 0) return;
     const pick = workouts[Math.floor(Math.random() * workouts.length)];
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/workout',
       params: { mood: moodIdentity.dominantMood, workoutId: pick.id, intensity: '5' },
@@ -191,7 +188,6 @@ export default function HomeScreen() {
   }, [moodIdentity]);
 
   const handleBadDay = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({
       pathname: '/bad-day',
       params: lastSession
@@ -202,7 +198,6 @@ export default function HomeScreen() {
 
   const handlePrescribe = useCallback(() => {
     if (!selectedMood) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/prescription',
       params: { mood: selectedMood, intensity: String(intensity) },
@@ -221,7 +216,6 @@ export default function HomeScreen() {
       timestamp: Date.now(),
       lightDay: true as const,
     };
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await addSession(session);
     await rescheduleAfterSession([...sessions, session]);
     dismissPanel();
@@ -239,14 +233,12 @@ export default function HomeScreen() {
       timestamp: Date.now(),
       lightDay: true as const,
     };
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await addSession(session);
     await rescheduleAfterSession([...sessions, session]);
   }, [lastSession, addSession, sessions]);
 
   const handleSameAsYesterdayRepeat = useCallback(() => {
     if (!lastSession) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/prescription',
       params: { mood: lastSession.mood, intensity: String(lastSession.intensity) },

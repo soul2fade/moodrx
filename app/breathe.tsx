@@ -8,7 +8,6 @@ import {
   StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { fonts } from '../lib/typography';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { saveMindfulMinutesToHealth } from '@/lib/health';
@@ -83,7 +82,6 @@ export default function BreatheScreen() {
     setPhaseIdx(0);
     setCountdown(PHASES[0].duration);
     setCycles(0);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     animatePhase(0);
 
     countdownRef.current = setInterval(() => {
@@ -98,7 +96,6 @@ export default function BreatheScreen() {
         secondsRef.current = PHASES[nextIdx].duration;
         setPhaseIdx(nextIdx);
         setCountdown(PHASES[nextIdx].duration);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         animatePhase(nextIdx);
       }
     }, 1000);

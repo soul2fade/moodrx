@@ -10,12 +10,11 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { getTrashTalkVolume, getUserProfile, getVoiceEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { getUserProfile, setUserProfile, UserProfile } from '@/lib/storage';
 import { exportSessionsJson } from '@/lib/export-sessions';
 import { resetAllAppData } from '@/lib/reset-app';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -54,12 +53,9 @@ export default function SettingsScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
-  const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
-  const [voiceEnabled, setVoiceEnabledState] = useState(true);
   const [healthAvailable, setHealthAvailable] = useState(false);
   const [healthPlatformLabel, setHealthPlatformLabel] = useState('Health');
   const [healthEnabled, setHealthEnabledState] = useState(false);
-  const voiceToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
   const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium } = useSubscription();
   const { clearSessions, sessions } = useSessions();
@@ -79,18 +75,13 @@ export default function SettingsScreen() {
       AsyncStorage.getItem(NOTIFICATIONS_KEY),
       getReminderSchedule(),
       getUserProfile(),
-      getTrashTalkVolume(),
-      getVoiceEnabled(),
-    ]).then(([notifVal, schedule, profile, volume, voiceOn]) => {
+    ]).then(([notifVal, schedule, profile]) => {
       const enabled = notifVal === 'true';
       setNotificationsEnabled(enabled);
       toggleAnim.setValue(enabled ? 1 : 0);
       setReminderSchedule(schedule);
       if (profile.preferredTime) setPreferredTimeState(profile.preferredTime);
       if (profile.primaryGoal) setPrimaryGoalState(profile.primaryGoal);
-      setTrashTalkVolumeState(volume);
-      setVoiceEnabledState(voiceOn);
-      voiceToggleAnim.setValue(voiceOn ? 1 : 0);
     });
     if (isHealthSyncAvailable()) {
       void isHealthBackendReady().then((ready) => {
@@ -102,23 +93,7 @@ export default function SettingsScreen() {
         healthToggleAnim.setValue(on ? 1 : 0);
       }).catch(() => {});
     }
-  }, [toggleAnim, voiceToggleAnim, healthToggleAnim]);
-
-  const handleTrashTalkVolumeChange = async (value: number) => {
-    setTrashTalkVolumeState(value);
-    await setTrashTalkVolume(value);
-  };
-
-  const handleVoiceToggle = async () => {
-    const next = !voiceEnabled;
-    setVoiceEnabledState(next);
-    await setVoiceEnabled(next);
-    Animated.timing(voiceToggleAnim, {
-      toValue: next ? 1 : 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
+  }, [toggleAnim, healthToggleAnim]);
 
   const handleHealthToggle = async () => {
     if (!healthEnabled) {
@@ -143,11 +118,6 @@ export default function SettingsScreen() {
   const healthTranslateX = healthToggleAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [3, 25],
-  });
-
-  const voiceTranslateX = voiceToggleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [2, 22],
   });
 
   const handleSelectPreferredTime = async (value: UserProfile['preferredTime']) => {
@@ -365,43 +335,6 @@ export default function SettingsScreen() {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
-
-        <Text style={styles.sectionHeader}>WORKOUT</Text>
-        <View style={styles.toggleRow}>
-          <View style={styles.toggleLabelBlock}>
-            <Text style={styles.toggleLabel}>Workout commentary</Text>
-            <Text style={styles.prefHint}>Show Dr. MoodRx notes before and after workouts, with a gentler tone for anxious and low moods.</Text>
-          </View>
-          <TouchableOpacity
-            onPress={handleVoiceToggle}
-            activeOpacity={0.8}
-            style={[styles.toggle, voiceEnabled ? styles.toggleOn : styles.toggleOff]}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: voiceEnabled }}
-            accessibilityLabel="Workout commentary"
-          >
-            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: voiceTranslateX }] }]} />
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.prefLabel}>TRASH TALK VOLUME</Text>
-        <Text style={styles.prefHint}>Only plays when you turn on trash talk during a workout.</Text>
-        <View style={styles.volumeRow}>
-          <Text style={styles.volumeValue}>{Math.round(trashTalkVolume * 100)}%</Text>
-          <Slider
-            style={styles.volumeSlider}
-            minimumValue={0}
-            maximumValue={1}
-            step={0.05}
-            value={trashTalkVolume}
-            onValueChange={handleTrashTalkVolumeChange}
-            minimumTrackTintColor="#E8B84B"
-            maximumTrackTintColor="#1a1a1a"
-            thumbTintColor="#E8B84B"
-            accessibilityLabel={`Trash talk volume ${Math.round(trashTalkVolume * 100)} percent`}
-            accessibilityRole="adjustable"
-          />
         </View>
 
         {healthAvailable && (
@@ -752,22 +685,6 @@ const styles = StyleSheet.create({
     ...t.bodySm,
     color: '#a3a3a3',
     marginBottom: 8,
-  },
-  volumeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
-  },
-  volumeValue: {
-    ...t.label,
-    color: '#E8B84B',
-    width: 44,
-    letterSpacing: 1,
-  },
-  volumeSlider: {
-    flex: 1,
-    height: 36,
   },
   versionProBadge: {
     alignSelf: 'flex-start',

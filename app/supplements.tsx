@@ -386,7 +386,7 @@ function SupplementsScreen() {
                       <Text
                         style={[
                           styles.reminderTimeChipText,
-                          reminderTime === p.label ? { color: '#ffffff' } : { color: '#999' },
+                          { color: '#ffffff' },
                         ]}
                       >
                         {p.label}
@@ -682,14 +682,14 @@ function SupplementsScreen() {
                     <View style={styles.supplementRight}>
                       <Text style={styles.supplementDose}>{supp.dose}</Text>
                       <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
-                      <Text style={[styles.expandChevron, { color: '#aaaaaa' }]}>
+                      <Text style={[styles.expandChevron, { color: '#ffffff' }]}>
                         {isExpanded ? '▲' : '▼'}
                       </Text>
                     </View>
                   </TouchableOpacity>
 
                   {isExpanded && (
-                    <View style={[styles.sciencePanel, { borderLeftColor: '#aaaaaa' }]}>
+                    <View style={[styles.sciencePanel, { borderLeftColor: '#ffffff' }]}>
                       <Text style={styles.sciencePanelLabel}>GOOD FOR</Text>
                       <View style={styles.moodTagRow}>
                         {supp.moods.map((m) => (
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   tabBtnText: {
     fontFamily: fonts.mono.regular,
     fontSize: 14,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 2,
     lineHeight: 20,
   },
@@ -786,7 +786,7 @@ const styles = StyleSheet.create({
   },
   sectionNote: {
     ...t.timestamp,
-    color: '#999999',
+    color: '#ffffff',
     marginBottom: 16,
   },
   moodFilterBadge: {
@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
   },
   moodFilterLabel: {
     ...t.label,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 2,
     fontSize: 13,
     lineHeight: 18,
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
   },
   moodFilterNote: {
     ...t.bodySm,
-    color: '#999999',
+    color: '#ffffff',
   },
   adherenceStrip: {
     flexDirection: 'row',
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 16,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 0,
   },
   adherenceCountText: {
@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   adherenceCountOf: {
-    color: '#999999',
+    color: '#ffffff',
     fontFamily: fonts.mono.regular,
     fontSize: 14,
     lineHeight: 20,
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     ...t.label,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 3,
     marginLeft: 8,
   },
@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
   },
   priorityCardLabel: {
     ...t.label,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 3,
     fontSize: 12,
     lineHeight: 17,
@@ -926,13 +926,13 @@ const styles = StyleSheet.create({
   },
   priorityCardDose: {
     ...t.timestamp,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 2,
     marginTop: 2,
   },
   priorityCardScience: {
     ...t.soft,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 14,
     lineHeight: 20,
     marginTop: 10,
@@ -1002,7 +1002,7 @@ const styles = StyleSheet.create({
   },
   supplementBenefit: {
     ...t.bodyMuted,
-    color: '#999999',
+    color: '#ffffff',
     fontSize: 13,
     marginTop: 2,
   },
@@ -1011,13 +1011,13 @@ const styles = StyleSheet.create({
   },
   supplementDose: {
     ...t.label,
-    color: '#999999',
+    color: '#ffffff',
     fontSize: 13,
     lineHeight: 18,
   },
   supplementTiming: {
     ...t.label,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 2,
     marginTop: 2,
     fontSize: 13,
@@ -1037,7 +1037,7 @@ const styles = StyleSheet.create({
   },
   sciencePanelLabel: {
     ...t.label,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 8,
     fontSize: 12,
@@ -1045,13 +1045,13 @@ const styles = StyleSheet.create({
   },
   sciencePanelText: {
     ...t.soft,
-    color: '#c8c8c8',
+    color: '#ffffff',
     fontSize: 14,
     lineHeight: 20,
   },
   sourceText: {
     ...t.soft,
-    color: '#aaaaaa',
+    color: '#ffffff',
     fontSize: 12,
     lineHeight: 18,
     marginTop: 4,
@@ -1094,7 +1094,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 13,
     lineHeight: 18,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 1.5,
   },
   weekBlock: {
@@ -1108,7 +1108,7 @@ const styles = StyleSheet.create({
   },
   weekLabel: {
     ...t.label,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 2,
     fontSize: 13,
     lineHeight: 18,
@@ -1136,14 +1136,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 16,
-    color: '#999999',
+    color: '#ffffff',
     letterSpacing: 0,
   },
   historySupName: {
     fontFamily: fonts.primary.regular,
     fontSize: 13,
     lineHeight: 18,
-    color: '#c8c8c8',
+    color: '#ffffff',
   },
   historyDot: {
     width: 10,
@@ -1168,7 +1168,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 14,
-    color: '#999999',
+    color: '#ffffff',
   },
   reminderCard: {
     borderWidth: 1,
@@ -1178,7 +1178,6 @@ const styles = StyleSheet.create({
   },
   reminderCardLocked: {
     borderColor: '#1a1a1a',
-    opacity: 0.6,
   },
   reminderHeader: {
     flexDirection: 'row',
@@ -1189,7 +1188,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#999',
+    color: '#ffffff',
     letterSpacing: 3,
     textTransform: 'uppercase' as const,
   },
@@ -1218,7 +1217,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#999',
+    color: '#ffffff',
     marginTop: 8,
   },
   reminderTimeRow: {

@@ -10,17 +10,16 @@ import {
   Dimensions,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
+import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
-import { isYesterdayTimestamp, todayDateString } from '@/lib/dateUtils';
+import { todayDateString } from '@/lib/dateUtils';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
 import { type as t, fonts } from '@/lib/typography';
-import { useSubscription } from '@/contexts/SubscriptionContext';
 import { BottomNav } from '@/components/BottomNav';
 import { HomeCarousel } from '@/components/HomeCarousel';
 import { IntensityPicker } from '@/components/IntensityPicker';
@@ -29,12 +28,13 @@ import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 
-const PANEL_HEIGHT = Dimensions.get('window').height * 0.58;
+const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
+const HOME_MOOD_ORDER = MOOD_ORDER.filter((mood) => mood !== 'good');
 
 let greetingShownThisSession = false;
 
 export default function HomeScreen() {
-  const { sessions, isLoading, streak, sessionCount, lastSession, addSession } = useSessions();
+  const { sessions, isLoading, sessionCount, lastSession, addSession } = useSessions();
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
@@ -63,7 +63,7 @@ export default function HomeScreen() {
   const greetingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRescheduledSessionCountRef = useRef(-1);
   const moodAnims = useRef(
-    MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
+    HOME_MOOD_ORDER.map(() => ({ opacity: new Animated.Value(0), y: new Animated.Value(10) }))
   ).current;
 
   const dismissPanel = useCallback(() => {
@@ -159,11 +159,8 @@ export default function HomeScreen() {
     [selectedMood, intensity],
   );
 
-  const checkedInToday = hasSessionToday(sessions);
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
-  const showSameAsYesterday = !isLoading && !checkedInToday && !selectedMood && lastSession != null && isYesterdayTimestamp(lastSession.timestamp);
-  const { isPremium } = useSubscription();
 
   const handleDismissNavHint = useCallback(async () => {
     setShowNavHint(false);
@@ -186,15 +183,6 @@ export default function HomeScreen() {
       params: { mood: moodIdentity.dominantMood, workoutId: pick.id, intensity: '5' },
     });
   }, [moodIdentity]);
-
-  const handleBadDay = useCallback(() => {
-    router.push({
-      pathname: '/bad-day',
-      params: lastSession
-        ? { mood: lastSession.mood, intensity: String(lastSession.intensity) }
-        : {},
-    });
-  }, [lastSession]);
 
   const handlePrescribe = useCallback(() => {
     if (!selectedMood) return;
@@ -221,30 +209,6 @@ export default function HomeScreen() {
     dismissPanel();
   }, [selectedMood, intensity, addSession, sessions, dismissPanel]);
 
-  const handleSameAsYesterdayLog = useCallback(async () => {
-    if (!lastSession) return;
-    const session = {
-      id: Date.now().toString(),
-      mood: lastSession.mood,
-      intensity: lastSession.intensity,
-      postScore: lastSession.intensity,
-      workoutName: 'Same as yesterday',
-      duration: 0,
-      timestamp: Date.now(),
-      lightDay: true as const,
-    };
-    await addSession(session);
-    await rescheduleAfterSession([...sessions, session]);
-  }, [lastSession, addSession, sessions]);
-
-  const handleSameAsYesterdayRepeat = useCallback(() => {
-    if (!lastSession) return;
-    router.push({
-      pathname: '/prescription',
-      params: { mood: lastSession.mood, intensity: String(lastSession.intensity) },
-    });
-  }, [lastSession]);
-
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
@@ -253,65 +217,6 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         scrollEnabled={!selectedMood}
       >
-        {/* Top row */}
-        <View style={styles.topRow}>
-          {!isPremium ? (
-            <TouchableOpacity
-              onPress={() => router.push('/premium')}
-              activeOpacity={0.7}
-              style={styles.tryProBadge}
-              accessibilityRole="button"
-              accessibilityLabel="Try Pro"
-            >
-              <Text style={styles.tryProBadgeText}>TRY PRO →</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.proMemberBadge}>
-              <Text style={styles.proMemberBadgeText}>PRO</Text>
-            </View>
-          )}
-          {streak > 0 && (
-            <View style={styles.streakBadge}>
-              <Text style={styles.streakBadgeText}>
-                {streak} DAY{streak !== 1 ? 'S' : ''}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {showGreeting && (
-          <Animated.View
-            style={[
-              styles.streakPill,
-              {
-                opacity: greetingAnim,
-                transform: [{
-                  translateY: greetingAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-6, 0],
-                  }),
-                }],
-              },
-            ]}
-          >
-            <View style={styles.streakPillCopy}>
-              <Text style={styles.streakPillLabel}>{greetingStreakLabel}</Text>
-              <Text style={styles.streakPillText}>{greetingStreakMsg}</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => {
-                if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
-                Animated.timing(greetingAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => setShowGreeting(false));
-              }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel="Dismiss streak message"
-            >
-              <Text style={styles.streakPillDismiss}>✕</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-
         <Text style={styles.headline}>
           {moodIdentity && sessions.length >= 10
             ? `Still ${MOODS[moodIdentity.dominantMood].name.toLowerCase()}? Let\u2019s fix that.`
@@ -358,7 +263,7 @@ export default function HomeScreen() {
 
         {/* Mood list */}
         <View style={styles.moodList} accessibilityRole="radiogroup" accessibilityLabel="Select your mood">
-          {MOOD_ORDER.map((moodKey, idx) => {
+          {HOME_MOOD_ORDER.map((moodKey, idx) => {
             const mood = MOODS[moodKey];
             const isSelected = selectedMood === moodKey;
             return (
@@ -397,69 +302,6 @@ export default function HomeScreen() {
             );
           })}
         </View>
-
-        {!isLoading && !selectedMood && !checkedInToday && (
-          <TouchableOpacity
-            style={styles.badDayButton}
-            onPress={handleBadDay}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Bad day minimum workout, two minutes"
-          >
-            <Text style={styles.badDayText}>I CAN&apos;T TODAY — 2 MIN MINIMUM →</Text>
-          </TouchableOpacity>
-        )}
-
-        {showSameAsYesterday && lastSession && (
-          <View style={[styles.sameDayCard, { borderLeftColor: MOODS[lastSession.mood].color }]}>
-            <Text style={styles.sameDayLabel}>SAME AS YESTERDAY?</Text>
-            <Text style={styles.sameDaySub}>
-              {MOODS[lastSession.mood].name.toUpperCase()} · {lastSession.intensity}/10
-            </Text>
-            <View style={styles.sameDayActions}>
-              <TouchableOpacity
-                onPress={handleSameAsYesterdayLog}
-                style={styles.sameDayBtn}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Log same mood as yesterday without a workout"
-              >
-                <Text style={styles.sameDayBtnText}>JUST LOG IT</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleSameAsYesterdayRepeat}
-                style={styles.sameDayBtnOutline}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Repeat yesterday's workout prescription"
-              >
-                <Text style={styles.sameDayBtnOutlineText}>REPEAT →</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Breathe tool link */}
-        <TouchableOpacity
-          onPress={() => router.push('/breathe' as any)}
-          activeOpacity={0.6}
-          style={styles.breatheLink}
-          accessibilityRole="button"
-          accessibilityLabel="Open box breathing tool"
-        >
-          <Text style={styles.breatheLinkText}>Need to breathe first? →</Text>
-        </TouchableOpacity>
-
-        {/* Safety net link */}
-        <TouchableOpacity
-          onPress={() => router.push('/crisis' as any)}
-          activeOpacity={0.6}
-          style={styles.safetyNetBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Not okay enough to move? Get crisis support"
-        >
-          <Text style={styles.safetyNetText}>Not okay enough to move? →</Text>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* Backdrop */}
@@ -542,7 +384,7 @@ export default function HomeScreen() {
 
       {showNavHint && (
         <View style={styles.navHintPill}>
-          <Text style={styles.navHintText}>Insights · Supps · Settings live in the bar below</Text>
+          <Text style={styles.navHintText}>Insights · Settings live in the bar below</Text>
           <TouchableOpacity
             onPress={handleDismissNavHint}
             activeOpacity={0.7}
@@ -552,6 +394,26 @@ export default function HomeScreen() {
             <Text style={styles.navHintDismiss}>GOT IT</Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {showGreeting && (
+        <Animated.View style={[styles.greetingToast, { opacity: greetingAnim, transform: [{ translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }] }]}>
+          <View style={styles.greetingContent}>
+            <Text style={styles.greetingLabel}>{greetingStreakLabel}</Text>
+            <Text style={styles.greetingText}>{greetingStreakMsg}</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => {
+              if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+              Animated.timing(greetingAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => setShowGreeting(false));
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+          >
+            <Text style={styles.greetingDismiss}>✕</Text>
+          </TouchableOpacity>
+        </Animated.View>
       )}
 
       <BottomNav />
@@ -569,8 +431,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-    paddingTop: 80,
-    paddingBottom: 80,
+    paddingTop: 132,
+    paddingBottom: 36,
   },
   topRow: {
     flexDirection: 'row',
@@ -606,48 +468,33 @@ const styles = StyleSheet.create({
   },
   streakPill: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    borderWidth: 2,
-    borderColor: '#ffffff',
-    backgroundColor: '#f5f5f5',
-    paddingVertical: 14,
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#333333',
+    backgroundColor: '#111111',
+    paddingVertical: 10,
     paddingHorizontal: 14,
-    marginBottom: 18,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  streakPillCopy: {
-    flex: 1,
+    marginBottom: 12,
   },
   streakPillLabel: {
     ...t.label,
-    alignSelf: 'flex-start',
-    backgroundColor: '#E8B84B',
-    color: 'black',
+    color: '#E8B84B',
     letterSpacing: 2,
     fontSize: 12,
     lineHeight: 17,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginBottom: 7,
   },
   streakPillText: {
     ...t.bodySm,
-    color: 'black',
-    fontSize: 15,
-    lineHeight: 22,
+    color: '#c8c8c8',
+    flex: 1,
+    fontSize: 13,
   },
   streakPillDismiss: {
     ...t.label,
-    color: 'black',
+    color: '#999999',
     fontSize: 12,
     lineHeight: 17,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
   },
   checkInLabel: {
     ...t.label,
@@ -1018,5 +865,42 @@ const styles = StyleSheet.create({
   prescribeButtonText: {
     ...t.timer,
     fontSize: 15,
+  },
+  greetingToast: {
+    position: 'absolute',
+    top: '40%',
+    left: 24,
+    right: 24,
+    backgroundColor: '#ffffff',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 100,
+  },
+  greetingContent: {
+    flex: 1,
+    gap: 4,
+  },
+  greetingLabel: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    lineHeight: 19,
+    color: '#B8860B',
+    letterSpacing: 3,
+  },
+  greetingText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 18,
+    color: 'black',
+    letterSpacing: 0.2,
+    lineHeight: 26,
+  },
+  greetingDismiss: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 16,
+    color: 'black',
+    marginLeft: 12,
   },
 });

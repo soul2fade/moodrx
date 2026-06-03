@@ -493,15 +493,15 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     width: CARD_W,
-    height: 190,
+    height: 204,
   },
   scrollContent: {
     width: CARD_W * 2,
-    height: 190,
+    height: 204,
   },
   page: {
     width: CARD_W,
-    height: 190,
+    height: 204,
   },
   pageScroll: {
     flex: 1,
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 10,
-    marginTop: 10,
+    marginTop: 12,
   },
   pageLabelContainer: {
     position: 'relative',
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1a1a1a',
     paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     backgroundColor: '#0d0d0d',
     marginBottom: 8,
   },
@@ -593,8 +593,8 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   sparklineCard: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
     backgroundColor: '#0a0a0a',
     borderWidth: 1,
     borderColor: '#1a1a1a',

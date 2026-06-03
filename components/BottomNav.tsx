@@ -6,7 +6,6 @@ import { fonts } from '@/lib/typography';
 const TABS = [
   { label: 'HOME', path: '/home' },
   { label: 'INSIGHTS', path: '/insights' },
-  { label: 'SUPPS', path: '/supplements' },
   { label: 'SETTINGS', path: '/settings' },
 ] as const;
 
@@ -46,7 +45,7 @@ export function BottomNav() {
       ];
     });
     Animated.parallel(animations).start();
-  }, [pathname]);
+  }, [labelOpacities, pathname, underlineOpacities]);
 
   return (
     <View style={styles.container}>

@@ -24,6 +24,17 @@ export interface SupplementLog {
   taken: boolean;
 }
 
+export interface CustomWorkout {
+  id: string;
+  mood: MoodKey;
+  name: string;
+  duration: number;
+  intensity: 'Light' | 'Moderate' | 'Intense';
+  steps: string[];
+  vibe: string;
+  isCustom: true;
+}
+
 const FIRST_LAUNCH_KEY = '@moodrx_first_launch_done';
 const GUIDED_SESSION_KEY = '@moodrx_guided_done';
 const SESSIONS_KEY = '@moodrx_sessions';
@@ -203,6 +214,37 @@ export async function toggleSupplementLog(supplementName: string, date: string):
     invalidateSupplementsCache();
   } catch (e) {
     console.warn('[MoodRx] toggleSupplementLog failed:', e);
+  }
+}
+
+export async function getCustomWorkouts(): Promise<CustomWorkout[]> {
+  try {
+    const raw = await AsyncStorage.getItem(CUSTOM_WORKOUTS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as CustomWorkout[];
+  } catch (e) {
+    console.warn('[MoodRx] getCustomWorkouts failed:', e);
+    return [];
+  }
+}
+
+export async function saveCustomWorkout(workout: CustomWorkout): Promise<void> {
+  try {
+    const existing = await getCustomWorkouts();
+    existing.push(workout);
+    await AsyncStorage.setItem(CUSTOM_WORKOUTS_KEY, JSON.stringify(existing));
+  } catch (e) {
+    console.warn('[MoodRx] saveCustomWorkout failed:', e);
+  }
+}
+
+export async function deleteCustomWorkout(id: string): Promise<void> {
+  try {
+    const existing = await getCustomWorkouts();
+    const filtered = existing.filter((w) => w.id !== id);
+    await AsyncStorage.setItem(CUSTOM_WORKOUTS_KEY, JSON.stringify(filtered));
+  } catch (e) {
+    console.warn('[MoodRx] deleteCustomWorkout failed:', e);
   }
 }
 

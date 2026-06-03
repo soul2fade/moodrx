@@ -294,8 +294,10 @@ export default function HomeScreen() {
               },
             ]}
           >
-            <Text style={styles.streakPillLabel}>{greetingStreakLabel}</Text>
-            <Text style={styles.streakPillText}>{greetingStreakMsg}</Text>
+            <View style={styles.streakPillCopy}>
+              <Text style={styles.streakPillLabel}>{greetingStreakLabel}</Text>
+              <Text style={styles.streakPillText}>{greetingStreakMsg}</Text>
+            </View>
             <TouchableOpacity
               onPress={() => {
                 if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
@@ -604,33 +606,48 @@ const styles = StyleSheet.create({
   },
   streakPill: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#333333',
-    backgroundColor: '#111111',
-    paddingVertical: 10,
+    alignItems: 'flex-start',
+    gap: 12,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    backgroundColor: '#f5f5f5',
+    paddingVertical: 14,
     paddingHorizontal: 14,
-    marginBottom: 12,
+    marginBottom: 18,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  streakPillCopy: {
+    flex: 1,
   },
   streakPillLabel: {
     ...t.label,
-    color: '#E8B84B',
+    alignSelf: 'flex-start',
+    backgroundColor: '#E8B84B',
+    color: '#0a0a0a',
     letterSpacing: 2,
     fontSize: 12,
     lineHeight: 17,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginBottom: 7,
   },
   streakPillText: {
     ...t.bodySm,
-    color: '#c8c8c8',
-    flex: 1,
-    fontSize: 13,
+    color: '#111111',
+    fontSize: 15,
+    lineHeight: 22,
   },
   streakPillDismiss: {
     ...t.label,
-    color: '#999999',
+    color: '#111111',
     fontSize: 12,
     lineHeight: 17,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   checkInLabel: {
     ...t.label,

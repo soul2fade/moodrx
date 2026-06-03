@@ -11,7 +11,7 @@ import {
 import { router } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useSessions } from '@/contexts/SessionsContext';
-import { formatSessionDelta } from '@/lib/session-utils';
+import { formatChange } from '@/lib/analytics';
 import { type as t, fonts } from '@/lib/typography';
 
 const FEATURES = [
@@ -67,7 +67,8 @@ export default function PremiumScreen() {
   const monthlyPrice = monthlyPkg?.product?.priceString ?? '$6.99';
   const yearlyPrice = yearlyPkg?.product?.priceString ?? '$49.99';
   const hasPersonalStats = sessionCount >= 3;
-  const personalDeltaLabel = formatSessionDelta(5, 5 + Math.round(avgChange * 10) / 10);
+  const personalDeltaLabel = formatChange(avgChange);
+  const socialProofColor = hasPersonalStats && avgChange > 0 ? '#E8B84B' : '#059669';
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: '#0a0a0a', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -109,16 +110,16 @@ export default function PremiumScreen() {
         )}
 
         <View style={styles.socialProofBox}>
-          <Text style={styles.socialProofStat}>
+          <Text style={[styles.socialProofStat, { color: socialProofColor }]}>
             {hasPersonalStats ? personalDeltaLabel : '−3'}
           </Text>
           <Text style={styles.socialProofLabel}>
-            {hasPersonalStats ? 'YOUR AVG SHIFT PER SESSION' : 'EXAMPLE SHIFT (ONE SESSION)'}
+            {hasPersonalStats ? 'AVG MOOD SCORE CHANGE' : 'EXAMPLE MOOD SCORE CHANGE'}
           </Text>
           <Text style={styles.socialProofSub}>
             {hasPersonalStats
-              ? `Based on ${sessionCount} logged sessions in your evidence file.`
-              : 'Log a few sessions to see your own average here.'}
+              ? `After each session, your 1-10 mood score changes by this amount on average. Lower is better. Based on ${sessionCount} sessions.`
+              : 'Example: −3 means the mood score dropped by 3 points after a session. Lower is better.'}
           </Text>
         </View>
 

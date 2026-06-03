@@ -111,12 +111,14 @@ export default function WorkoutScreen() {
   const [stepTimerRunning, setStepTimerRunning] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
+  const [showTrashTalkWarning, setShowTrashTalkWarning] = useState(false);
   const restProgressAnim = useRef(new Animated.Value(1)).current;
   const activeProgressAnim = useRef(new Animated.Value(1)).current;
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepTimerRemainingRef = useRef(0);
   const insultIdxRef = useRef(0);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const trashWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isNavigating = useRef(false);
   const repScaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -198,6 +200,7 @@ export default function WorkoutScreen() {
       try { insultPlayer.remove(); } catch {}
       try { transitionPlayer.remove(); } catch {}
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
+      if (trashWarningTimerRef.current) clearTimeout(trashWarningTimerRef.current);
       if (stepTimerRef.current) clearInterval(stepTimerRef.current);
       deactivateKeepAwake();
     };
@@ -400,7 +403,22 @@ export default function WorkoutScreen() {
   };
 
   const handleTrashTalk = () => {
-    setTrashTalkOn((on) => !on);
+    setTrashTalkOn((on) => {
+      const next = !on;
+      if (next) {
+        if (trashWarningTimerRef.current) clearTimeout(trashWarningTimerRef.current);
+        setShowTrashTalkWarning(true);
+        trashWarningTimerRef.current = setTimeout(() => {
+          setShowTrashTalkWarning(false);
+          trashWarningTimerRef.current = null;
+        }, 3500);
+      } else {
+        if (trashWarningTimerRef.current) clearTimeout(trashWarningTimerRef.current);
+        trashWarningTimerRef.current = null;
+        setShowTrashTalkWarning(false);
+      }
+      return next;
+    });
   };
 
   const handleKeepAwake = async () => {
@@ -484,6 +502,14 @@ export default function WorkoutScreen() {
           <Text style={styles.stepCounter} allowFontScaling={false}>{currentStep + 1} / {totalSteps}</Text>
         </View>
       </View>
+
+      {showTrashTalkWarning && (
+        <View style={styles.trashWarningToast} accessibilityRole="alert">
+          <Text style={styles.trashWarningText}>
+            Turning on trash talk means you accept the risk of being insulted — in good fun of course! 🙂
+          </Text>
+        </View>
+      )}
 
       {/* Quit confirmation modal */}
       <Modal
@@ -775,6 +801,29 @@ const styles = StyleSheet.create({
   keepGoingText: { ...t.label, color: '#ffffff' },
   quitConfirmBtn: { borderWidth: 1, borderColor: '#E11D48', paddingHorizontal: 16, paddingVertical: 8 },
   quitConfirmBtnText: { ...t.label, color: '#E11D48', letterSpacing: 1 },
+  trashWarningToast: {
+    position: 'absolute',
+    top: 96,
+    left: 24,
+    right: 24,
+    zIndex: 20,
+    borderWidth: 2,
+    borderColor: '#E11D48',
+    backgroundColor: '#ffffff',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  trashWarningText: {
+    ...t.bodySm,
+    color: 'black',
+    fontSize: 15,
+    lineHeight: 22,
+  },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32 },
   iconCenter: { alignItems: 'center', marginBottom: 12 },

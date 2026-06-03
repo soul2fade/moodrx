@@ -370,8 +370,8 @@ export default function SettingsScreen() {
         <Text style={styles.sectionHeader}>WORKOUT</Text>
         <View style={styles.toggleRow}>
           <View style={styles.toggleLabelBlock}>
-            <Text style={styles.toggleLabel}>Dr. MoodRx copy</Text>
-            <Text style={styles.prefHint}>Pre/post lines on prescription and post-workout. Softer tone for anxious and low moods.</Text>
+            <Text style={styles.toggleLabel}>Workout commentary</Text>
+            <Text style={styles.prefHint}>Show Dr. MoodRx notes before and after workouts, with a gentler tone for anxious and low moods.</Text>
           </View>
           <TouchableOpacity
             onPress={handleVoiceToggle}
@@ -379,7 +379,7 @@ export default function SettingsScreen() {
             style={[styles.toggle, voiceEnabled ? styles.toggleOn : styles.toggleOff]}
             accessibilityRole="switch"
             accessibilityState={{ checked: voiceEnabled }}
-            accessibilityLabel="Dr MoodRx copy"
+            accessibilityLabel="Workout commentary"
           >
             <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: voiceTranslateX }] }]} />
           </TouchableOpacity>

@@ -17,11 +17,12 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Night',
     dose: '200-400mg',
     moods: ['anxious', 'stressed'],
-    science: "Magnesium regulates your GABA receptors — the same system benzodiazepines target, minus the prescription and the zombie eyes. NHANES data shows roughly 48% of Americans fall below the estimated average requirement for magnesium — most of them have no idea. The glycinate form is significantly better absorbed than cheap magnesium oxide, which mostly just makes you run to the bathroom.",
+    science: "Magnesium supports normal GABA and NMDA receptor function, which is part of why low magnesium status can show up as tension, poor sleep, and stress sensitivity. NHANES data shows roughly 48% of Americans fall below the estimated average requirement for magnesium. The glycinate form is generally better tolerated than magnesium oxide and may be easier to absorb for some people.",
     sources: [
       "Boyle et al. (2017). The effects of magnesium supplementation on subjective anxiety and stress. Nutrients.",
-      "Costello & Moser (2019). NHANES magnesium intake data. Open Heart.",
+      "Rosanoff et al. (2012). Suboptimal magnesium status in the United States: are the health consequences underestimated? Nutr Rev.",
       "Abbasi et al. (2012). The effect of magnesium supplementation on primary insomnia. J Res Med Sci.",
+      "Schuette et al. (1994). Bioavailability of magnesium diglycinate vs magnesium oxide in patients with ileal resection. JPEN J Parenter Enteral Nutr.",
     ],
   },
   {
@@ -33,7 +34,7 @@ export const SUPPLEMENTS: Supplement[] = [
     science: "EPA and DHA are structural components of your brain cell membranes. Low omega-3 levels correlate with reduced serotonin transmission — your brain literally can't move the happy chemical around efficiently. Across multiple meta-analyses, it's EPA specifically — not DHA — that consistently shows antidepressant effects, via its anti-inflammatory action in neural tissue. Look for supplements where EPA is the dominant fraction.",
     sources: [
       "Sublette et al. (2011). Meta-analytic review of EPA antidepressant effects. J Clin Psychiatry.",
-      "Su et al. (2008). Omega-3 augmentation of sertraline in major depression. Biol Psychiatry.",
+      "Firth et al. (2019). The efficacy and safety of nutrient supplements in the treatment of mental disorders. World Psychiatry.",
       "Grosso et al. (2014). Role of omega-3 fatty acids in depression. PLoS One.",
     ],
   },
@@ -85,7 +86,7 @@ export const SUPPLEMENTS: Supplement[] = [
     science: "GABA is your brain's primary inhibitory neurotransmitter — it literally slows down neural activity. When GABA signaling is low, your brain can't stop firing, which is exactly what restlessness feels like. Oral GABA doesn't cross the blood-brain barrier well in standard form, but pharmacological GABA supplements have shown benefits for reducing psychological stress markers and improving sleep onset. Take it 30-60 minutes before you need to wind down.",
     sources: [
       "Abdou et al. (2006). Relaxation and immunity enhancement effects of GABA administration. Biofactors.",
-      "Byun et al. (2014). GABA administration and its effects on sleep quality. J Psychiatr Res.",
+      "Byun et al. (2018). Safety and efficacy of gamma-aminobutyric acid from fermented rice germ in patients with insomnia symptoms. J Clin Neurol.",
     ],
   },
   {
@@ -106,11 +107,12 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Morning',
     dose: '2-5K IU',
     moods: ['low', 'foggy'],
-    science: "Vitamin D receptors exist throughout your brain, particularly in areas controlling mood and cognition. Over 40% of Americans are deficient, and the correlation with depression is one of the most replicated findings in nutritional psychiatry. The K2 is there because D3 increases calcium absorption — K2 makes sure it goes to your bones, not your arteries.",
+    science: "Vitamin D receptors exist throughout your brain, including areas involved in mood and cognition. Low vitamin D status is consistently associated with depression risk, though supplementation results are mixed and may depend on baseline deficiency. The K2 is there because D3 increases calcium absorption — K2 helps activate proteins involved in directing calcium toward bone and away from soft tissues.",
     sources: [
       "Anglin et al. (2013). Vitamin D deficiency and depression in adults: systematic review. Br J Psychiatry.",
       "Shaffer et al. (2014). Vitamin D supplementation for depressive symptoms. Psychosom Med.",
       "Holick (2007). Vitamin D deficiency. N Engl J Med.",
+      "Wasilewski et al. (2019). The bone-vasculature axis: calcium supplementation and the role of vitamin K. Front Cardiovasc Med.",
     ],
   },
   {
@@ -161,7 +163,7 @@ export const SUPPLEMENTS: Supplement[] = [
     science: "B vitamins are direct cofactors in neurotransmitter synthesis — your brain literally cannot produce serotonin, dopamine, or norepinephrine without B6, B9, and B12. Stress burns through B vitamins faster than normal. A deficiency doesn't feel like 'vitamin deficiency' — it feels like depression, brain fog, and fatigue. Which is why most people never connect the dots.",
     sources: [
       "Kennedy (2016). B Vitamins and the Brain: Mechanisms, Dose and Efficacy. Nutrients.",
-      "Young (1993). Serotonin and 5-HTP: neuromodulation. J Psychiatry Neurosci.",
+      "Young et al. (2019). B vitamin supplementation on depressive symptoms, anxiety, and stress: systematic review and meta-analysis. Nutrients.",
       "Coppen & Bolander-Gouaille (2005). Treatment of depression: time to consider folic acid and B12. J Psychopharmacol.",
     ],
   },
@@ -199,7 +201,8 @@ export const SUPPLEMENTS: Supplement[] = [
     science: "Zinc is involved in the synthesis and regulation of over 300 enzymatic processes, including those governing dopamine, serotonin, and GABA activity. Subclinical zinc deficiency is surprisingly common and often presents not as illness but as emotional blunting, reduced motivation, and poor stress resilience. When you're feeling good, zinc helps maintain the neurotransmitter balance that's producing that state. Take with food — on an empty stomach it causes nausea.",
     sources: [
       "Cope & Levenson (2010). Role of zinc in the development and treatment of mood disorders. Curr Opin Clin Nutr Metab Care.",
-      "Nowak et al. (2003). Zinc and depression. Pharmacol Rep.",
+      "Swardfager et al. (2013). Zinc in depression: a meta-analysis. Biol Psychiatry.",
+      "Ranjbar et al. (2014). Effects of zinc supplementation on efficacy of antidepressant therapy. Nutr Neurosci.",
     ],
   },
   {
@@ -221,11 +224,10 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Morning',
     dose: '300-600mg',
     moods: ['foggy', 'good'],
-    science: "Alpha-GPC is the most bioavailable choline donor — once it crosses the blood-brain barrier, it's immediately used to synthesize acetylcholine, the primary neurotransmitter for focal attention, working memory, and synaptic signaling. Simultaneously, it donates glycerophosphate to repair and stabilize the lipid structure of neuronal membranes. Most people are chronically under-supplying choline from diet. This fills that gap directly at the brain level.",
+    science: "Alpha-GPC is a choline donor that supports acetylcholine synthesis, a neurotransmitter involved in attention, memory, and learning. Clinical evidence is strongest in older adults with cognitive impairment rather than healthy people, but the mechanism makes it a reasonable focus-support option when dietary choline is low.",
     sources: [
       "De Jesus Moreno Moreno (2003). Cognitive improvement in mild-to-moderate Alzheimer's dementia after treatment with choline alfoscerate. Clinical Therapeutics, 25(1), 178–193.",
-      "Parnetti et al. (2007). Cholinergic precursors in the treatment of cognitive impairment. Mech Ageing Dev.",
-      "Bellar et al. (2015). The effect of alpha-GPC on isometric strength. J Int Soc Sports Nutr.",
+      "Parnetti et al. (2001). Choline alphoscerate in cognitive decline and acute cerebrovascular disease. Mech Ageing Dev.",
     ],
   },
   {
@@ -301,7 +303,7 @@ export const SUPPLEMENTS: Supplement[] = [
     sources: [
       "Papakostas et al. (2012). L-methylfolate as adjunctive therapy for SSRI-resistant major depression. Am J Psychiatry, 169(12), 1267–1274.",
       "Stahl (2008). L-methylfolate: a vitamin for your monoamines. J Clin Psychiatry, 69(9), 1352–1353.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
+      "Firth et al. (2019). The efficacy and safety of nutrient supplements in the treatment of mental disorders. World Psychiatry.",
     ],
   },
   {
@@ -314,7 +316,7 @@ export const SUPPLEMENTS: Supplement[] = [
     sources: [
       "Papakostas et al. (2010). S-adenosyl methionine augmentation of serotonin reuptake inhibitors for antidepressant nonresponders. Am J Psychiatry, 167(8), 942–948.",
       "Mischoulon & Fava (2002). Role of S-adenosyl-L-methionine in the treatment of depression. Am J Clin Nutr.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
+      "Firth et al. (2019). The efficacy and safety of nutrient supplements in the treatment of mental disorders. World Psychiatry.",
     ],
   },
   {
@@ -323,11 +325,11 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'As needed',
     dose: '150-300mg kavalactones',
     moods: ['anxious', 'restless'],
-    science: "Kava's active compounds — kavalactones — directly bind to and positively modulate GABA-A receptors, functioning similarly to mild clinical anxiolytics but without the sedation or dependence risk of benzodiazepines. They also suppress limbic system hyper-reactivity, which is what drives the physical symptoms of social anxiety and panic. Multiple RCTs confirm significant reductions in anxiety on standardized scales. Unlike most herbal anxiolytics, it works acutely — within an hour — not just after weeks of use.",
+    science: "Kava's active compounds — kavalactones — modulate GABA-A and other nervous-system targets involved in anxiety. Clinical trials and reviews suggest standardized kava extracts can reduce anxiety symptoms short-term. It can work faster than many baseline-support herbs, but quality, dosing, liver safety, and medication interactions matter.",
     sources: [
-      "Pittler & Ernst (2003). Kava extract for treating anxiety (Cochrane review). J Clin Psychopharmacol.",
+      "Pittler & Ernst (2003). Kava extract versus placebo for treating anxiety. Cochrane Database Syst Rev.",
       "Lakhan & Vieira (2010). Nutritional and herbal supplements for anxiety and anxiety-related disorders. Nutr J.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
+      "Sarris et al. (2013). Kava in the treatment of generalized anxiety disorder: a double-blind, randomized, placebo-controlled study. J Clin Psychopharmacol.",
     ],
   },
   {
@@ -336,11 +338,11 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Evening',
     dose: '300-500mg',
     moods: ['anxious', 'restless'],
-    science: "Passionflower raises available GABA in the brain through multiple pathways — inhibiting its breakdown and enhancing its activity at receptors. It coordinates a broad calming effect across the central nervous system, which specifically targets the physical symptoms of anxiety: the tremors, the butterflies, the muscular tension. An RCT comparing passionflower to oxazepam (a prescription anxiolytic) found equivalent effectiveness on anxiety scores, with significantly fewer cognitive side effects. It's better for baseline anxiety than acute panic.",
+    science: "Passionflower appears to influence GABA-related calming pathways and has a long history of use for anxiety and sleep. A small RCT comparing passionflower to oxazepam found similar anxiety-score improvements with less impairment of job performance, but the evidence base is still limited. Think of it as baseline calming support, not a guaranteed acute panic fix.",
     sources: [
       "Akhondzadeh et al. (2001). Passionflower in the treatment of generalized anxiety. J Clin Pharm Ther, 26(5), 363–367.",
       "Miroddi et al. (2013). Passiflora incarnata L.: ethnopharmacology, clinical application, safety and evaluation of clinical trials. J Ethnopharmacol.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
+      "Janda et al. (2020). Passiflora incarnata in neuropsychiatric disorders: a systematic review. Nutrients.",
     ],
   },
   {
@@ -349,11 +351,11 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Evening',
     dose: '220-1100mg',
     moods: ['anxious', 'stressed'],
-    science: "Chamomile contains apigenin — a flavonoid that binds directly to the benzodiazepine site on GABA-A receptors. This isn't indirect or theoretical; apigenin is a partial agonist at the same receptor site targeted by clinical anxiolytics. Unlike the others, chamomile's effect is cumulative — a long-term placebo-controlled RCT (26 weeks, published in Phytomedicine) showed sustained reduction in relapse rates for generalized anxiety disorder. It's one of the best-validated botanicals for chronic, background worry rather than acute panic.",
+    science: "Chamomile contains apigenin, a flavonoid that interacts with benzodiazepine-related GABA-A receptor sites in preclinical models. Human trials support modest anxiolytic effects in generalized anxiety disorder, and a long-term randomized trial found lower ongoing GAD symptom scores, though relapse reduction was not statistically significant. It's better framed as chronic background-worry support than an acute panic tool.",
     sources: [
       "Amsterdam et al. (2009). A randomized, double-blind, placebo-controlled trial of oral Matricaria recutita for generalized anxiety disorder. J Clin Psychopharmacol, 29(4), 378–382.",
       "Hieu et al. (2019). Therapeutic efficacy and safety of chamomile for state anxiety, generalized anxiety disorder, insomnia. Phytother Res.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
+      "Mao et al. (2016). Long-term chamomile treatment for generalized anxiety disorder: a randomized clinical trial. Phytomedicine.",
     ],
   },
   {
@@ -362,11 +364,11 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Split doses with meals',
     dose: '12-18g (powder)',
     moods: ['anxious', 'restless'],
-    science: "At standard doses, inositol does almost nothing. At 12–18g daily — the therapeutic range — it stabilizes the intracellular signaling systems that regulate serotonin receptor sensitivity, specifically raising the threshold required to trigger a panic spike. A double-blind crossover RCT showed it reduced panic attack frequency more effectively than fluvoxamine (an SSRI) with fewer side effects. The dose is the entire point: most people never use enough to see the effect.",
+    science: "At standard doses, inositol does almost nothing. At 12–18g daily — the therapeutic range used in early trials — it may influence intracellular signaling systems linked to serotonin receptors. Small double-blind crossover trials showed benefits in panic disorder and OCD, including one comparison against fluvoxamine for panic attacks. The evidence is promising but mixed, so dose and expectations matter.",
     sources: [
       "Palatnik et al. (2001). Double-blind, controlled, crossover trial of inositol versus fluvoxamine for panic disorder. J Clin Psychopharmacol, 21(3), 335–339.",
       "Benjamin et al. (1995). Double-blind, placebo-controlled, crossover trial of inositol treatment for panic disorder. Am J Psychiatry.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
+      "Fux et al. (1996). Inositol treatment of obsessive-compulsive disorder. Am J Psychiatry.",
     ],
   },
   {
@@ -379,7 +381,6 @@ export const SUPPLEMENTS: Supplement[] = [
     sources: [
       "Brzezinski et al. (2005). Effects of exogenous melatonin on sleep: meta-analysis. Sleep Med Rev, 9(1), 61–68.",
       "Ferracioli-Oda et al. (2013). Meta-analysis: melatonin for the treatment of primary sleep disorders. PLoS ONE.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
     ],
   },
   {
@@ -392,7 +393,7 @@ export const SUPPLEMENTS: Supplement[] = [
     sources: [
       "Dinan et al. (2013). Psychobiotics: a novel class of psychotropic. Biol Psychiatry, 74(10), 720–726.",
       "Wallace & Milev (2021). The effects of probiotics on depressive symptoms in humans: systematic review. Ann Gen Psychiatry.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
+      "Firth et al. (2019). The efficacy and safety of nutrient supplements in the treatment of mental disorders. World Psychiatry.",
     ],
   },
   {
@@ -401,11 +402,11 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Before bed',
     dose: '300-600mg',
     moods: ['restless', 'anxious'],
-    science: "Valerian works through two simultaneous GABA mechanisms: its active compounds stimulate GABA release from nerve endings while blocking its reabsorption, rapidly increasing GABA availability in the brain. Unlike chamomile (which works through receptor binding) or melatonin (which works through circadian signaling), valerian acts directly on the inhibitory neurotransmitter supply — shifting the brain from active waking state to sedated pre-sleep. It takes 2–4 weeks to reach full effectiveness at consistent doses. A meta-analysis of 16 trials confirmed improved sleep quality without measurable morning grogginess.",
+    science: "Valerian appears to affect GABA-related pathways involved in sleep onset and relaxation. Clinical evidence is mixed: systematic reviews suggest it may improve subjective sleep quality for some people, but study quality and preparation differences make firm conclusions difficult. It is best treated as a gentle sleep-support option, not a guaranteed sedative.",
     sources: [
       "Bent et al. (2006). Valerian for sleep: a systematic review and meta-analysis. Am J Med, 119(12), 1005–1012.",
       "Leathwood et al. (1982). Aqueous extract of valerian root improves sleep quality. Pharmacol Biochem Behav.",
-      "Firth et al. (2020). The evidence for nutritional supplements in psychiatric disorders. World Psychiatry.",
+      "Shinjyo et al. (2020). Valerian root in treating sleep problems and associated disorders: systematic review and meta-analysis. J Evid Based Integr Med.",
     ],
   },
 ];

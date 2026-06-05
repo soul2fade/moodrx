@@ -213,7 +213,9 @@ export default function InsightsScreen() {
                 </View>
               )}
             </View>
-            <Text style={styles.healthHint}>Cross-reference with your mood sessions below.</Text>
+            <Text style={styles.healthHint}>
+              Health sync is optional. MoodRx uses this data only to show patterns with your mood sessions.
+            </Text>
           </View>
         )}
 
@@ -1233,7 +1235,7 @@ const styles = StyleSheet.create({
   },
   healthCardLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: colors.text,
     letterSpacing: 3,
     marginBottom: 10,
   },
@@ -1251,7 +1253,7 @@ const styles = StyleSheet.create({
   },
   healthStatLabel: {
     ...t.label,
-    color: '#999999',
+    color: colors.text,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
@@ -1259,7 +1261,7 @@ const styles = StyleSheet.create({
   },
   healthHint: {
     ...t.bodySm,
-    color: '#999999',
+    color: colors.text,
     marginTop: 10,
   },
   supplementBtn: {

@@ -345,6 +345,9 @@ export default function SettingsScreen() {
                 ? 'Saves workouts and breathing sessions. Reads steps and sleep for Insights. Requires Health Connect and a native Android build.'
                 : 'Saves workouts and breathing sessions. Reads steps and sleep for Insights. Requires a device rebuild with HealthKit enabled.'}
             </Text>
+            <Text style={styles.prefHint}>
+              Health sync is optional. MoodRx uses steps, sleep, and workout data only to show patterns in your insights.
+            </Text>
             <View style={styles.toggleRow}>
               <Text style={styles.toggleLabel}>Sync with {healthPlatformLabel}</Text>
               <TouchableOpacity

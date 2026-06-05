@@ -156,7 +156,7 @@ export const SUPPLEMENTS: Supplement[] = [
     benefit: "Stress and nutrient support",
     timing: 'Morning',
     dose: '1 cap',
-    moods: ['low', 'foggy', 'stressed'],
+    moods: ['foggy', 'stressed'],
     science: "B vitamins participate in energy metabolism, methylation, and neurotransmitter-related pathways. A systematic review and meta-analysis of B-complex supplementation found a statistically significant benefit for stress, but not for anxiety and not clearly for depressive symptoms. Folate and B12 evidence is most relevant when low status or deficiency is present.",
     sources: [
       "Kennedy (2016). B Vitamins and the Brain: Mechanisms, Dose and Efficacy. Nutrients.",
@@ -194,8 +194,8 @@ export const SUPPLEMENTS: Supplement[] = [
     benefit: "Depression-adjunct evidence",
     timing: 'With food',
     dose: '15-30mg',
-    moods: ['good'],
-    science: "Zinc is an essential trace mineral involved in many enzymes and neural signaling pathways. Meta-analysis shows lower peripheral zinc concentrations in people with depression compared with controls, and small clinical trials suggest zinc may help as an adjunct to antidepressant therapy. The listed citations do not prove that zinc improves mood in zinc-replete healthy users.",
+    moods: ['low'],
+    science: "Zinc is an essential trace mineral involved in many enzymes and neural signaling pathways. Meta-analysis shows lower peripheral zinc concentrations in people with depression compared with controls, and small clinical trials suggest zinc may help as an adjunct to antidepressant therapy. The listed citations do not prove that zinc improves mood in zinc-replete healthy users. Chronic high-dose zinc can impair copper status, so long-term use should be cautious.",
     sources: [
       "Cope & Levenson (2010). Role of zinc in the development and treatment of mood disorders. Curr Opin Clin Nutr Metab Care.",
       "Swardfager et al. (2013). Zinc in depression: a meta-analysis. Biol Psychiatry.",
@@ -206,8 +206,8 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Tyrosine',
     benefit: "Stress-demand cognition",
     timing: 'Morning (empty stomach)',
-    dose: '500-2000mg',
-    moods: ['foggy', 'low'],
+    dose: 'Study doses vary',
+    moods: ['foggy'],
     science: "L-tyrosine is a precursor for catecholamines including dopamine and norepinephrine. Reviews and small acute studies suggest tyrosine can help preserve working memory or cognitive performance during sleep loss, cold/noise stress, or high cognitive demand. Evidence does not show broad cognitive benefit when catecholamine demand is not elevated.",
     sources: [
       "Jongkees et al. (2015). Effect of tyrosine supplementation on clinical and healthy populations under stress or cognitive demands. J Psychiatr Res.",

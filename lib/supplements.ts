@@ -15,7 +15,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Magnesium Glycinate',
     benefit: "Mixed anxiety evidence",
     timing: 'Night',
-    dose: '200-400mg',
+    dose: 'Dosage varies',
     moods: ['anxious', 'stressed'],
     science: "Magnesium has been studied for anxiety, but the evidence is weak and mixed. In a 2017 systematic review, 4 of 8 studies in anxiety-vulnerable samples reported positive effects and 4 showed no effect; the review also found no validated subjective stress outcome. NHANES-based reviews report that many Americans consume less magnesium than the estimated average requirement. One small trial in older adults found magnesium improved insomnia scores, and a small ileal-resection study found magnesium diglycinate better tolerated or absorbed in some patients with impaired magnesium oxide absorption.",
     sources: [
@@ -29,7 +29,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Omega-3 EPA/DHA',
     benefit: "EPA-focused mood evidence",
     timing: 'With food',
-    dose: '1-2g',
+    dose: 'Dosage varies',
     moods: ['low'],
     science: "Meta-analyses of depression trials report that omega-3 formulas with higher EPA content are more consistently associated with reduced depressive symptoms than DHA-dominant formulas, especially as adjunctive support. These studies support an EPA-focused depression claim; they do not prove a direct serotonin mechanism in humans.",
     sources: [
@@ -42,7 +42,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: '5-HTP',
     benefit: "Serotonin precursor evidence",
     timing: 'Evening',
-    dose: '50-100mg',
+    dose: 'Dosage varies',
     moods: ['low'],
     science: "5-HTP is a serotonin precursor. Reviews of 5-HTP for depression found possible antidepressant effects in older small trials, but the Cochrane review concluded that the evidence was insufficient because available placebo-controlled data were limited and low quality. Do not combine 5-HTP with SSRIs, MAOIs, or other serotonergic drugs unless supervised by a clinician.",
     sources: [
@@ -54,7 +54,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Ashwagandha KSM-66',
     benefit: "Studied cortisol reduction",
     timing: 'Morning',
-    dose: '300-600mg',
+    dose: 'Dosage varies',
     moods: ['stressed', 'anxious'],
     science: "A 60-day randomized trial of KSM-66 ashwagandha root extract in chronically stressed adults reported larger reductions in perceived stress scores and serum cortisol than placebo. Broader reviews describe ashwagandha anxiety evidence as promising but limited by small and heterogeneous studies; results should not be assumed to apply to every ashwagandha product.",
     sources: [
@@ -66,7 +66,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'L-Theanine',
     benefit: "Relaxed-alertness evidence",
     timing: 'As needed',
-    dose: '100-200mg',
+    dose: 'Dosage varies',
     moods: ['anxious', 'restless'],
     science: "Small human studies report that L-theanine can increase alpha-band EEG activity associated with relaxed alertness and can reduce some acute stress-response measures. Human evidence supports limited acute stress/calmness claims; neurotransmitter changes such as GABA, serotonin, and dopamine increases are not established by these human citations.",
     sources: [
@@ -78,7 +78,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'GABA',
     benefit: "Sleep-onset evidence limited",
     timing: 'Evening',
-    dose: '250-500mg',
+    dose: 'Dosage varies',
     moods: ['restless'],
     science: "Endogenous GABA is the brain's main inhibitory neurotransmitter, but whether oral GABA meaningfully increases brain GABA in humans remains unresolved. Small human studies of oral GABA report relaxation-related marker changes and, in one fermented-rice-germ GABA trial, shorter sleep latency and improved sleep efficiency in people with insomnia symptoms.",
     sources: [
@@ -90,7 +90,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Magnesium L-Threonate',
     benefit: "Brain-magnesium research",
     timing: 'Night',
-    dose: '1-2g',
+    dose: 'Dosage varies',
     moods: ['restless'],
     science: "Magnesium L-threonate increased brain magnesium and improved learning and memory measures in rodents. A small human study of a magnesium L-threonate-containing formula reported cognitive benefits in older adults with cognitive impairment. These citations do not establish human brain-magnesium superiority over other forms or a direct restlessness/sleep benefit.",
     sources: [
@@ -102,7 +102,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Vitamin D3+K2',
     benefit: "Deficiency-linked mood support",
     timing: 'Morning',
-    dose: 'Check labs',
+    dose: 'Dosage varies',
     moods: ['low'],
     science: "Low vitamin D status is associated with depression in systematic reviews, but supplementation trials show mixed results and appear most relevant when deficiency is present. Vitamin K activates proteins involved in bone mineralization and inhibition of vascular calcification, but these citations do not prove D3+K2 prevents vascular disease in general supplement users.",
     sources: [
@@ -116,7 +116,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: "Lion's Mane",
     benefit: "Preliminary cognitive evidence",
     timing: 'Morning',
-    dose: '500-1000mg',
+    dose: 'Dosage varies',
     moods: ['foggy'],
     science: "A small double-blind trial in older adults with mild cognitive impairment reported cognitive-score improvement after 16 weeks of Hericium erinaceus intake. A small study in women reported reductions in some depression and anxiety measures. Neurotrophic effects from compounds in Lion's Mane are supported mainly by preclinical and cell research, not by direct human evidence of neurogenesis or myelin repair.",
     sources: [
@@ -129,7 +129,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Phosphatidylserine',
     benefit: "Limited memory/stress evidence",
     timing: 'With breakfast',
-    dose: '100-300mg',
+    dose: 'Dosage varies',
     moods: ['foggy', 'stressed'],
     science: "Phosphatidylserine is a membrane phospholipid involved in neuronal signaling. Reviews and small human studies report possible benefits for some memory or stress-response measures, but findings vary by population, dose, and formulation. The FDA has allowed only qualified cognitive-function claims for phosphatidylserine, with language stating that the evidence is limited and preliminary.",
     sources: [
@@ -142,7 +142,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Rhodiola',
     benefit: "Stress-fatigue evidence",
     timing: 'Morning',
-    dose: '200-400mg',
+    dose: 'Dosage varies',
     moods: ['stressed', 'foggy'],
     science: "Small human trials of standardized Rhodiola rosea extracts report improvements in stress-related fatigue, mental performance during night duty, or attention under fatigue. The evidence is limited by small studies and extract-specific designs. The listed studies do not test stacking Rhodiola with ashwagandha.",
     sources: [
@@ -155,7 +155,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'B-Complex',
     benefit: "Stress and nutrient support",
     timing: 'Morning',
-    dose: '1 cap',
+    dose: 'Dosage varies',
     moods: ['foggy', 'stressed'],
     science: "B vitamins participate in energy metabolism, methylation, and neurotransmitter-related pathways. A systematic review and meta-analysis of B-complex supplementation found a statistically significant benefit for stress, but not for anxiety and not clearly for depressive symptoms. Folate and B12 evidence is most relevant when low status or deficiency is present.",
     sources: [
@@ -168,7 +168,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Creatine Monohydrate',
     benefit: "Brain-energy evidence mixed",
     timing: 'Morning',
-    dose: '3-5g',
+    dose: 'Dosage varies',
     moods: ['good'],
     science: "Creatine supports the phosphocreatine energy-buffering system. Human studies and reviews report possible benefits for memory or reasoning in some groups, including vegetarians, older adults, or people under cognitive stressors, but effects are not consistent across all cognitive domains. The listed citations do not prove that creatine preserves mood on a good day.",
     sources: [
@@ -181,7 +181,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'NAC',
     benefit: "Glutathione and glutamate research",
     timing: 'With food',
-    dose: '600-1200mg',
+    dose: 'Dosage varies',
     moods: ['good'],
     science: "N-acetylcysteine provides cysteine for glutathione synthesis and has been studied for oxidative-stress and glutamate-related pathways in psychiatric conditions. Clinical evidence is condition-specific and mixed. The listed studies support NAC as a researched adjunct in psychiatric disorders; they do not establish it as a healthy-person mood-maintenance or detox supplement.",
     sources: [
@@ -193,7 +193,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Zinc',
     benefit: "Depression-adjunct evidence",
     timing: 'With food',
-    dose: '15-30mg',
+    dose: 'Dosage varies',
     moods: ['low'],
     science: "Zinc is an essential trace mineral involved in many enzymes and neural signaling pathways. Meta-analysis shows lower peripheral zinc concentrations in people with depression compared with controls, and small clinical trials suggest zinc may help as an adjunct to antidepressant therapy. The listed citations do not prove that zinc improves mood in zinc-replete healthy users. Chronic high-dose zinc can impair copper status, so long-term use should be cautious.",
     sources: [
@@ -206,7 +206,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Tyrosine',
     benefit: "Stress-demand cognition",
     timing: 'Morning (empty stomach)',
-    dose: 'Study doses vary',
+    dose: 'Dosage varies',
     moods: ['foggy'],
     science: "L-tyrosine is a precursor for catecholamines including dopamine and norepinephrine. Reviews and small acute studies suggest tyrosine can help preserve working memory or cognitive performance during sleep loss, cold/noise stress, or high cognitive demand. Evidence does not show broad cognitive benefit when catecholamine demand is not elevated.",
     sources: [
@@ -219,7 +219,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Alpha-GPC',
     benefit: "Cognitive-impairment evidence",
     timing: 'Morning',
-    dose: 'Study doses vary',
+    dose: 'Dosage varies',
     moods: ['foggy'],
     science: "Alpha-GPC is a choline-containing compound used in cholinergic pathways. Human evidence is strongest in Alzheimer's disease, vascular dementia, and related cognitive impairment, usually at higher clinical doses than typical supplement use. Evidence for focus or cognitive enhancement in healthy adults is limited and not established by the listed citations.",
     sources: [
@@ -231,7 +231,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Bacopa Monnieri',
     benefit: "Memory evidence over weeks",
     timing: 'With food',
-    dose: '300-600mg',
+    dose: 'Dosage varies',
     moods: ['foggy', 'stressed'],
     science: "Randomized trials of standardized Bacopa monnieri extracts report improvements in some memory measures after chronic use, often around 12 weeks. Findings for attention, processing speed, anxiety, and stress are mixed across studies. The listed human trials do not directly support dendrite-branching or cortisol-reduction claims.",
     sources: [
@@ -244,7 +244,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: "St. John's Wort",
     benefit: "Depression evidence",
     timing: 'With food',
-    dose: 'Interaction risk',
+    dose: 'Dosage varies',
     moods: ['low'],
     science: "A Cochrane review found tested St. John's wort extracts were superior to placebo and similarly effective to standard antidepressants in short-term trials of major depression, with fewer adverse-effect dropouts. The review also reported heterogeneity and country-of-origin effects. St. John's wort has clinically important drug-interaction risks, so it should not be combined with medications without clinician review.",
     sources: [
@@ -256,7 +256,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Saffron',
     benefit: "Depression trial evidence",
     timing: 'With food',
-    dose: '30mg',
+    dose: 'Dosage varies',
     moods: ['low', 'stressed'],
     science: "Small randomized trials and reviews suggest saffron extract, commonly around 30 mg/day, can reduce depressive symptoms in adults with mild-to-moderate depression. Some comparator trials reported symptom improvements similar to imipramine or fluoxetine, but these studies are small and do not prove antidepressant equivalence. Evidence for anxiety is less developed.",
     sources: [
@@ -269,7 +269,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Lemon Balm',
     benefit: "Preliminary calming evidence",
     timing: 'Evening',
-    dose: 'Study doses vary',
+    dose: 'Dosage varies',
     moods: ['anxious', 'restless'],
     science: "A small acute crossover study reported reduced laboratory-induced stress after Melissa officinalis. A separate open-label pilot study reported improvements in anxiety and sleep disturbance, but it was not placebo-controlled. Claims about GABA-transaminase inhibition or sleep latency are not established by these human citations.",
     sources: [
@@ -281,7 +281,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'CoQ10',
     benefit: "Mitochondrial energy research",
     timing: 'With food',
-    dose: '100-300mg',
+    dose: 'Dosage varies',
     moods: ['good'],
     science: "Coenzyme Q10 is a mitochondrial electron-transport cofactor and antioxidant. Clinical studies have evaluated CoQ10 for fatigue in specific conditions such as multiple sclerosis, but evidence for general mental clarity or cognitive enhancement in healthy adults is not established by the listed citations. Exercise-performance findings are mixed.",
     sources: [
@@ -294,7 +294,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'L-Methylfolate',
     benefit: "Folate pathway support",
     timing: 'Morning',
-    dose: 'Study doses vary',
+    dose: 'Dosage varies',
     moods: ['low'],
     science: "L-methylfolate is the bioactive folate form used in one-carbon metabolism and pathways that support monoamine synthesis. Clinical depression evidence is strongest for prescription-strength 15 mg/day L-methylfolate as an adjunct to SSRIs in patients with inadequate antidepressant response. The listed trials do not show that 400-1000 mcg treats depression or anxiety.",
     sources: [
@@ -307,7 +307,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'SAMe',
     benefit: "Depression evidence",
     timing: 'Morning (empty stomach)',
-    dose: 'Study doses vary',
+    dose: 'Dosage varies',
     moods: ['low'],
     science: "SAMe is an endogenous methyl donor involved in methylation and monoamine-related pathways. Reviews of older trials report antidepressant effects versus placebo and similar short-term outcomes to tricyclic antidepressants, though study quality varies. A randomized adjunctive trial used 1600 mg/day in antidepressant nonresponders; the listed evidence does not establish 400-800 mg/day as an effective antidepressant dose.",
     sources: [
@@ -319,7 +319,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Kava Kava',
     benefit: "Short-term anxiety evidence",
     timing: "Short-term use",
-    dose: 'Safety varies',
+    dose: 'Dosage varies',
     moods: ['anxious', 'restless'],
     science: "Older trials and a 2013 randomized trial suggest some standardized kava extracts can reduce generalized anxiety symptoms over several weeks. Evidence is mixed, and kava is not established as an immediate as-needed anxiolytic. Liver safety, dose, duration, alcohol use, product quality, and medication interactions are important.",
     sources: [
@@ -332,7 +332,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Passionflower',
     benefit: "Limited anxiety evidence",
     timing: 'Evening',
-    dose: 'Study doses vary',
+    dose: 'Dosage varies',
     moods: ['anxious', 'restless'],
     science: "Passionflower has traditional use for anxiety and sleep, and preclinical work suggests GABA-system involvement. Human evidence is limited: one small active-comparator trial in generalized anxiety disorder found similar end-of-study anxiety improvements to oxazepam, with less job-performance impairment, but larger placebo-controlled trials are needed.",
     sources: [
@@ -345,7 +345,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Chamomile Extract',
     benefit: "GAD symptom evidence",
     timing: 'Evening',
-    dose: '220-1100mg',
+    dose: 'Dosage varies',
     moods: ['anxious', 'stressed'],
     science: "Human trials support modest benefit for generalized anxiety disorder symptoms. A long-term randomized trial found lower ongoing GAD symptom scores during continuation treatment, but relapse prevention was not statistically significant. The clinical mechanism is not settled, and apigenin/GABA-A receptor claims are based on preclinical evidence rather than these human outcomes.",
     sources: [
@@ -358,9 +358,9 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Inositol',
     benefit: "Small panic/OCD trials",
     timing: 'Split doses with meals',
-    dose: '12-18g (powder)',
-    moods: ['anxious', 'restless'],
-    science: "Older small crossover trials studied high-dose myo-inositol, typically 12-18 g/day, for panic disorder and OCD. Some trials reported symptom improvement, but later meta-analysis found no clear overall benefit across depression and anxiety-disorder outcomes. Evidence is preliminary and mixed.",
+    dose: 'Dosage varies',
+    moods: ['anxious'],
+    science: "Older small crossover trials studied high-dose myo-inositol, typically 12-18 g/day, for panic disorder and OCD. Some trials reported symptom improvement. Evidence is preliminary and mixed.",
     sources: [
       "Palatnik et al. (2001). Double-blind, controlled, crossover trial of inositol versus fluvoxamine for panic disorder. J Clin Psychopharmacol.",
       "Benjamin et al. (1995). Double-blind, placebo-controlled, crossover trial of inositol treatment for panic disorder. Am J Psychiatry.",
@@ -371,7 +371,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Melatonin',
     benefit: "Sleep timing support",
     timing: 'Before bed',
-    dose: '0.5-5mg',
+    dose: 'Dosage varies',
     moods: ['restless'],
     science: "Melatonin is primarily a circadian timing signal. Meta-analyses report modest improvements in sleep latency and total sleep time for some sleep disorders. Dose-response and timing depend on the sleep problem being targeted; the listed citations do not support a universal claim that 0.5 mg works as well as 5 mg for most people.",
     sources: [
@@ -383,7 +383,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Probiotics',
     benefit: "Gut-brain evidence mixed",
     timing: 'Morning (empty stomach)',
-    dose: '10-50 billion CFU',
+    dose: 'Dosage varies',
     moods: ['anxious', 'low', 'stressed'],
     science: "The gut-brain axis is biologically plausible, but probiotic effects are strain-, population-, and outcome-specific. Meta-analyses report small benefits for depressive symptoms in some populations, while anxiety findings are less consistent. Gut serotonin is mostly peripheral and does not directly enter the brain, so mood claims should not be based on gut serotonin production alone.",
     sources: [
@@ -396,7 +396,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Valerian Root',
     benefit: "Sleep evidence mixed",
     timing: 'Before bed',
-    dose: '300-600mg',
+    dose: 'Dosage varies',
     moods: ['restless', 'anxious'],
     science: "Valerian contains constituents that may affect GABA-A-related pathways in preclinical studies. Human sleep evidence is mixed: some trials and reviews suggest possible subjective sleep-quality or sleep-latency benefits, but study quality, preparation differences, and guideline reviews make firm conclusions difficult. It should be framed as uncertain sleep support rather than a reliable insomnia treatment.",
     sources: [

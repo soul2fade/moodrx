@@ -413,7 +413,7 @@ export default function WorkoutScreen() {
           actualDuration: String(activeDuration),
           completedSteps: String(totalSteps),
           totalSteps: String(totalSteps),
-          plannedDuration: String(activeDuration),
+          plannedDuration: String(resolvedWorkout.duration),
           ...(isGuided ? { guided: '1' } : {}),
         },
       });
@@ -433,7 +433,7 @@ export default function WorkoutScreen() {
   const handleLogWhatIDid = () => {
     if (!resolvedWorkout || isNavigating.current) return;
     isNavigating.current = true;
-    const elapsedMinutes = Math.min(getElapsedMinutes(), Math.max(activeDuration, 1));
+    const elapsedMinutes = getElapsedMinutes();
     stopAll();
     setShowQuitConfirm(false);
     router.push({
@@ -447,7 +447,7 @@ export default function WorkoutScreen() {
         actualDuration: String(elapsedMinutes),
         completedSteps: String(Math.min(currentStep + 1, totalSteps)),
         totalSteps: String(totalSteps),
-        plannedDuration: String(activeDuration),
+        plannedDuration: String(resolvedWorkout.duration),
         ...(isGuided ? { guided: '1' } : {}),
       },
     });

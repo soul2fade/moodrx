@@ -219,8 +219,8 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Alpha-GPC',
     benefit: "Cognitive-impairment evidence",
     timing: 'Morning',
-    dose: '300-600mg',
-    moods: ['foggy', 'good'],
+    dose: 'Study doses vary',
+    moods: ['foggy'],
     science: "Alpha-GPC is a choline-containing compound used in cholinergic pathways. Human evidence is strongest in Alzheimer's disease, vascular dementia, and related cognitive impairment, usually at higher clinical doses than typical supplement use. Evidence for focus or cognitive enhancement in healthy adults is limited and not established by the listed citations.",
     sources: [
       "De Jesus Moreno Moreno (2003). Cognitive improvement in mild-to-moderate Alzheimer's dementia after treatment with choline alfoscerate. Clin Ther.",
@@ -244,7 +244,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: "St. John's Wort",
     benefit: "Depression evidence",
     timing: 'With food',
-    dose: '300mg (0.3% hypericin)',
+    dose: 'Interaction risk',
     moods: ['low'],
     science: "A Cochrane review found tested St. John's wort extracts were superior to placebo and similarly effective to standard antidepressants in short-term trials of major depression, with fewer adverse-effect dropouts. The review also reported heterogeneity and country-of-origin effects. St. John's wort has clinically important drug-interaction risks, so it should not be combined with medications without clinician review.",
     sources: [
@@ -269,7 +269,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Lemon Balm',
     benefit: "Preliminary calming evidence",
     timing: 'Evening',
-    dose: '300-600mg',
+    dose: 'Study doses vary',
     moods: ['anxious', 'restless'],
     science: "A small acute crossover study reported reduced laboratory-induced stress after Melissa officinalis. A separate open-label pilot study reported improvements in anxiety and sleep disturbance, but it was not placebo-controlled. Claims about GABA-transaminase inhibition or sleep latency are not established by these human citations.",
     sources: [

@@ -29,7 +29,7 @@ import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.52;
-const HOME_MOOD_ORDER = MOOD_ORDER.filter((mood) => mood !== 'good');
+const HOME_MOOD_ORDER = MOOD_ORDER;
 
 let greetingShownThisSession = false;
 

@@ -13,11 +13,11 @@ export interface Supplement {
 export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Magnesium Glycinate',
-    benefit: "Magnesium intake support",
+    benefit: "Mixed anxiety evidence",
     timing: 'Night',
     dose: '200-400mg',
     moods: ['anxious', 'stressed'],
-    science: "A 2017 systematic review found the evidence for magnesium supplementation and subjective anxiety to be suggestive but poor quality; it did not find validated stress outcomes. NHANES-based reviews report that many Americans consume less magnesium than the estimated average requirement. One small trial in older adults found magnesium improved insomnia scores, and a small ileal-resection study found magnesium diglycinate better tolerated or absorbed in some patients with impaired magnesium oxide absorption.",
+    science: "Magnesium has been studied for anxiety, but the evidence is weak and mixed. In a 2017 systematic review, 4 of 8 studies in anxiety-vulnerable samples reported positive effects and 4 showed no effect; the review also found no validated subjective stress outcome. NHANES-based reviews report that many Americans consume less magnesium than the estimated average requirement. One small trial in older adults found magnesium improved insomnia scores, and a small ileal-resection study found magnesium diglycinate better tolerated or absorbed in some patients with impaired magnesium oxide absorption.",
     sources: [
       "Boyle et al. (2017). The effects of magnesium supplementation on subjective anxiety and stress. Nutrients.",
       "Rosanoff et al. (2012). Suboptimal magnesium status in the United States: are the health consequences underestimated? Nutr Rev.",

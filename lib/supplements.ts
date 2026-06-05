@@ -294,8 +294,8 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'L-Methylfolate',
     benefit: "Folate pathway support",
     timing: 'Morning',
-    dose: '400-1000mcg',
-    moods: ['low', 'anxious'],
+    dose: 'Study doses vary',
+    moods: ['low'],
     science: "L-methylfolate is the bioactive folate form used in one-carbon metabolism and pathways that support monoamine synthesis. Clinical depression evidence is strongest for prescription-strength 15 mg/day L-methylfolate as an adjunct to SSRIs in patients with inadequate antidepressant response. The listed trials do not show that 400-1000 mcg treats depression or anxiety.",
     sources: [
       "Papakostas et al. (2012). L-methylfolate as adjunctive therapy for SSRI-resistant major depression. Am J Psychiatry.",
@@ -307,7 +307,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'SAMe',
     benefit: "Depression evidence",
     timing: 'Morning (empty stomach)',
-    dose: '400-800mg',
+    dose: 'Study doses vary',
     moods: ['low'],
     science: "SAMe is an endogenous methyl donor involved in methylation and monoamine-related pathways. Reviews of older trials report antidepressant effects versus placebo and similar short-term outcomes to tricyclic antidepressants, though study quality varies. A randomized adjunctive trial used 1600 mg/day in antidepressant nonresponders; the listed evidence does not establish 400-800 mg/day as an effective antidepressant dose.",
     sources: [
@@ -319,7 +319,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Kava Kava',
     benefit: "Short-term anxiety evidence",
     timing: "Short-term use",
-    dose: '150-300mg kavalactones',
+    dose: 'Safety varies',
     moods: ['anxious', 'restless'],
     science: "Older trials and a 2013 randomized trial suggest some standardized kava extracts can reduce generalized anxiety symptoms over several weeks. Evidence is mixed, and kava is not established as an immediate as-needed anxiolytic. Liver safety, dose, duration, alcohol use, product quality, and medication interactions are important.",
     sources: [
@@ -332,7 +332,7 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Passionflower',
     benefit: "Limited anxiety evidence",
     timing: 'Evening',
-    dose: '300-500mg',
+    dose: 'Study doses vary',
     moods: ['anxious', 'restless'],
     science: "Passionflower has traditional use for anxiety and sleep, and preclinical work suggests GABA-system involvement. Human evidence is limited: one small active-comparator trial in generalized anxiety disorder found similar end-of-study anxiety improvements to oxazepam, with less job-performance impairment, but larger placebo-controlled trials are needed.",
     sources: [

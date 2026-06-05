@@ -386,8 +386,25 @@ export default function PrescriptionScreen() {
                 ))}
               </View>
 
+              {/* Evidence */}
+              <View style={styles.suppEvidenceRow}>
+                <View style={[styles.suppEvidenceChip, { borderColor: accentColor }]}>
+                  <Text style={[styles.suppEvidenceChipText, { color: accentColor }]}>
+                    {selectedSupp.evidenceLevel}
+                  </Text>
+                </View>
+                {selectedSupp.cautions.map((caution) => (
+                  <View key={caution} style={styles.suppCautionChip}>
+                    <Text style={styles.suppCautionChipText}>{caution}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <Text style={[styles.suppModalSectionLabel, { marginTop: 20 }]}>TL;DR</Text>
+              <Text style={styles.suppModalScience}>{selectedSupp.evidenceSummary}</Text>
+
               {/* Science */}
-              <Text style={[styles.suppModalSectionLabel, { marginTop: 20 }]}>WHY THIS WORKS</Text>
+              <Text style={[styles.suppModalSectionLabel, { marginTop: 20 }]}>WHAT THE EVIDENCE SAYS</Text>
               <Text style={styles.suppModalScience}>{selectedSupp.science}</Text>
 
               {/* Sources */}
@@ -832,14 +849,14 @@ const styles = StyleSheet.create({
   },
   suppModalDose: {
     ...t.label,
-    color: '#999999',
+    color: '#ffffff',
     fontSize: 13,
     marginTop: 4,
     lineHeight: undefined,
   },
   suppModalClose: {
     fontSize: 18,
-    color: '#999999',
+    color: '#ffffff',
     paddingLeft: 16,
     paddingTop: 2,
   },
@@ -867,15 +884,45 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     lineHeight: undefined,
   },
+  suppEvidenceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 18,
+  },
+  suppEvidenceChip: {
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  suppEvidenceChipText: {
+    ...t.label,
+    fontSize: 12,
+    letterSpacing: 1,
+    lineHeight: 17,
+  },
+  suppCautionChip: {
+    borderWidth: 1,
+    borderColor: '#E8B84B',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  suppCautionChipText: {
+    ...t.label,
+    color: '#E8B84B',
+    fontSize: 12,
+    letterSpacing: 1,
+    lineHeight: 17,
+  },
   suppModalScience: {
     ...t.body,
-    color: '#cccccc',
+    color: '#ffffff',
     fontSize: 15,
     lineHeight: 23,
   },
   suppModalSource: {
     ...t.body,
-    color: '#888888',
+    color: '#ffffff',
     fontSize: 13,
     lineHeight: 20,
     marginTop: 6,

@@ -39,6 +39,14 @@ type TabKey = 'TODAY' | 'HISTORY' | 'ALL';
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const SUPPLEMENT_TRUST_COPY =
   'Wellness guidance only. Check with a clinician before starting supplements, especially if pregnant, medicated, or managing a condition.';
+const BEST_MATCHED_COPY = 'Not magic. Just the best-matched evidence we\u2019ve got.';
+
+function getMatchReason(moods: MoodKey[]): string {
+  const labels = moods.map((mood) => MOODS[mood].name.toLowerCase());
+  if (labels.length === 0) return 'Matched from your recent check-in pattern.';
+  if (labels.length === 1) return `Matched because this evidence is tied to ${labels[0]} patterns.`;
+  return `Matched because this evidence is tied to ${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]} patterns.`;
+}
 
 interface DayAdherence {
   taken: boolean;
@@ -416,12 +424,27 @@ function SupplementsScreen() {
           {prioritySupplement && (
             <View style={[styles.priorityCard, { borderLeftColor: accentColor }]}>
               <Text style={styles.priorityCardLabel}>TODAY&apos;S PRIORITY</Text>
-              <Text style={styles.priorityCardHeadline}>One thing. Take it.</Text>
+              <Text style={styles.priorityCardHeadline}>Best-matched option today.</Text>
               <Text style={styles.priorityCardName}>{prioritySupplement.name}</Text>
               <Text style={styles.priorityCardDose}>
                 {prioritySupplement.dose} · {prioritySupplement.timing.toUpperCase()}
               </Text>
-              <Text style={styles.priorityCardReason}>{prioritySupplement.benefit}.</Text>
+              <View style={styles.evidenceChipRow}>
+                <View style={[styles.evidenceChip, { borderColor: accentColor }]}>
+                  <Text style={[styles.evidenceChipText, { color: accentColor }]}>
+                    {prioritySupplement.evidenceLevel}
+                  </Text>
+                </View>
+                {prioritySupplement.cautions.map((caution) => (
+                  <View key={caution} style={styles.cautionChip}>
+                    <Text style={styles.cautionChipText}>{caution}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={styles.sciencePanelLabel}>WHY THIS MATCHED YOU</Text>
+              <Text style={styles.priorityCardReason}>{getMatchReason(prioritySupplement.moods)}</Text>
+              <Text style={[styles.sciencePanelLabel, { marginTop: 12 }]}>TL;DR</Text>
+              <Text style={styles.priorityCardReason}>{prioritySupplement.evidenceSummary}</Text>
               <TouchableOpacity
                 onPress={() => setShowPriorityScience((open) => !open)}
                 activeOpacity={0.7}
@@ -430,7 +453,7 @@ function SupplementsScreen() {
                 accessibilityLabel={`${showPriorityScience ? 'Hide' : 'Show'} why ${prioritySupplement.name} works`}
               >
                 <Text style={[styles.priorityWhyText, { color: accentColor }]}>
-                  WHY THIS WORKS {showPriorityScience ? '↑' : '↓'}
+                  WHAT THE EVIDENCE SAYS {showPriorityScience ? '↑' : '↓'}
                 </Text>
               </TouchableOpacity>
               {showPriorityScience && (
@@ -446,6 +469,7 @@ function SupplementsScreen() {
                   )}
                 </View>
               )}
+              <Text style={styles.bestMatchedText}>{BEST_MATCHED_COPY}</Text>
               <Text style={styles.supplementTrustText}>{SUPPLEMENT_TRUST_COPY}</Text>
               <TouchableOpacity
                 onPress={() => handleToggle(prioritySupplement.name)}
@@ -515,7 +539,19 @@ function SupplementsScreen() {
                           </View>
                         ))}
                       </View>
-                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>WHY THIS WORKS</Text>
+                      <View style={styles.evidenceChipRow}>
+                        <View style={[styles.evidenceChip, { borderColor: accentColor }]}>
+                          <Text style={[styles.evidenceChipText, { color: accentColor }]}>{supp.evidenceLevel}</Text>
+                        </View>
+                        {supp.cautions.map((caution) => (
+                          <View key={caution} style={styles.cautionChip}>
+                            <Text style={styles.cautionChipText}>{caution}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>TL;DR</Text>
+                      <Text style={styles.sciencePanelText}>{supp.evidenceSummary}</Text>
+                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>WHAT THE EVIDENCE SAYS</Text>
                       <Text style={styles.sciencePanelText}>{supp.science}</Text>
                       {(supp.sources?.length ?? 0) > 0 && (
                         <>
@@ -525,6 +561,7 @@ function SupplementsScreen() {
                           ))}
                         </>
                       )}
+                      <Text style={styles.bestMatchedText}>{BEST_MATCHED_COPY}</Text>
                       <Text style={styles.supplementTrustText}>{SUPPLEMENT_TRUST_COPY}</Text>
                     </View>
                   )}
@@ -731,7 +768,19 @@ function SupplementsScreen() {
                           </View>
                         ))}
                       </View>
-                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>WHY THIS WORKS</Text>
+                      <View style={styles.evidenceChipRow}>
+                        <View style={styles.evidenceChip}>
+                          <Text style={styles.evidenceChipText}>{supp.evidenceLevel}</Text>
+                        </View>
+                        {supp.cautions.map((caution) => (
+                          <View key={caution} style={styles.cautionChip}>
+                            <Text style={styles.cautionChipText}>{caution}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>TL;DR</Text>
+                      <Text style={styles.sciencePanelText}>{supp.evidenceSummary}</Text>
+                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>WHAT THE EVIDENCE SAYS</Text>
                       <Text style={styles.sciencePanelText}>{supp.science}</Text>
                       {(supp.sources?.length ?? 0) > 0 && (
                         <>
@@ -741,6 +790,7 @@ function SupplementsScreen() {
                           ))}
                         </>
                       )}
+                      <Text style={styles.bestMatchedText}>{BEST_MATCHED_COPY}</Text>
                       <Text style={styles.supplementTrustText}>{SUPPLEMENT_TRUST_COPY}</Text>
                     </View>
                   )}
@@ -971,6 +1021,39 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 10,
   },
+  evidenceChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  evidenceChip: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  evidenceChipText: {
+    ...t.label,
+    color: '#ffffff',
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 1,
+  },
+  cautionChip: {
+    borderWidth: 1,
+    borderColor: '#E8B84B',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  cautionChipText: {
+    ...t.label,
+    color: '#E8B84B',
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 1,
+  },
   priorityWhyBtn: {
     alignSelf: 'flex-start',
     paddingVertical: 8,
@@ -1118,6 +1201,13 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     lineHeight: 18,
+    marginTop: 12,
+  },
+  bestMatchedText: {
+    fontFamily: fonts.primary.regular,
+    color: '#ffffff',
+    fontSize: 13,
+    lineHeight: 19,
     marginTop: 12,
   },
   moodTagRow: {

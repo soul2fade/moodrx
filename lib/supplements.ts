@@ -3,6 +3,9 @@ import { MoodKey } from './storage';
 export interface Supplement {
   name: string;
   benefit: string;
+  evidenceLevel: string;
+  evidenceSummary: string;
+  cautions: string[];
   timing: string;
   dose: string;
   moods: MoodKey[];
@@ -14,6 +17,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Magnesium Glycinate',
     benefit: "Mixed anxiety evidence",
+    evidenceLevel: "MIXED HUMAN EVIDENCE",
+    evidenceSummary: "Evidence is mixed: 4 of 8 anxiety-vulnerable samples improved, while 4 showed no effect.",
+    cautions: ["PREGNANCY / MEDICATION CHECK"],
     timing: 'Night',
     dose: 'Dosage varies',
     moods: ['anxious', 'stressed'],
@@ -28,6 +34,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Omega-3 EPA/DHA',
     benefit: "EPA-focused mood evidence",
+    evidenceLevel: "MODERATE HUMAN EVIDENCE",
+    evidenceSummary: "EPA-dominant omega-3 formulas have more consistent depression-trial evidence than DHA-dominant formulas.",
+    cautions: ["MEDICATION CHECK"],
     timing: 'With food',
     dose: 'Dosage varies',
     moods: ['low'],
@@ -41,6 +50,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: '5-HTP',
     benefit: "Serotonin precursor evidence",
+    evidenceLevel: "LIMITED HUMAN EVIDENCE",
+    evidenceSummary: "Older small trials suggest possible antidepressant effects, but Cochrane found the evidence insufficient.",
+    cautions: ["SEROTONIN MEDICATION CAUTION"],
     timing: 'Evening',
     dose: 'Dosage varies',
     moods: ['low'],
@@ -53,6 +65,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Ashwagandha KSM-66',
     benefit: "Studied cortisol reduction",
+    evidenceLevel: "LIMITED HUMAN EVIDENCE",
+    evidenceSummary: "One KSM-66 trial reported reduced stress scores and cortisol; broader ashwagandha evidence is limited and product-specific.",
+    cautions: ["PREGNANCY / MEDICATION CHECK"],
     timing: 'Morning',
     dose: 'Dosage varies',
     moods: ['stressed', 'anxious'],
@@ -65,6 +80,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'L-Theanine',
     benefit: "Relaxed-alertness evidence",
+    evidenceLevel: "LIMITED HUMAN EVIDENCE",
+    evidenceSummary: "Small human studies support relaxed-alertness and acute stress-response claims.",
+    cautions: [],
     timing: 'As needed',
     dose: 'Dosage varies',
     moods: ['anxious', 'restless'],
@@ -77,6 +95,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'GABA',
     benefit: "Sleep-onset evidence limited",
+    evidenceLevel: "LIMITED HUMAN EVIDENCE",
+    evidenceSummary: "This is about exogenous oral GABA; small studies suggest relaxation markers and sleep-onset effects, but brain GABA effects remain unresolved.",
+    cautions: ["SLEEPINESS CAUTION"],
     timing: 'Evening',
     dose: 'Dosage varies',
     moods: ['restless'],
@@ -89,6 +110,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Magnesium L-Threonate',
     benefit: "Brain-magnesium research",
+    evidenceLevel: "PRECLINICAL + LIMITED HUMAN DATA",
+    evidenceSummary: "Rodent brain-magnesium findings exist, plus limited older-adult cognitive data; human brain-magnesium superiority is not established.",
+    cautions: ["PREGNANCY / MEDICATION CHECK"],
     timing: 'Night',
     dose: 'Dosage varies',
     moods: ['restless'],
@@ -101,6 +125,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Vitamin D3+K2',
     benefit: "Deficiency-linked mood support",
+    evidenceLevel: "MIXED HUMAN EVIDENCE",
+    evidenceSummary: "Low vitamin D is associated with depression, but supplementation results are mixed and most relevant when deficiency is present.",
+    cautions: ["LAB-GUIDED"],
     timing: 'Morning',
     dose: 'Dosage varies',
     moods: ['low'],
@@ -115,6 +142,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: "Lion's Mane",
     benefit: "Preliminary cognitive evidence",
+    evidenceLevel: "PRELIMINARY HUMAN EVIDENCE",
+    evidenceSummary: "One small MCI trial and one small mood study exist; neurotrophic claims are mainly preclinical.",
+    cautions: [],
     timing: 'Morning',
     dose: 'Dosage varies',
     moods: ['foggy'],
@@ -128,6 +158,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Phosphatidylserine',
     benefit: "Limited memory/stress evidence",
+    evidenceLevel: "LIMITED HUMAN EVIDENCE",
+    evidenceSummary: "Small studies suggest possible memory or stress-response effects, but findings vary by population and formulation.",
+    cautions: [],
     timing: 'With breakfast',
     dose: 'Dosage varies',
     moods: ['foggy', 'stressed'],
@@ -141,6 +174,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Rhodiola',
     benefit: "Stress-fatigue evidence",
+    evidenceLevel: "LIMITED HUMAN EVIDENCE",
+    evidenceSummary: "Small extract-specific trials suggest stress-fatigue or mental-performance effects under fatigue.",
+    cautions: ["STIMULANT-LIKE CAUTION"],
     timing: 'Morning',
     dose: 'Dosage varies',
     moods: ['stressed', 'foggy'],
@@ -154,6 +190,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'B-Complex',
     benefit: "Stress and nutrient support",
+    evidenceLevel: "MODERATE HUMAN EVIDENCE",
+    evidenceSummary: "B-complex meta-analysis supports stress benefit, but not clear anxiety or depression benefit.",
+    cautions: [],
     timing: 'Morning',
     dose: 'Dosage varies',
     moods: ['foggy', 'stressed'],
@@ -167,6 +206,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Creatine Monohydrate',
     benefit: "Brain-energy evidence mixed",
+    evidenceLevel: "MIXED HUMAN EVIDENCE",
+    evidenceSummary: "Cognitive benefits appear possible in some groups or stressors, but not across all domains.",
+    cautions: [],
     timing: 'Morning',
     dose: 'Dosage varies',
     moods: ['good'],
@@ -180,6 +222,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'NAC',
     benefit: "Glutathione and glutamate research",
+    evidenceLevel: "MIXED CLINICAL EVIDENCE",
+    evidenceSummary: "NAC is researched in psychiatric conditions, but evidence is condition-specific and not healthy-person mood maintenance.",
+    cautions: ["MEDICATION CHECK"],
     timing: 'With food',
     dose: 'Dosage varies',
     moods: ['good'],
@@ -192,6 +237,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Zinc',
     benefit: "Depression-adjunct evidence",
+    evidenceLevel: "DEPRESSION-ADJUNCT EVIDENCE",
+    evidenceSummary: "Lower zinc is associated with depression, and small trials suggest adjunctive antidepressant support.",
+    cautions: ["COPPER BALANCE CAUTION"],
     timing: 'With food',
     dose: 'Dosage varies',
     moods: ['low'],
@@ -205,6 +253,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Tyrosine',
     benefit: "Stress-demand cognition",
+    evidenceLevel: "LIMITED HUMAN EVIDENCE",
+    evidenceSummary: "Tyrosine may help cognition under sleep loss, cold/noise stress, or high cognitive demand.",
+    cautions: ["BLOOD PRESSURE / MEDICATION CHECK"],
     timing: 'Morning (empty stomach)',
     dose: 'Dosage varies',
     moods: ['foggy'],
@@ -218,6 +269,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Alpha-GPC',
     benefit: "Cognitive-impairment evidence",
+    evidenceLevel: "COGNITIVE-IMPAIRMENT EVIDENCE",
+    evidenceSummary: "Evidence is strongest in cognitive impairment populations, not healthy focus enhancement.",
+    cautions: [],
     timing: 'Morning',
     dose: 'Dosage varies',
     moods: ['foggy'],
@@ -230,6 +284,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Bacopa Monnieri',
     benefit: "Memory evidence over weeks",
+    evidenceLevel: "MODERATE HUMAN EVIDENCE",
+    evidenceSummary: "Standardized extracts show memory effects after chronic use; attention and stress findings are mixed.",
+    cautions: [],
     timing: 'With food',
     dose: 'Dosage varies',
     moods: ['foggy', 'stressed'],
@@ -243,6 +300,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: "St. John's Wort",
     benefit: "Depression evidence",
+    evidenceLevel: "STRONG HUMAN EVIDENCE",
+    evidenceSummary: "Cochrane found tested extracts superior to placebo and similar to antidepressants in short-term depression trials.",
+    cautions: ["MAJOR MEDICATION INTERACTION"],
     timing: 'With food',
     dose: 'Dosage varies',
     moods: ['low'],
@@ -255,6 +315,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Saffron',
     benefit: "Depression trial evidence",
+    evidenceLevel: "MODERATE HUMAN EVIDENCE",
+    evidenceSummary: "Small trials and reviews suggest 30 mg/day saffron extract can reduce depressive symptoms.",
+    cautions: [],
     timing: 'With food',
     dose: 'Dosage varies',
     moods: ['low', 'stressed'],
@@ -268,6 +331,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Lemon Balm',
     benefit: "Preliminary calming evidence",
+    evidenceLevel: "PRELIMINARY HUMAN EVIDENCE",
+    evidenceSummary: "One small acute study and one open-label pilot support preliminary calming/sleep-disturbance evidence.",
+    cautions: [],
     timing: 'Evening',
     dose: 'Dosage varies',
     moods: ['anxious', 'restless'],
@@ -280,6 +346,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'CoQ10',
     benefit: "Mitochondrial energy research",
+    evidenceLevel: "CONDITION-SPECIFIC EVIDENCE",
+    evidenceSummary: "CoQ10 has condition-specific fatigue research; healthy mental clarity evidence is not established.",
+    cautions: [],
     timing: 'With food',
     dose: 'Dosage varies',
     moods: ['good'],
@@ -293,6 +362,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'L-Methylfolate',
     benefit: "Folate pathway support",
+    evidenceLevel: "DEPRESSION-ADJUNCT EVIDENCE",
+    evidenceSummary: "Evidence is strongest for prescription-strength 15 mg/day adjunctive use in SSRI-resistant depression.",
+    cautions: ["CLINICAL DOSE DIFFERS"],
     timing: 'Morning',
     dose: 'Dosage varies',
     moods: ['low'],
@@ -306,6 +378,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'SAMe',
     benefit: "Depression evidence",
+    evidenceLevel: "DEPRESSION EVIDENCE",
+    evidenceSummary: "Older trials and one adjunctive trial support depression evidence, but studied doses differ.",
+    cautions: ["BIPOLAR / MEDICATION CAUTION"],
     timing: 'Morning (empty stomach)',
     dose: 'Dosage varies',
     moods: ['low'],
@@ -318,6 +393,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Kava Kava',
     benefit: "Short-term anxiety evidence",
+    evidenceLevel: "MIXED HUMAN EVIDENCE",
+    evidenceSummary: "Some trials suggest GAD symptom benefit over weeks, but evidence is mixed and safety matters.",
+    cautions: ["LIVER / ALCOHOL CAUTION"],
     timing: "Short-term use",
     dose: 'Dosage varies',
     moods: ['anxious', 'restless'],
@@ -331,6 +409,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Passionflower',
     benefit: "Limited anxiety evidence",
+    evidenceLevel: "LIMITED HUMAN EVIDENCE",
+    evidenceSummary: "One small active-comparator GAD trial exists; larger placebo-controlled trials are needed.",
+    cautions: [],
     timing: 'Evening',
     dose: 'Dosage varies',
     moods: ['anxious', 'restless'],
@@ -344,6 +425,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Chamomile Extract',
     benefit: "GAD symptom evidence",
+    evidenceLevel: "MODERATE HUMAN EVIDENCE",
+    evidenceSummary: "Human trials support modest GAD symptom benefit; relapse prevention was not statistically significant.",
+    cautions: [],
     timing: 'Evening',
     dose: 'Dosage varies',
     moods: ['anxious', 'stressed'],
@@ -357,6 +441,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Inositol',
     benefit: "Small panic/OCD trials",
+    evidenceLevel: "PRELIMINARY HUMAN EVIDENCE",
+    evidenceSummary: "Older small high-dose trials reported panic/OCD symptom improvement; evidence remains preliminary.",
+    cautions: ["HIGH-DOSE STUDY"],
     timing: 'Split doses with meals',
     dose: 'Dosage varies',
     moods: ['anxious'],
@@ -370,6 +457,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Melatonin',
     benefit: "Sleep timing support",
+    evidenceLevel: "MODERATE HUMAN EVIDENCE",
+    evidenceSummary: "Meta-analyses show modest sleep-latency and total-sleep-time effects; timing and dose depend on the sleep problem.",
+    cautions: ["TIMING MATTERS"],
     timing: 'Before bed',
     dose: 'Dosage varies',
     moods: ['restless'],
@@ -382,6 +472,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Probiotics',
     benefit: "Gut-brain evidence mixed",
+    evidenceLevel: "MIXED HUMAN EVIDENCE",
+    evidenceSummary: "Depressive-symptom effects are small and strain-specific; anxiety findings are less consistent.",
+    cautions: ["STRAIN-SPECIFIC"],
     timing: 'Morning (empty stomach)',
     dose: 'Dosage varies',
     moods: ['anxious', 'low', 'stressed'],
@@ -395,6 +488,9 @@ export const SUPPLEMENTS: Supplement[] = [
   {
     name: 'Valerian Root',
     benefit: "Sleep evidence mixed",
+    evidenceLevel: "MIXED HUMAN EVIDENCE",
+    evidenceSummary: "Some trials suggest subjective sleep benefits, but study quality and preparation differences limit conclusions.",
+    cautions: ["SLEEPINESS CAUTION"],
     timing: 'Before bed',
     dose: 'Dosage varies',
     moods: ['restless', 'anxious'],

@@ -80,7 +80,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Evening',
     dose: 'Dosage varies',
     moods: ['restless'],
-    science: "Endogenous GABA is the brain's main inhibitory neurotransmitter, but whether oral GABA meaningfully increases brain GABA in humans remains unresolved. Small human studies of oral GABA report relaxation-related marker changes and, in one fermented-rice-germ GABA trial, shorter sleep latency and improved sleep efficiency in people with insomnia symptoms.",
+    science: "GABA made by the body is the brain's main inhibitory neurotransmitter, but this entry is about exogenous oral GABA supplements. Whether oral GABA meaningfully increases brain GABA in humans remains unresolved. Small human studies of oral GABA report relaxation-related marker changes and, in one fermented-rice-germ GABA trial, shorter sleep latency and improved sleep efficiency in people with insomnia symptoms.",
     sources: [
       "Abdou et al. (2006). Relaxation and immunity enhancement effects of GABA administration. Biofactors.",
       "Byun et al. (2018). Safety and efficacy of gamma-aminobutyric acid from fermented rice germ in patients with insomnia symptoms. J Clin Neurol.",

@@ -92,7 +92,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Night',
     dose: '1-2g',
     moods: ['restless'],
-    science: "Magnesium L-threonate increased brain magnesium and improved learning and memory measures in rodents. A small human study of MMFS-01, a magnesium L-threonate-containing formula, reported cognitive benefits in older adults with cognitive impairment. Direct human evidence that magnesium L-threonate raises brain magnesium more than other forms is not established by these citations.",
+    science: "Magnesium L-threonate increased brain magnesium and improved learning and memory measures in rodents. A small human study of a magnesium L-threonate-containing formula reported cognitive benefits in older adults with cognitive impairment. These citations do not establish human brain-magnesium superiority over other forms or a direct restlessness/sleep benefit.",
     sources: [
       "Slutsky et al. (2010). Enhancement of learning and memory by elevating brain magnesium. Neuron.",
       "Liu et al. (2016). Efficacy and safety of MMFS-01 (Mg-L-threonate) in older adults with cognitive impairment. J Alzheimers Dis.",
@@ -102,9 +102,9 @@ export const SUPPLEMENTS: Supplement[] = [
     name: 'Vitamin D3+K2',
     benefit: "Deficiency-linked mood support",
     timing: 'Morning',
-    dose: '2-5K IU',
-    moods: ['low', 'foggy'],
-    science: "Systematic reviews report an association between low vitamin D status and depression, while vitamin D supplementation trials show mixed results and may depend on baseline deficiency or clinical population. Vitamin K is involved in activating proteins such as osteocalcin and matrix Gla protein, which are related to bone mineralization and inhibition of vascular calcification; this does not prove that D3+K2 supplementation prevents vascular disease in general users.",
+    dose: 'Check labs',
+    moods: ['low'],
+    science: "Low vitamin D status is associated with depression in systematic reviews, but supplementation trials show mixed results and appear most relevant when deficiency is present. Vitamin K activates proteins involved in bone mineralization and inhibition of vascular calcification, but these citations do not prove D3+K2 prevents vascular disease in general supplement users.",
     sources: [
       "Anglin et al. (2013). Vitamin D deficiency and depression in adults: systematic review. Br J Psychiatry.",
       "Shaffer et al. (2014). Vitamin D supplementation for depressive symptoms. Psychosom Med.",

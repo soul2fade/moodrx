@@ -71,10 +71,10 @@ export default function PrescriptionScreen() {
     [workouts, isPremium],
   );
 
-  const handleWorkoutTap = (workout: Workout) => {
+  const handleWorkoutTap = (workout: Workout, dose: 'minimum' | 'full' = 'full') => {
     router.push({
       pathname: '/workout',
-      params: { mood, workoutId: workout.id, intensity: String(intensity) },
+      params: { mood, workoutId: workout.id, intensity: String(intensity), dose },
     });
   };
 
@@ -166,12 +166,8 @@ export default function PrescriptionScreen() {
             )}
             {/* Hero workout — today's prescription */}
             <Text style={[styles.heroRxLabel, { color: accentColor }]}>TODAY&apos;S PRESCRIPTION</Text>
-            <TouchableOpacity
+            <View
               style={flattenStyle([styles.workoutCard, styles.heroCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
-              onPress={() => handleWorkoutTap(workouts[0])}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel={`Start ${workouts[0].name}`}
             >
               <View style={styles.workoutCardTop}>
                 <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>01</Text>
@@ -194,10 +190,30 @@ export default function PrescriptionScreen() {
                 <Text style={flattenStyle([styles.scienceInlineLabel, { color: accentColor }])}>THE SCIENCE</Text>
                 <Text style={styles.scienceInlineText}>{workouts[0].why}</Text>
               </View>
-              <View style={[styles.startButton, { borderColor: accentColor }]}>
-                <Text style={[styles.startButtonText, { color: accentColor }]}>START THIS WORKOUT →</Text>
+              <View style={styles.dosePicker}>
+                <Text style={styles.dosePickerLabel}>CHOOSE YOUR DOSE</Text>
+                <View style={styles.dosePickerRow}>
+                  <TouchableOpacity
+                    onPress={() => handleWorkoutTap(workouts[0], 'minimum')}
+                    activeOpacity={0.8}
+                    style={[styles.doseButton, { borderColor: accentColor }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Start 3 minute minimum dose of ${workouts[0].name}`}
+                  >
+                    <Text style={[styles.doseButtonText, { color: accentColor }]}>MINIMUM — 3 MIN</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleWorkoutTap(workouts[0], 'full')}
+                    activeOpacity={0.8}
+                    style={[styles.doseButton, styles.doseButtonFull, { borderColor: accentColor }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Start full ${workouts[0].duration} minute ${workouts[0].name} workout`}
+                  >
+                    <Text style={[styles.doseButtonText, { color: accentColor }]}>FULL — {workouts[0].duration} MIN</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </TouchableOpacity>
+            </View>
 
             {/* Alternatives toggle */}
             {workouts.length > 1 && (
@@ -251,12 +267,8 @@ export default function PrescriptionScreen() {
                     {isFreeAlternative && (
                       <Text style={styles.cantDoThatLabel}>CAN&apos;T DO THAT? TRY THIS</Text>
                     )}
-                    <TouchableOpacity
+                    <View
                       style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: accentColor }])}
-                      onPress={() => handleWorkoutTap(workout)}
-                      activeOpacity={0.85}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Open ${workout.name} workout`}
                     >
                       <View style={styles.workoutCardTop}>
                         <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>
@@ -277,7 +289,27 @@ export default function PrescriptionScreen() {
                         <Text style={styles.workoutBadgeMuted}>{getWorkoutBadge(sessions, workout)}</Text>
                       )}
                       <Text style={styles.workoutVibe}>{workout.vibe}</Text>
-                    </TouchableOpacity>
+                      <View style={styles.dosePickerCompact}>
+                        <TouchableOpacity
+                          onPress={() => handleWorkoutTap(workout, 'minimum')}
+                          activeOpacity={0.8}
+                          style={styles.altDoseButton}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Start 3 minute minimum dose of ${workout.name}`}
+                        >
+                          <Text style={styles.altDoseButtonText}>MINIMUM — 3 MIN</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => handleWorkoutTap(workout, 'full')}
+                          activeOpacity={0.8}
+                          style={styles.altDoseButton}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Start full ${workout.duration} minute ${workout.name} workout`}
+                        >
+                          <Text style={styles.altDoseButtonText}>FULL — {workout.duration} MIN</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                     </React.Fragment>
                   );
                 })}
@@ -559,17 +591,61 @@ const styles = StyleSheet.create({
   heroCard: {
     backgroundColor: '#0d0d0d',
   },
-  startButton: {
-    borderWidth: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
+  dosePicker: {
     marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingTop: 14,
   },
-  startButtonText: {
+  dosePickerLabel: {
     ...t.label,
-    letterSpacing: 3,
+    color: '#ffffff',
+    letterSpacing: 2,
     fontSize: 12,
-    lineHeight: undefined,
+    lineHeight: 17,
+    marginBottom: 10,
+  },
+  dosePickerRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  doseButton: {
+    flex: 1,
+    borderWidth: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  doseButtonFull: {
+    backgroundColor: '#0a0a0a',
+  },
+  doseButtonText: {
+    ...t.label,
+    letterSpacing: 1.5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  dosePickerCompact: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 14,
+  },
+  altDoseButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#333333',
+    paddingVertical: 10,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  altDoseButtonText: {
+    ...t.label,
+    color: '#ffffff',
+    letterSpacing: 1.2,
+    fontSize: 12,
+    lineHeight: 17,
   },
   alternativesToggle: {
     flexDirection: 'row',

@@ -16,6 +16,10 @@ export interface Session {
   rating?: 'yes' | 'somewhat' | 'no';
   note?: string;
   lightDay?: boolean;
+  completionType?: 'full' | 'minimum' | 'partial';
+  completedSteps?: number;
+  totalSteps?: number;
+  plannedDuration?: number;
 }
 
 export interface SupplementLog {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -83,13 +83,15 @@ const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
 
 
 export default function WorkoutScreen() {
-  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; guided?: string }>();
+  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; guided?: string; dose?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
     : (Object.keys(MOODS)[0] as MoodKey);
   const workoutId = params.workoutId ?? '';
   const intensity = params.intensity || '5';
   const isGuided = params.guided === '1';
+  const workoutDose = params.dose === 'minimum' ? 'minimum' : 'full';
+  const isMinimumDose = workoutDose === 'minimum';
 
   const workout = workoutId ? getWorkoutById(workoutId) : getWorkoutsForMood(mood)[0];
   const resolvedWorkout = workout ?? getWorkoutsForMood(mood)[0];
@@ -121,6 +123,7 @@ export default function WorkoutScreen() {
   const trashWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isNavigating = useRef(false);
   const repScaleAnim = useRef(new Animated.Value(1)).current;
+  const workoutStartRef = useRef(Date.now());
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -128,7 +131,19 @@ export default function WorkoutScreen() {
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
-  const totalSteps = resolvedWorkout?.steps.length ?? 0;
+  const workoutName = resolvedWorkout?.name ?? 'Workout';
+  const activeSteps = useMemo(
+    () => isMinimumDose
+      ? [
+        `1 min easy start. Begin ${workoutName} at the lowest possible effort.`,
+        `1 min main effort. Do the simplest version of ${workoutName}.`,
+        '1 min cool-down. Slow your breathing. Minimum dose complete.',
+      ]
+      : resolvedWorkout?.steps ?? [],
+    [isMinimumDose, resolvedWorkout?.steps, workoutName],
+  );
+  const activeDuration = isMinimumDose ? 3 : (resolvedWorkout?.duration ?? 0);
+  const totalSteps = activeSteps.length;
   const midInsult = useDrMoodRxLine(mood, 'mid');
   const midStep = Math.floor((totalSteps - 1) / 2);
 
@@ -238,7 +253,7 @@ export default function WorkoutScreen() {
       setStepTimerKind(null);
       return;
     }
-    const text = resolvedWorkout.steps[currentStep] ?? '';
+    const text = activeSteps[currentStep] ?? '';
     const restSecs = parseRestSeconds(text);
     const activeSecs = parseActiveSeconds(text);
     restProgressAnim.setValue(1);
@@ -256,7 +271,7 @@ export default function WorkoutScreen() {
     } else {
       setStepTimerKind(null);
     }
-  }, [currentStep, resolvedWorkout, clearStepTimerInterval, stopStepTimerProgress, restProgressAnim, activeProgressAnim]);
+  }, [currentStep, resolvedWorkout, activeSteps, clearStepTimerInterval, stopStepTimerProgress, restProgressAnim, activeProgressAnim]);
 
   useEffect(() => {
     if (!stepTimerRunning || stepTimerKind === null) {
@@ -378,6 +393,8 @@ export default function WorkoutScreen() {
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
   };
 
+  const getElapsedMinutes = () => Math.max(1, Math.ceil((Date.now() - workoutStartRef.current) / 60000));
+
   const handleNext = () => {
     if (!resolvedWorkout || isNavigating.current) return;
     if (currentStep < totalSteps - 1) {
@@ -387,7 +404,18 @@ export default function WorkoutScreen() {
       stopAll();
       router.push({
         pathname: '/post-workout',
-        params: { mood, workoutId, intensity, reps: String(repCount), ...(isGuided ? { guided: '1' } : {}) },
+        params: {
+          mood,
+          workoutId,
+          intensity,
+          reps: String(repCount),
+          completionType: isMinimumDose ? 'minimum' : 'full',
+          actualDuration: String(activeDuration),
+          completedSteps: String(totalSteps),
+          totalSteps: String(totalSteps),
+          plannedDuration: String(activeDuration),
+          ...(isGuided ? { guided: '1' } : {}),
+        },
       });
     }
   };
@@ -400,6 +428,29 @@ export default function WorkoutScreen() {
   const handleQuit = () => {
     stopAll();
     router.replace('/home');
+  };
+
+  const handleLogWhatIDid = () => {
+    if (!resolvedWorkout || isNavigating.current) return;
+    isNavigating.current = true;
+    const elapsedMinutes = Math.min(getElapsedMinutes(), Math.max(activeDuration, 1));
+    stopAll();
+    setShowQuitConfirm(false);
+    router.push({
+      pathname: '/post-workout',
+      params: {
+        mood,
+        workoutId,
+        intensity,
+        reps: String(repCount),
+        completionType: 'partial',
+        actualDuration: String(elapsedMinutes),
+        completedSteps: String(Math.min(currentStep + 1, totalSteps)),
+        totalSteps: String(totalSteps),
+        plannedDuration: String(activeDuration),
+        ...(isGuided ? { guided: '1' } : {}),
+      },
+    });
   };
 
   const handleTrashTalk = () => {
@@ -463,7 +514,8 @@ export default function WorkoutScreen() {
   const isLastStep = currentStep === totalSteps - 1;
   const motivationalMsg = MOTIVATIONAL[Math.min(currentStep, MOTIVATIONAL.length - 1)];
   const progressWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
-  const currentStepText = resolvedWorkout.steps[currentStep] ?? '';
+  const activeStepText = activeSteps[currentStep] ?? '';
+  const currentStepText = activeStepText;
   const showRepCounter = stepHasReps(currentStepText);
 
   return (
@@ -520,13 +572,19 @@ export default function WorkoutScreen() {
       >
         <View style={styles.quitModalBackdrop}>
           <View style={styles.quitModalCard} accessibilityRole="alert">
-            <Text style={styles.quitConfirmText}>Abandon this workout?</Text>
+            <Text style={styles.quitConfirmText}>DONE ENOUGH?</Text>
+            <Text style={styles.quitConfirmSub}>
+              You moved. That counts. Log {getElapsedMinutes()} min of {workoutName}, or keep going.
+            </Text>
             <View style={styles.quitConfirmButtons}>
+              <TouchableOpacity onPress={handleLogWhatIDid} activeOpacity={0.7} style={styles.logItBtn} accessibilityRole="button">
+                <Text style={styles.logItText}>Log what I did</Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowQuitConfirm(false)} activeOpacity={0.7} style={styles.keepGoingBtn} accessibilityRole="button">
                 <Text style={styles.keepGoingText}>Keep going</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleQuit} activeOpacity={0.7} style={styles.quitConfirmBtn} accessibilityRole="button">
-                <Text style={styles.quitConfirmBtnText}>Quit</Text>
+                <Text style={styles.quitConfirmBtnText}>Quit without logging</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -538,7 +596,7 @@ export default function WorkoutScreen() {
         <View style={styles.iconCenter}>
           <MoodIcon mood={mood} size={36} color={accentColor} />
         </View>
-        <Text style={styles.workoutName}>{resolvedWorkout.name}</Text>
+        <Text style={styles.workoutName}>{isMinimumDose ? `${resolvedWorkout.name} — Minimum Dose` : resolvedWorkout.name}</Text>
         <Text style={styles.stepLabel}>STEP {currentStep + 1} OF {totalSteps}</Text>
 
         {/* Workout Coach */}
@@ -585,8 +643,8 @@ export default function WorkoutScreen() {
           </View>
         ) : (
           <View style={styles.stepBox}>
-            <Text style={styles.stepText} accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}: ${resolvedWorkout.steps[currentStep]}`}>
-              {resolvedWorkout.steps[currentStep]}
+            <Text style={styles.stepText} accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}: ${activeStepText}`}>
+              {activeStepText}
             </Text>
             {stepTimerKind === 'active' && (
               <View style={styles.activeTimerBox}>
@@ -636,7 +694,7 @@ export default function WorkoutScreen() {
         <>
         {/* ── STEP MINI-MAP ── */}
         <View style={styles.miniMap}>
-          {resolvedWorkout.steps.map((step, idx) => {
+          {activeSteps.map((step, idx) => {
             const isActive = idx === currentStep;
             const isDone = idx < currentStep;
             return (
@@ -795,12 +853,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
     padding: 20,
   },
-  quitConfirmText: { ...t.body, fontSize: 15 },
-  quitConfirmButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
-  keepGoingBtn: { paddingVertical: 8 },
-  keepGoingText: { ...t.label, color: '#ffffff' },
-  quitConfirmBtn: { borderWidth: 1, borderColor: '#E11D48', paddingHorizontal: 16, paddingVertical: 8 },
-  quitConfirmBtnText: { ...t.label, color: '#E11D48', letterSpacing: 1 },
+  quitConfirmText: { ...t.body, color: '#ffffff', fontSize: 17, lineHeight: 24 },
+  quitConfirmSub: { ...t.bodySm, color: '#ffffff', fontSize: 15, lineHeight: 22, marginTop: 8 },
+  quitConfirmButtons: { gap: 10, marginTop: 16 },
+  logItBtn: { borderWidth: 1, borderColor: '#ffffff', paddingVertical: 12, alignItems: 'center' },
+  logItText: { ...t.label, color: '#ffffff', letterSpacing: 2, fontSize: 13, lineHeight: 18 },
+  keepGoingBtn: { borderWidth: 1, borderColor: '#333333', paddingVertical: 12, alignItems: 'center' },
+  keepGoingText: { ...t.label, color: '#ffffff', letterSpacing: 2, fontSize: 13, lineHeight: 18 },
+  quitConfirmBtn: { paddingVertical: 12, alignItems: 'center' },
+  quitConfirmBtnText: { ...t.label, color: '#E11D48', letterSpacing: 1.5, fontSize: 13, lineHeight: 18 },
   trashWarningToast: {
     position: 'absolute',
     top: 96,

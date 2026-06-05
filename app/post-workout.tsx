@@ -50,7 +50,18 @@ function getScoreContext(score: number, lowerIsBetter: boolean): string {
 
 export default function PostWorkoutScreen() {
   const { addSession: addSessionToContext, sessionCount: cachedSessionCount } = useSessions();
-  const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string; guided?: string }>();
+  const params = useLocalSearchParams<{
+    mood: string;
+    workoutId: string;
+    intensity: string;
+    reps: string;
+    guided?: string;
+    completionType?: string;
+    actualDuration?: string;
+    completedSteps?: string;
+    totalSteps?: string;
+    plannedDuration?: string;
+  }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
     : (Object.keys(MOODS)[0] as MoodKey);
@@ -58,6 +69,12 @@ export default function PostWorkoutScreen() {
   const intensity = parseInt(params.intensity || '5', 10);
   const sessionReps = parseInt(params.reps || '0', 10);
   const isGuided = params.guided === '1';
+  const completionType = params.completionType === 'minimum' || params.completionType === 'partial'
+    ? params.completionType
+    : 'full';
+  const completedSteps = parseInt(params.completedSteps || '0', 10) || undefined;
+  const totalWorkoutSteps = parseInt(params.totalSteps || '0', 10) || undefined;
+  const plannedDuration = parseInt(params.plannedDuration || '0', 10) || undefined;
 
   const [postScore, setPostScore] = useState(5);
   const [rating, setRating] = useState<'yes' | 'somewhat' | 'no' | null>(null);
@@ -73,6 +90,8 @@ export default function PostWorkoutScreen() {
   const [previousBest, setPreviousBest] = useState<PersonalBest | null>(null);
   const [note, setNote] = useState('');
   const workout = getWorkoutById(workoutId) ?? getWorkoutsForMood(mood)[0];
+  const actualDurationParam = parseInt(params.actualDuration || '0', 10) || 0;
+  const actualDuration = actualDurationParam > 0 ? actualDurationParam : (workout?.duration ?? 0);
 
   useEffect(() => {
     Promise.all([getSessions(), getUserProfile(), getPersonalBest(workoutId)]).then(([sessions, profile, pb]) => {
@@ -144,10 +163,15 @@ export default function PostWorkoutScreen() {
         postScore,
         workoutName: workout?.name ?? workoutId,
         workoutId: workoutId || undefined,
-        duration: workout?.duration ?? 0,
+        duration: actualDuration,
         timestamp: Date.now(),
         note: note.trim() || undefined,
         rating: rating ?? undefined,
+        completionType,
+        completedSteps,
+        totalSteps: totalWorkoutSteps,
+        plannedDuration,
+        lightDay: completionType !== 'full' ? true : undefined,
       });
       if (sessionReps > 0) {
         const isNewBest = previousBest === null || sessionReps > previousBest.reps;
@@ -159,8 +183,8 @@ export default function PostWorkoutScreen() {
       getSessions().then((updated) => rescheduleAfterSession(updated)).catch(() => {});
       void saveWorkoutToHealth({
         name: workout?.name ?? workoutId,
-        durationMinutes: workout?.duration ?? 0,
-        startMs: Date.now() - (workout?.duration ?? 0) * 60 * 1000,
+        durationMinutes: actualDuration,
+        startMs: Date.now() - actualDuration * 60 * 1000,
         endMs: Date.now(),
       });
       setShowWinCard(true);
@@ -205,9 +229,19 @@ export default function PostWorkoutScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.headline}>You absolute legend.</Text>
+        <Text style={styles.headline}>
+          {completionType === 'partial'
+            ? 'You moved. That counts.'
+            : completionType === 'minimum'
+            ? 'Minimum dose logged.'
+            : 'You absolute legend.'}
+        </Text>
         <Text style={styles.subtext}>
-          You showed up when your brain said don&apos;t. That takes guts.
+          {completionType === 'partial'
+            ? `${actualDuration} min logged. Done enough is still done.`
+            : completionType === 'minimum'
+            ? 'You chose the minimum and did it. That counts.'
+            : 'You showed up when your brain said don&apos;t. That takes guts.'}
         </Text>
         {postInsult !== '' && (
           <Text style={styles.insultLine}>{postInsult}</Text>

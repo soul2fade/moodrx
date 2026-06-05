@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-    paddingTop: 132,
+    paddingTop: 96,
     paddingBottom: 36,
   },
   topRow: {
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...t.headline,
-    marginTop: 36,
+    marginTop: 0,
   },
   divider: {
     width: 32,

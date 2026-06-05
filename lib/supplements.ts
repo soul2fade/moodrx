@@ -27,7 +27,7 @@ export const SUPPLEMENTS: Supplement[] = [
   },
   {
     name: 'Omega-3 EPA/DHA',
-    benefit: "EPA-focused mood support",
+    benefit: "EPA-focused mood evidence",
     timing: 'With food',
     dose: '1-2g',
     moods: ['low'],
@@ -52,7 +52,7 @@ export const SUPPLEMENTS: Supplement[] = [
   },
   {
     name: 'Ashwagandha KSM-66',
-    benefit: "Stress trial evidence",
+    benefit: "Studied cortisol reduction",
     timing: 'Morning',
     dose: '300-600mg',
     moods: ['stressed', 'anxious'],

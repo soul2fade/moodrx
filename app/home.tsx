@@ -227,40 +227,6 @@ export default function HomeScreen() {
 
         <Text style={styles.subtext}>Be honest. I&apos;m not here to judge. Much.</Text>
 
-        {/* 3-page carousel: Today / Your Pattern / Quick Actions */}
-        <View style={styles.carouselPlaceholder}>
-          {carouselPage === null ? (
-            <View style={styles.skeletonWrapper}>
-              <View style={styles.skeletonLine} />
-              <View style={[styles.skeletonLine, styles.skeletonLineSm]} />
-              <View style={[styles.skeletonLine, styles.skeletonLineMd]} />
-              <View style={styles.skeletonDots}>
-                <View style={[styles.skeletonDot, styles.skeletonDotActive]} />
-                <View style={styles.skeletonDot} />
-                <View style={styles.skeletonDot} />
-              </View>
-            </View>
-          ) : (
-            <Animated.View style={{ opacity: carouselFadeAnim, flex: 1 }}>
-              <HomeCarousel
-                selectedMood={selectedMood}
-                sessionCount={sessionCount}
-                userProfile={userProfile}
-                lastSession={lastSession}
-                showStillFeeling={showStillFeeling}
-                moodIdentity={moodIdentity}
-                sessions={sessions}
-                onQuickSession={handleQuickSession}
-                initialPage={carouselPage}
-                onPageChange={(page) => {
-                  setCarouselPage(page);
-                  setLastCarouselPage(page);
-                }}
-              />
-            </Animated.View>
-          )}
-        </View>
-
         {/* Mood list */}
         <View style={styles.moodList} accessibilityRole="radiogroup" accessibilityLabel="Select your mood">
           {HOME_MOOD_ORDER.map((moodKey, idx) => {
@@ -301,6 +267,40 @@ export default function HomeScreen() {
               </Animated.View>
             );
           })}
+        </View>
+
+        {/* 3-page carousel: Today / Your Pattern / Quick Actions */}
+        <View style={styles.carouselPlaceholder}>
+          {carouselPage === null ? (
+            <View style={styles.skeletonWrapper}>
+              <View style={styles.skeletonLine} />
+              <View style={[styles.skeletonLine, styles.skeletonLineSm]} />
+              <View style={[styles.skeletonLine, styles.skeletonLineMd]} />
+              <View style={styles.skeletonDots}>
+                <View style={[styles.skeletonDot, styles.skeletonDotActive]} />
+                <View style={styles.skeletonDot} />
+                <View style={styles.skeletonDot} />
+              </View>
+            </View>
+          ) : (
+            <Animated.View style={{ opacity: carouselFadeAnim, flex: 1 }}>
+              <HomeCarousel
+                selectedMood={selectedMood}
+                sessionCount={sessionCount}
+                userProfile={userProfile}
+                lastSession={lastSession}
+                showStillFeeling={showStillFeeling}
+                moodIdentity={moodIdentity}
+                sessions={sessions}
+                onQuickSession={handleQuickSession}
+                initialPage={carouselPage}
+                onPageChange={(page) => {
+                  setCarouselPage(page);
+                  setLastCarouselPage(page);
+                }}
+              />
+            </Animated.View>
+          )}
         </View>
       </ScrollView>
 

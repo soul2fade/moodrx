@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,8 @@ import { BottomNav } from '@/components/BottomNav';
 type TabKey = 'TODAY' | 'HISTORY' | 'ALL';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const SUPPLEMENT_TRUST_COPY =
+  'Wellness guidance only. Check with a clinician before starting supplements, especially if pregnant, medicated, or managing a condition.';
 
 interface DayAdherence {
   taken: boolean;
@@ -128,6 +130,7 @@ function SupplementsScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lastMood, setLastMood] = useState<MoodKey | null>(null);
   const [expandedSupp, setExpandedSupp] = useState<string | null>(null);
+  const [showPriorityScience, setShowPriorityScience] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('TODAY');
   const [allFilterMood, setAllFilterMood] = useState<MoodKey | null>(null);
 
@@ -181,8 +184,14 @@ function SupplementsScreen() {
     [visibleSupplements, takenSet]
   );
   const totalCount = visibleSupplements.length;
+  const prioritySupplement = visibleSupplements[0];
+  const isPriorityTaken = prioritySupplement ? takenSet.has(prioritySupplement.name) : false;
 
   const accentColor = lastMood ? MOODS[lastMood].color : '#059669';
+
+  useEffect(() => {
+    setShowPriorityScience(false);
+  }, [prioritySupplement?.name]);
 
   const weekAdherence = useMemo(() => buildWeekAdherence(logs), [logs]);
   const weekTakenCount = useMemo(() => countWeekTaken(weekAdherence), [weekAdherence]);
@@ -404,31 +413,54 @@ function SupplementsScreen() {
           )}
 
           {/* Priority card */}
-          {visibleSupplements.length > 0 && (() => {
-            const priority = visibleSupplements[0];
-            const isPriorityTaken = takenSet.has(priority.name);
-            return (
-              <View style={[styles.priorityCard, { borderLeftColor: accentColor }]}>
-                <Text style={styles.priorityCardLabel}>TODAY&apos;S PRIORITY</Text>
-                <Text style={styles.priorityCardHeadline}>One thing. Take it.</Text>
-                <Text style={styles.priorityCardName}>{priority.name}</Text>
-                <Text style={styles.priorityCardDose}>{priority.dose} · {priority.timing.toUpperCase()}</Text>
-                <Text style={styles.priorityCardScience}>{priority.science}</Text>
-                <TouchableOpacity
-                  onPress={() => handleToggle(priority.name)}
-                  activeOpacity={0.7}
-                  style={[styles.priorityCheckBtn, isPriorityTaken && { borderColor: accentColor }]}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: isPriorityTaken }}
-                  accessibilityLabel={`${priority.name}: ${isPriorityTaken ? 'taken' : 'not taken'}. Tap to toggle.`}
-                >
-                  <Text style={[styles.priorityCheckBtnText, isPriorityTaken && { color: accentColor }]}>
-                    {isPriorityTaken ? 'TAKEN ✓' : 'MARK AS TAKEN'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })()}
+          {prioritySupplement && (
+            <View style={[styles.priorityCard, { borderLeftColor: accentColor }]}>
+              <Text style={styles.priorityCardLabel}>TODAY&apos;S PRIORITY</Text>
+              <Text style={styles.priorityCardHeadline}>One thing. Take it.</Text>
+              <Text style={styles.priorityCardName}>{prioritySupplement.name}</Text>
+              <Text style={styles.priorityCardDose}>
+                {prioritySupplement.dose} · {prioritySupplement.timing.toUpperCase()}
+              </Text>
+              <Text style={styles.priorityCardReason}>{prioritySupplement.benefit}.</Text>
+              <TouchableOpacity
+                onPress={() => setShowPriorityScience((open) => !open)}
+                activeOpacity={0.7}
+                style={styles.priorityWhyBtn}
+                accessibilityRole="button"
+                accessibilityLabel={`${showPriorityScience ? 'Hide' : 'Show'} why ${prioritySupplement.name} works`}
+              >
+                <Text style={[styles.priorityWhyText, { color: accentColor }]}>
+                  WHY THIS WORKS {showPriorityScience ? '↑' : '↓'}
+                </Text>
+              </TouchableOpacity>
+              {showPriorityScience && (
+                <View style={styles.prioritySciencePanel}>
+                  <Text style={styles.priorityCardScience}>{prioritySupplement.science}</Text>
+                  {(prioritySupplement.sources?.length ?? 0) > 0 && (
+                    <>
+                      <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>SOURCES</Text>
+                      {prioritySupplement.sources.map((src, i) => (
+                        <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
+                      ))}
+                    </>
+                  )}
+                </View>
+              )}
+              <Text style={styles.supplementTrustText}>{SUPPLEMENT_TRUST_COPY}</Text>
+              <TouchableOpacity
+                onPress={() => handleToggle(prioritySupplement.name)}
+                activeOpacity={0.7}
+                style={[styles.priorityCheckBtn, isPriorityTaken && { borderColor: accentColor }]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isPriorityTaken }}
+                accessibilityLabel={`${prioritySupplement.name}: ${isPriorityTaken ? 'taken' : 'not taken'}. Tap to toggle.`}
+              >
+                <Text style={[styles.priorityCheckBtnText, isPriorityTaken && { color: accentColor }]}>
+                  {isPriorityTaken ? 'TAKEN ✓' : 'MARK AS TAKEN'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Supplement list */}
           <View style={styles.supplementList}>
@@ -493,6 +525,7 @@ function SupplementsScreen() {
                           ))}
                         </>
                       )}
+                      <Text style={styles.supplementTrustText}>{SUPPLEMENT_TRUST_COPY}</Text>
                     </View>
                   )}
                 </View>
@@ -708,6 +741,7 @@ function SupplementsScreen() {
                           ))}
                         </>
                       )}
+                      <Text style={styles.supplementTrustText}>{SUPPLEMENT_TRUST_COPY}</Text>
                     </View>
                   )}
                 </View>
@@ -930,12 +964,35 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginTop: 2,
   },
+  priorityCardReason: {
+    ...t.bodySm,
+    color: '#ffffff',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 10,
+  },
+  priorityWhyBtn: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  priorityWhyText: {
+    ...t.label,
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  prioritySciencePanel: {
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
+    paddingTop: 12,
+    marginTop: 4,
+  },
   priorityCardScience: {
     ...t.soft,
     color: '#ffffff',
     fontSize: 14,
     lineHeight: 20,
-    marginTop: 10,
   },
   priorityCheckBtn: {
     borderWidth: 1,
@@ -1055,6 +1112,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginTop: 4,
+  },
+  supplementTrustText: {
+    fontFamily: fonts.primary.regular,
+    color: '#ffffff',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 12,
   },
   moodTagRow: {
     flexDirection: 'row',

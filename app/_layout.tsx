@@ -73,26 +73,32 @@ export default function RootLayout() {
   }
 
   /*
-   * IMPORTANT: DO NOT REMOVE GluestackInitializer OR ErrorBoundary */
+   * IMPORTANT: DO NOT REMOVE GluestackInitializer OR ErrorBoundary
+   *
+   * ErrorBoundary sits OUTSIDE the providers so a throw in SubscriptionProvider
+   * or SessionsProvider init (RC SDK config error, AsyncStorage parse failure,
+   * etc.) is caught and surfaces the fallback UI with a Try Again button —
+   * not a permanent blank screen.
+   */
   return (
-    <SubscriptionProvider>
-      <SessionsProvider>
-      <ErrorBoundary>
-        <GluestackInitializer colorScheme={colorScheme}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: '#0a0a0a' },
-              animation: 'fade',
-            }}
-          >
-            <Stack.Screen name="+not-found" />
-            <Stack.Screen name="premium" />
-          </Stack>
-          <StatusBar style="auto" />
-        </GluestackInitializer>
-      </ErrorBoundary>
-      </SessionsProvider>
-    </SubscriptionProvider>
+    <ErrorBoundary>
+      <SubscriptionProvider>
+        <SessionsProvider>
+          <GluestackInitializer colorScheme={colorScheme}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: '#0a0a0a' },
+                animation: 'fade',
+              }}
+            >
+              <Stack.Screen name="+not-found" />
+              <Stack.Screen name="premium" />
+            </Stack>
+            <StatusBar style="auto" />
+          </GluestackInitializer>
+        </SessionsProvider>
+      </SubscriptionProvider>
+    </ErrorBoundary>
   );
 }

@@ -17,6 +17,7 @@ import {
   Platform,
 } from 'react-native';
 import Purchases, {
+  INTRO_ELIGIBILITY_STATUS,
   type CustomerInfo,
   type PurchasesOfferings,
   type PurchasesPackage,
@@ -66,6 +67,31 @@ function deriveSubscriptionState(
   const hasUsedTrial = allEntitlement !== undefined || legacyTrialUsed;
 
   return { isPaidPremium, isInTrial, trialDaysLeft, hasUsedTrial };
+}
+
+/** Ask RevenueCat directly whether this user is still eligible for a free
+ *  trial on the annual product. Returns true when RC says INELIGIBLE (the
+ *  user has used the trial), false when ELIGIBLE, and null when RC can't
+ *  determine (UNKNOWN, no offer exists, offerings missing, network error).
+ *  The fallback (legacy + has-any-entitlement heuristic) handles null. */
+async function checkTrialUsedFromRC(
+  rcOfferings: PurchasesOfferings | null,
+): Promise<boolean | null> {
+  if (Platform.OS === 'web') return null;
+  const annualPkg = rcOfferings?.current?.availablePackages?.find(
+    (p) => p.identifier === '$rc_annual',
+  );
+  const productId = annualPkg?.product?.identifier;
+  if (!productId) return null;
+  try {
+    const result = await Purchases.checkTrialOrIntroductoryPriceEligibility([productId]);
+    const status = result[productId]?.status;
+    if (status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_INELIGIBLE) return true;
+    if (status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE) return false;
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 async function maybeScheduleTrialNudges(customerInfo: CustomerInfo): Promise<void> {
@@ -119,6 +145,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const pendingPurchaseRef = useRef<PurchasesPackage | null>(null);
   const pendingResolveRef = useRef<((granted: boolean) => void) | null>(null);
   const legacyTrialUsedRef = useRef(false);
+  // Latest offerings, mirrored to a ref so applyCustomerInfo can check
+  // trial eligibility without re-subscribing on every render.
+  const offeringsRef = useRef<PurchasesOfferings | null>(null);
 
   const isPremium = isPaidPremium;
 
@@ -127,7 +156,15 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     setIsPaidPremium(snapshot.isPaidPremium);
     setIsInTrial(snapshot.isInTrial);
     setTrialDaysLeft(snapshot.trialDaysLeft);
+    // Initial value from the legacy heuristic — overridden below if RC gives
+    // us a definitive answer. Users who bought monthly directly (no trial)
+    // get a true positive from the heuristic but ELIGIBLE from RC; we trust
+    // RC and let them start a trial.
     setHasUsedTrial(snapshot.hasUsedTrial);
+    const eligibility = await checkTrialUsedFromRC(offeringsRef.current);
+    if (eligibility !== null) {
+      setHasUsedTrial(eligibility);
+    }
     await maybeScheduleTrialNudges(customerInfo);
   }, []);
 
@@ -147,8 +184,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         ]);
 
         if (mounted) {
-          await applyCustomerInfo(customerInfo);
+          // Seed offeringsRef BEFORE applyCustomerInfo so the eligibility
+          // check inside it has the annual product to query against on the
+          // very first run.
+          offeringsRef.current = rcOfferings;
           setOfferings(rcOfferings);
+          await applyCustomerInfo(customerInfo);
         }
 
         Purchases.addCustomerInfoUpdateListener(onCustomerInfoUpdate);

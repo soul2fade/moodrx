@@ -381,11 +381,24 @@ export async function enableRemindersFromPrompt(trialStartMs?: number | null): P
   }
 }
 
-export async function cancelAllNotifications(): Promise<void> {
+/** Cancel every OS-scheduled notification this app set up. Leaves the
+ *  user's stored reminder preferences alone — call this when something
+ *  invalidated the schedule (permissions revoked, signup flow restarting)
+ *  and the user might re-enable reminders later. */
+export async function cancelAllScheduledNotifications(): Promise<void> {
   if (Platform.OS === 'web') return;
   await cancelReminders();
   await cancelSupplementReminder();
   await cancelTrialNudges();
+}
+
+/** Cancel schedules AND wipe the AsyncStorage flags that record the user's
+ *  reminder preferences. Only the full-reset flow should use this — every
+ *  other caller wants `cancelAllScheduledNotifications` so the user's
+ *  "I want morning check-ins at 8am" choice survives the cancellation. */
+export async function clearAllNotificationState(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  await cancelAllScheduledNotifications();
   try {
     await AsyncStorage.multiRemove([
       NOTIFICATIONS_ENABLED_KEY,
@@ -396,6 +409,11 @@ export async function cancelAllNotifications(): Promise<void> {
     // non-critical
   }
 }
+
+/** @deprecated Use clearAllNotificationState for reset flows or
+ *  cancelAllScheduledNotifications for cancel-only flows. Kept as an alias
+ *  for one release so external callers don't break. */
+export const cancelAllNotifications = clearAllNotificationState;
 
 export async function scheduleSupplementReminder(hour: number, minute: number): Promise<void> {
   if (Platform.OS === 'web') return;

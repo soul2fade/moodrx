@@ -16,8 +16,10 @@ import {
   getSupplementLogs,
   toggleSupplementLog,
   getSessions,
+  sessionDateString,
   SupplementLog,
   Session,
+  MoodKey,
   getSupplementReminderPrefs,
   saveSupplementReminderPrefs,
 } from '@/lib/storage';
@@ -28,8 +30,6 @@ import {
   DEFAULT_SUPPLEMENT_TIME,
 } from '@/lib/notifications';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
-import type { MoodKey } from '@/lib/storage';
-import { sessionDateString } from '@/lib/storage';
 import { todayDateString, formatTodayLabel, toDateString } from '@/lib/dateUtils';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';

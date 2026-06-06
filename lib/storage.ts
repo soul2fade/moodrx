@@ -16,6 +16,19 @@ export interface Session {
   rating?: 'yes' | 'somewhat' | 'no';
   note?: string;
   lightDay?: boolean;
+  /** YYYY-MM-DD in the local timezone at write time. Persisted so streak
+   *  and "today" checks survive timezone changes (travel, DST) without
+   *  recomputing from the unix timestamp. Optional for sessions logged
+   *  before this field existed — sessionDateString() falls back. */
+  localDateString?: string;
+}
+
+/** Returns the session's day label (YYYY-MM-DD). Prefers the persisted
+ *  localDateString (set at write time in the user's then-local timezone);
+ *  falls back to recomputing from the timestamp for sessions written
+ *  before the field existed. */
+export function sessionDateString(s: Session): string {
+  return s.localDateString ?? toDateString(s.timestamp);
 }
 
 export interface SupplementLog {
@@ -128,10 +141,17 @@ export async function getSessions(): Promise<Session[]> {
 }
 
 export async function addSession(session: Session): Promise<void> {
+  // Snapshot the local date once at write time so streak/today logic
+  // doesn't shift under the user's feet when they travel across time
+  // zones or DST flips inside the streak window.
+  const enriched: Session = {
+    ...session,
+    localDateString: session.localDateString ?? toDateString(session.timestamp),
+  };
   sessionWriteChain = sessionWriteChain.then(async () => {
     invalidateSessionsCache();
     const existing = await getSessions();
-    const updated = [...existing, session];
+    const updated = [...existing, enriched];
     await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(updated));
     // Write-through: seed the cache with the post-write state so any read
     // landing inside the TTL window sees the new session immediately.
@@ -219,7 +239,7 @@ export async function toggleSupplementLog(supplementName: string, date: string):
 
 export function hasSessionToday(sessions: Session[]): boolean {
   const today = todayDateString();
-  return sessions.some((s) => toDateString(s.timestamp) === today);
+  return sessions.some((s) => sessionDateString(s) === today);
 }
 
 export function getStreakEncouragement(streak: number): string | null {
@@ -232,7 +252,7 @@ export function getStreakEncouragement(streak: number): string | null {
 export function getStreak(sessions: Session[]): number {
   if (sessions.length === 0) return 0;
 
-  const uniqueDates = Array.from(new Set(sessions.map((s) => toDateString(s.timestamp)))).sort();
+  const uniqueDates = Array.from(new Set(sessions.map((s) => sessionDateString(s)))).sort();
   const uniqueSet = new Set(uniqueDates);
 
   const today = todayDateString();

@@ -7,7 +7,10 @@ import {
   readHealthConnectSnapshot,
   requestHealthConnectPermissions,
   writeHealthConnectExerciseSession,
+  type HealthReadReason,
 } from './health-android';
+
+export type { HealthReadReason };
 
 const HEALTH_ENABLED_KEY = '@moodrx_health_enabled';
 
@@ -19,6 +22,10 @@ export interface HealthSnapshot {
   platform: HealthPlatform | null;
   stepsToday: number | null;
   sleepHoursLastNight: number | null;
+  /** Set when the platform read path failed (vs. genuinely returned no
+   *  data). UI uses this to show "Tap to reconnect" instead of hiding
+   *  the health card silently. Undefined on a clean read. */
+  readError?: HealthReadReason;
 }
 
 export interface WorkoutHealthPayload {
@@ -188,13 +195,14 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
 
   if (platform === 'health_connect') {
     try {
-      const { stepsToday, sleepHoursLastNight } = await readHealthConnectSnapshot();
+      const { stepsToday, sleepHoursLastNight, readError } = await readHealthConnectSnapshot();
       return {
         connected: true,
         available: true,
         platform,
         stepsToday,
         sleepHoursLastNight,
+        readError,
       };
     } catch (e) {
       console.warn('[MoodRx] getHealthSnapshot (Health Connect) failed:', e);
@@ -204,6 +212,7 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
         platform,
         stepsToday: null,
         sleepHoursLastNight: null,
+        readError: 'unknown',
       };
     }
   }
@@ -249,6 +258,7 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
       platform,
       stepsToday: null,
       sleepHoursLastNight: null,
+      readError: 'unknown',
     };
   }
 }

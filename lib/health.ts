@@ -28,6 +28,15 @@ export interface WorkoutHealthPayload {
   endMs: number;
 }
 
+/** Result of a permission request. HealthKit's privacy design hides
+ *  whether read access was actually granted (the API succeeds even for
+ *  denied reads), so we surface `mayBeDenied` when the post-auth probe
+ *  returns 0 — UI can prompt the user to verify in Settings → Health. */
+export interface HealthPermissionResult {
+  granted: boolean;
+  mayBeDenied?: boolean;
+}
+
 type HealthModule = typeof import('@kayzmann/expo-healthkit');
 
 function getHealthKitModule(): HealthModule | null {
@@ -93,31 +102,50 @@ export async function setHealthSyncEnabled(enabled: boolean): Promise<void> {
   }
 }
 
-export async function requestHealthPermissions(): Promise<boolean> {
+export async function requestHealthPermissions(): Promise<HealthPermissionResult> {
   if (Platform.OS === 'android') {
     const granted = await requestHealthConnectPermissions();
     if (granted) await setHealthSyncEnabled(true);
     else await setHealthSyncEnabled(false);
-    return granted;
+    return { granted };
   }
 
   const mod = getHealthKitModule();
-  if (!mod?.isAvailable()) return false;
+  if (!mod?.isAvailable()) return { granted: false };
   try {
     await mod.requestAuthorization(
       ['Steps', 'SleepAnalysis', 'Workout', 'MindfulMinutes'],
       ['Workout', 'MindfulMinutes'],
     );
-    const now = new Date();
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
-    await mod.getSteps(startOfDay, now);
+    // The auth call resolves whether the user tapped "Allow" or "Don't Allow"
+    // (or tapped through a dialog with everything off). Treat that as "the
+    // user opted in" — write paths will still work, and read paths surface
+    // via mayBeDenied below.
     await setHealthSyncEnabled(true);
-    return true;
+    // HealthKit privacy: reads silently return 0 / empty when scopes are
+    // denied (Apple intentionally hides this from apps). We probe steps for
+    // today; if the result is exactly 0, flag mayBeDenied so the UI can
+    // prompt the user to verify Settings → Health → Sources → MoodRx.
+    // (Note: a user genuinely at 0 steps today will see the hint too. The
+    // false-positive cost is small compared to "silently shows 0 forever".)
+    let mayBeDenied = false;
+    try {
+      const now = new Date();
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      const steps = await mod.getSteps(startOfDay, now);
+      if (!Number.isFinite(steps) || steps === 0) {
+        mayBeDenied = true;
+      }
+    } catch {
+      // Probe itself failed — treat as denied, but don't tear down the opt-in.
+      mayBeDenied = true;
+    }
+    return { granted: true, mayBeDenied };
   } catch (e) {
     await setHealthSyncEnabled(false);
     console.warn('[MoodRx] HealthKit authorization failed:', e);
-    return false;
+    return { granted: false };
   }
 }
 

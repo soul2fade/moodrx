@@ -122,7 +122,7 @@ export default function SettingsScreen() {
 
   const handleHealthToggle = async () => {
     if (!healthEnabled) {
-      const granted = await requestHealthPermissions();
+      const { granted, mayBeDenied } = await requestHealthPermissions();
       setHealthEnabledState(granted);
       healthToggleAnim.setValue(granted ? 1 : 0);
       if (!granted) {
@@ -131,6 +131,15 @@ export default function SettingsScreen() {
           Platform.OS === 'android'
             ? 'Install or update Health Connect, then allow MoodRx to read steps/sleep and write workouts.'
             : 'Enable MoodRx in Settings → Health to sync workouts and read steps/sleep.',
+        );
+      } else if (mayBeDenied && Platform.OS === 'ios') {
+        // HealthKit doesn't tell apps when read scopes are denied — a probe
+        // returning 0 might mean denied or might mean genuinely 0 today.
+        // Surface the hint so users who denied reads aren't stuck looking
+        // at empty data forever.
+        Alert.alert(
+          'Reading 0 steps so far',
+          "If you have steps today and they're not showing up, open Settings → Health → Data Access & Devices → MoodRx and make sure steps and sleep are allowed.",
         );
       }
       return;

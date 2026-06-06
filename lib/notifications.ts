@@ -326,8 +326,16 @@ export async function scheduleTrialNudges(trialStartMs: number): Promise<void> {
     await cancelTrialNudges();
     const now = Date.now();
     const ids: string[] = [];
+    // Anchor on local-midnight of the start date BEFORE adding offset days,
+    // and step days via setDate(getDate()+N) which is DST-safe. Adding raw
+    // 86 400 000 ms to a unix timestamp and then calling setHours(18,...)
+    // misfires by one day for users whose local date of trialStartMs
+    // differs from the UTC date (trials started near local midnight).
+    const startLocalMidnight = new Date(trialStartMs);
+    startLocalMidnight.setHours(0, 0, 0, 0);
     for (const nudge of TRIAL_NUDGES) {
-      const triggerDate = new Date(trialStartMs + nudge.offsetDays * 24 * 60 * 60 * 1000);
+      const triggerDate = new Date(startLocalMidnight.getTime());
+      triggerDate.setDate(triggerDate.getDate() + nudge.offsetDays);
       triggerDate.setHours(18, 0, 0, 0);
       if (triggerDate.getTime() > now) {
         const id = await Notifications.scheduleNotificationAsync({

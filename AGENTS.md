@@ -64,6 +64,30 @@ All app data is stored locally via AsyncStorage (`lib/storage.ts`). There is no 
 
 RevenueCat (`react-native-purchases`) handles iOS/Android IAP. Public keys are set via `EXPO_PUBLIC_REVENUECAT_*` env vars (local `.env` and EAS environment variables).
 
+### Required EAS environment variables
+
+These must be set in the EAS dashboard scoped to the `production` profile or the production build silently falls back to no-op paths (RevenueCat init logs a warning and skips, CatDoes Watch error tracking goes dark). Verify with:
+
+```
+eas env:list --environment production
+```
+
+Required keys:
+
+- `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` — RevenueCat iOS SDK key (Project Settings → API keys → SDK API keys)
+- `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` — RevenueCat Android SDK key
+- `EXPO_PUBLIC_CATDOES_WATCH_KEY` — CatDoes Watch error tracking key
+
+Optional (used in `preview` profile only):
+
+- `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY` — RevenueCat test-store key for QA builds
+
+To set a missing key:
+
+```
+eas env:create --environment production --name EXPO_PUBLIC_REVENUECAT_IOS_API_KEY --value <key>
+```
+
 ### Icons
 
 Uses `lucide-react-native` for icons.

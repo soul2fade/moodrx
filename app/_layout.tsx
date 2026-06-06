@@ -14,6 +14,7 @@ import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
+import { registerNotificationChannels } from "@/lib/notifications";
 
 // Show notifications while app is in the foreground
 Notifications.setNotificationHandler({
@@ -58,6 +59,7 @@ export default function RootLayout() {
         err instanceof Error ? err.message : String(err),
       );
     }
+    void registerNotificationChannels();
   }, []);
 
   useEffect(() => {

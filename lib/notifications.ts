@@ -9,6 +9,30 @@ export const NOTIFICATIONS_ENABLED_KEY = 'notifications_enabled';
 export const REMINDER_TIME_KEY = 'reminder_time';
 export const REMINDER_SCHEDULE_KEY = '@moodrx_reminder_schedule';
 
+/** Single Android notification channel used by all MoodRx reminders.
+ *  Must be registered before any scheduleNotificationAsync call on
+ *  Android 8+ or some OEMs silently drop the notification. */
+export const NOTIFICATION_CHANNEL_ID = 'moodrx-reminders';
+
+let channelRegistered = false;
+
+export async function registerNotificationChannels(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  if (channelRegistered) return;
+  try {
+    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
+      name: 'Reminders',
+      description: 'Daily check-ins, workout reminders, supplement nudges, and trial notifications.',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      enableVibrate: true,
+      showBadge: false,
+    });
+    channelRegistered = true;
+  } catch (e) {
+    console.warn('[MoodRx] registerNotificationChannels failed:', e);
+  }
+}
+
 export interface ReminderSchedule {
   weekdayLabel: string;
   weekendLabel: string;
@@ -202,7 +226,7 @@ async function scheduleWeeklyCheckin(
   body: string,
 ): Promise<string> {
   return Notifications.scheduleNotificationAsync({
-    content: { title: 'MoodRx', body },
+    content: { title: 'MoodRx', body, ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }) },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday,
@@ -214,7 +238,7 @@ async function scheduleWeeklyCheckin(
 
 async function scheduleDailyCheckin(hour: number, minute: number, body: string): Promise<string> {
   return Notifications.scheduleNotificationAsync({
-    content: { title: 'MoodRx', body },
+    content: { title: 'MoodRx', body, ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }) },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour,
@@ -307,7 +331,7 @@ export async function scheduleTrialNudges(trialStartMs: number): Promise<void> {
       triggerDate.setHours(18, 0, 0, 0);
       if (triggerDate.getTime() > now) {
         const id = await Notifications.scheduleNotificationAsync({
-          content: { title: 'MoodRx', body: nudge.body },
+          content: { title: 'MoodRx', body: nudge.body, ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }) },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,
             date: triggerDate,
@@ -383,6 +407,7 @@ export async function scheduleSupplementReminder(hour: number, minute: number): 
       content: {
         title: 'MoodRx — Supplements',
         body: msg,
+        ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }),
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,

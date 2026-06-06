@@ -61,7 +61,7 @@ export default function SettingsScreen() {
   const [healthEnabled, setHealthEnabledState] = useState(false);
   const voiceToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
-  const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium } = useSubscription();
+  const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -240,7 +240,11 @@ export default function SettingsScreen() {
     outputRange: [3, 25],
   });
 
-  const trialExpired = hasUsedTrial && !isInTrial && !isPremium;
+  // `trialExpired` and the "FREE VERSION" CTA must wait for RC to load — otherwise
+  // a paying user briefly sees "TRIAL ENDED / Upgrade to restore full access" on
+  // cold start while customerInfo is in flight.
+  const trialExpired = !subLoading && hasUsedTrial && !isInTrial && !isPremium;
+  const showFreeVersionCTA = !subLoading && !hasUsedTrial && !isPremium;
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -311,7 +315,7 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {!hasUsedTrial && !isPremium && (
+        {showFreeVersionCTA && (
           <View style={styles.subStatusRow}>
             <Text style={styles.subStatusLabel}>FREE VERSION</Text>
             <TouchableOpacity

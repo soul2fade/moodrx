@@ -33,6 +33,7 @@ export default function PremiumScreen() {
     trialDaysLeft,
     hasUsedTrial,
     offerings,
+    isLoading: subLoading,
   } = useSubscription();
   const { sessionCount, avgChange } = useSessions();
 
@@ -54,7 +55,9 @@ export default function PremiumScreen() {
     return () => backHandler.remove();
   }, []);
 
-  const trialExpired = hasUsedTrial && !isInTrial && !isPremium;
+  // Gate the "TRIAL ENDED" badge on RC having finished loading — otherwise a
+  // paying user briefly sees the expired warning on cold start.
+  const trialExpired = !subLoading && hasUsedTrial && !isInTrial && !isPremium;
 
   const currentOffering = offerings?.current;
   const monthlyPkg = currentOffering?.availablePackages?.find(

@@ -15,6 +15,7 @@ export function useWorkoutTimer(onTimerEnd: () => void) {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const endTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerEndRef = useRef<number | null>(null);
   const onTimerEndRef = useRef(onTimerEnd);
   onTimerEndRef.current = onTimerEnd;
@@ -23,6 +24,10 @@ export function useWorkoutTimer(onTimerEnd: () => void) {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
+    }
+    if (endTimeoutRef.current) {
+      clearTimeout(endTimeoutRef.current);
+      endTimeoutRef.current = null;
     }
     timerEndRef.current = null;
     setTimerSeconds(null);
@@ -37,6 +42,7 @@ export function useWorkoutTimer(onTimerEnd: () => void) {
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (endTimeoutRef.current) clearTimeout(endTimeoutRef.current);
       countdownRef.current.forEach(clearTimeout);
     };
   }, []);
@@ -54,7 +60,10 @@ export function useWorkoutTimer(onTimerEnd: () => void) {
         timerEndRef.current = null;
         setTimerSeconds(null);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setTimeout(() => onTimerEndRef.current(), 700);
+        endTimeoutRef.current = setTimeout(() => {
+          endTimeoutRef.current = null;
+          onTimerEndRef.current();
+        }, 700);
       } else {
         setTimerSeconds(remaining);
       }

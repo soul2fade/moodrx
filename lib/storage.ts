@@ -105,7 +105,10 @@ export async function setGuidedSessionDone(): Promise<void> {
 export async function getSessions(): Promise<Session[]> {
   const now = Date.now();
   if (sessionsCache && now - sessionsCacheTime < CACHE_TTL) {
-    return sessionsCache;
+    // Defensive copy: callers that sort/splice the result must not mutate
+    // the cached array (which the next addSession() reads to build the new
+    // disk payload).
+    return [...sessionsCache];
   }
   try {
     const raw = await AsyncStorage.getItem(SESSIONS_KEY);
@@ -117,7 +120,7 @@ export async function getSessions(): Promise<Session[]> {
     const parsed = JSON.parse(raw) as Session[];
     sessionsCache = parsed;
     sessionsCacheTime = now;
-    return parsed;
+    return [...parsed];
   } catch (e) {
     console.warn('[MoodRx] getSessions failed:', e);
     return [];
@@ -150,7 +153,7 @@ export async function clearSessions(): Promise<void> {
 export async function getSupplementLogs(): Promise<SupplementLog[]> {
   const now = Date.now();
   if (supplementsCache && now - supplementsCacheTime < CACHE_TTL) {
-    return supplementsCache;
+    return [...supplementsCache];
   }
   try {
     const raw = await AsyncStorage.getItem(SUPPLEMENT_LOGS_KEY);
@@ -162,7 +165,7 @@ export async function getSupplementLogs(): Promise<SupplementLog[]> {
     const parsed = JSON.parse(raw) as SupplementLog[];
     supplementsCache = parsed;
     supplementsCacheTime = now;
-    return parsed;
+    return [...parsed];
   } catch (e) {
     console.warn('[MoodRx] getSupplementLogs failed:', e);
     return [];
@@ -309,6 +312,10 @@ export async function clearAllData(): Promise<void> {
       VOICE_ENABLED_KEY,
       WORKOUT_FOCUS_MODE_KEY,
       WORKOUT_VOICE_MODE_KEY,
+      // Health-sync opt-in must reset too — otherwise after "Reset all data"
+      // the next launch silently re-syncs to HealthKit/Health Connect even
+      // though the rest of the app behaves like a clean install.
+      '@moodrx_health_enabled',
       'notifications_enabled',
       'reminder_time',
       '@moodrx_reminder_schedule',
@@ -346,10 +353,15 @@ export async function getUserProfile(): Promise<UserProfile> {
   }
 }
 
-export async function setUserProfile(profile: UserProfile): Promise<void> {
+export async function setUserProfile(profile: Partial<UserProfile>): Promise<void> {
   try {
-    await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
-    userProfileCache = profile;
+    // Merge instead of replace — a caller updating just `preferredTime`
+    // should not wipe `primaryGoal`. Callers that intentionally want to
+    // reset a field should pass an explicit `undefined`.
+    const existing = await getUserProfile();
+    const merged: UserProfile = { ...existing, ...profile };
+    await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(merged));
+    userProfileCache = merged;
   } catch (e) {
     console.warn('[MoodRx] setUserProfile failed:', e);
   }
@@ -396,12 +408,12 @@ export interface PersonalBest {
 }
 
 async function loadPersonalBests(): Promise<Record<string, PersonalBest>> {
-  if (personalBestsCache) return personalBestsCache;
+  if (personalBestsCache) return { ...personalBestsCache };
   try {
     const raw = await AsyncStorage.getItem(PERSONAL_BESTS_KEY);
     const parsed: Record<string, PersonalBest> = raw ? JSON.parse(raw) : {};
     personalBestsCache = parsed;
-    return parsed;
+    return { ...parsed };
   } catch (e) {
     console.warn('[MoodRx] loadPersonalBests failed:', e);
     return {};

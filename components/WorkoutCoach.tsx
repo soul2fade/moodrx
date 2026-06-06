@@ -128,6 +128,11 @@ export default function WorkoutCoach({
   const [phrase, setPhrase] = useState(() => getPhrase(defaultCoachId, 0));
 
   const coachVideoSource = COACH_VIDEO_BY_MOOD[mood] ?? COACH_VIDEO_BY_MOOD.anxious;
+  // useVideoPlayer captures the source on first call; subsequent mood
+  // changes update coachVideoSource but the player instance keeps
+  // playing the original video. swap the underlying source via
+  // player.replace() so the visual coach matches the prop, not just
+  // the surrounding text.
   const player = useVideoPlayer(coachVideoSource, (p) => {
     p.loop = true;
     p.muted = true;
@@ -135,8 +140,13 @@ export default function WorkoutCoach({
   });
 
   useEffect(() => {
-    try { player.play(); } catch { /* noop */ }
-  }, [player]);
+    try {
+      player.replace(coachVideoSource);
+      player.play();
+    } catch {
+      // expo-video may throw if the player was already torn down
+    }
+  }, [player, coachVideoSource]);
 
   const isControlled = controlledStep !== undefined;
   const step = isControlled ? Math.min(3, Math.max(0, controlledStep)) : internalStep;

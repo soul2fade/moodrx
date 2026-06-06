@@ -166,11 +166,22 @@ export default function PostWorkoutScreen() {
       const endMs = Date.now();
       const durationMinutes = Math.max(1, workout?.duration ?? 1);
       const startMs = endMs - durationMinutes * 60 * 1000;
-      void saveWorkoutToHealth({
+      saveWorkoutToHealth({
         name: workout?.name ?? workoutId,
         durationMinutes,
         startMs,
         endMs,
+      }).then((result) => {
+        // Don't surface a UI Alert — sync is opportunistic and the user
+        // already completed their workout flow. But do log a structured
+        // breadcrumb so CatDoes Watch captures real sync failures (vs.
+        // the expected "user didn't opt in" no-op).
+        if (!result.ok && result.reason !== 'not_enabled') {
+          console.warn('[MoodRx] HealthKit workout sync did not persist', result.reason);
+        }
+      }).catch((e) => {
+        // .then() shouldn't throw, but belt-and-suspenders
+        console.warn('[MoodRx] HealthKit workout sync threw', e);
       });
       setShowWinCard(true);
     } catch {

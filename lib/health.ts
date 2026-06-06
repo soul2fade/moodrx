@@ -37,6 +37,20 @@ export interface HealthPermissionResult {
   mayBeDenied?: boolean;
 }
 
+/** Structured outcome of a write to HealthKit / Health Connect. Lets
+ *  callers log/surface a meaningful reason instead of guessing whether
+ *  the silent fire-and-forget actually persisted anything. */
+export type HealthWriteReason =
+  | 'not_enabled'    // user hasn't opted in to health sync
+  | 'invalid_window' // start/end timestamps are NaN, zero, or end <= start
+  | 'no_module'      // native module unavailable (Expo Go, missing build)
+  | 'write_failed';  // platform SDK threw — see logs for details
+
+export interface HealthWriteResult {
+  ok: boolean;
+  reason?: HealthWriteReason;
+}
+
 type HealthModule = typeof import('@kayzmann/expo-healthkit');
 
 function getHealthKitModule(): HealthModule | null {
@@ -239,8 +253,8 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
   }
 }
 
-export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promise<void> {
-  if (!(await getHealthSyncEnabled())) return;
+export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promise<HealthWriteResult> {
+  if (!(await getHealthSyncEnabled())) return { ok: false, reason: 'not_enabled' };
 
   // Use the caller's actual measured window. Previously we back-computed
   // startMs from `endMs - max(60s, durationMinutes*60)`, which clobbered
@@ -248,11 +262,8 @@ export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promis
   // sessions (next session's clamped 60s window stomped on prior end).
   const { startMs, endMs, name } = payload;
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
-    // Refuse to write a zero/negative-duration sample — HealthKit and
-    // Health Connect both reject these, and it's a sign the caller's
-    // duration tracking is broken, not data worth logging.
     console.warn('[MoodRx] saveWorkoutToHealth skipped — invalid window', { startMs, endMs });
-    return;
+    return { ok: false, reason: 'invalid_window' };
   }
   const durationSec = Math.round((endMs - startMs) / 1000);
 
@@ -264,14 +275,15 @@ export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promis
         endMs,
         exerciseType: ExerciseType.OTHER_WORKOUT,
       });
+      return { ok: true };
     } catch (e) {
       console.warn('[MoodRx] saveWorkoutToHealth (Health Connect) failed:', e);
+      return { ok: false, reason: 'write_failed' };
     }
-    return;
   }
 
   const mod = getHealthKitModule();
-  if (!mod?.isAvailable()) return;
+  if (!mod?.isAvailable()) return { ok: false, reason: 'no_module' };
 
   try {
     await mod.saveWorkout({
@@ -283,15 +295,17 @@ export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promis
       activityType: 'other',
       metadata: { name, source: 'MoodRx' },
     });
+    return { ok: true };
   } catch (e) {
     console.warn('[MoodRx] saveWorkoutToHealth (HealthKit) failed:', e);
+    return { ok: false, reason: 'write_failed' };
   }
 }
 
 /** Box-breathing cycles — 16 seconds per full 4-4-4-4 cycle. */
-export async function saveMindfulMinutesToHealth(cycles: number): Promise<void> {
-  if (cycles <= 0) return;
-  if (!(await getHealthSyncEnabled())) return;
+export async function saveMindfulMinutesToHealth(cycles: number): Promise<HealthWriteResult> {
+  if (cycles <= 0) return { ok: false, reason: 'invalid_window' };
+  if (!(await getHealthSyncEnabled())) return { ok: false, reason: 'not_enabled' };
 
   const durationSec = Math.max(60, cycles * 16);
   const endMs = Date.now();
@@ -306,14 +320,15 @@ export async function saveMindfulMinutesToHealth(cycles: number): Promise<void> 
         exerciseType: ExerciseType.GUIDED_BREATHING,
         notes: 'Mindful breathing session',
       });
+      return { ok: true };
     } catch (e) {
       console.warn('[MoodRx] saveMindfulMinutesToHealth (Health Connect) failed:', e);
+      return { ok: false, reason: 'write_failed' };
     }
-    return;
   }
 
   const mod = getHealthKitModule();
-  if (!mod?.isAvailable()) return;
+  if (!mod?.isAvailable()) return { ok: false, reason: 'no_module' };
 
   try {
     // HealthKit mindful sessions require category samples; yoga is the closest supported write type.
@@ -326,7 +341,9 @@ export async function saveMindfulMinutesToHealth(cycles: number): Promise<void> 
       activityType: 'yoga',
       metadata: { name: 'MoodRx Box Breathing', source: 'MoodRx', mindful: true },
     });
+    return { ok: true };
   } catch (e) {
     console.warn('[MoodRx] saveMindfulMinutesToHealth (HealthKit) failed:', e);
+    return { ok: false, reason: 'write_failed' };
   }
 }

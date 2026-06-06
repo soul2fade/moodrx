@@ -43,6 +43,48 @@ const SESSIONS_KEY = '@moodrx_sessions';
 const SUPPLEMENT_LOGS_KEY = 'supplement_logs';
 const CUSTOM_WORKOUTS_KEY = 'custom_workouts';
 
+// ─── Schema versioning for the array-shaped persistence keys ───
+//
+// Each versioned payload is stored as `{ version: number, data: T }`. Reads
+// transparently accept the legacy unwrapped shape (`T` directly) so the very
+// first read after this code ships still works, and the next write upgrades
+// the on-disk format. When a future field rename / type change ships, bump
+// SCHEMA_VERSION and dispatch on the stored `version` inside readVersioned.
+const SCHEMA_VERSION = 1;
+
+interface VersionedPayload<T> {
+  version: number;
+  data: T;
+}
+
+function isVersionedPayload<T>(value: unknown): value is VersionedPayload<T> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'version' in value &&
+    'data' in value &&
+    typeof (value as { version: unknown }).version === 'number'
+  );
+}
+
+/** Parse a raw AsyncStorage string, accepting both the wrapped
+ *  `{version,data}` shape and the legacy unwrapped shape. The legacy
+ *  branch lets every key migrate in-place: read returns the unwrapped
+ *  data, the next write persists it wrapped. */
+function readVersioned<T>(raw: string): T {
+  const parsed: unknown = JSON.parse(raw);
+  if (isVersionedPayload<T>(parsed)) {
+    // Future: switch on parsed.version and run migrations before returning.
+    return parsed.data;
+  }
+  return parsed as T;
+}
+
+function writeVersioned<T>(data: T): string {
+  const payload: VersionedPayload<T> = { version: SCHEMA_VERSION, data };
+  return JSON.stringify(payload);
+}
+
 // ─── Simple in-memory cache to avoid redundant AsyncStorage reads ───
 let sessionsCache: Session[] | null = null;
 let sessionsCacheTime = 0;
@@ -130,7 +172,7 @@ export async function getSessions(): Promise<Session[]> {
       sessionsCacheTime = now;
       return [];
     }
-    const parsed = JSON.parse(raw) as Session[];
+    const parsed = readVersioned<Session[]>(raw);
     sessionsCache = parsed;
     sessionsCacheTime = now;
     return [...parsed];
@@ -152,7 +194,7 @@ export async function addSession(session: Session): Promise<void> {
     invalidateSessionsCache();
     const existing = await getSessions();
     const updated = [...existing, enriched];
-    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(updated));
+    await AsyncStorage.setItem(SESSIONS_KEY, writeVersioned(updated));
     // Write-through: seed the cache with the post-write state so any read
     // landing inside the TTL window sees the new session immediately.
     sessionsCache = updated;
@@ -182,7 +224,7 @@ export async function getSupplementLogs(): Promise<SupplementLog[]> {
       supplementsCacheTime = now;
       return [];
     }
-    const parsed = JSON.parse(raw) as SupplementLog[];
+    const parsed = readVersioned<SupplementLog[]>(raw);
     supplementsCache = parsed;
     supplementsCacheTime = now;
     return [...parsed];
@@ -203,7 +245,7 @@ export async function saveSupplementLog(log: SupplementLog): Promise<void> {
       const updated = idx !== -1
         ? existing.map((l, i) => (i === idx ? log : l))
         : [...existing, log];
-      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(updated));
+      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, writeVersioned(updated));
       supplementsCache = updated;
       supplementsCacheTime = Date.now();
     } catch (e) {
@@ -227,7 +269,7 @@ export async function toggleSupplementLog(supplementName: string, date: string):
       const updated = idx === -1
         ? [...all, { date, supplementName, taken: true }]
         : all.map((l, i) => (i === idx ? { ...l, taken: !l.taken } : l));
-      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(updated));
+      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, writeVersioned(updated));
       supplementsCache = updated;
       supplementsCacheTime = Date.now();
     } catch (e) {
@@ -431,7 +473,9 @@ async function loadPersonalBests(): Promise<Record<string, PersonalBest>> {
   if (personalBestsCache) return { ...personalBestsCache };
   try {
     const raw = await AsyncStorage.getItem(PERSONAL_BESTS_KEY);
-    const parsed: Record<string, PersonalBest> = raw ? JSON.parse(raw) : {};
+    const parsed: Record<string, PersonalBest> = raw
+      ? readVersioned<Record<string, PersonalBest>>(raw)
+      : {};
     personalBestsCache = parsed;
     return { ...parsed };
   } catch (e) {
@@ -449,7 +493,7 @@ export async function savePersonalBest(workoutId: string, reps: number): Promise
   try {
     const all = await loadPersonalBests();
     const updated = { ...all, [workoutId]: { reps, date: todayDateString() } };
-    await AsyncStorage.setItem(PERSONAL_BESTS_KEY, JSON.stringify(updated));
+    await AsyncStorage.setItem(PERSONAL_BESTS_KEY, writeVersioned(updated));
     personalBestsCache = updated;
   } catch (e) {
     console.warn('[MoodRx] savePersonalBest failed:', e);

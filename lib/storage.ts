@@ -45,6 +45,7 @@ let notifPromptShownCache: boolean | null = null;
 let carouselHintSeenCache: boolean | null = null;
 
 let sessionWriteChain: Promise<void> = Promise.resolve();
+let supplementWriteChain: Promise<void> = Promise.resolve();
 
 function invalidateSessionsCache() {
   sessionsCache = null;
@@ -127,9 +128,12 @@ export async function addSession(session: Session): Promise<void> {
   sessionWriteChain = sessionWriteChain.then(async () => {
     invalidateSessionsCache();
     const existing = await getSessions();
-    existing.push(session);
-    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(existing));
-    invalidateSessionsCache();
+    const updated = [...existing, session];
+    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(updated));
+    // Write-through: seed the cache with the post-write state so any read
+    // landing inside the TTL window sees the new session immediately.
+    sessionsCache = updated;
+    sessionsCacheTime = Date.now();
   });
   return sessionWriteChain;
 }
@@ -166,21 +170,24 @@ export async function getSupplementLogs(): Promise<SupplementLog[]> {
 }
 
 export async function saveSupplementLog(log: SupplementLog): Promise<void> {
-  try {
-    const existing = await getSupplementLogs();
-    const idx = existing.findIndex(
-      (l) => l.date === log.date && l.supplementName === log.supplementName
-    );
-    if (idx !== -1) {
-      existing[idx] = log;
-    } else {
-      existing.push(log);
+  supplementWriteChain = supplementWriteChain.then(async () => {
+    try {
+      invalidateSupplementsCache();
+      const existing = await getSupplementLogs();
+      const idx = existing.findIndex(
+        (l) => l.date === log.date && l.supplementName === log.supplementName
+      );
+      const updated = idx !== -1
+        ? existing.map((l, i) => (i === idx ? log : l))
+        : [...existing, log];
+      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(updated));
+      supplementsCache = updated;
+      supplementsCacheTime = Date.now();
+    } catch (e) {
+      console.warn('[MoodRx] saveSupplementLog failed:', e);
     }
-    await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(existing));
-    invalidateSupplementsCache();
-  } catch (e) {
-    console.warn('[MoodRx] saveSupplementLog failed:', e);
-  }
+  });
+  return supplementWriteChain;
 }
 
 export async function getSupplementLogsForDate(date: string): Promise<SupplementLog[]> {
@@ -189,21 +196,22 @@ export async function getSupplementLogsForDate(date: string): Promise<Supplement
 }
 
 export async function toggleSupplementLog(supplementName: string, date: string): Promise<void> {
-  try {
-    const all = await getSupplementLogs();
-    const idx = all.findIndex((l) => l.date === date && l.supplementName === supplementName);
-    if (idx === -1) {
-      all.push({ date, supplementName, taken: true });
-    } else if (all[idx].taken) {
-      all[idx].taken = false;
-    } else {
-      all[idx].taken = true;
+  supplementWriteChain = supplementWriteChain.then(async () => {
+    try {
+      invalidateSupplementsCache();
+      const all = await getSupplementLogs();
+      const idx = all.findIndex((l) => l.date === date && l.supplementName === supplementName);
+      const updated = idx === -1
+        ? [...all, { date, supplementName, taken: true }]
+        : all.map((l, i) => (i === idx ? { ...l, taken: !l.taken } : l));
+      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(updated));
+      supplementsCache = updated;
+      supplementsCacheTime = Date.now();
+    } catch (e) {
+      console.warn('[MoodRx] toggleSupplementLog failed:', e);
     }
-    await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(all));
-    invalidateSupplementsCache();
-  } catch (e) {
-    console.warn('[MoodRx] toggleSupplementLog failed:', e);
-  }
+  });
+  return supplementWriteChain;
 }
 
 export function hasSessionToday(sessions: Session[]): boolean {

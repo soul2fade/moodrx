@@ -85,9 +85,10 @@ interface SubscriptionContextValue {
   hasUsedTrial: boolean;
   isLoading: boolean;
   offerings: PurchasesOfferings | null;
-  startTrial: () => Promise<void>;
-  purchaseMonthly: () => Promise<void>;
-  purchaseYearly: () => Promise<void>;
+  /** Resolves to true when an entitlement was actually granted (purchase/trial succeeded). False on cancel, error, or unavailable platform. */
+  startTrial: () => Promise<boolean>;
+  purchaseMonthly: () => Promise<boolean>;
+  purchaseYearly: () => Promise<boolean>;
   restorePurchases: () => Promise<void>;
   devTogglePremium: () => void;
 }
@@ -99,9 +100,9 @@ const SubscriptionContext = createContext<SubscriptionContextValue>({
   hasUsedTrial: false,
   isLoading: true,
   offerings: null,
-  startTrial: async () => {},
-  purchaseMonthly: async () => {},
-  purchaseYearly: async () => {},
+  startTrial: async () => false,
+  purchaseMonthly: async () => false,
+  purchaseYearly: async () => false,
   restorePurchases: async () => {},
   devTogglePremium: () => {},
 });
@@ -116,6 +117,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   const [confirmVisible, setConfirmVisible] = useState(false);
   const pendingPurchaseRef = useRef<PurchasesPackage | null>(null);
+  const pendingResolveRef = useRef<((granted: boolean) => void) | null>(null);
   const legacyTrialUsedRef = useRef(false);
 
   const isPremium = isPaidPremium;
@@ -165,50 +167,56 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     };
   }, [applyCustomerInfo]);
 
-  const executePurchase = useCallback(async (pkg: PurchasesPackage) => {
+  const executePurchase = useCallback(async (pkg: PurchasesPackage): Promise<boolean> => {
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
       await applyCustomerInfo(customerInfo);
+      return customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
     } catch (err: unknown) {
-      if (isRCPurchaseError(err) && err.userCancelled) return;
+      if (isRCPurchaseError(err) && err.userCancelled) return false;
       const msg = isRCPurchaseError(err) ? (err.message ?? 'Something went wrong.') : 'Something went wrong.';
       Alert.alert('Purchase failed', msg);
+      return false;
     }
   }, [applyCustomerInfo]);
 
   const triggerPurchase = useCallback(
-    async (packageId: string) => {
+    async (packageId: string): Promise<boolean> => {
       const pkg = offerings?.current?.availablePackages?.find(
         (p) => p.identifier === packageId
       );
 
       if (__DEV__) {
-        pendingPurchaseRef.current = pkg ?? null;
-        setConfirmVisible(true);
-        return;
+        // The dev/preview path opens a confirm modal; await its outcome via the
+        // resolver that handleConfirmPurchase / handleCancelPurchase invoke.
+        return new Promise<boolean>((resolve) => {
+          pendingPurchaseRef.current = pkg ?? null;
+          pendingResolveRef.current = resolve;
+          setConfirmVisible(true);
+        });
       }
 
       if (Platform.OS === 'web') {
         Alert.alert('Unavailable', 'Purchases are only available in the iOS and Android apps.');
-        return;
+        return false;
       }
 
       if (!pkg) {
         Alert.alert('Unavailable', 'This plan is not available right now. Please try again later.');
-        return;
+        return false;
       }
 
-      await executePurchase(pkg);
+      return executePurchase(pkg);
     },
     [offerings, executePurchase]
   );
 
-  const purchaseMonthly = useCallback(async () => {
-    await triggerPurchase('$rc_monthly');
+  const purchaseMonthly = useCallback(async (): Promise<boolean> => {
+    return triggerPurchase('$rc_monthly');
   }, [triggerPurchase]);
 
-  const purchaseYearly = useCallback(async () => {
-    await triggerPurchase('$rc_annual');
+  const purchaseYearly = useCallback(async (): Promise<boolean> => {
+    return triggerPurchase('$rc_annual');
   }, [triggerPurchase]);
 
   /** Starts the App Store / Play free trial via the annual subscription. */
@@ -238,10 +246,13 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   const handleConfirmPurchase = useCallback(async () => {
     const pkg = pendingPurchaseRef.current;
+    const resolve = pendingResolveRef.current;
     setConfirmVisible(false);
     pendingPurchaseRef.current = null;
+    pendingResolveRef.current = null;
     if (pkg) {
-      await executePurchase(pkg);
+      const granted = await executePurchase(pkg);
+      resolve?.(granted);
     } else {
       // Dev/preview: no real package available — mock the unlock directly
       setIsPaidPremium(true);
@@ -251,12 +262,15 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const anchorMs = Date.now();
       await setTrialNudgeAnchor(anchorMs);
       await scheduleTrialNudges(anchorMs);
+      resolve?.(true);
     }
   }, [executePurchase]);
 
   const handleCancelPurchase = useCallback(() => {
     setConfirmVisible(false);
     pendingPurchaseRef.current = null;
+    pendingResolveRef.current?.(false);
+    pendingResolveRef.current = null;
   }, []);
 
   const value = useMemo<SubscriptionContextValue>(

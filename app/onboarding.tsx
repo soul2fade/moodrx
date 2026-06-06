@@ -54,7 +54,11 @@ export default function OnboardingScreen() {
     Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
   const handleStartTrial = useCallback(async () => {
-    await purchaseYearly();
+    const granted = await purchaseYearly();
+    // Only mark onboarding done if the user actually started the trial / got
+    // an entitlement. Otherwise (cancel, error, web), leave them on this
+    // screen so they can retry or pick "Continue with free version".
+    if (!granted) return;
     await setFirstLaunchDone();
     router.replace('/guided');
   }, [purchaseYearly]);

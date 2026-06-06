@@ -160,11 +160,17 @@ export default function PostWorkoutScreen() {
         }
       }
       getSessions().then((updated) => rescheduleAfterSession(updated)).catch(() => {});
+      // Clamp to a minimum 1-minute window so unknown-duration workouts
+      // (workout?.duration unset → 0) still produce a non-empty HealthKit
+      // sample. saveWorkoutToHealth now refuses zero-duration writes.
+      const endMs = Date.now();
+      const durationMinutes = Math.max(1, workout?.duration ?? 1);
+      const startMs = endMs - durationMinutes * 60 * 1000;
       void saveWorkoutToHealth({
         name: workout?.name ?? workoutId,
-        durationMinutes: workout?.duration ?? 0,
-        startMs: Date.now() - (workout?.duration ?? 0) * 60 * 1000,
-        endMs: Date.now(),
+        durationMinutes,
+        startMs,
+        endMs,
       });
       setShowWinCard(true);
     } catch {

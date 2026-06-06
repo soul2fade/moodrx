@@ -242,14 +242,24 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
 export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promise<void> {
   if (!(await getHealthSyncEnabled())) return;
 
-  const durationSec = Math.max(60, Math.round(payload.durationMinutes * 60));
-  const endMs = payload.endMs;
-  const startMs = endMs - durationSec * 1000;
+  // Use the caller's actual measured window. Previously we back-computed
+  // startMs from `endMs - max(60s, durationMinutes*60)`, which clobbered
+  // payload.startMs and produced overlapping samples on back-to-back
+  // sessions (next session's clamped 60s window stomped on prior end).
+  const { startMs, endMs, name } = payload;
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    // Refuse to write a zero/negative-duration sample — HealthKit and
+    // Health Connect both reject these, and it's a sign the caller's
+    // duration tracking is broken, not data worth logging.
+    console.warn('[MoodRx] saveWorkoutToHealth skipped — invalid window', { startMs, endMs });
+    return;
+  }
+  const durationSec = Math.round((endMs - startMs) / 1000);
 
   if (Platform.OS === 'android') {
     try {
       await writeHealthConnectExerciseSession({
-        title: payload.name,
+        title: name,
         startMs,
         endMs,
         exerciseType: ExerciseType.OTHER_WORKOUT,
@@ -271,7 +281,7 @@ export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promis
       distance: 0,
       calories: 0,
       activityType: 'other',
-      metadata: { name: payload.name, source: 'MoodRx' },
+      metadata: { name, source: 'MoodRx' },
     });
   } catch (e) {
     console.warn('[MoodRx] saveWorkoutToHealth (HealthKit) failed:', e);

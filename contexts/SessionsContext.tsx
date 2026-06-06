@@ -27,17 +27,11 @@ interface SessionsContextValue {
   clearSessions: () => Promise<void>;
 }
 
-const SessionsContext = createContext<SessionsContextValue>({
-  sessions: [],
-  isLoading: true,
-  streak: 0,
-  sessionCount: 0,
-  avgChange: 0,
-  lastSession: null,
-  refresh: async () => {},
-  addSession: async () => {},
-  clearSessions: async () => {},
-});
+// Default is `null` (not an empty-shape stub) so that any consumer
+// rendered outside <SessionsProvider> fails loudly in useSessions()
+// instead of silently reading `sessions: []` and `isLoading: true`
+// forever (which masks real bugs as "no data yet").
+const SessionsContext = createContext<SessionsContextValue | null>(null);
 
 export function SessionsProvider({ children }: { children: React.ReactNode }) {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -87,6 +81,10 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useSessions() {
-  return useContext(SessionsContext);
+export function useSessions(): SessionsContextValue {
+  const ctx = useContext(SessionsContext);
+  if (!ctx) {
+    throw new Error('useSessions must be used inside <SessionsProvider>');
+  }
+  return ctx;
 }

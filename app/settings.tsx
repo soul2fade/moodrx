@@ -174,9 +174,28 @@ export default function SettingsScreen() {
   const handleToggle = async () => {
     if (!notificationsEnabled) {
       if (Platform.OS !== 'web') {
+        // Check current state first so we can tell apart "user is about to
+        // see the prompt for the first time" from "user denied months ago,
+        // requestPermissionsAsync will silently return denied without
+        // re-prompting". The latter case needs a Settings deep link or
+        // the toggle does nothing visible and the user is stuck.
+        const current = await Notifications.getPermissionsAsync();
+        const wasPreviouslyDenied = current.status !== 'granted' && !current.canAskAgain;
         const { status } = await Notifications.requestPermissionsAsync();
         if (status !== 'granted') {
           setPermDenied(true);
+          if (wasPreviouslyDenied) {
+            Alert.alert(
+              'Notifications are off',
+              Platform.OS === 'ios'
+                ? 'You blocked notifications earlier. Open Settings → Notifications → MoodRx and turn them on, then flip this toggle again.'
+                : 'You blocked notifications earlier. Open Settings → Apps → MoodRx → Notifications and turn them on, then flip this toggle again.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Open Settings', onPress: () => { void Linking.openSettings(); } },
+              ],
+            );
+          }
           return;
         }
       }

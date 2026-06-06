@@ -32,9 +32,7 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.health.READ_STEPS",
-        "android.permission.health.WRITE_STEPS",
         "android.permission.health.READ_SLEEP",
-        "android.permission.health.WRITE_SLEEP",
         "android.permission.health.READ_EXERCISE",
         "android.permission.health.WRITE_EXERCISE"
       ]
@@ -51,8 +49,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
-          "color": "#0a0a0a",
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#ffffff",
           "sounds": []
         }
       ],

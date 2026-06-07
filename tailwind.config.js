@@ -4,7 +4,12 @@ const { DARK_MODE } = require("./tailwind.constants.js");
 module.exports = {
   // You can change darkMode through tailwind.constants.js file
   darkMode: DARK_MODE,
-  content: ["app/**/*.{tsx,jsx,ts,js}", "components/**/*.{tsx,jsx,ts,js}"],
+  content: [
+    "app/**/*.{tsx,jsx,ts,js}",
+    "components/**/*.{tsx,jsx,ts,js}",
+    "contexts/**/*.{tsx,jsx,ts,js}",
+    "hooks/**/*.{tsx,jsx,ts,js}",
+  ],
   presets: [require("nativewind/preset")],
   safelist: [
     {

@@ -81,6 +81,7 @@ export default function Index() {
           .start(async () => {
             if (cancelled) return;
             const done = await getFirstLaunchDone();
+            if (cancelled) return;
             router.replace(done ? '/home' : '/onboarding');
           });
       }, 1520);

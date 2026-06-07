@@ -2,7 +2,7 @@
  * MoodRx Workout Coach Component
  *
  * Road-sign style animated figures with 5 character voices:
- * - Vera de Milo (muscle energy, campy confidence)
+ * - Honey Maximus (campy fitness, mood-lifting energy)
  * - Ron Burgundy (verbose, absurdly confident)
  * - Brick Tamland (confused, accidentally wholesome)
  * - Ricky Bobby (NASCAR intensity, competitive fire)
@@ -31,7 +31,7 @@ type CoachId = 'vera' | 'ron' | 'brick' | 'ricky' | 'derek';
 type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
 const COACHES: Record<CoachId, { id: CoachId; name: string; color: string }> = {
-  vera:  { id: 'vera',  name: 'Vera de Milo',   color: '#FF6B9D' },
+  vera:  { id: 'vera',  name: 'Honey Maximus',  color: '#FF6B9D' },
   ron:   { id: 'ron',   name: 'Ron Burgundy',    color: '#C0392B' },
   brick: { id: 'brick', name: 'Brick Tamland',   color: '#E67E22' },
   ricky: { id: 'ricky', name: 'Ricky Bobby',     color: '#3498DB' },
@@ -49,10 +49,10 @@ const MOOD_COACH_MAP: Record<MoodKey, CoachId> = {
 
 const PHRASES: Record<CoachId, string[][]> = {
   vera: [
-    ["Honey, these muscles don't build THEMSELVES","The struggle is REAL and I am HERE for it","Pain is just weakness leaving the body in HEELS","This is SUFFERING, darling, but I'm FABULOUS","My body is a TEMPLE and temples need MAINTENANCE"],
-    ["Ohhhh now we're TALKING","These guns are WAKING UP, sweetie","I can FEEL the magic happening","The transformation has BEGUN, hunty","My muscles are speaking and I am LISTENING"],
-    ["LOOK AT ME. I am STUNNING and STRONG","These biceps don't LIE, baby","I am a GODDESS in this body","YESSS THIS is what POWER feels like","My strength is UNDENIABLE and GORGEOUS"],
-    ["I am COMPLETE, I am WHOLE, I am MUSCULAR","*flexes* THE WORK PAYS OFF, DARLING","I have TRANSCENDED. I am GLOWING. I am RIPPED.","Clarity? Try DEFINITION, honey","HEAR ME ROAR, and LOOK AT THESE DELTOIDS"],
+    ["Sugar, your MOOD called — and she's READY to MOVE","This first step is HARD because the FEELINGS are HEAVY","Couch energy is VALID. So is GETTING UP. Let's GO.","Honey, the BAD MOOD is about to MEET its MATCH","We don't have to FEEL GOOD to START. We START to FEEL GOOD."],
+    ["Ohhhh the CLOUDS are LIFTING, honey","My BRAIN just sent FLOWERS to my BODY","Stress is FLEEING the BUILDING in REAL TIME","Honey, my NERVOUS SYSTEM is FINALLY EXHALING","I can FEEL the GLOOM packing its BAGS"],
+    ["I am ALIVE, I am AWAKE, I am LITERALLY GLOWING","This is what THERAPY through MOVEMENT FEELS like, darling","Joy just WALKED IN WEARING SEQUINS","I just MOVED my way OUT of a MOOD, darling","The SPARKLE was INSIDE the whole TIME — we just SHOOK it LOOSE"],
+    ["The MOOD has been MOVED — I REST my CASE","Honey, I FORGOT what I was even WORRIED about","My HEAD is QUIET. My HEART is OPEN. The WORK is DONE.","I CAME for the MOOD, I STAYED for the MAGIC","Tomorrow's PROBLEMS, meet TODAY's calmer ME"],
   ],
   ron: [
     ["I'm in a glass case of emotion... and sweat","I'm in a glass case of emotion","My body is like a fine leather-bound book being read in a hurricane","The pain is... actually quite poetic","I immediately regret this decision","This is NOT what the brochure promised"],

@@ -34,7 +34,10 @@ export default function PrescriptionScreen() {
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
     : (Object.keys(MOODS)[0] as MoodKey);
-  const intensity = parseInt(params.intensity || '5', 10);
+  const parsedIntensity = parseInt(params.intensity ?? '', 10);
+  const intensity = Number.isFinite(parsedIntensity)
+    ? Math.min(10, Math.max(1, parsedIntensity))
+    : 5;
   const [activeTab, setActiveTab] = useState<Tab>('workouts');
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [showAlternatives, setShowAlternatives] = useState(false);

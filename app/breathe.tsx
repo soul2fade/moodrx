@@ -92,7 +92,6 @@ export default function BreatheScreen() {
     setPhaseIdx(0);
     setCountdown(PHASES[0].duration);
     setCycles(0);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     animatePhase(0);
 
     countdownRef.current = setInterval(() => {

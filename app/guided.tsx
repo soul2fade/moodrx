@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { IntensityPicker } from '@/components/IntensityPicker';
-import * as Haptics from 'expo-haptics';
 import type { MoodKey } from '@/lib/storage';
 import { getGuidedSessionDone, setGuidedSessionDone } from '@/lib/storage';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
@@ -39,7 +38,6 @@ export default function GuidedScreen() {
 
   const handleStart = useCallback(() => {
     if (!workout) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/workout',
       params: {
@@ -83,7 +81,6 @@ export default function GuidedScreen() {
                   : styles.moodRow}
                 onPress={() => {
                   setSelectedMood(moodKey);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }}
                 activeOpacity={0.7}
                 accessibilityRole="radio"

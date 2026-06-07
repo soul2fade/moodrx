@@ -172,7 +172,6 @@ export default function WorkoutScreen() {
       void setWorkoutFocusMode(next);
       return next;
     });
-    Haptics.selectionAsync();
   }, []);
 
   const handleVoiceToggle = useCallback(() => {
@@ -188,7 +187,6 @@ export default function WorkoutScreen() {
       }
       return next;
     });
-    Haptics.selectionAsync();
   }, [transitionPlayer, insultPlayer]);
 
   useEffect(() => {
@@ -311,7 +309,6 @@ export default function WorkoutScreen() {
 
   const handleTimerStart = useCallback(() => {
     if (stepTimerKind === null) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (stepTimerRemaining <= 0) {
       setStepTimerRemaining(stepTimerTotal);
       stepTimerRemainingRef.current = stepTimerTotal;
@@ -323,14 +320,12 @@ export default function WorkoutScreen() {
 
   const handleTimerStop = useCallback(() => {
     if (!stepTimerRunning) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setStepTimerRunning(false);
     clearStepTimerInterval();
     stopStepTimerProgress();
   }, [stepTimerRunning, clearStepTimerInterval, stopStepTimerProgress]);
 
   const handleTimerReset = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setStepTimerRunning(false);
     clearStepTimerInterval();
     stopStepTimerProgress();
@@ -399,13 +394,11 @@ export default function WorkoutScreen() {
 
   const handleNext = () => {
     if (!resolvedWorkout || isNavigating.current) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStep < totalSteps - 1) {
       setCurrentStep((s) => s + 1);
     } else {
       isNavigating.current = true;
       stopAll();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.push({
         pathname: '/post-workout',
         params: { mood, workoutId, intensity, reps: String(repCount), ...(isGuided ? { guided: '1' } : {}) },
@@ -424,12 +417,10 @@ export default function WorkoutScreen() {
   };
 
   const handleTrashTalk = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setTrashTalkOn((on) => !on);
   };
 
   const handleKeepAwake = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (keepAwake) {
       deactivateKeepAwake();
       setKeepAwake(false);
@@ -440,7 +431,6 @@ export default function WorkoutScreen() {
   };
 
   const handleRepTap = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setRepCount((c) => c + 1);
     Animated.sequence([
       Animated.spring(repScaleAnim, { toValue: 1.15, useNativeDriver: true, speed: 80, bounciness: 8 }),
@@ -457,7 +447,6 @@ export default function WorkoutScreen() {
     }
     const sound = SOUNDSCAPES.find((s) => s.key === key);
     if (!sound) return;
-    Haptics.selectionAsync();
     setActiveSoundscape(key);
     setAudioSrc(sound.src);
   };

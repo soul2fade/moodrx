@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
-import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
@@ -114,7 +113,6 @@ export default function PostWorkoutScreen() {
 
   const handleOpenCardPreview = () => {
     if (Platform.OS === 'web') return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowCardPreview(true);
   };
 
@@ -140,7 +138,6 @@ export default function PostWorkoutScreen() {
     if (isSubmitting) return; // prevent double-tap
     setIsSubmitting(true);
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await addSessionToContext({
         id: createSessionId(),
         mood,

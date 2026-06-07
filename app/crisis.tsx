@@ -10,7 +10,6 @@ import {
   Animated,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
@@ -43,7 +42,6 @@ export default function CrisisScreen() {
 
   const copyNumber = useCallback(async (number: string) => {
     await Clipboard.setStringAsync(number);
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setCopiedNumber(number);
     setTimeout(() => setCopiedNumber(null), 2000);
   }, []);

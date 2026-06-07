@@ -31,6 +31,37 @@ export function sessionDateString(s: Session): string {
   return s.localDateString ?? toDateString(s.timestamp);
 }
 
+// The six valid mood keys. Defined locally (not imported from ./moods) to
+// avoid a circular import — moods.ts imports MoodKey from this file.
+const VALID_MOODS: ReadonlySet<string> = new Set<MoodKey>([
+  'anxious', 'low', 'foggy', 'restless', 'stressed', 'good',
+]);
+
+/** Defensive read-time normalization. Sessions are persisted from validated
+ *  inputs, but a corrupted store, a hand-edited backup, or a future mood-key
+ *  rename could surface a session whose `mood` is not one of the six known
+ *  keys — which would crash every unguarded `MOODS[mood].color/.name` lookup
+ *  downstream (home, insights, ShareCard, HomeCarousel, MoodIcon, etc.).
+ *  Coerce unknown moods to a safe default and non-finite numbers to 0 so a
+ *  single bad record can never feed undefined/NaN into rendering. Returns the
+ *  same object reference when nothing needs fixing (the overwhelmingly common
+ *  path) to avoid per-read allocations. */
+function sanitizeSession(s: Session): Session {
+  const mood = VALID_MOODS.has(s.mood) ? s.mood : 'anxious';
+  const intensity = Number.isFinite(s.intensity) ? s.intensity : 0;
+  const postScore = Number.isFinite(s.postScore) ? s.postScore : 0;
+  const timestamp = Number.isFinite(s.timestamp) ? s.timestamp : 0;
+  if (
+    mood === s.mood &&
+    intensity === s.intensity &&
+    postScore === s.postScore &&
+    timestamp === s.timestamp
+  ) {
+    return s;
+  }
+  return { ...s, mood, intensity, postScore, timestamp };
+}
+
 export interface SupplementLog {
   date: string; // YYYY-MM-DD
   supplementName: string;
@@ -172,7 +203,7 @@ export async function getSessions(): Promise<Session[]> {
       sessionsCacheTime = now;
       return [];
     }
-    const parsed = readVersioned<Session[]>(raw);
+    const parsed = readVersioned<Session[]>(raw).map(sanitizeSession);
     sessionsCache = parsed;
     sessionsCacheTime = now;
     return [...parsed];
@@ -191,14 +222,26 @@ export async function addSession(session: Session): Promise<void> {
     localDateString: session.localDateString ?? toDateString(session.timestamp),
   };
   sessionWriteChain = sessionWriteChain.then(async () => {
-    invalidateSessionsCache();
-    const existing = await getSessions();
-    const updated = [...existing, enriched];
-    await AsyncStorage.setItem(SESSIONS_KEY, writeVersioned(updated));
-    // Write-through: seed the cache with the post-write state so any read
-    // landing inside the TTL window sees the new session immediately.
-    sessionsCache = updated;
-    sessionsCacheTime = Date.now();
+    try {
+      invalidateSessionsCache();
+      const existing = await getSessions();
+      const updated = [...existing, enriched];
+      await AsyncStorage.setItem(SESSIONS_KEY, writeVersioned(updated));
+      // Write-through: seed the cache with the post-write state so any read
+      // landing inside the TTL window sees the new session immediately.
+      sessionsCache = updated;
+      sessionsCacheTime = Date.now();
+    } catch (e) {
+      // A rejected setItem (disk full / I/O error) must NOT poison the
+      // shared write chain. Without this catch the chain promise would
+      // reject, and every subsequent addSession would chain off a rejected
+      // promise — silently dropping ALL future session writes for the rest
+      // of the process. Swallow + invalidate cache so the next write retries
+      // from disk. Mirrors saveSupplementLog/toggleSupplementLog, which
+      // already guard their chains this way.
+      console.warn('[MoodRx] addSession failed:', e);
+      invalidateSessionsCache();
+    }
   });
   return sessionWriteChain;
 }

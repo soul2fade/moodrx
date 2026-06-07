@@ -40,10 +40,19 @@ export default function CrisisScreen() {
   }, []);
   useHardwareBack(backHandler);
 
-  const copyNumber = useCallback(async (number: string) => {
-    await Clipboard.setStringAsync(number);
-    setCopiedNumber(number);
-    setTimeout(() => setCopiedNumber(null), 2000);
+  // Returns whether the copy succeeded. Never throws — on a device where
+  // the clipboard write rejects, callers must still be able to surface the
+  // number to the user (this is the crisis screen; a silent failure here is
+  // the worst-case outcome).
+  const copyNumber = useCallback(async (number: string): Promise<boolean> => {
+    try {
+      await Clipboard.setStringAsync(number);
+      setCopiedNumber(number);
+      setTimeout(() => setCopiedNumber(null), 2000);
+      return true;
+    } catch {
+      return false;
+    }
   }, []);
 
   const handleAction = async (resource: typeof RESOURCES[number]) => {
@@ -63,14 +72,22 @@ export default function CrisisScreen() {
       } catch {
         // canOpenURL itself can throw on web; treat as "can't call"
       }
-      await copyNumber(resource.number);
+      const copied = await copyNumber(resource.number);
       Alert.alert(
         "This device can't make calls",
-        `${resource.number} has been copied to your clipboard. Dial it from a phone, or text HOME to 741741 for the Crisis Text Line.`,
+        copied
+          ? `${resource.number} has been copied to your clipboard. Dial it from a phone, or text HOME to 741741 for the Crisis Text Line.`
+          : `Dial ${resource.number} from a phone, or text HOME to 741741 for the Crisis Text Line.`,
       );
       return;
     }
-    await copyNumber(resource.number);
+    const copied = await copyNumber(resource.number);
+    if (!copied) {
+      Alert.alert(
+        'Copy unavailable',
+        `Text HOME to ${resource.number} from your messaging app to reach the Crisis Text Line.`,
+      );
+    }
   };
 
   return (

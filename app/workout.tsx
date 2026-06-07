@@ -195,19 +195,26 @@ export default function WorkoutScreen() {
   }, [trashTalkVolume, insultPlayer]);
 
   useEffect(() => {
-    if (insultAudioSrc) {
-      insultPlayer.volume = trashTalkVolume;
-      insultPlayer.seekTo(0);
-      insultPlayer.play();
-    }
+    // Guarded: a state change can set insultAudioSrc as the screen tears
+    // down (the unmount effect remove()s these players), so play() can race
+    // a torn-down player. try/catch keeps that from throwing.
+    try {
+      if (insultAudioSrc) {
+        insultPlayer.volume = trashTalkVolume;
+        insultPlayer.seekTo(0);
+        insultPlayer.play();
+      }
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps -- insultPlayer is a stable expo-audio ref; src/volume changes drive re-runs.
   }, [insultAudioSrc, trashTalkVolume]);
 
   useEffect(() => {
-    if (transitionAudioSrc) {
-      transitionPlayer.seekTo(0);
-      transitionPlayer.play();
-    }
+    try {
+      if (transitionAudioSrc) {
+        transitionPlayer.seekTo(0);
+        transitionPlayer.play();
+      }
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps -- transitionPlayer is a stable expo-audio ref; src changes drive re-runs.
   }, [transitionAudioSrc]);
 
@@ -391,7 +398,13 @@ export default function WorkoutScreen() {
   useHardwareBack(hwBackHandler);
 
   const stopAll = () => {
-    try { player.remove(); } catch {}
+    // pause(), not remove(): handleNext navigates with router.push, which
+    // keeps THIS screen mounted in the stack. Calling player.remove() here
+    // would leave a torn-down native player that a later soundscape toggle
+    // or re-render (effect that calls player.play()) could touch — an
+    // expo-audio use-after-remove, which is a hard native crash that
+    // bypasses the JS ErrorBoundary. The unmount effect owns remove().
+    try { player.pause(); } catch {}
     try { insultPlayer.pause(); } catch {}
     try { transitionPlayer.pause(); } catch {}
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);

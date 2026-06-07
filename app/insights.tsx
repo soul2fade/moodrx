@@ -54,7 +54,7 @@ export default function InsightsScreen() {
   const [healthSnapshot, setHealthSnapshot] = useState<HealthSnapshot | null>(null);
   const shareCardRef = useRef<ViewShot>(null);
   const { panelAnim: casePanelAnim, backdropAnim: caseBackdropAnim, show: showCasePanelAnim, dismiss: dismissCasePanelAnim } = useBottomPanel(CASE_PANEL_HEIGHT);
-  const { isPremium } = useSubscription();
+  const { isPremium, isLoading: subLoading } = useSubscription();
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
   const backHandler = useCallback(() => {
@@ -365,7 +365,7 @@ export default function InsightsScreen() {
                 </View>
               );
             })}
-            {!isPremium && workoutStats.total > 3 && (
+            {!subLoading && !isPremium && workoutStats.total > 3 && (
               <TouchableOpacity
                 style={styles.historyUpsellRow}
                 onPress={() => setShowPremiumSheet(true)}
@@ -418,7 +418,7 @@ export default function InsightsScreen() {
                 </TouchableOpacity>
               );
             })}
-            {!isPremium && sessionCount > 3 && (
+            {!subLoading && !isPremium && sessionCount > 3 && (
               <TouchableOpacity
                 style={styles.historyUpsellRow}
                 onPress={() => setShowPremiumSheet(true)}
@@ -455,7 +455,7 @@ export default function InsightsScreen() {
                 </View>
               );
             })}
-            {!isPremium && sessionNotes.total > 3 && (
+            {!subLoading && !isPremium && sessionNotes.total > 3 && (
               <TouchableOpacity
                 style={styles.historyUpsellRow}
                 onPress={() => setShowPremiumSheet(true)}

@@ -164,7 +164,7 @@ export default function HomeScreen() {
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
   const showSameAsYesterday = !isLoading && !checkedInToday && !selectedMood && lastSession != null && isYesterdayTimestamp(lastSession.timestamp);
-  const { isPremium } = useSubscription();
+  const { isPremium, isLoading: subLoading } = useSubscription();
 
   const handleDismissNavHint = useCallback(async () => {
     setShowNavHint(false);
@@ -263,7 +263,11 @@ export default function HomeScreen() {
       >
         {/* Top row */}
         <View style={styles.topRow}>
-          {!isPremium ? (
+          {/* Render neither badge while subscription state is still loading,
+              to avoid flashing "TRY PRO" at users who actually have Pro. */}
+          {subLoading ? (
+            <View style={styles.tryProBadge} />
+          ) : !isPremium ? (
             <TouchableOpacity
               onPress={() => router.push('/premium')}
               activeOpacity={0.7}

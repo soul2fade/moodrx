@@ -493,7 +493,7 @@ export default function WorkoutScreen() {
       {/* Top row */}
       <View style={styles.topRow}>
         <TouchableOpacity onPress={() => setShowQuitConfirm(true)} activeOpacity={0.7} style={styles.quitButton} accessibilityRole="button" accessibilityLabel="Quit workout">
-          <Text style={styles.quitText} allowFontScaling={false}>X QUIT</Text>
+          <Text style={styles.quitText} maxFontSizeMultiplier={1.3}>X QUIT</Text>
         </TouchableOpacity>
         <View style={styles.topRowRight}>
           <TouchableOpacity
@@ -504,7 +504,7 @@ export default function WorkoutScreen() {
             accessibilityState={{ checked: voiceMode }}
             accessibilityLabel={`Voice mode ${voiceMode ? 'on' : 'off'}. Audio-only with the workout guide voice.`}
           >
-            <Text style={[styles.focusBtnText, voiceMode && { color: accentColor }]} allowFontScaling={false}>VOICE</Text>
+            <Text style={[styles.focusBtnText, voiceMode && { color: accentColor }]} maxFontSizeMultiplier={1.3}>VOICE</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleFocusToggle}
@@ -514,9 +514,9 @@ export default function WorkoutScreen() {
             accessibilityState={{ checked: focusMode }}
             accessibilityLabel={`Focus mode ${focusMode ? 'on' : 'off'}`}
           >
-            <Text style={[styles.focusBtnText, focusMode && { color: accentColor }]} allowFontScaling={false}>FOCUS</Text>
+            <Text style={[styles.focusBtnText, focusMode && { color: accentColor }]} maxFontSizeMultiplier={1.3}>FOCUS</Text>
           </TouchableOpacity>
-          <Text style={styles.stepCounter} allowFontScaling={false}>{currentStep + 1} / {totalSteps}</Text>
+          <Text style={styles.stepCounter} maxFontSizeMultiplier={1.3}>{currentStep + 1} / {totalSteps}</Text>
         </View>
       </View>
 
@@ -564,8 +564,8 @@ export default function WorkoutScreen() {
         {/* Step text box / Rest timer */}
         {stepTimerKind === 'rest' ? (
           <View style={styles.restBox}>
-            <Text style={styles.restLabel} allowFontScaling={false}>REST</Text>
-            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? '#525252' : accentColor }]} allowFontScaling={false}>
+            <Text style={styles.restLabel}>REST</Text>
+            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? '#525252' : accentColor }]} maxFontSizeMultiplier={1.3}>
               {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
             </Text>
             <View style={styles.restProgressBg}>
@@ -574,7 +574,7 @@ export default function WorkoutScreen() {
                 backgroundColor: stepTimerRemaining === 0 ? '#525252' : accentColor,
               }]} />
             </View>
-            <Text style={styles.restSubtext} allowFontScaling={false}>
+            <Text style={styles.restSubtext}>
               {stepTimerRemaining === 0 ? 'get ready.' : stepTimerRunning ? 'breathe.' : 'tap start when ready.'}
             </Text>
             <View style={styles.timerControlsRow}>
@@ -599,7 +599,7 @@ export default function WorkoutScreen() {
             </Text>
             {stepTimerKind === 'active' && (
               <View style={styles.activeTimerBox}>
-                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? '#525252' : accentColor }]} allowFontScaling={false}>
+                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? '#525252' : accentColor }]} maxFontSizeMultiplier={1.3}>
                   {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
                 </Text>
                 <View style={styles.activeProgressBg}>
@@ -609,10 +609,10 @@ export default function WorkoutScreen() {
                   }]} />
                 </View>
                 {stepTimerRemaining === 0 && (
-                  <Text style={styles.activeTimerDone} allowFontScaling={false}>DONE — HIT NEXT</Text>
+                  <Text style={styles.activeTimerDone}>DONE — HIT NEXT</Text>
                 )}
                 {!stepTimerRunning && stepTimerRemaining > 0 && (
-                  <Text style={styles.activeTimerHint} allowFontScaling={false}>tap start when ready.</Text>
+                  <Text style={styles.activeTimerHint}>tap start when ready.</Text>
                 )}
                 <View style={styles.timerControlsRow}>
                   {stepTimerRunning ? (
@@ -687,8 +687,8 @@ export default function WorkoutScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Rep count ${repCount}, tap to increment`}
               >
-                <Text style={[styles.repNum, { color: previousBest !== null && repCount > previousBest ? accentColor : accentColor }]} allowFontScaling={false}>{repCount}</Text>
-                <Text style={styles.repLabel} allowFontScaling={false}>TAP</Text>
+                <Text style={[styles.repNum, { color: previousBest !== null && repCount > previousBest ? accentColor : accentColor }]} maxFontSizeMultiplier={1.3}>{repCount}</Text>
+                <Text style={styles.repLabel} maxFontSizeMultiplier={1.3}>TAP</Text>
               </TouchableOpacity>
             </Animated.View>
             <TouchableOpacity onPress={() => setRepCount(0)} activeOpacity={0.6} style={styles.repReset}>

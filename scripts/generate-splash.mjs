@@ -5,9 +5,34 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Embed Space Grotesk as base64 so librsvg (sharp's SVG renderer) uses it
-const fontRegular = readFileSync(new URL('../assets/fonts/SpaceGrotesk-Regular.ttf', import.meta.url).pathname).toString('base64');
-const fontLight   = readFileSync(new URL('../assets/fonts/SpaceGrotesk-Light.ttf',   import.meta.url).pathname).toString('base64');
+// Source fonts from @expo-google-fonts/space-grotesk (already a runtime
+// dependency for the app's text) rather than from assets/fonts/. The
+// previous local copies under assets/fonts/SpaceGrotesk-*.ttf were
+// silently HTML — a download from github.com that hit the auth-walled
+// "raw" URL and saved the login page bytes as .ttf — so this script
+// was embedding GitHub markup into the splash SVG and producing
+// glyph-less output.
+function loadTrueTypeFont(relPath) {
+  const buf = readFileSync(new URL(relPath, import.meta.url));
+  // Real TrueType files begin with the magic `00 01 00 00` (or `OTTO`
+  // for CFF / `true` for legacy Apple). Fail loudly if we accidentally
+  // pick up HTML or another broken download in the future.
+  const magic = buf.subarray(0, 4);
+  const ok =
+    (magic[0] === 0x00 && magic[1] === 0x01 && magic[2] === 0x00 && magic[3] === 0x00) ||
+    magic.toString('ascii') === 'OTTO' ||
+    magic.toString('ascii') === 'true';
+  if (!ok) {
+    throw new Error(
+      `Expected TrueType magic at start of ${relPath} but got ${magic.toString('hex')}. ` +
+      'Check that the font wasn\'t replaced with an HTML download.',
+    );
+  }
+  return buf.toString('base64');
+}
+
+const fontRegular = loadTrueTypeFont('../node_modules/@expo-google-fonts/space-grotesk/400Regular/SpaceGrotesk_400Regular.ttf');
+const fontLight   = loadTrueTypeFont('../node_modules/@expo-google-fonts/space-grotesk/300Light/SpaceGrotesk_300Light.ttf');
 
 // Three-bar logo + MoodRx wordmark as SVG, white on transparent
 // Rendered at 3× (1200×1560) so it stays crisp on high-density screens
@@ -61,7 +86,9 @@ const svgContent = `
 </svg>
 `;
 
-const outputPath = new URL('../assets/images/splash-icon.png', import.meta.url).pathname;
+// fileURLToPath instead of .pathname so this works on Windows
+// (file:///C:/foo => /C:/foo via .pathname, which Sharp can't open).
+const outputPath = fileURLToPath(new URL('../assets/images/splash-icon.png', import.meta.url));
 
 await sharp(Buffer.from(svgContent))
   .png()
@@ -80,7 +107,7 @@ const iconSvg = `
 </svg>
 `;
 
-const iconPath = new URL('../assets/images/icon.png', import.meta.url).pathname;
+const iconPath = fileURLToPath(new URL('../assets/images/icon.png', import.meta.url));
 await sharp(Buffer.from(iconSvg)).png().toFile(iconPath);
 console.log('App icon generated →', iconPath);
 
@@ -93,6 +120,6 @@ const adaptiveSvg = `
 </svg>
 `;
 
-const adaptivePath = new URL('../assets/images/adaptive-icon.png', import.meta.url).pathname;
+const adaptivePath = fileURLToPath(new URL('../assets/images/adaptive-icon.png', import.meta.url));
 await sharp(Buffer.from(adaptiveSvg)).png().toFile(adaptivePath);
 console.log('Adaptive icon generated →', adaptivePath);

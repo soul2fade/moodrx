@@ -9,6 +9,9 @@
     "scheme": "moodrx",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "extra": {
       "eas": {
         "projectId": "856c4912-709e-4132-9028-49d55e06e6b5"

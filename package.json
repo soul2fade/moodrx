@@ -8,7 +8,7 @@
     "ios": "DARK_MODE=media expo start --ios",
     "web": "DARK_MODE=media expo start --web",
     "lint": "expo lint",
-    "lint:ci": "eslint app/ lib/ components/",
+    "lint:ci": "eslint app/ lib/ components/ contexts/ hooks/ utils/",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

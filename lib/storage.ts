@@ -191,14 +191,26 @@ export async function addSession(session: Session): Promise<void> {
     localDateString: session.localDateString ?? toDateString(session.timestamp),
   };
   sessionWriteChain = sessionWriteChain.then(async () => {
-    invalidateSessionsCache();
-    const existing = await getSessions();
-    const updated = [...existing, enriched];
-    await AsyncStorage.setItem(SESSIONS_KEY, writeVersioned(updated));
-    // Write-through: seed the cache with the post-write state so any read
-    // landing inside the TTL window sees the new session immediately.
-    sessionsCache = updated;
-    sessionsCacheTime = Date.now();
+    try {
+      invalidateSessionsCache();
+      const existing = await getSessions();
+      const updated = [...existing, enriched];
+      await AsyncStorage.setItem(SESSIONS_KEY, writeVersioned(updated));
+      // Write-through: seed the cache with the post-write state so any read
+      // landing inside the TTL window sees the new session immediately.
+      sessionsCache = updated;
+      sessionsCacheTime = Date.now();
+    } catch (e) {
+      // A rejected setItem (disk full / I/O error) must NOT poison the
+      // shared write chain. Without this catch the chain promise would
+      // reject, and every subsequent addSession would chain off a rejected
+      // promise — silently dropping ALL future session writes for the rest
+      // of the process. Swallow + invalidate cache so the next write retries
+      // from disk. Mirrors saveSupplementLog/toggleSupplementLog, which
+      // already guard their chains this way.
+      console.warn('[MoodRx] addSession failed:', e);
+      invalidateSessionsCache();
+    }
   });
   return sessionWriteChain;
 }

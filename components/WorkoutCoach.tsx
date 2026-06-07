@@ -4,7 +4,7 @@
  * Road-sign style animated figures with 5 character voices:
  * - Honey Maximus (campy fitness, mood-lifting energy)
  * - Champ Headline (verbose anchor, broadcasting on the mood weather)
- * - Brick Tamland (confused, accidentally wholesome)
+ * - Roscoe Sunshine (sweet himbo, defuses anxiety with confused warmth)
  * - Ricky Bobby (NASCAR intensity, competitive fire)
  * - Derek Zoolander (vain, fashion-obsessed)
  *
@@ -33,7 +33,7 @@ type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 const COACHES: Record<CoachId, { id: CoachId; name: string; color: string }> = {
   vera:  { id: 'vera',  name: 'Honey Maximus',  color: '#FF6B9D' },
   ron:   { id: 'ron',   name: 'Champ Headline',  color: '#C0392B' },
-  brick: { id: 'brick', name: 'Brick Tamland',   color: '#E67E22' },
+  brick: { id: 'brick', name: 'Roscoe Sunshine',  color: '#E67E22' },
   ricky: { id: 'ricky', name: 'Ricky Bobby',     color: '#3498DB' },
   derek: { id: 'derek', name: 'Derek Zoolander', color: '#9B59B6' },
 };
@@ -61,10 +61,10 @@ const PHRASES: Record<CoachId, string[][]> = {
     ["And THAT, dear viewers, is what we call A SUCCESSFUL BROADCAST","Signing off from a SIGNIFICANTLY better headspace — thank you for joining","The mood report has been UPDATED. The mood is FANTASTIC.","I would like to thank my BLOODSTREAM, my LUNGS, and ME","Tomorrow's forecast: SLIGHTLY MORE TOLERABLE than today"],
   ],
   brick: [
-    ["I don't know what we're doing but I am SCARED","Are we exercising? I love exercising! ...wait do I?","My arms are confused","Where am I? Oh right, working out. Cool cool cool.","I think my legs are angry at me"],
-    ["Hey... I think something's happening!","My body just did a thing and I LIKED it","LOUD NOISES... but like, good ones?","I can feel my blood! Is that normal?","Wait I'm actually kind of good at this"],
-    ["I LOVE THIS","I DON'T KNOW WHY I'M YELLING BUT IT FEELS RIGHT","My muscles are having a PARTY","I once ate a whole wheel of cheese. This is better.","I feel like a RAINBOW made of BICEPS"],
-    ["I am very happy right now","I think I just became a better person? Is that how this works?","Everything is warm and tingly and WONDERFUL","I would like to do this again please","My body and my brain just became BEST FRIENDS"],
+    ["Hi. I am ALSO nervous. Are we doing this together? Okay good.","My brain is doing the thing where it WORRIES about EVERYTHING","Wait... is everyone else this WORRIED all the time? Just me? Okay.","I forgot what we were doing. Oh right. Moving. Moving is GOOD.","We are gonna MOVE and it's gonna be... probably FINE? Yes. Fine."],
+    ["Wait. Wait wait wait. Did the SCARY thoughts just SHRINK?","I forgot to be NERVOUS for like a whole MINUTE just now","Hey... I think the WORRIES are getting QUIETER","Something inside me is DOING a thing and the thing is NICE","My HEART is still going FAST but I think it is HAPPY fast"],
+    ["I FEEL OKAY. I FEEL OKAY. I JUST WANTED TO SAY THAT.","My brain is QUIET and my body is NICE and I love both of them","I LOVE my BODY for doing this. I LOVE my BRAIN for letting it.","Hi. I am ME. And I FEEL GOOD. Whoa.","I think I just BECAME a person who is NOT panicking. Look at me!"],
+    ["I am SAFE. I am OKAY. I am HERE.","I think... I think I just took CARE of myself. Look at me.","Calm. C-A-L-M. Calm. I had to spell it to BELIEVE it.","I am breathing. I am MOVING. I am OKAY. Three things I am.","Thank you body. Thank you brain. We are FRIENDS now."],
   ],
   ricky: [
     ["If you ain't first you're last and RIGHT NOW I'm last","I wanna go fast but my body wants to go HOME","Shake and bake? More like ache and break","Dear lord baby Jesus please let this end","I'm too LEGIT for this kind of suffering"],

@@ -11,7 +11,7 @@ export default function NotFoundScreen() {
       <SafeAreaView>
         <VStack>
           <Text size="2xl">This screen doesn&apos;t exist.</Text>
-          <Link href="/">
+          <Link href="/home">
             <LinkText>Go to home screen!</LinkText>
           </Link>
         </VStack>

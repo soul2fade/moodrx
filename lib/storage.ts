@@ -16,6 +16,19 @@ export interface Session {
   rating?: 'yes' | 'somewhat' | 'no';
   note?: string;
   lightDay?: boolean;
+  /** YYYY-MM-DD in the local timezone at write time. Persisted so streak
+   *  and "today" checks survive timezone changes (travel, DST) without
+   *  recomputing from the unix timestamp. Optional for sessions logged
+   *  before this field existed — sessionDateString() falls back. */
+  localDateString?: string;
+}
+
+/** Returns the session's day label (YYYY-MM-DD). Prefers the persisted
+ *  localDateString (set at write time in the user's then-local timezone);
+ *  falls back to recomputing from the timestamp for sessions written
+ *  before the field existed. */
+export function sessionDateString(s: Session): string {
+  return s.localDateString ?? toDateString(s.timestamp);
 }
 
 export interface SupplementLog {
@@ -29,6 +42,48 @@ const GUIDED_SESSION_KEY = '@moodrx_guided_done';
 const SESSIONS_KEY = '@moodrx_sessions';
 const SUPPLEMENT_LOGS_KEY = 'supplement_logs';
 const CUSTOM_WORKOUTS_KEY = 'custom_workouts';
+
+// ─── Schema versioning for the array-shaped persistence keys ───
+//
+// Each versioned payload is stored as `{ version: number, data: T }`. Reads
+// transparently accept the legacy unwrapped shape (`T` directly) so the very
+// first read after this code ships still works, and the next write upgrades
+// the on-disk format. When a future field rename / type change ships, bump
+// SCHEMA_VERSION and dispatch on the stored `version` inside readVersioned.
+const SCHEMA_VERSION = 1;
+
+interface VersionedPayload<T> {
+  version: number;
+  data: T;
+}
+
+function isVersionedPayload<T>(value: unknown): value is VersionedPayload<T> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'version' in value &&
+    'data' in value &&
+    typeof (value as { version: unknown }).version === 'number'
+  );
+}
+
+/** Parse a raw AsyncStorage string, accepting both the wrapped
+ *  `{version,data}` shape and the legacy unwrapped shape. The legacy
+ *  branch lets every key migrate in-place: read returns the unwrapped
+ *  data, the next write persists it wrapped. */
+function readVersioned<T>(raw: string): T {
+  const parsed: unknown = JSON.parse(raw);
+  if (isVersionedPayload<T>(parsed)) {
+    // Future: switch on parsed.version and run migrations before returning.
+    return parsed.data;
+  }
+  return parsed as T;
+}
+
+function writeVersioned<T>(data: T): string {
+  const payload: VersionedPayload<T> = { version: SCHEMA_VERSION, data };
+  return JSON.stringify(payload);
+}
 
 // ─── Simple in-memory cache to avoid redundant AsyncStorage reads ───
 let sessionsCache: Session[] | null = null;
@@ -105,7 +160,10 @@ export async function setGuidedSessionDone(): Promise<void> {
 export async function getSessions(): Promise<Session[]> {
   const now = Date.now();
   if (sessionsCache && now - sessionsCacheTime < CACHE_TTL) {
-    return sessionsCache;
+    // Defensive copy: callers that sort/splice the result must not mutate
+    // the cached array (which the next addSession() reads to build the new
+    // disk payload).
+    return [...sessionsCache];
   }
   try {
     const raw = await AsyncStorage.getItem(SESSIONS_KEY);
@@ -114,10 +172,10 @@ export async function getSessions(): Promise<Session[]> {
       sessionsCacheTime = now;
       return [];
     }
-    const parsed = JSON.parse(raw) as Session[];
+    const parsed = readVersioned<Session[]>(raw);
     sessionsCache = parsed;
     sessionsCacheTime = now;
-    return parsed;
+    return [...parsed];
   } catch (e) {
     console.warn('[MoodRx] getSessions failed:', e);
     return [];
@@ -125,11 +183,18 @@ export async function getSessions(): Promise<Session[]> {
 }
 
 export async function addSession(session: Session): Promise<void> {
+  // Snapshot the local date once at write time so streak/today logic
+  // doesn't shift under the user's feet when they travel across time
+  // zones or DST flips inside the streak window.
+  const enriched: Session = {
+    ...session,
+    localDateString: session.localDateString ?? toDateString(session.timestamp),
+  };
   sessionWriteChain = sessionWriteChain.then(async () => {
     invalidateSessionsCache();
     const existing = await getSessions();
-    const updated = [...existing, session];
-    await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(updated));
+    const updated = [...existing, enriched];
+    await AsyncStorage.setItem(SESSIONS_KEY, writeVersioned(updated));
     // Write-through: seed the cache with the post-write state so any read
     // landing inside the TTL window sees the new session immediately.
     sessionsCache = updated;
@@ -150,7 +215,7 @@ export async function clearSessions(): Promise<void> {
 export async function getSupplementLogs(): Promise<SupplementLog[]> {
   const now = Date.now();
   if (supplementsCache && now - supplementsCacheTime < CACHE_TTL) {
-    return supplementsCache;
+    return [...supplementsCache];
   }
   try {
     const raw = await AsyncStorage.getItem(SUPPLEMENT_LOGS_KEY);
@@ -159,10 +224,10 @@ export async function getSupplementLogs(): Promise<SupplementLog[]> {
       supplementsCacheTime = now;
       return [];
     }
-    const parsed = JSON.parse(raw) as SupplementLog[];
+    const parsed = readVersioned<SupplementLog[]>(raw);
     supplementsCache = parsed;
     supplementsCacheTime = now;
-    return parsed;
+    return [...parsed];
   } catch (e) {
     console.warn('[MoodRx] getSupplementLogs failed:', e);
     return [];
@@ -180,7 +245,7 @@ export async function saveSupplementLog(log: SupplementLog): Promise<void> {
       const updated = idx !== -1
         ? existing.map((l, i) => (i === idx ? log : l))
         : [...existing, log];
-      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(updated));
+      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, writeVersioned(updated));
       supplementsCache = updated;
       supplementsCacheTime = Date.now();
     } catch (e) {
@@ -204,7 +269,7 @@ export async function toggleSupplementLog(supplementName: string, date: string):
       const updated = idx === -1
         ? [...all, { date, supplementName, taken: true }]
         : all.map((l, i) => (i === idx ? { ...l, taken: !l.taken } : l));
-      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, JSON.stringify(updated));
+      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, writeVersioned(updated));
       supplementsCache = updated;
       supplementsCacheTime = Date.now();
     } catch (e) {
@@ -216,7 +281,7 @@ export async function toggleSupplementLog(supplementName: string, date: string):
 
 export function hasSessionToday(sessions: Session[]): boolean {
   const today = todayDateString();
-  return sessions.some((s) => toDateString(s.timestamp) === today);
+  return sessions.some((s) => sessionDateString(s) === today);
 }
 
 export function getStreakEncouragement(streak: number): string | null {
@@ -229,7 +294,7 @@ export function getStreakEncouragement(streak: number): string | null {
 export function getStreak(sessions: Session[]): number {
   if (sessions.length === 0) return 0;
 
-  const uniqueDates = Array.from(new Set(sessions.map((s) => toDateString(s.timestamp)))).sort();
+  const uniqueDates = Array.from(new Set(sessions.map((s) => sessionDateString(s)))).sort();
   const uniqueSet = new Set(uniqueDates);
 
   const today = todayDateString();
@@ -309,6 +374,10 @@ export async function clearAllData(): Promise<void> {
       VOICE_ENABLED_KEY,
       WORKOUT_FOCUS_MODE_KEY,
       WORKOUT_VOICE_MODE_KEY,
+      // Health-sync opt-in must reset too — otherwise after "Reset all data"
+      // the next launch silently re-syncs to HealthKit/Health Connect even
+      // though the rest of the app behaves like a clean install.
+      '@moodrx_health_enabled',
       'notifications_enabled',
       'reminder_time',
       '@moodrx_reminder_schedule',
@@ -346,10 +415,15 @@ export async function getUserProfile(): Promise<UserProfile> {
   }
 }
 
-export async function setUserProfile(profile: UserProfile): Promise<void> {
+export async function setUserProfile(profile: Partial<UserProfile>): Promise<void> {
   try {
-    await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
-    userProfileCache = profile;
+    // Merge instead of replace — a caller updating just `preferredTime`
+    // should not wipe `primaryGoal`. Callers that intentionally want to
+    // reset a field should pass an explicit `undefined`.
+    const existing = await getUserProfile();
+    const merged: UserProfile = { ...existing, ...profile };
+    await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(merged));
+    userProfileCache = merged;
   } catch (e) {
     console.warn('[MoodRx] setUserProfile failed:', e);
   }
@@ -396,12 +470,14 @@ export interface PersonalBest {
 }
 
 async function loadPersonalBests(): Promise<Record<string, PersonalBest>> {
-  if (personalBestsCache) return personalBestsCache;
+  if (personalBestsCache) return { ...personalBestsCache };
   try {
     const raw = await AsyncStorage.getItem(PERSONAL_BESTS_KEY);
-    const parsed: Record<string, PersonalBest> = raw ? JSON.parse(raw) : {};
+    const parsed: Record<string, PersonalBest> = raw
+      ? readVersioned<Record<string, PersonalBest>>(raw)
+      : {};
     personalBestsCache = parsed;
-    return parsed;
+    return { ...parsed };
   } catch (e) {
     console.warn('[MoodRx] loadPersonalBests failed:', e);
     return {};
@@ -417,7 +493,7 @@ export async function savePersonalBest(workoutId: string, reps: number): Promise
   try {
     const all = await loadPersonalBests();
     const updated = { ...all, [workoutId]: { reps, date: todayDateString() } };
-    await AsyncStorage.setItem(PERSONAL_BESTS_KEY, JSON.stringify(updated));
+    await AsyncStorage.setItem(PERSONAL_BESTS_KEY, writeVersioned(updated));
     personalBestsCache = updated;
   } catch (e) {
     console.warn('[MoodRx] savePersonalBest failed:', e);

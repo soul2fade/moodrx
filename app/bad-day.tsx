@@ -25,7 +25,7 @@ import { type as t } from '@/lib/typography';
 import { useSessions } from '@/contexts/SessionsContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
-import { formatSessionDelta } from '@/lib/session-utils';
+import { createSessionId, formatSessionDelta } from '@/lib/session-utils';
 
 export default function BadDayScreen() {
   const params = useLocalSearchParams<{ mood?: string; intensity?: string }>();
@@ -64,7 +64,7 @@ export default function BadDayScreen() {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await addSession({
-        id: Date.now().toString(),
+        id: createSessionId(),
         mood,
         intensity,
         postScore,

@@ -16,8 +16,10 @@ import {
   getSupplementLogs,
   toggleSupplementLog,
   getSessions,
+  sessionDateString,
   SupplementLog,
   Session,
+  MoodKey,
   getSupplementReminderPrefs,
   saveSupplementReminderPrefs,
 } from '@/lib/storage';
@@ -28,7 +30,6 @@ import {
   DEFAULT_SUPPLEMENT_TIME,
 } from '@/lib/notifications';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
-import type { MoodKey } from '@/lib/storage';
 import { todayDateString, formatTodayLabel, toDateString } from '@/lib/dateUtils';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
@@ -97,13 +98,13 @@ function countWeekTaken(adherence: DayAdherence[]): number {
 function getMoodForWeek(sessions: Session[], weekDates: string[]): MoodKey | null {
   const weekDateSet = new Set(weekDates);
   const lastDay = weekDates[6];
-  const inWeek = sessions.filter((s) => weekDateSet.has(toDateString(s.timestamp)));
+  const inWeek = sessions.filter((s) => weekDateSet.has(sessionDateString(s)));
   if (inWeek.length > 0) {
     const sorted = [...inWeek].sort((a, b) => b.timestamp - a.timestamp);
     const raw = sorted[0].mood as string;
     return raw in MOODS ? (raw as MoodKey) : null;
   }
-  const before = sessions.filter((s) => toDateString(s.timestamp) <= lastDay);
+  const before = sessions.filter((s) => sessionDateString(s) <= lastDay);
   if (before.length > 0) {
     const sorted = [...before].sort((a, b) => b.timestamp - a.timestamp);
     const raw = sorted[0].mood as string;
@@ -117,7 +118,7 @@ function getMoodForWeek(sessions: Session[], weekDates: string[]): MoodKey | nul
  * on or before that date. Returns null if no sessions exist before/on that date.
  */
 function getMoodForDay(sessions: Session[], dateStr: string): MoodKey | null {
-  const onOrBefore = sessions.filter((s) => toDateString(s.timestamp) <= dateStr);
+  const onOrBefore = sessions.filter((s) => sessionDateString(s) <= dateStr);
   if (onOrBefore.length === 0) return null;
   const sorted = [...onOrBefore].sort((a, b) => b.timestamp - a.timestamp);
   const raw = sorted[0].mood as string;

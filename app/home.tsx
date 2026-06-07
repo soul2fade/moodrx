@@ -29,6 +29,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
+import { createSessionId } from '@/lib/session-utils';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.58;
 
@@ -212,7 +213,7 @@ export default function HomeScreen() {
   const handleJustLogIt = useCallback(async () => {
     if (!selectedMood) return;
     const session = {
-      id: Date.now().toString(),
+      id: createSessionId(),
       mood: selectedMood,
       intensity,
       postScore: intensity,
@@ -230,7 +231,7 @@ export default function HomeScreen() {
   const handleSameAsYesterdayLog = useCallback(async () => {
     if (!lastSession) return;
     const session = {
-      id: Date.now().toString(),
+      id: createSessionId(),
       mood: lastSession.mood,
       intensity: lastSession.intensity,
       postScore: lastSession.intensity,

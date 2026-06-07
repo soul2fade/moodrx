@@ -28,6 +28,7 @@ import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
 import { NotificationPrompt } from '@/components/NotificationPrompt';
+import { createSessionId } from '@/lib/session-utils';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
@@ -141,7 +142,7 @@ export default function PostWorkoutScreen() {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await addSessionToContext({
-        id: Date.now().toString(),
+        id: createSessionId(),
         mood,
         intensity,
         postScore,

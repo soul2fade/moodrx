@@ -31,7 +31,7 @@
         "backgroundColor": "#0a0a0a"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
+      "predictiveBackGestureEnabled": true,
       "permissions": [
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_SLEEP",

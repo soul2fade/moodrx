@@ -2,11 +2,11 @@
  * MoodRx Workout Coach Component
  *
  * Road-sign style animated figures with 5 character voices:
- * - Vera de Milo (muscle energy, campy confidence)
- * - Ron Burgundy (verbose, absurdly confident)
- * - Brick Tamland (confused, accidentally wholesome)
- * - Ricky Bobby (NASCAR intensity, competitive fire)
- * - Derek Zoolander (vain, fashion-obsessed)
+ * - Honey Maximus (campy fitness, mood-lifting energy)
+ * - Champ Headline (verbose anchor, broadcasting on the mood weather)
+ * - Roscoe Sunshine (sweet himbo, defuses anxiety with confused warmth)
+ * - Tex Thunderbird (racing intensity, channels stress into ferocious effort)
+ * - Lance Sterling (vain catwalk energy, channels restlessness into performance)
  *
  * Props:
  *   mood: 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good'
@@ -31,11 +31,11 @@ type CoachId = 'vera' | 'ron' | 'brick' | 'ricky' | 'derek';
 type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
 const COACHES: Record<CoachId, { id: CoachId; name: string; color: string }> = {
-  vera:  { id: 'vera',  name: 'Vera de Milo',   color: '#FF6B9D' },
-  ron:   { id: 'ron',   name: 'Ron Burgundy',    color: '#C0392B' },
-  brick: { id: 'brick', name: 'Brick Tamland',   color: '#E67E22' },
-  ricky: { id: 'ricky', name: 'Ricky Bobby',     color: '#3498DB' },
-  derek: { id: 'derek', name: 'Derek Zoolander', color: '#9B59B6' },
+  vera:  { id: 'vera',  name: 'Honey Maximus',  color: '#FF6B9D' },
+  ron:   { id: 'ron',   name: 'Champ Headline',  color: '#C0392B' },
+  brick: { id: 'brick', name: 'Roscoe Sunshine',  color: '#E67E22' },
+  ricky: { id: 'ricky', name: 'Tex Thunderbird', color: '#3498DB' },
+  derek: { id: 'derek', name: 'Lance Sterling',  color: '#9B59B6' },
 };
 
 const MOOD_COACH_MAP: Record<MoodKey, CoachId> = {
@@ -49,34 +49,34 @@ const MOOD_COACH_MAP: Record<MoodKey, CoachId> = {
 
 const PHRASES: Record<CoachId, string[][]> = {
   vera: [
-    ["Honey, these muscles don't build THEMSELVES","The struggle is REAL and I am HERE for it","Pain is just weakness leaving the body in HEELS","This is SUFFERING, darling, but I'm FABULOUS","My body is a TEMPLE and temples need MAINTENANCE"],
-    ["Ohhhh now we're TALKING","These guns are WAKING UP, sweetie","I can FEEL the magic happening","The transformation has BEGUN, hunty","My muscles are speaking and I am LISTENING"],
-    ["LOOK AT ME. I am STUNNING and STRONG","These biceps don't LIE, baby","I am a GODDESS in this body","YESSS THIS is what POWER feels like","My strength is UNDENIABLE and GORGEOUS"],
-    ["I am COMPLETE, I am WHOLE, I am MUSCULAR","*flexes* THE WORK PAYS OFF, DARLING","I have TRANSCENDED. I am GLOWING. I am RIPPED.","Clarity? Try DEFINITION, honey","HEAR ME ROAR, and LOOK AT THESE DELTOIDS"],
+    ["Sugar, your mood called — and she's ready to move.","This first step is hard because the feelings are heavy.","Couch energy is valid. So is getting up. Let's go.","Honey, the bad mood is about to meet its match.","We don't have to feel good to start. We start to feel good."],
+    ["Ohhhh the clouds are lifting, honey.","My brain just sent flowers to my body.","Stress is fleeing the building in real time.","Honey, my nervous system is finally exhaling.","I can feel the gloom packing its bags."],
+    ["I am alive, I am awake, I am literally glowing.","This is what therapy through movement feels like, darling.","Joy just walked in wearing sequins.","I just moved my way out of a mood, darling.","The sparkle was inside the whole time — we just shook it loose."],
+    ["The mood has been moved — I rest my case.","Honey, I forgot what I was even worried about.","My head is quiet. My heart is open. The work is done.","I came for the mood, I stayed for the magic.","Tomorrow's problems, meet today's calmer me."],
   ],
   ron: [
-    ["I'm in a glass case of emotion... and sweat","I'm in a glass case of emotion","My body is like a fine leather-bound book being read in a hurricane","The pain is... actually quite poetic","I immediately regret this decision","This is NOT what the brochure promised"],
-    ["Stay classy, muscles","I'm having a moment of clarity about my biceps","Wait... am I kind of a big deal right now?","Something is happening and it is GOOD","My body just got a memo it did NOT expect"],
-    ["I'm KIND of a big deal","People KNOW me. My body ESPECIALLY.","I have many leather-bound books about my own strength","I don't know how to put this but I'm pretty important","This feeling? It's called being MAGNIFICENT"],
-    ["That escalated quickly... into enlightenment","I'm a man of substance AND definition","Milk was a bad choice but THIS was magnificent","You stay classy. I stay POWERFUL.","60% of the time I feel incredible EVERY time"],
+    ["This evening's top story: a man, a mood, a movement.","I am reading from a teleprompter and it says 'Keep going.'","My body is like an ancient parchment being unfurled by a child.","I'm reporting live from the fog, and the fog is thick.","My nervous system is sending a press release: proceed anyway.","Breaking: local man begins workout. Story developing."],
+    ["The fog has begun to lift. I can see my reflection again.","We are now witnessing a mood reversal in real time.","Breaking update — the chest is lighter, the head is clearer.","I would like to formally retract every complaint I made earlier.","I have been informed by my body that the forecast has changed."],
+    ["I am broadcasting from a place of total clarity, ladies and gentlemen.","My brain has been upgraded to premium and I am loving the package.","The mood: elevated. The body: available. The man: unstoppable.","I am pleased to announce a major development in my own well-being.","I am living confirmation that movement is the best press release."],
+    ["And that, dear viewers, is what we call a successful broadcast.","Signing off from a significantly better headspace — thank you for joining.","The mood report has been updated. The mood is fantastic.","I would like to thank my bloodstream, my lungs, and me.","Tomorrow's forecast: slightly more tolerable than today."],
   ],
   brick: [
-    ["I don't know what we're doing but I am SCARED","Are we exercising? I love exercising! ...wait do I?","My arms are confused","Where am I? Oh right, working out. Cool cool cool.","I think my legs are angry at me"],
-    ["Hey... I think something's happening!","My body just did a thing and I LIKED it","LOUD NOISES... but like, good ones?","I can feel my blood! Is that normal?","Wait I'm actually kind of good at this"],
-    ["I LOVE THIS","I DON'T KNOW WHY I'M YELLING BUT IT FEELS RIGHT","My muscles are having a PARTY","I once ate a whole wheel of cheese. This is better.","I feel like a RAINBOW made of BICEPS"],
-    ["I am very happy right now","I think I just became a better person? Is that how this works?","Everything is warm and tingly and WONDERFUL","I would like to do this again please","My body and my brain just became BEST FRIENDS"],
+    ["Hi. I am also nervous. Are we doing this together? Okay good.","My brain is doing the thing where it worries about everything.","Wait... is everyone else this worried all the time? Just me? Okay.","I forgot what we were doing. Oh right. Moving. Moving is good.","We are gonna move and it's gonna be... probably fine? Yes. Fine."],
+    ["Wait. Wait wait wait. Did the scary thoughts just shrink?","I forgot to be nervous for like a whole minute just now.","Hey... I think the worries are getting quieter.","Something inside me is doing a thing and the thing is nice.","My heart is still going fast but I think it is happy fast."],
+    ["I feel okay. I feel okay. I just wanted to say that.","My brain is quiet and my body is nice and I love both of them.","I love my body for doing this. I love my brain for letting it.","Hi. I am me. And I feel good. Whoa.","I think I just became a person who is not panicking. Look at me!"],
+    ["I am safe. I am okay. I am here.","I think... I think I just took care of myself. Look at me.","Calm. C-A-L-M. Calm. I had to spell it to believe it.","I am breathing. I am moving. I am okay. Three things I am.","Thank you body. Thank you brain. We are friends now."],
   ],
   ricky: [
-    ["If you ain't first you're last and RIGHT NOW I'm last","I wanna go fast but my body wants to go HOME","Shake and bake? More like ache and break","Dear lord baby Jesus please let this end","I'm too LEGIT for this kind of suffering"],
-    ["SHAKE... AND... BAKE","We are GOING for it now","I feel like a WINNER and winners don't quit","My body just found second gear baby","If you don't chew Big Red then... wait what was I saying"],
-    ["I'M ON FIRE. Not literally. FIGURATIVELY.","SLINGSHOT ENGAGED","I AM A MACHINE AND THIS MACHINE IS RUNNIN HOT","Cal Naughton Jr WISHES he could feel this good","THIS is what championship DNA feels like"],
-    ["I wanna be you when I grow up... wait I AM me","That just happened. That JUST happened.","Dear tiny baby Jesus, THANK YOU","If you ain't first you're last. I am FIRST.","I'm the BEST THERE IS, plain and simple"],
+    ["Stress thinks it's gonna win today. Stress is wrong.","I came in tight. We are about to come out loose.","Helmet on. Brain off. Let's go.","Stress brought a hammer. I brought a whole workshop.","Start your engines, gentlemen. Today we beat the bad day."],
+    ["Found second gear. Found it. There it is.","I can feel the stress getting scared, baby.","Body says go. Brain says go. Stress says nooo. Sounds like a win.","I am outrunning the bad day in real time.","The tension is melting like rubber on pavement."],
+    ["The stress just saw my taillights.","I am the winner of the bad day.","I am firing on all cylinders and the cylinders are loud.","I came here stressed. I leave here legendary.","I'm in the lead against my own anxiety and I'm pulling away."],
+    ["We crossed the line. The stress did not.","Checkered flag, baby. Stress — eat my dust.","Stress brought nothing. I brought everything. Done.","Pole position on my own dang day.","Engine cooling. Heart settling. Mood: fixed."],
   ],
   derek: [
-    ["But why male models... I mean, why EXERCISE","I can't turn left AND I can't do this","This is NOT Blue Steel. This is Blue STRUGGLE.","I feel like I'm taking crazy pills","Is this a center for ANTS? Because I'm SWEATING like one"],
-    ["Wait... I think I just invented a new look. SWEAT STEEL.","I'm PRETTY sure I'm getting prettier right now","My body is like a RUNWAY and I just hit the turn","Moisture is the essence of wetness and I am MOIST","I feel a new look coming on..."],
-    ["MAGNUM. This is MAGNUM.","I am RIDICULOUSLY good looking AND strong","One look? ONE LOOK? I have MULTIPLE looks now","This body was MADE for this. And also for modeling.","Le Tigre WISHES it could feel this way"],
-    ["I think there's more to life than being really really ridiculously fit. But not much more.","Ferrari. That's what this feeling is. FERRARI.","I just Blue Steeled my own SOUL","Moisture, strength, and INCREDIBLE bone structure","I'm not just a model. I'm a MODEL ATHLETE."],
+    ["I can't sit still, so we are going to make sitting still irrelevant.","Restless legs? Restless brain? Wonderful — we have so much to work with.","I have been buzzing for hours. The buzz is about to become a vibe.","My body has been pacing in its own head. Now it gets to pace for real.","The energy is wild. We are about to give it a job."],
+    ["I am literally pacing this out and my body finally agrees.","The buzz in my chest just became a beat I can dance to.","I think I just turned 'too much energy' into 'just enough swagger.'","Look at me find my flow. Look at it. Wow.","I came in fidgety. Now I am fluid."],
+    ["I am so present I might charge admission.","This is what restless energy looks like with somewhere to go.","I have channeled the entire restlessness into motion and it is divine.","The fidget has become a flex.","Mirror says: stunning. Body says: deserved. Brain says: finally."],
+    ["And that is how you turn a buzz into a bow.","I came in restless. I leave in repose.","The fidget is gone. In its place: actual peace. Wild.","I am still gorgeous, but now I am also quiet.","I outran my own twitchiness and the trophy is calm."],
   ],
 };
 

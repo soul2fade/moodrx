@@ -28,6 +28,7 @@ import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
 import { NotificationPrompt } from '@/components/NotificationPrompt';
 import { createSessionId } from '@/lib/session-utils';
+import { maybeRequestReview } from '@/lib/review';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
@@ -118,6 +119,9 @@ export default function PostWorkoutScreen() {
 
   const navigation = useNavigation();
   const submittedRef = useRef(false);
+  // Set in handleLog when this session beat the stored personal best, so the
+  // finish flow can treat it as a positive moment worth a review prompt.
+  const newBestRef = useRef(false);
 
   // Catches all exit paths (iOS swipe-back, Android hardware back, header
   // back, programmatic navigation). The previous useHardwareBack-only
@@ -169,6 +173,10 @@ export default function PostWorkoutScreen() {
       if (sessionReps > 0) {
         const isNewBest = previousBest === null || sessionReps > previousBest.reps;
         if (isNewBest) {
+          // Only a beaten prior best is a celebrated moment (matches the
+          // "NEW PERSONAL BEST" badge); the first-ever count just seeds the
+          // baseline and isn't review-worthy.
+          if (previousBest !== null) newBestRef.current = true;
           await savePersonalBest(workoutId, sessionReps);
           setPreviousBest({ reps: sessionReps, date: todayDateString() });
         }
@@ -213,9 +221,15 @@ export default function PostWorkoutScreen() {
     if (!promptShown) {
       setShowNotifPrompt(true);
     } else {
+      // Only ask for a review on this path — when there's no notification
+      // prompt to show — so we never stack two system asks. Gate on a
+      // genuinely positive outcome; maybeRequestReview throttles globally.
+      if (rating === 'yes' || newBestRef.current) {
+        await maybeRequestReview('post-workout');
+      }
       router.replace('/home');
     }
-  }, [isGuided]);
+  }, [isGuided, rating]);
 
   const handleViewEvidence = async () => {
     setShowWinCard(false);

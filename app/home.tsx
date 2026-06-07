@@ -29,6 +29,7 @@ import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { createSessionId } from '@/lib/session-utils';
+import { maybeRequestReview } from '@/lib/review';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.58;
 
@@ -81,6 +82,7 @@ export default function HomeScreen() {
         setCarouselPage(lastPage);
         const currentStreak = getStreak(sessions);
         const today = todayDateString();
+        const MILESTONES = [3, 7, 14, 30];
         let updated = { ...state };
         if (currentStreak > state.hwm) {
           updated = { ...updated, hwm: currentStreak };
@@ -88,10 +90,19 @@ export default function HomeScreen() {
         if (currentStreak === 0 && state.hwm >= 2 && state.lastBrokenDate !== today) {
           updated = { ...updated, lastBrokenDate: today, lastBrokenHwm: state.hwm };
         }
+
+        // Hitting a streak milestone is a genuinely positive moment — ask for a
+        // review. Gate on seenMilestones so a given milestone only ever triggers
+        // once (the review module then applies its own global throttle on top).
+        const seenMilestones = state.seenMilestones ?? [];
+        if (MILESTONES.includes(currentStreak) && !seenMilestones.includes(currentStreak)) {
+          updated = { ...updated, seenMilestones: [...seenMilestones, currentStreak] };
+          void maybeRequestReview('streak-milestone');
+        }
+
         if (JSON.stringify(updated) !== JSON.stringify(state)) saveStreakState(updated);
 
         // Show streak toast once per app launch (only for non-milestone active streaks)
-        const MILESTONES = [3, 7, 14, 30];
         if (!greetingShownThisSession && currentStreak > 0 && !MILESTONES.includes(currentStreak)) {
           greetingShownThisSession = true;
           const label = `${currentStreak} DAY${currentStreak !== 1 ? 'S' : ''}`;

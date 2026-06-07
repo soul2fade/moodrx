@@ -129,6 +129,7 @@ let streakStateCache: StreakState | null = null;
 let personalBestsCache: Record<string, PersonalBest> | null = null;
 let notifPromptShownCache: boolean | null = null;
 let carouselHintSeenCache: boolean | null = null;
+let reviewStateCache: ReviewState | null = null;
 
 let sessionWriteChain: Promise<void> = Promise.resolve();
 let supplementWriteChain: Promise<void> = Promise.resolve();
@@ -149,6 +150,7 @@ function invalidateLightCaches() {
   personalBestsCache = null;
   notifPromptShownCache = null;
   carouselHintSeenCache = null;
+  reviewStateCache = null;
   invalidateUiStateCache();
 }
 
@@ -428,6 +430,7 @@ export async function clearAllData(): Promise<void> {
       '@moodrx_checkin_notif_ids',
       '@moodrx_supplement_notif_id',
       '@moodrx_trial_notif_ids',
+      REVIEW_STATE_KEY,
     ]);
     await clearUiState();
     invalidateSessionsCache();
@@ -728,5 +731,39 @@ export async function setNavHintSeen(): Promise<void> {
     await patchUiState({ navHintSeen: true, navHintPending: false });
   } catch {
     // non-critical
+  }
+}
+
+const REVIEW_STATE_KEY = '@moodrx_review_state';
+
+export interface ReviewState {
+  /** Unix ms of the last time we asked the OS to surface a review prompt,
+   *  or null if we never have. Used to throttle so we never nag — see
+   *  lib/review.ts. */
+  lastRequestedAt: number | null;
+}
+
+export async function getReviewState(): Promise<ReviewState> {
+  if (reviewStateCache) return reviewStateCache;
+  try {
+    const raw = await AsyncStorage.getItem(REVIEW_STATE_KEY);
+    const parsed: ReviewState = raw
+      ? (JSON.parse(raw) as ReviewState)
+      : { lastRequestedAt: null };
+    reviewStateCache = parsed;
+    return parsed;
+  } catch (e) {
+    console.warn('[MoodRx] getReviewState failed:', e);
+    return { lastRequestedAt: null };
+  }
+}
+
+export async function setReviewRequested(timestamp: number): Promise<void> {
+  try {
+    const state: ReviewState = { lastRequestedAt: timestamp };
+    await AsyncStorage.setItem(REVIEW_STATE_KEY, JSON.stringify(state));
+    reviewStateCache = state;
+  } catch (e) {
+    console.warn('[MoodRx] setReviewRequested failed:', e);
   }
 }

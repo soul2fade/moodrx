@@ -27,6 +27,7 @@ import { fonts } from '@/lib/typography';
 import type { MoodKey, Session, UserProfile } from '@/lib/storage';
 import { getCarouselHintSeen, setCarouselHintSeen } from '@/lib/storage';
 import { getBestPatternCallout } from '@/lib/workout-insights';
+import { getLastNDays } from '@/lib/analytics';
 
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 24;
@@ -196,8 +197,8 @@ export function HomeCarousel({
 
   const PAGE_LABELS = ['YOUR PATTERN', 'QUICK ACTIONS'];
 
-  const last7 = sessions.slice(-7);
-  const trendDiff = last7.length >= 2 ? last7[last7.length - 1].intensity - last7[0].intensity : 0;
+  const last7Days = getLastNDays(sessions, 7);
+  const trendDiff = last7Days.length >= 2 ? last7Days[last7Days.length - 1].intensity - last7Days[0].intensity : 0;
   const trendLabel = Math.abs(trendDiff) < 1 ? '→ HOLDING STEADY' : trendDiff < 0 ? '↓ TRENDING BETTER' : '↑ TRENDING WORSE';
   const trendColor = Math.abs(trendDiff) < 1 ? '#999999' : trendDiff < 0 ? '#059669' : '#b45309';
   const patternCallout = getBestPatternCallout(sessions);
@@ -295,12 +296,12 @@ export function HomeCarousel({
                 >
                   <Text style={styles.sparklineHeader}>7-DAY TREND</Text>
                   <View style={styles.sparklineBars}>
-                    {last7.map((s, i) => {
-                      const barH = Math.max((s.intensity / 10) * 32, 3);
-                      const moodCol = MOODS[s.mood]?.color ?? '#525252';
+                    {last7Days.map((d) => {
+                      const barH = Math.max((d.intensity / 10) * 32, 3);
+                      const moodCol = MOODS[d.mood]?.color ?? '#525252';
                       return (
                         <View
-                          key={s.id ?? i}
+                          key={d.date}
                           style={[styles.sparklineBar, { height: barH, backgroundColor: moodCol + 'aa' }]}
                           importantForAccessibility="no"
                         />
@@ -477,27 +478,31 @@ export function HomeCarousel({
               <Text style={sheet.close}>✕</Text>
             </TouchableOpacity>
           </View>
-          {last7.map((s, i) => {
-            const d    = new Date(s.timestamp);
-            const day  = DAYS[d.getDay()];
-            const date = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
-            const md   = MOODS[s.mood];
+          {last7Days.map((dayAgg) => {
+            const dt   = new Date(dayAgg.latest.timestamp);
+            const day  = DAYS[dt.getDay()];
+            const date = `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
+            const md   = MOODS[dayAgg.mood];
+            const intensityVal = Math.round(dayAgg.intensity);
+            const moodLabel = dayAgg.sessionCount > 1
+              ? `${md.name.toUpperCase()} × ${dayAgg.sessionCount}`
+              : md.name.toUpperCase();
             return (
-              <View key={s.id ?? i} style={sheet.row}>
+              <View key={dayAgg.date} style={sheet.row}>
                 <View style={sheet.dateCol}>
                   <Text style={sheet.rowDay}>{day}</Text>
                   <Text style={sheet.rowDate}>{date}</Text>
                 </View>
                 <View style={sheet.moodCol}>
                   <View style={[sheet.moodDot, { backgroundColor: md.color }]} />
-                  <Text style={[sheet.moodName, { color: md.color }]}>{md.name.toUpperCase()}</Text>
+                  <Text style={[sheet.moodName, { color: md.color }]}>{moodLabel}</Text>
                 </View>
                 <View style={sheet.intensityCol}>
                   <Text style={sheet.intensityNum}>
-                    {s.intensity}<Text style={sheet.intensityMax}>/10</Text>
+                    {intensityVal}<Text style={sheet.intensityMax}>/10</Text>
                   </Text>
                   <View style={sheet.intensityBg}>
-                    <View style={[sheet.intensityFill, { width: `${s.intensity * 10}%` as any, backgroundColor: md.color + 'cc' }]} />
+                    <View style={[sheet.intensityFill, { width: `${intensityVal * 10}%` as any, backgroundColor: md.color + 'cc' }]} />
                   </View>
                 </View>
               </View>

@@ -1,4 +1,4 @@
-import type { MoodKey, Session } from './storage';
+import { sessionDateString, type MoodKey, type Session } from './storage';
 import { MOOD_ORDER } from './moods';
 import { getWorkoutsForMood } from './workouts';
 
@@ -33,6 +33,51 @@ export function getMostCommonMood(sessions: Session[]): MoodKey | null {
 export function formatChange(val: number): string {
   const rounded = Math.abs(val).toFixed(1);
   return val >= 0 ? `+${rounded}` : `-${rounded}`;
+}
+
+// ─── Per-day aggregates ──────────────────────────────────────────────────────
+
+export interface DayAggregate {
+  /** YYYY-MM-DD in the session's local time */
+  date: string;
+  /** Average pre-workout intensity across that day's sessions (0–10) */
+  intensity: number;
+  /** Average post-workout score across that day's sessions (0–10) */
+  postScore: number;
+  /** Dominant mood for the day (ties broken by most recent) */
+  mood: MoodKey;
+  /** Number of sessions logged that day */
+  sessionCount: number;
+  /** Most recent session that day — used for representative timestamp/key */
+  latest: Session;
+}
+
+/** Group sessions by local date and return the last N unique days,
+ *  oldest-first. Replaces the previous `sessions.slice(-7)` pattern in
+ *  HomeCarousel and Insights, which returned up to 7 sessions of the
+ *  same day if the user logged frequently — making the chart's day
+ *  labels repeat and the trend math meaningless. Each entry now
+ *  represents one calendar day, with intensity/postScore averaged
+ *  across any same-day sessions. */
+export function getLastNDays(sessions: Session[], n: number): DayAggregate[] {
+  if (sessions.length === 0 || n <= 0) return [];
+  const byDate = new Map<string, Session[]>();
+  for (const s of sessions) {
+    const date = sessionDateString(s);
+    const bucket = byDate.get(date);
+    if (bucket) bucket.push(s);
+    else byDate.set(date, [s]);
+  }
+  const dates = [...byDate.keys()].sort();
+  const lastN = dates.slice(-n);
+  return lastN.map((date) => {
+    const dayS = byDate.get(date)!;
+    const intensity = dayS.reduce((acc, s) => acc + s.intensity, 0) / dayS.length;
+    const postScore = dayS.reduce((acc, s) => acc + s.postScore, 0) / dayS.length;
+    const mood = getMostCommonMood(dayS) ?? dayS[0].mood;
+    const latest = dayS.reduce((a, b) => (a.timestamp > b.timestamp ? a : b));
+    return { date, intensity, postScore, mood, sessionCount: dayS.length, latest };
+  });
 }
 
 // ─── Weekly prescription ─────────────────────────────────────────────────────

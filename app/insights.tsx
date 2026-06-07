@@ -22,7 +22,7 @@ import { MoodIcon } from '@/components/MoodIcon';
 import { WorkoutCalendar } from '@/components/WorkoutCalendar';
 import { MoodArc } from '@/components/MoodArc';
 import { ShareCard } from '@/components/ShareCard';
-import { getMostCommonMood, formatChange } from '@/lib/analytics';
+import { getMostCommonMood, formatChange, getLastNDays } from '@/lib/analytics';
 import { DAY_ABBREVS } from '@/lib/dateUtils';
 import { colors } from '@/lib/colors';
 import { type as t, fonts } from '../lib/typography';
@@ -75,7 +75,7 @@ export default function InsightsScreen() {
     [sessions],
   );
 
-  const last7 = useMemo(() => sessions.slice(-7), [sessions]);
+  const last7Days = useMemo(() => getLastNDays(sessions, 7), [sessions]);
   const recent10 = useMemo(() => [...sessions].reverse().slice(0, isPremium ? 10 : 3), [sessions, isPremium]);
 
   const workoutStats = useMemo(() => {
@@ -284,8 +284,8 @@ export default function InsightsScreen() {
 
         {/* Chart */}
         <View style={styles.chartSection}>
-          <Text style={styles.chartLabel}>LAST {last7.length} SESSIONS</Text>
-          {!isLoading && last7.length === 0 ? (
+          <Text style={styles.chartLabel}>LAST {last7Days.length} DAY{last7Days.length === 1 ? '' : 'S'}</Text>
+          {!isLoading && last7Days.length === 0 ? (
             <View style={styles.emptyChart}>
               <Text style={styles.noSessions}>No data yet.</Text>
               <Text style={styles.noSessionsSub}>Your first session is the baseline. Let&apos;s get it.</Text>
@@ -301,16 +301,17 @@ export default function InsightsScreen() {
             </View>
           ) : (
             <View style={styles.chart}>
-              {last7.map((session, index) => {
-                const preHeight = Math.max(((session.intensity ?? 0) / 10) * BAR_MAX_HEIGHT, 4);
-                const postHeight = Math.max(((session.postScore ?? 0) / 10) * BAR_MAX_HEIGHT, 4);
-                const dayAbbr = DAY_ABBREVS[new Date(session.timestamp).getDay()] ?? '—';
+              {last7Days.map((day) => {
+                const preHeight = Math.max((day.intensity / 10) * BAR_MAX_HEIGHT, 4);
+                const postHeight = Math.max((day.postScore / 10) * BAR_MAX_HEIGHT, 4);
+                const dayAbbr = DAY_ABBREVS[new Date(day.latest.timestamp).getDay()] ?? '—';
+                const countSuffix = day.sessionCount > 1 ? `, averaged across ${day.sessionCount} sessions` : '';
                 return (
                   <View
-                    key={session.id ?? index}
+                    key={day.date}
                     style={styles.chartGroup}
                     accessible={true}
-                    accessibilityLabel={`${dayAbbr}: intensity ${session.intensity ?? 0} before, ${session.postScore ?? 0} after`}
+                    accessibilityLabel={`${dayAbbr}: intensity ${day.intensity.toFixed(1)} before, ${day.postScore.toFixed(1)} after${countSuffix}`}
                   >
                     <View style={styles.chartBars}>
                       <View

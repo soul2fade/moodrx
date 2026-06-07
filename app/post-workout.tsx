@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Modal,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
@@ -30,7 +30,6 @@ import { NotificationPrompt } from '@/components/NotificationPrompt';
 import { createSessionId } from '@/lib/session-utils';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
-import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { getFieldNotePlaceholder } from '@/lib/workout-ui';
@@ -116,9 +115,28 @@ export default function PostWorkoutScreen() {
     setShowCardPreview(true);
   };
 
-  // Prevent Android back button from going back to workout mid-flow
-  const backHandler = useCallback(() => {
-    if (note.trim()) {
+  const navigation = useNavigation();
+  const submittedRef = useRef(false);
+
+  // Catches all exit paths (iOS swipe-back, Android hardware back, header
+  // back, programmatic navigation). The previous useHardwareBack-only
+  // version intercepted Android hardware back but not iOS swipe-back —
+  // users could lose their field note silently by swiping back. Now any
+  // exit attempt while a note is unsaved triggers the discard Alert.
+  // submittedRef is flipped to true in handleLog so post-save navigation
+  // (the win card flow, "view evidence", etc.) isn't blocked.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (submittedRef.current) return;
+      if (!note.trim()) {
+        // No note to lose, but preserve the previous behavior of going
+        // home rather than back to /workout (which is what default
+        // React Navigation back would do given the route history).
+        e.preventDefault();
+        router.replace('/home');
+        return;
+      }
+      e.preventDefault();
       Alert.alert(
         'Discard note?',
         'Your field note will be lost if you leave without logging.',
@@ -127,12 +145,9 @@ export default function PostWorkoutScreen() {
           { text: 'Leave', style: 'destructive', onPress: () => router.replace('/home') },
         ],
       );
-      return true;
-    }
-    router.replace('/home');
-    return true;
-  }, [note]);
-  useHardwareBack(backHandler);
+    });
+    return unsubscribe;
+  }, [navigation, note]);
 
   const handleLog = async () => {
     if (isSubmitting) return; // prevent double-tap
@@ -181,6 +196,7 @@ export default function PostWorkoutScreen() {
         // .then() shouldn't throw, but belt-and-suspenders
         console.warn('[MoodRx] HealthKit workout sync threw', e);
       });
+      submittedRef.current = true;
       setShowWinCard(true);
     } catch {
       setIsSubmitting(false);

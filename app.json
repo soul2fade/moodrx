@@ -21,8 +21,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.moodrx.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSUserNotificationsUsageDescription": "MoodRx uses notifications to remind you of your daily mood check-in and workouts."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

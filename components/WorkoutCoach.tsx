@@ -5,7 +5,7 @@
  * - Honey Maximus (campy fitness, mood-lifting energy)
  * - Champ Headline (verbose anchor, broadcasting on the mood weather)
  * - Roscoe Sunshine (sweet himbo, defuses anxiety with confused warmth)
- * - Ricky Bobby (NASCAR intensity, competitive fire)
+ * - Tex Thunderbird (racing intensity, channels stress into ferocious effort)
  * - Derek Zoolander (vain, fashion-obsessed)
  *
  * Props:
@@ -34,7 +34,7 @@ const COACHES: Record<CoachId, { id: CoachId; name: string; color: string }> = {
   vera:  { id: 'vera',  name: 'Honey Maximus',  color: '#FF6B9D' },
   ron:   { id: 'ron',   name: 'Champ Headline',  color: '#C0392B' },
   brick: { id: 'brick', name: 'Roscoe Sunshine',  color: '#E67E22' },
-  ricky: { id: 'ricky', name: 'Ricky Bobby',     color: '#3498DB' },
+  ricky: { id: 'ricky', name: 'Tex Thunderbird', color: '#3498DB' },
   derek: { id: 'derek', name: 'Derek Zoolander', color: '#9B59B6' },
 };
 
@@ -67,10 +67,10 @@ const PHRASES: Record<CoachId, string[][]> = {
     ["I am safe. I am okay. I am here.","I think... I think I just took care of myself. Look at me.","Calm. C-A-L-M. Calm. I had to spell it to believe it.","I am breathing. I am moving. I am okay. Three things I am.","Thank you body. Thank you brain. We are friends now."],
   ],
   ricky: [
-    ["If you ain't first you're last and RIGHT NOW I'm last","I wanna go fast but my body wants to go HOME","Shake and bake? More like ache and break","Dear lord baby Jesus please let this end","I'm too LEGIT for this kind of suffering"],
-    ["SHAKE... AND... BAKE","We are GOING for it now","I feel like a WINNER and winners don't quit","My body just found second gear baby","If you don't chew Big Red then... wait what was I saying"],
-    ["I'M ON FIRE. Not literally. FIGURATIVELY.","SLINGSHOT ENGAGED","I AM A MACHINE AND THIS MACHINE IS RUNNIN HOT","Cal Naughton Jr WISHES he could feel this good","THIS is what championship DNA feels like"],
-    ["I wanna be you when I grow up... wait I AM me","That just happened. That JUST happened.","Dear tiny baby Jesus, THANK YOU","If you ain't first you're last. I am FIRST.","I'm the BEST THERE IS, plain and simple"],
+    ["Stress thinks it's gonna win today. Stress is wrong.","I came in tight. We are about to come out loose.","Helmet on. Brain off. Let's go.","Stress brought a hammer. I brought a whole workshop.","Start your engines, gentlemen. Today we beat the bad day."],
+    ["Found second gear. Found it. There it is.","I can feel the stress getting scared, baby.","Body says go. Brain says go. Stress says nooo. Sounds like a win.","I am outrunning the bad day in real time.","The tension is melting like rubber on pavement."],
+    ["The stress just saw my taillights.","I am the winner of the bad day.","I am firing on all cylinders and the cylinders are loud.","I came here stressed. I leave here legendary.","I'm in the lead against my own anxiety and I'm pulling away."],
+    ["We crossed the line. The stress did not.","Checkered flag, baby. Stress — eat my dust.","Stress brought nothing. I brought everything. Done.","Pole position on my own dang day.","Engine cooling. Heart settling. Mood: fixed."],
   ],
   derek: [
     ["But why male models... I mean, why EXERCISE","I can't turn left AND I can't do this","This is NOT Blue Steel. This is Blue STRUGGLE.","I feel like I'm taking crazy pills","Is this a center for ANTS? Because I'm SWEATING like one"],

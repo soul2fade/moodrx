@@ -238,7 +238,7 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
     const sleepStart = new Date(now);
     sleepStart.setDate(sleepStart.getDate() - 1);
     sleepStart.setHours(18, 0, 0, 0);
-    const sleepSamples = await mod.getSleepSamples(sleepStart, now);
+    const sleepSamples = (await mod.getSleepSamples(sleepStart, now)) ?? [];
     const asleepSeconds = sleepSamples
       .filter((s) => ['asleep', 'core', 'deep', 'rem'].includes(s.value))
       .reduce((sum, s) => sum + (s.duration ?? 0), 0);

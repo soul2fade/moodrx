@@ -59,7 +59,14 @@ export default function RootLayout() {
   const fontsReady = loaded || !!fontError;
 
   useEffect(() => {
-    initCatDoesWatch();
+    try {
+      initCatDoesWatch();
+    } catch (err: unknown) {
+      console.warn(
+        "CatDoes Watch init failed:",
+        err instanceof Error ? err.message : String(err),
+      );
+    }
     try {
       initializeRevenueCat();
     } catch (err: unknown) {

@@ -31,7 +31,10 @@ export default function BadDayScreen() {
   const initialMood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
     : 'anxious';
-  const initialIntensity = parseInt(params.intensity || '6', 10);
+  const parsedIntensity = parseInt(params.intensity ?? '', 10);
+  const initialIntensity = Number.isFinite(parsedIntensity)
+    ? Math.min(10, Math.max(1, parsedIntensity))
+    : 6;
 
   const { addSession } = useSessions();
   const [mood, setMood] = useState<MoodKey>(initialMood);

@@ -264,10 +264,19 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAll = async () => {
-    await resetAllAppData();
-    await clearSessions();
-    setShowDeleteConfirm(false);
-    router.replace('/onboarding');
+    try {
+      await resetAllAppData();
+      await clearSessions();
+      setShowDeleteConfirm(false);
+      router.replace('/onboarding');
+    } catch (e) {
+      // If a storage clear rejects, the confirm box would otherwise stay
+      // up and the destructive flow appears frozen (ErrorBoundary doesn't
+      // catch async handler rejections). Close the dialog and tell the user.
+      console.warn('[MoodRx] delete all data failed:', e);
+      setShowDeleteConfirm(false);
+      Alert.alert('Delete failed', 'Some data could not be removed. Please try again.');
+    }
   };
 
   const translateX = toggleAnim.interpolate({
@@ -668,7 +677,7 @@ export default function SettingsScreen() {
           MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
         </Text>
         <TouchableOpacity
-          onPress={() => Linking.openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
+          onPress={() => { void Linking.openURL('https://soul2fade.github.io/moodrx/privacy-policy.html').catch(() => Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')); }}
           activeOpacity={0.7}
           style={styles.legalLink}
           accessibilityRole="link"
@@ -677,7 +686,7 @@ export default function SettingsScreen() {
           <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => Linking.openURL('https://soul2fade.github.io/moodrx/terms.html')}
+          onPress={() => { void Linking.openURL('https://soul2fade.github.io/moodrx/terms.html').catch(() => Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')); }}
           activeOpacity={0.7}
           style={styles.legalLink}
           accessibilityRole="link"

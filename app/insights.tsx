@@ -420,7 +420,7 @@ export default function InsightsScreen() {
               const changeColor = change >= 0 ? '#059669' : '#999999';
               const moodColor = MOODS[session.mood]?.color ?? '#999999';
               const date = new Date(session.timestamp);
-              const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
+              const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()] ?? ''}`;
               return (
                 <TouchableOpacity
                   key={session.id}
@@ -469,7 +469,7 @@ export default function InsightsScreen() {
             <Text style={styles.notesLabel}>FIELD NOTES</Text>
             {sessionNotes.visible.map((s) => {
               const date = new Date(s.timestamp);
-              const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
+              const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()] ?? ''}`;
               const moodColor = MOODS[s.mood]?.color ?? '#999999';
               return (
                 <View key={s.id} style={styles.noteRow}>
@@ -595,7 +595,7 @@ export default function InsightsScreen() {
           const changeColor = change >= 0 ? '#059669' : '#999999';
           const moodColor = MOODS[cs.mood]?.color ?? '#999999';
           const date = new Date(cs.timestamp);
-          const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()]}`;
+          const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()] ?? ''}`;
           const ratingLabel = cs.rating === 'yes' ? 'YES ★' : cs.rating === 'somewhat' ? 'SOMEWHAT' : cs.rating === 'no' ? 'NOT REALLY' : null;
           const ratingColor = cs.rating === 'yes' ? '#059669' : '#525252';
           return (

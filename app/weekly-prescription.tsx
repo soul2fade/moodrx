@@ -104,7 +104,7 @@ export default function WeeklyPrescriptionScreen() {
                       {isToday ? '  ·  TODAY' : ''}
                     </Text>
                     {day.isDataDriven && (
-                      <Text allowFontScaling={false} style={[styles.dataBadge, { color: mood.color }]}>DATA</Text>
+                      <Text style={[styles.dataBadge, { color: mood.color }]}>DATA</Text>
                     )}
                   </View>
 
@@ -112,16 +112,15 @@ export default function WeeklyPrescriptionScreen() {
 
                   <View style={styles.metaRow}>
                     <Text
-                      allowFontScaling={false}
                       style={[styles.moodCode, { color: mood.color }]}
                     >
                       {mood.code}
                     </Text>
-                    <Text allowFontScaling={false} style={styles.metaDot}>·</Text>
+                    <Text style={styles.metaDot}>·</Text>
                     <Text style={styles.moodName}>{mood.name.toUpperCase()}</Text>
-                    <Text allowFontScaling={false} style={styles.metaDot}>·</Text>
+                    <Text style={styles.metaDot}>·</Text>
                     <Text style={styles.duration}>{day.duration} MIN</Text>
-                    <Text allowFontScaling={false} style={styles.metaDot}>·</Text>
+                    <Text style={styles.metaDot}>·</Text>
                     <Text style={styles.intensity}>{day.intensity.toUpperCase()}</Text>
                   </View>
                 </View>

@@ -179,9 +179,9 @@ export default function PrescriptionScreen() {
               <View style={styles.workoutCardTop}>
                 <Text style={flattenStyle([styles.workoutNumber, { color: accentColor }])}>01</Text>
                 <View style={styles.workoutCardRight}>
-                  <Text style={styles.workoutDuration} allowFontScaling={false}>{workouts[0].duration} MIN</Text>
+                  <Text style={styles.workoutDuration}>{workouts[0].duration} MIN</Text>
                   <View style={styles.intensityBadge}>
-                    <Text style={styles.intensityBadgeText} allowFontScaling={false}>{workouts[0].intensity.toUpperCase()}</Text>
+                    <Text style={styles.intensityBadgeText}>{workouts[0].intensity.toUpperCase()}</Text>
                   </View>
                 </View>
               </View>
@@ -235,9 +235,9 @@ export default function PrescriptionScreen() {
                         <View style={styles.workoutCardTop}>
                           <Text style={styles.workoutNumber}>{String(index + 1).padStart(2, '0')}</Text>
                           <View style={styles.workoutCardRight}>
-                            <Text style={styles.workoutDuration} allowFontScaling={false}>{workout.duration} MIN</Text>
+                            <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
                             <View style={styles.intensityBadge}>
-                              <Text style={styles.intensityBadgeText} allowFontScaling={false}>{workout.intensity.toUpperCase()}</Text>
+                              <Text style={styles.intensityBadgeText}>{workout.intensity.toUpperCase()}</Text>
                             </View>
                           </View>
                         </View>
@@ -266,9 +266,9 @@ export default function PrescriptionScreen() {
                           {String(index + 1).padStart(2, '0')}
                         </Text>
                         <View style={styles.workoutCardRight}>
-                          <Text style={styles.workoutDuration} allowFontScaling={false}>{workout.duration} MIN</Text>
+                          <Text style={styles.workoutDuration}>{workout.duration} MIN</Text>
                           <View style={styles.intensityBadge}>
-                            <Text style={styles.intensityBadgeText} allowFontScaling={false}>{workout.intensity.toUpperCase()}</Text>
+                            <Text style={styles.intensityBadgeText}>{workout.intensity.toUpperCase()}</Text>
                           </View>
                         </View>
                       </View>
@@ -315,7 +315,7 @@ export default function PrescriptionScreen() {
                       </View>
                       <View style={styles.supplementBenefitRow}>
                         <Text style={styles.supplementBenefit}>{supp.benefit}</Text>
-                        <Text style={styles.supplementTiming} allowFontScaling={false}>{supp.timing.toUpperCase()}</Text>
+                        <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
                       </View>
                       {isLocked && (
                         <Text style={styles.unlockProTextStack}>UNLOCK PRO →</Text>

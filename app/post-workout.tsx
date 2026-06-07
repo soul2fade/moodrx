@@ -264,13 +264,13 @@ export default function PostWorkoutScreen() {
 
         {sessionReps > 0 && (
           <View style={styles.pbRow}>
-            <Text style={styles.pbLabel} allowFontScaling={false}>REPS THIS SESSION</Text>
+            <Text style={styles.pbLabel}>REPS THIS SESSION</Text>
             <Text style={[styles.pbReps, { color: accentColor }]}>{sessionReps}</Text>
             {previousBest !== null && sessionReps > previousBest.reps && (
-              <Text style={styles.pbNewBest} allowFontScaling={false}>NEW PERSONAL BEST</Text>
+              <Text style={styles.pbNewBest}>NEW PERSONAL BEST</Text>
             )}
             {previousBest !== null && sessionReps <= previousBest.reps && (
-              <Text style={styles.pbPrev} allowFontScaling={false}>prev best  {previousBest.reps}</Text>
+              <Text style={styles.pbPrev}>prev best  {previousBest.reps}</Text>
             )}
           </View>
         )}
@@ -278,7 +278,7 @@ export default function PostWorkoutScreen() {
         <View style={styles.sectionDivider} />
 
         <View style={styles.scoreSection}>
-          <Text style={styles.howLabel} allowFontScaling={false}>{moodData.name.toUpperCase()} LEVEL NOW?</Text>
+          <Text style={styles.howLabel}>{moodData.name.toUpperCase()} LEVEL NOW?</Text>
 
           <View style={styles.scoreDisplay}>
             <Text style={[styles.scoreNumber, { color: accentColor }]}>{postScore}</Text>
@@ -315,7 +315,7 @@ export default function PostWorkoutScreen() {
               : 'Held steady.';
             return (
               <View style={[styles.changeHero, { borderTopColor: changeColor }]}>
-                <Text style={styles.changeHeroLabel} allowFontScaling={false}>CHANGE</Text>
+                <Text style={styles.changeHeroLabel}>CHANGE</Text>
                 <View style={styles.changeHeroValueRow}>
                   {isPositive ? (
                     <TrendingUp size={28} color={changeColor} accessibilityElementsHidden importantForAccessibility="no" />
@@ -339,12 +339,12 @@ export default function PostWorkoutScreen() {
           {/* Before → Now reference */}
           <View style={styles.deltaRow}>
             <View style={styles.deltaBlock}>
-              <Text style={styles.deltaBlockLabel} allowFontScaling={false}>BEFORE</Text>
+              <Text style={styles.deltaBlockLabel}>BEFORE</Text>
               <Text style={styles.deltaBlockValue}>{intensity}</Text>
             </View>
             <Text style={styles.deltaArrow}>→</Text>
             <View style={styles.deltaBlock}>
-              <Text style={styles.deltaBlockLabel} allowFontScaling={false}>NOW</Text>
+              <Text style={styles.deltaBlockLabel}>NOW</Text>
               <Text style={[styles.deltaBlockValue, { color: accentColor }]}>{postScore}</Text>
             </View>
           </View>
@@ -352,7 +352,7 @@ export default function PostWorkoutScreen() {
 
         {workout && (
           <View style={styles.workoutInfo}>
-            <Text style={styles.completedLabel} allowFontScaling={false}>COMPLETED</Text>
+            <Text style={styles.completedLabel}>COMPLETED</Text>
             <Text style={styles.workoutName}>{workout.name}</Text>
           </View>
         )}

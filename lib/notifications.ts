@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import type { Session, MoodKey } from './storage';
-import { getSessions, getStreak } from './storage';
+import { getSessions, getStreak, getSupplementReminderPrefs } from './storage';
 import { getSupplementsForMood } from './supplements';
 
 export const NOTIFICATIONS_ENABLED_KEY = 'notifications_enabled';
@@ -293,17 +293,29 @@ export async function rescheduleAfterSession(sessions: Session[]): Promise<void>
   if (Platform.OS === 'web') return;
   try {
     const enabledVal = await AsyncStorage.getItem(NOTIFICATIONS_ENABLED_KEY);
-    if (enabledVal !== 'true') return;
+    if (enabledVal === 'true') {
+      const schedule = await getReminderSchedule();
+      if (!PRESET_TIMES.some((p) => p.label === schedule.weekdayLabel)) {
+        schedule.weekdayLabel = PRESET_TIMES[0].label;
+      }
+      if (!PRESET_TIMES.some((p) => p.label === schedule.weekendLabel)) {
+        schedule.weekendLabel = PRESET_TIMES[0].label;
+      }
 
-    const schedule = await getReminderSchedule();
-    if (!PRESET_TIMES.some((p) => p.label === schedule.weekdayLabel)) {
-      schedule.weekdayLabel = PRESET_TIMES[0].label;
-    }
-    if (!PRESET_TIMES.some((p) => p.label === schedule.weekendLabel)) {
-      schedule.weekendLabel = PRESET_TIMES[0].label;
+      await scheduleCheckinReminders(schedule, buildContextualMessage(sessions));
     }
 
-    await scheduleCheckinReminders(schedule, buildContextualMessage(sessions));
+    // Supplement reminders are independent of the check-in toggle. If the
+    // user has them on, refresh the body so the "based on your latest
+    // ANXIOUS session" copy reflects today's data, not whatever the
+    // dominant mood was when they first turned the reminder on.
+    const suppPrefs = await getSupplementReminderPrefs();
+    if (suppPrefs.enabled) {
+      const preset = SUPPLEMENT_PRESET_TIMES.find((p) => p.label === suppPrefs.timeLabel);
+      if (preset) {
+        await scheduleSupplementReminder(preset.hour, preset.minute);
+      }
+    }
   } catch {
     // ignore — permissions may not be granted
   }
@@ -389,11 +401,24 @@ export async function enableRemindersFromPrompt(trialStartMs?: number | null): P
   }
 }
 
-export async function cancelAllNotifications(): Promise<void> {
+/** Cancel every OS-scheduled notification this app set up. Leaves the
+ *  user's stored reminder preferences alone — call this when something
+ *  invalidated the schedule (permissions revoked, signup flow restarting)
+ *  and the user might re-enable reminders later. */
+export async function cancelAllScheduledNotifications(): Promise<void> {
   if (Platform.OS === 'web') return;
   await cancelReminders();
   await cancelSupplementReminder();
   await cancelTrialNudges();
+}
+
+/** Cancel schedules AND wipe the AsyncStorage flags that record the user's
+ *  reminder preferences. Only the full-reset flow should use this — every
+ *  other caller wants `cancelAllScheduledNotifications` so the user's
+ *  "I want morning check-ins at 8am" choice survives the cancellation. */
+export async function clearAllNotificationState(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  await cancelAllScheduledNotifications();
   try {
     await AsyncStorage.multiRemove([
       NOTIFICATIONS_ENABLED_KEY,
@@ -404,6 +429,11 @@ export async function cancelAllNotifications(): Promise<void> {
     // non-critical
   }
 }
+
+/** @deprecated Use clearAllNotificationState for reset flows or
+ *  cancelAllScheduledNotifications for cancel-only flows. Kept as an alias
+ *  for one release so external callers don't break. */
+export const cancelAllNotifications = clearAllNotificationState;
 
 export async function scheduleSupplementReminder(hour: number, minute: number): Promise<void> {
   if (Platform.OS === 'web') return;

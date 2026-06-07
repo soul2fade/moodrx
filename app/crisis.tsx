@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   TouchableOpacity,
@@ -40,15 +41,38 @@ export default function CrisisScreen() {
   }, []);
   useHardwareBack(backHandler);
 
+  const copyNumber = useCallback(async (number: string) => {
+    await Clipboard.setStringAsync(number);
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setCopiedNumber(number);
+    setTimeout(() => setCopiedNumber(null), 2000);
+  }, []);
+
   const handleAction = async (resource: typeof RESOURCES[number]) => {
     if (resource.action === 'CALL') {
-      Linking.openURL(`tel:${resource.number}`);
+      const url = `tel:${resource.number}`;
+      // High-stakes context — silent failure is not acceptable. Probe
+      // canOpenURL first (iPad, Wi-Fi-only iPhone, or any device without
+      // a phone app returns false), and fall back to copying the number
+      // to the clipboard with a clear Alert explaining why the call
+      // didn't dial.
+      try {
+        const canCall = await Linking.canOpenURL(url);
+        if (canCall) {
+          await Linking.openURL(url);
+          return;
+        }
+      } catch {
+        // canOpenURL itself can throw on web; treat as "can't call"
+      }
+      await copyNumber(resource.number);
+      Alert.alert(
+        "This device can't make calls",
+        `${resource.number} has been copied to your clipboard. Dial it from a phone, or text HOME to 741741 for the Crisis Text Line.`,
+      );
       return;
     }
-    await Clipboard.setStringAsync(resource.number);
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setCopiedNumber(resource.number);
-    setTimeout(() => setCopiedNumber(null), 2000);
+    await copyNumber(resource.number);
   };
 
   return (

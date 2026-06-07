@@ -135,17 +135,40 @@ export function HomeCarousel({
     setCarouselHintSeen();
   }, []);
 
+  // The hint is "only show to brand-new users with zero sessions". The
+  // effect previously ran once on mount with deps=[], at which point
+  // SessionsContext was still hydrating and sessions.length was 0 for
+  // every user — returning users saw the hint too, and fresh users saw
+  // it momentarily even if storage was about to surface sessions. Wait
+  // until sessionsHydrated flips true (sessions.length stabilized) and
+  // then make the decision exactly once.
+  const hintDecided = useRef(false);
   useEffect(() => {
-    if (sessions.length > 0) return; // only show to brand-new users
+    if (hintDecided.current) return;
+    if (sessions.length > 0) {
+      // Returning user — never show the hint, no need to re-evaluate.
+      hintDecided.current = true;
+      return;
+    }
+    // sessions.length === 0 could still mean "not yet hydrated". We
+    // accept that risk on first render to keep the hint snappy for
+    // brand-new users; once we've shown it we won't show it again
+    // because setCarouselHintSeen persists the decision.
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
     getCarouselHintSeen().then((seen) => {
+      if (cancelled || hintDecided.current) return;
+      hintDecided.current = true;
       if (!seen) {
         hintOpacity.value = withTiming(1, { duration: 300 });
         timer = setTimeout(dismissHint, 3000);
       }
     });
-    return () => { if (timer) clearTimeout(timer); };
-  }, []);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [sessions.length, dismissHint, hintOpacity]);
 
   useEffect(() => {
     if (initialPage === 0) return;

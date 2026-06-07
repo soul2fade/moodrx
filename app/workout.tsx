@@ -31,24 +31,39 @@ import {
   pickWorkoutGuideTimerCue,
 } from '@/lib/workout-voice';
 
+/** Extract a duration in seconds from a workout step description.
+ *  Sums any number-of-minutes + number-of-seconds tokens present
+ *  ("1 min 30 sec" → 90s, "Rest 45 sec" → 45s, "Hold 2 min" → 120s).
+ *  Returns null when no time tokens are present. Previously the parser
+ *  matched min OR sec but returned only one, so combined "X min Y sec"
+ *  strings silently lost the larger component. */
+function parseStepSeconds(text: string): number | null {
+  const lower = text.toLowerCase();
+  let total = 0;
+  let matched = false;
+  const minMatch = lower.match(/(\d+)\s*min/);
+  if (minMatch) {
+    total += parseInt(minMatch[1], 10) * 60;
+    matched = true;
+  }
+  const secMatch = lower.match(/(\d+)\s*sec/);
+  if (secMatch) {
+    total += parseInt(secMatch[1], 10);
+    matched = true;
+  }
+  return matched ? total : null;
+}
+
 function parseRestSeconds(text: string): number | null {
   const lower = text.toLowerCase();
   if (!lower.includes('rest') && !lower.includes('recover')) return null;
-  const secMatch = lower.match(/(\d+)\s*sec/);
-  const minMatch = lower.match(/(\d+)\s*min/);
-  if (secMatch) return parseInt(secMatch[1], 10);
-  if (minMatch) return parseInt(minMatch[1], 10) * 60;
-  return null;
+  return parseStepSeconds(text);
 }
 
 function parseActiveSeconds(text: string): number | null {
   const lower = text.toLowerCase();
   if (lower.includes('rest') || lower.includes('recover')) return null;
-  const secMatch = lower.match(/(\d+)\s*sec/);
-  const minMatch = lower.match(/(\d+)\s*min/);
-  if (secMatch) return parseInt(secMatch[1], 10);
-  if (minMatch) return parseInt(minMatch[1], 10) * 60;
-  return null;
+  return parseStepSeconds(text);
 }
 
 const MOTIVATIONAL = [

@@ -264,10 +264,19 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAll = async () => {
-    await resetAllAppData();
-    await clearSessions();
-    setShowDeleteConfirm(false);
-    router.replace('/onboarding');
+    try {
+      await resetAllAppData();
+      await clearSessions();
+      setShowDeleteConfirm(false);
+      router.replace('/onboarding');
+    } catch (e) {
+      // If a storage clear rejects, the confirm box would otherwise stay
+      // up and the destructive flow appears frozen (ErrorBoundary doesn't
+      // catch async handler rejections). Close the dialog and tell the user.
+      console.warn('[MoodRx] delete all data failed:', e);
+      setShowDeleteConfirm(false);
+      Alert.alert('Delete failed', 'Some data could not be removed. Please try again.');
+    }
   };
 
   const translateX = toggleAnim.interpolate({

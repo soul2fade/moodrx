@@ -57,10 +57,29 @@ export async function requestHealthConnectPermissions(): Promise<boolean> {
   }
 }
 
-export async function readHealthConnectSnapshot(): Promise<{
+export type HealthReadReason = 'permission' | 'sdk' | 'unknown';
+
+export interface HealthConnectSnapshot {
   stepsToday: number | null;
   sleepHoursLastNight: number | null;
-}> {
+  /** Set when at least one record read FAILED (vs returned no data).
+   *  Lets the UI distinguish "nothing logged today" from "we can't read,
+   *  user should reconnect Health Connect". Undefined means clean read. */
+  readError?: HealthReadReason;
+}
+
+/** Best-effort heuristic for the failure mode based on the thrown error.
+ *  Health Connect's exception messages aren't structured, but they almost
+ *  always include "permission" when scopes were revoked vs. some other
+ *  failure mode (SDK not initialized, OS bug, etc.). */
+function classifyReadError(e: unknown): HealthReadReason {
+  const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
+  if (msg.includes('permission')) return 'permission';
+  if (msg.includes('sdk') || msg.includes('initialize') || msg.includes('not ready')) return 'sdk';
+  return 'unknown';
+}
+
+export async function readHealthConnectSnapshot(): Promise<HealthConnectSnapshot> {
   const now = new Date();
   const startOfDay = new Date(now);
   startOfDay.setHours(0, 0, 0, 0);
@@ -71,6 +90,10 @@ export async function readHealthConnectSnapshot(): Promise<{
 
   let stepsToday: number | null = null;
   let sleepHoursLastNight: number | null = null;
+  // Track the first read error and its classification so the UI can show
+  // a "Tap to reconnect Health Connect" hint rather than silently rendering
+  // an empty state that looks identical to "no data today".
+  let firstError: HealthReadReason | undefined;
 
   try {
     const stepsResult = await aggregateRecord({
@@ -86,6 +109,7 @@ export async function readHealthConnectSnapshot(): Promise<{
     }
   } catch (e) {
     console.warn('[MoodRx] Health Connect steps read failed:', e);
+    firstError ??= classifyReadError(e);
   }
 
   try {
@@ -102,9 +126,10 @@ export async function readHealthConnectSnapshot(): Promise<{
     }
   } catch (e) {
     console.warn('[MoodRx] Health Connect sleep read failed:', e);
+    firstError ??= classifyReadError(e);
   }
 
-  return { stepsToday, sleepHoursLastNight };
+  return { stepsToday, sleepHoursLastNight, readError: firstError };
 }
 
 export async function writeHealthConnectExerciseSession(options: {

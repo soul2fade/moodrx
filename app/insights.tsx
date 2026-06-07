@@ -217,6 +217,27 @@ export default function InsightsScreen() {
           </View>
         )}
 
+        {/* Surface read failures rather than hiding the card silently —
+            users had no way to learn a revoked permission was the problem. */}
+        {healthSnapshot?.connected && healthSnapshot.readError && healthSnapshot.stepsToday === null && healthSnapshot.sleepHoursLastNight === null && (
+          <TouchableOpacity
+            style={styles.healthCard}
+            onPress={() => router.push('/settings')}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Reconnect Health"
+          >
+            <Text style={styles.healthCardLabel}>
+              {(healthSnapshot.platform ? getHealthPlatformLabel(healthSnapshot.platform) : 'HEALTH').toUpperCase()}
+            </Text>
+            <Text style={styles.healthHint}>
+              {healthSnapshot.readError === 'permission'
+                ? 'Permission was revoked — tap to reconnect.'
+                : "Couldn't read your health data — tap to reconnect."}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Supplement Tracker button */}
         <TouchableOpacity
           style={styles.supplementBtn}

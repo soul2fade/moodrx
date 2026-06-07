@@ -7,7 +7,10 @@ import {
   readHealthConnectSnapshot,
   requestHealthConnectPermissions,
   writeHealthConnectExerciseSession,
+  type HealthReadReason,
 } from './health-android';
+
+export type { HealthReadReason };
 
 const HEALTH_ENABLED_KEY = '@moodrx_health_enabled';
 
@@ -19,6 +22,10 @@ export interface HealthSnapshot {
   platform: HealthPlatform | null;
   stepsToday: number | null;
   sleepHoursLastNight: number | null;
+  /** Set when the platform read path failed (vs. genuinely returned no
+   *  data). UI uses this to show "Tap to reconnect" instead of hiding
+   *  the health card silently. Undefined on a clean read. */
+  readError?: HealthReadReason;
 }
 
 export interface WorkoutHealthPayload {
@@ -26,6 +33,29 @@ export interface WorkoutHealthPayload {
   durationMinutes: number;
   startMs: number;
   endMs: number;
+}
+
+/** Result of a permission request. HealthKit's privacy design hides
+ *  whether read access was actually granted (the API succeeds even for
+ *  denied reads), so we surface `mayBeDenied` when the post-auth probe
+ *  returns 0 — UI can prompt the user to verify in Settings → Health. */
+export interface HealthPermissionResult {
+  granted: boolean;
+  mayBeDenied?: boolean;
+}
+
+/** Structured outcome of a write to HealthKit / Health Connect. Lets
+ *  callers log/surface a meaningful reason instead of guessing whether
+ *  the silent fire-and-forget actually persisted anything. */
+export type HealthWriteReason =
+  | 'not_enabled'    // user hasn't opted in to health sync
+  | 'invalid_window' // start/end timestamps are NaN, zero, or end <= start
+  | 'no_module'      // native module unavailable (Expo Go, missing build)
+  | 'write_failed';  // platform SDK threw — see logs for details
+
+export interface HealthWriteResult {
+  ok: boolean;
+  reason?: HealthWriteReason;
 }
 
 type HealthModule = typeof import('@kayzmann/expo-healthkit');
@@ -93,31 +123,50 @@ export async function setHealthSyncEnabled(enabled: boolean): Promise<void> {
   }
 }
 
-export async function requestHealthPermissions(): Promise<boolean> {
+export async function requestHealthPermissions(): Promise<HealthPermissionResult> {
   if (Platform.OS === 'android') {
     const granted = await requestHealthConnectPermissions();
     if (granted) await setHealthSyncEnabled(true);
     else await setHealthSyncEnabled(false);
-    return granted;
+    return { granted };
   }
 
   const mod = getHealthKitModule();
-  if (!mod?.isAvailable()) return false;
+  if (!mod?.isAvailable()) return { granted: false };
   try {
     await mod.requestAuthorization(
       ['Steps', 'SleepAnalysis', 'Workout', 'MindfulMinutes'],
       ['Workout', 'MindfulMinutes'],
     );
-    const now = new Date();
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
-    await mod.getSteps(startOfDay, now);
+    // The auth call resolves whether the user tapped "Allow" or "Don't Allow"
+    // (or tapped through a dialog with everything off). Treat that as "the
+    // user opted in" — write paths will still work, and read paths surface
+    // via mayBeDenied below.
     await setHealthSyncEnabled(true);
-    return true;
+    // HealthKit privacy: reads silently return 0 / empty when scopes are
+    // denied (Apple intentionally hides this from apps). We probe steps for
+    // today; if the result is exactly 0, flag mayBeDenied so the UI can
+    // prompt the user to verify Settings → Health → Sources → MoodRx.
+    // (Note: a user genuinely at 0 steps today will see the hint too. The
+    // false-positive cost is small compared to "silently shows 0 forever".)
+    let mayBeDenied = false;
+    try {
+      const now = new Date();
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      const steps = await mod.getSteps(startOfDay, now);
+      if (!Number.isFinite(steps) || steps === 0) {
+        mayBeDenied = true;
+      }
+    } catch {
+      // Probe itself failed — treat as denied, but don't tear down the opt-in.
+      mayBeDenied = true;
+    }
+    return { granted: true, mayBeDenied };
   } catch (e) {
     await setHealthSyncEnabled(false);
     console.warn('[MoodRx] HealthKit authorization failed:', e);
-    return false;
+    return { granted: false };
   }
 }
 
@@ -146,13 +195,14 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
 
   if (platform === 'health_connect') {
     try {
-      const { stepsToday, sleepHoursLastNight } = await readHealthConnectSnapshot();
+      const { stepsToday, sleepHoursLastNight, readError } = await readHealthConnectSnapshot();
       return {
         connected: true,
         available: true,
         platform,
         stepsToday,
         sleepHoursLastNight,
+        readError,
       };
     } catch (e) {
       console.warn('[MoodRx] getHealthSnapshot (Health Connect) failed:', e);
@@ -162,6 +212,7 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
         platform,
         stepsToday: null,
         sleepHoursLastNight: null,
+        readError: 'unknown',
       };
     }
   }
@@ -207,33 +258,42 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
       platform,
       stepsToday: null,
       sleepHoursLastNight: null,
+      readError: 'unknown',
     };
   }
 }
 
-export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promise<void> {
-  if (!(await getHealthSyncEnabled())) return;
+export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promise<HealthWriteResult> {
+  if (!(await getHealthSyncEnabled())) return { ok: false, reason: 'not_enabled' };
 
-  const durationSec = Math.max(60, Math.round(payload.durationMinutes * 60));
-  const endMs = payload.endMs;
-  const startMs = endMs - durationSec * 1000;
+  // Use the caller's actual measured window. Previously we back-computed
+  // startMs from `endMs - max(60s, durationMinutes*60)`, which clobbered
+  // payload.startMs and produced overlapping samples on back-to-back
+  // sessions (next session's clamped 60s window stomped on prior end).
+  const { startMs, endMs, name } = payload;
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    console.warn('[MoodRx] saveWorkoutToHealth skipped — invalid window', { startMs, endMs });
+    return { ok: false, reason: 'invalid_window' };
+  }
+  const durationSec = Math.round((endMs - startMs) / 1000);
 
   if (Platform.OS === 'android') {
     try {
       await writeHealthConnectExerciseSession({
-        title: payload.name,
+        title: name,
         startMs,
         endMs,
         exerciseType: ExerciseType.OTHER_WORKOUT,
       });
+      return { ok: true };
     } catch (e) {
       console.warn('[MoodRx] saveWorkoutToHealth (Health Connect) failed:', e);
+      return { ok: false, reason: 'write_failed' };
     }
-    return;
   }
 
   const mod = getHealthKitModule();
-  if (!mod?.isAvailable()) return;
+  if (!mod?.isAvailable()) return { ok: false, reason: 'no_module' };
 
   try {
     await mod.saveWorkout({
@@ -243,17 +303,19 @@ export async function saveWorkoutToHealth(payload: WorkoutHealthPayload): Promis
       distance: 0,
       calories: 0,
       activityType: 'other',
-      metadata: { name: payload.name, source: 'MoodRx' },
+      metadata: { name, source: 'MoodRx' },
     });
+    return { ok: true };
   } catch (e) {
     console.warn('[MoodRx] saveWorkoutToHealth (HealthKit) failed:', e);
+    return { ok: false, reason: 'write_failed' };
   }
 }
 
 /** Box-breathing cycles — 16 seconds per full 4-4-4-4 cycle. */
-export async function saveMindfulMinutesToHealth(cycles: number): Promise<void> {
-  if (cycles <= 0) return;
-  if (!(await getHealthSyncEnabled())) return;
+export async function saveMindfulMinutesToHealth(cycles: number): Promise<HealthWriteResult> {
+  if (cycles <= 0) return { ok: false, reason: 'invalid_window' };
+  if (!(await getHealthSyncEnabled())) return { ok: false, reason: 'not_enabled' };
 
   const durationSec = Math.max(60, cycles * 16);
   const endMs = Date.now();
@@ -268,14 +330,15 @@ export async function saveMindfulMinutesToHealth(cycles: number): Promise<void> 
         exerciseType: ExerciseType.GUIDED_BREATHING,
         notes: 'Mindful breathing session',
       });
+      return { ok: true };
     } catch (e) {
       console.warn('[MoodRx] saveMindfulMinutesToHealth (Health Connect) failed:', e);
+      return { ok: false, reason: 'write_failed' };
     }
-    return;
   }
 
   const mod = getHealthKitModule();
-  if (!mod?.isAvailable()) return;
+  if (!mod?.isAvailable()) return { ok: false, reason: 'no_module' };
 
   try {
     // HealthKit mindful sessions require category samples; yoga is the closest supported write type.
@@ -288,7 +351,9 @@ export async function saveMindfulMinutesToHealth(cycles: number): Promise<void> 
       activityType: 'yoga',
       metadata: { name: 'MoodRx Box Breathing', source: 'MoodRx', mindful: true },
     });
+    return { ok: true };
   } catch (e) {
     console.warn('[MoodRx] saveMindfulMinutesToHealth (HealthKit) failed:', e);
+    return { ok: false, reason: 'write_failed' };
   }
 }

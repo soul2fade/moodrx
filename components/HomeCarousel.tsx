@@ -485,8 +485,8 @@ export function HomeCarousel({
           </View>
           {last7Days.map((dayAgg) => {
             const dt   = new Date(dayAgg.latest.timestamp);
-            const day  = DAYS[dt.getDay()];
-            const date = `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
+            const day  = DAYS[dt.getDay()] ?? '';
+            const date = `${dt.getDate()} ${MONTHS[dt.getMonth()] ?? ''}`;
             const md   = MOODS[dayAgg.mood];
             const intensityVal = Math.round(dayAgg.intensity);
             const moodLabel = dayAgg.sessionCount > 1

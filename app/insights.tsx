@@ -76,7 +76,14 @@ export default function InsightsScreen() {
   );
 
   const last7Days = useMemo(() => getLastNDays(sessions, 7), [sessions]);
-  const recent10 = useMemo(() => [...sessions].reverse().slice(0, isPremium ? 10 : 3), [sessions, isPremium]);
+  /** Recent session list. Premium gets all sessions; free is capped at 3
+   *  (the upsell row promises the remainder once they upgrade). The cap
+   *  was previously 10 for premium, which contradicted the upsell copy's
+   *  implied "all sessions" promise for users with >13 sessions. */
+  const recentSessions = useMemo(() => {
+    const reversed = [...sessions].reverse();
+    return isPremium ? reversed : reversed.slice(0, 3);
+  }, [sessions, isPremium]);
 
   const workoutStats = useMemo(() => {
     const map: Record<string, { name: string; count: number; totalChange: number }> = {};
@@ -404,10 +411,10 @@ export default function InsightsScreen() {
         )}
 
         {/* Case History */}
-        {recent10.length > 0 && (
+        {recentSessions.length > 0 && (
           <View style={styles.recentSection}>
             <Text style={styles.recentLabel}>CASE HISTORY</Text>
-            {recent10.map((session) => {
+            {recentSessions.map((session) => {
               const change = session.postScore - session.intensity;
               const changeStr = change >= 0 ? `+${change}` : `${change}`;
               const changeColor = change >= 0 ? '#059669' : '#999999';

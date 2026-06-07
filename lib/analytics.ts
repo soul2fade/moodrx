@@ -2,22 +2,31 @@ import type { MoodKey, Session } from './storage';
 import { MOOD_ORDER } from './moods';
 import { getWorkoutsForMood } from './workouts';
 
-/** Returns the most frequently occurring mood across sessions */
-export function getMostCommonMood(sessions: Session[]): MoodKey {
+/** Returns the most frequently occurring mood across sessions.
+ *  Returns null for an empty array. Ties are broken by the most
+ *  recent session's mood among the tied moods, so insights and
+ *  weekly prescriptions reflect the recent trend instead of silently
+ *  defaulting to whichever mood comes first in MOOD_ORDER (which
+ *  was always 'anxious' under the previous implementation). */
+export function getMostCommonMood(sessions: Session[]): MoodKey | null {
+  if (sessions.length === 0) return null;
   const counts: Partial<Record<MoodKey, number>> = {};
   for (const s of sessions) {
     counts[s.mood] = (counts[s.mood] ?? 0) + 1;
   }
   let max = 0;
-  let best: MoodKey = 'anxious';
   for (const key of MOOD_ORDER) {
     const c = counts[key] ?? 0;
-    if (c > max) {
-      max = c;
-      best = key;
-    }
+    if (c > max) max = c;
   }
-  return best;
+  const tied = MOOD_ORDER.filter((k) => (counts[k] ?? 0) === max);
+  if (tied.length === 1) return tied[0];
+  // Tie-break: most recent session whose mood is in the tied set
+  const sorted = [...sessions].sort((a, b) => b.timestamp - a.timestamp);
+  for (const s of sorted) {
+    if (tied.includes(s.mood)) return s.mood;
+  }
+  return tied[0];
 }
 
 /** Formats a numeric change as "+X.X" or "-X.X" */
@@ -77,9 +86,9 @@ export function buildWeeklyPrescription(sessions: Session[]): DayRx[] {
     //            cold start → curated default
     let mood: MoodKey;
     if (isDataDriven) {
-      mood = getMostCommonMood(daySessions);
+      mood = getMostCommonMood(daySessions) ?? DEFAULT_MOODS[i];
     } else if (hasHistory) {
-      mood = getMostCommonMood(sessions);
+      mood = getMostCommonMood(sessions) ?? DEFAULT_MOODS[i];
     } else {
       mood = DEFAULT_MOODS[i];
     }

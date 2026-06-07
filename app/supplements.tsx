@@ -260,6 +260,19 @@ function SupplementsScreen() {
     });
   }, []);
 
+  /** History tab renders weeks × days × supplements cells, each previously
+   *  doing logs.some(l => l.date === d && l.supplementName === n && l.taken)
+   *  — O(weeks × days × supplements × logs) per render, ~245k operations
+   *  after a year of usage. Pre-index taken logs into a Set keyed by
+   *  `${date}|${supplementName}` so each cell becomes an O(1) lookup. */
+  const historyTakenSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of logs) {
+      if (l.taken) set.add(`${l.date}|${l.supplementName}`);
+    }
+    return set;
+  }, [logs]);
+
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Header */}
@@ -578,9 +591,7 @@ function SupplementsScreen() {
                     {weekDates.map((dateStr, di) => {
                       const dayMood = dayMoods[di];
                       const relevantToday = dayMood ? supp.moods.includes(dayMood) : true;
-                      const taken = logs.some(
-                        (l) => l.date === dateStr && l.supplementName === supp.name && l.taken
-                      );
+                      const taken = historyTakenSet.has(`${dateStr}|${supp.name}`);
                       return (
                         <View key={di} style={styles.historyDayCell}>
                           {relevantToday ? (

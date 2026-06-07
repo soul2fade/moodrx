@@ -27,8 +27,9 @@ export function IntensityPicker({
         minimumTrackTintColor={accentColor}
         maximumTrackTintColor="#1a1a1a"
         thumbTintColor={accentColor}
-        accessibilityLabel={`${accessibilityPrefix}: ${value} out of 10`}
+        accessibilityLabel={accessibilityPrefix}
         accessibilityRole="adjustable"
+        accessibilityValue={{ min: 1, max: 10, now: value, text: `${value} out of 10` }}
       />
     </View>
   );

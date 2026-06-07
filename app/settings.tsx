@@ -56,6 +56,12 @@ export default function SettingsScreen() {
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
   const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
   const [voiceEnabled, setVoiceEnabledState] = useState(true);
+  // Voice toggle state can't be read synchronously from AsyncStorage —
+  // if we render the toggle from useState(true) and storage actually
+  // has false, the user sees the toggle flash ON before flipping OFF.
+  // Gate the visible toggle on this flag (set once the storage read
+  // resolves) so it stays invisible until we know the real state.
+  const [voiceLoaded, setVoiceLoaded] = useState(false);
   const [healthAvailable, setHealthAvailable] = useState(false);
   const [healthPlatformLabel, setHealthPlatformLabel] = useState('Health');
   const [healthEnabled, setHealthEnabledState] = useState(false);
@@ -91,6 +97,7 @@ export default function SettingsScreen() {
       setTrashTalkVolumeState(volume);
       setVoiceEnabledState(voiceOn);
       voiceToggleAnim.setValue(voiceOn ? 1 : 0);
+      setVoiceLoaded(true);
     });
     if (isHealthSyncAvailable()) {
       void isHealthBackendReady().then((ready) => {
@@ -408,12 +415,20 @@ export default function SettingsScreen() {
           <TouchableOpacity
             onPress={handleVoiceToggle}
             activeOpacity={0.8}
-            style={[styles.toggle, voiceEnabled ? styles.toggleOn : styles.toggleOff]}
+            disabled={!voiceLoaded}
+            style={[
+              styles.toggle,
+              voiceLoaded
+                ? (voiceEnabled ? styles.toggleOn : styles.toggleOff)
+                : [styles.toggleOff, { opacity: 0 }],
+            ]}
             accessibilityRole="switch"
-            accessibilityState={{ checked: voiceEnabled }}
+            accessibilityState={{ checked: voiceEnabled, busy: !voiceLoaded }}
             accessibilityLabel="Dr MoodRx copy"
           >
-            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: voiceTranslateX }] }]} />
+            {voiceLoaded && (
+              <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: voiceTranslateX }] }]} />
+            )}
           </TouchableOpacity>
         </View>
 

@@ -1,29 +1,83 @@
-import type { MoodKey, Session } from './storage';
+import { sessionDateString, type MoodKey, type Session } from './storage';
 import { MOOD_ORDER } from './moods';
 import { getWorkoutsForMood } from './workouts';
 
-/** Returns the most frequently occurring mood across sessions */
-export function getMostCommonMood(sessions: Session[]): MoodKey {
+/** Returns the most frequently occurring mood across sessions.
+ *  Returns null for an empty array. Ties are broken by the most
+ *  recent session's mood among the tied moods, so insights and
+ *  weekly prescriptions reflect the recent trend instead of silently
+ *  defaulting to whichever mood comes first in MOOD_ORDER (which
+ *  was always 'anxious' under the previous implementation). */
+export function getMostCommonMood(sessions: Session[]): MoodKey | null {
+  if (sessions.length === 0) return null;
   const counts: Partial<Record<MoodKey, number>> = {};
   for (const s of sessions) {
     counts[s.mood] = (counts[s.mood] ?? 0) + 1;
   }
   let max = 0;
-  let best: MoodKey = 'anxious';
   for (const key of MOOD_ORDER) {
     const c = counts[key] ?? 0;
-    if (c > max) {
-      max = c;
-      best = key;
-    }
+    if (c > max) max = c;
   }
-  return best;
+  const tied = MOOD_ORDER.filter((k) => (counts[k] ?? 0) === max);
+  if (tied.length === 1) return tied[0];
+  // Tie-break: most recent session whose mood is in the tied set
+  const sorted = [...sessions].sort((a, b) => b.timestamp - a.timestamp);
+  for (const s of sorted) {
+    if (tied.includes(s.mood)) return s.mood;
+  }
+  return tied[0];
 }
 
 /** Formats a numeric change as "+X.X" or "-X.X" */
 export function formatChange(val: number): string {
   const rounded = Math.abs(val).toFixed(1);
   return val >= 0 ? `+${rounded}` : `-${rounded}`;
+}
+
+// ─── Per-day aggregates ──────────────────────────────────────────────────────
+
+export interface DayAggregate {
+  /** YYYY-MM-DD in the session's local time */
+  date: string;
+  /** Average pre-workout intensity across that day's sessions (0–10) */
+  intensity: number;
+  /** Average post-workout score across that day's sessions (0–10) */
+  postScore: number;
+  /** Dominant mood for the day (ties broken by most recent) */
+  mood: MoodKey;
+  /** Number of sessions logged that day */
+  sessionCount: number;
+  /** Most recent session that day — used for representative timestamp/key */
+  latest: Session;
+}
+
+/** Group sessions by local date and return the last N unique days,
+ *  oldest-first. Replaces the previous `sessions.slice(-7)` pattern in
+ *  HomeCarousel and Insights, which returned up to 7 sessions of the
+ *  same day if the user logged frequently — making the chart's day
+ *  labels repeat and the trend math meaningless. Each entry now
+ *  represents one calendar day, with intensity/postScore averaged
+ *  across any same-day sessions. */
+export function getLastNDays(sessions: Session[], n: number): DayAggregate[] {
+  if (sessions.length === 0 || n <= 0) return [];
+  const byDate = new Map<string, Session[]>();
+  for (const s of sessions) {
+    const date = sessionDateString(s);
+    const bucket = byDate.get(date);
+    if (bucket) bucket.push(s);
+    else byDate.set(date, [s]);
+  }
+  const dates = [...byDate.keys()].sort();
+  const lastN = dates.slice(-n);
+  return lastN.map((date) => {
+    const dayS = byDate.get(date)!;
+    const intensity = dayS.reduce((acc, s) => acc + s.intensity, 0) / dayS.length;
+    const postScore = dayS.reduce((acc, s) => acc + s.postScore, 0) / dayS.length;
+    const mood = getMostCommonMood(dayS) ?? dayS[0].mood;
+    const latest = dayS.reduce((a, b) => (a.timestamp > b.timestamp ? a : b));
+    return { date, intensity, postScore, mood, sessionCount: dayS.length, latest };
+  });
 }
 
 // ─── Weekly prescription ─────────────────────────────────────────────────────
@@ -77,9 +131,9 @@ export function buildWeeklyPrescription(sessions: Session[]): DayRx[] {
     //            cold start → curated default
     let mood: MoodKey;
     if (isDataDriven) {
-      mood = getMostCommonMood(daySessions);
+      mood = getMostCommonMood(daySessions) ?? DEFAULT_MOODS[i];
     } else if (hasHistory) {
-      mood = getMostCommonMood(sessions);
+      mood = getMostCommonMood(sessions) ?? DEFAULT_MOODS[i];
     } else {
       mood = DEFAULT_MOODS[i];
     }

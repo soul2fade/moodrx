@@ -14,9 +14,20 @@ import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
+import { Stack } from "expo-router";
 import { registerNotificationChannels } from "@/lib/notifications";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import GluestackInitializer from "@/components/GluestackInitializer";
+import useColorScheme from "@/hooks/useColorScheme";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { SessionsProvider } from "@/contexts/SessionsContext";
+import { initializeRevenueCat } from "@/lib/revenuecat";
+import { initCatDoesWatch } from "@/catdoes.watch";
 
-// Show notifications while app is in the foreground
+// Show notifications while app is in the foreground.
+// Stays at module top-level (not inside useEffect) so the handler is
+// registered synchronously at module load — before any notification
+// can fire from a cold launch into a background-delivered notification.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -26,15 +37,6 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
-
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import GluestackInitializer from "@/components/GluestackInitializer";
-import useColorScheme from "@/hooks/useColorScheme";
-import { Stack } from "expo-router";
-import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
-import { SessionsProvider } from "@/contexts/SessionsContext";
-import { initializeRevenueCat } from "@/lib/revenuecat";
-import { initCatDoesWatch } from "@/catdoes.watch";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

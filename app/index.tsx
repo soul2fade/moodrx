@@ -88,6 +88,7 @@ export default function Index() {
 
     run();
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Animated.Value refs are stable .current refs; intentional mount-only splash sequence.
   }, []);
 
   return (

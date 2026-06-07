@@ -3,7 +3,7 @@
  *
  * Road-sign style animated figures with 5 character voices:
  * - Honey Maximus (campy fitness, mood-lifting energy)
- * - Ron Burgundy (verbose, absurdly confident)
+ * - Champ Headline (verbose anchor, broadcasting on the mood weather)
  * - Brick Tamland (confused, accidentally wholesome)
  * - Ricky Bobby (NASCAR intensity, competitive fire)
  * - Derek Zoolander (vain, fashion-obsessed)
@@ -32,7 +32,7 @@ type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
 const COACHES: Record<CoachId, { id: CoachId; name: string; color: string }> = {
   vera:  { id: 'vera',  name: 'Honey Maximus',  color: '#FF6B9D' },
-  ron:   { id: 'ron',   name: 'Ron Burgundy',    color: '#C0392B' },
+  ron:   { id: 'ron',   name: 'Champ Headline',  color: '#C0392B' },
   brick: { id: 'brick', name: 'Brick Tamland',   color: '#E67E22' },
   ricky: { id: 'ricky', name: 'Ricky Bobby',     color: '#3498DB' },
   derek: { id: 'derek', name: 'Derek Zoolander', color: '#9B59B6' },
@@ -55,10 +55,10 @@ const PHRASES: Record<CoachId, string[][]> = {
     ["The MOOD has been MOVED — I REST my CASE","Honey, I FORGOT what I was even WORRIED about","My HEAD is QUIET. My HEART is OPEN. The WORK is DONE.","I CAME for the MOOD, I STAYED for the MAGIC","Tomorrow's PROBLEMS, meet TODAY's calmer ME"],
   ],
   ron: [
-    ["I'm in a glass case of emotion... and sweat","I'm in a glass case of emotion","My body is like a fine leather-bound book being read in a hurricane","The pain is... actually quite poetic","I immediately regret this decision","This is NOT what the brochure promised"],
-    ["Stay classy, muscles","I'm having a moment of clarity about my biceps","Wait... am I kind of a big deal right now?","Something is happening and it is GOOD","My body just got a memo it did NOT expect"],
-    ["I'm KIND of a big deal","People KNOW me. My body ESPECIALLY.","I have many leather-bound books about my own strength","I don't know how to put this but I'm pretty important","This feeling? It's called being MAGNIFICENT"],
-    ["That escalated quickly... into enlightenment","I'm a man of substance AND definition","Milk was a bad choice but THIS was magnificent","You stay classy. I stay POWERFUL.","60% of the time I feel incredible EVERY time"],
+    ["This evening's TOP STORY: a man, a mood, a movement","I am reading from a teleprompter and it says 'KEEP GOING'","My body is like an ancient parchment being unfurled by a child","I'm reporting LIVE from the FOG, and the FOG is THICK","My nervous system is sending a press release: PROCEED ANYWAY","Breaking: local man begins workout. Story developing."],
+    ["The fog has begun to LIFT. I CAN SEE my reflection again.","We are now WITNESSING a mood reversal IN REAL TIME","Breaking update — the chest is LIGHTER, the head is CLEARER","I would like to formally retract every complaint I made earlier","I have been informed by my body that the FORECAST has changed"],
+    ["I am BROADCASTING from a place of TOTAL CLARITY, ladies and gentlemen","My BRAIN has been UPGRADED to PREMIUM and I am LOVING the package","The mood: ELEVATED. The body: AVAILABLE. The man: UNSTOPPABLE.","I am pleased to announce a MAJOR DEVELOPMENT in my own well-being","I am LIVING CONFIRMATION that MOVEMENT is the BEST press release"],
+    ["And THAT, dear viewers, is what we call A SUCCESSFUL BROADCAST","Signing off from a SIGNIFICANTLY better headspace — thank you for joining","The mood report has been UPDATED. The mood is FANTASTIC.","I would like to thank my BLOODSTREAM, my LUNGS, and ME","Tomorrow's forecast: SLIGHTLY MORE TOLERABLE than today"],
   ],
   brick: [
     ["I don't know what we're doing but I am SCARED","Are we exercising? I love exercising! ...wait do I?","My arms are confused","Where am I? Oh right, working out. Cool cool cool.","I think my legs are angry at me"],

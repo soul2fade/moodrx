@@ -155,6 +155,7 @@ export default function WorkoutScreen() {
       player.volume = 0.35;
       player.play();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- expo-audio player is a stable ref; effect intentionally only re-runs on src/activeSoundscape changes.
   }, [audioSrc, activeSoundscape]);
 
   useEffect(() => {
@@ -199,6 +200,7 @@ export default function WorkoutScreen() {
       insultPlayer.seekTo(0);
       insultPlayer.play();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- insultPlayer is a stable expo-audio ref; src/volume changes drive re-runs.
   }, [insultAudioSrc, trashTalkVolume]);
 
   useEffect(() => {
@@ -206,6 +208,7 @@ export default function WorkoutScreen() {
       transitionPlayer.seekTo(0);
       transitionPlayer.play();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- transitionPlayer is a stable expo-audio ref; src changes drive re-runs.
   }, [transitionAudioSrc]);
 
   useEffect(() => {
@@ -217,6 +220,7 @@ export default function WorkoutScreen() {
       if (stepTimerRef.current) clearInterval(stepTimerRef.current);
       deactivateKeepAwake();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only unmount cleanup; all three players are stable refs.
   }, []);
 
   useEffect(() => {
@@ -353,6 +357,7 @@ export default function WorkoutScreen() {
     return () => {
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- insultPlayer is a stable expo-audio ref; trashTalkOn toggle is the meaningful trigger.
   }, [trashTalkOn]);
 
   useEffect(() => {

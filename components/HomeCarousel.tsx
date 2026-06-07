@@ -127,6 +127,7 @@ export function HomeCarousel({
 
   useEffect(() => {
     patternDotColor.value = moodIdentity ? MOODS[moodIdentity.dominantMood].color : '#525252';
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- patternDotColor is a Reanimated SharedValue (stable ref); moodIdentity is the meaningful trigger.
   }, [moodIdentity]);
 
   const dismissHint = useCallback(() => {
@@ -134,6 +135,7 @@ export function HomeCarousel({
     hintDismissed.current = true;
     hintOpacity.value = withTiming(0, { duration: 400 });
     setCarouselHintSeen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hintOpacity is a Reanimated SharedValue (stable ref); callback identity must stay stable for the timer cleanup below.
   }, []);
 
   // The hint is "only show to brand-new users with zero sessions". The
@@ -177,6 +179,7 @@ export function HomeCarousel({
       scrollRef.current?.scrollTo({ x: initialPage * CARD_W, animated: false });
     }, 0);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only initial scroll position; the initialPage-responsive effect below handles subsequent changes.
   }, []);
 
   useEffect(() => {
@@ -188,11 +191,13 @@ export function HomeCarousel({
       scrollRef.current?.scrollTo({ x: initialPage * CARD_W, animated: false });
     }, 50);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scrollX is a stable Reanimated SharedValue; initialPage is the meaningful trigger.
   }, [initialPage]);
 
   useEffect(() => {
     labelTranslateX.value = swipeDir.current * 10;
     labelTranslateX.value = withSpring(0, { damping: 12, stiffness: 180, mass: 0.6 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- labelTranslateX is a stable Reanimated SharedValue; activePage is the meaningful trigger.
   }, [activePage]);
 
   const PAGE_LABELS = ['YOUR PATTERN', 'QUICK ACTIONS'];

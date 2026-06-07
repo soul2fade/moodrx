@@ -83,6 +83,7 @@ export default function PostWorkoutScreen() {
       setProfileLoaded(true);
       setPreviousBest(pb);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- workoutId is a route param fixed at mount; intentional one-shot load.
   }, []);
   const moodData = MOODS[mood];
   const accentColor = moodData.color;

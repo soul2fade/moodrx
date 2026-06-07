@@ -46,6 +46,7 @@ export function BottomNav() {
       ];
     });
     Animated.parallel(animations).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- labelOpacities/underlineOpacities are stable .current refs from useRef; pathname is the meaningful trigger.
   }, [pathname]);
 
   return (

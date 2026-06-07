@@ -6,7 +6,7 @@
  * - Champ Headline (verbose anchor, broadcasting on the mood weather)
  * - Roscoe Sunshine (sweet himbo, defuses anxiety with confused warmth)
  * - Tex Thunderbird (racing intensity, channels stress into ferocious effort)
- * - Derek Zoolander (vain, fashion-obsessed)
+ * - Lance Sterling (vain catwalk energy, channels restlessness into performance)
  *
  * Props:
  *   mood: 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good'
@@ -35,7 +35,7 @@ const COACHES: Record<CoachId, { id: CoachId; name: string; color: string }> = {
   ron:   { id: 'ron',   name: 'Champ Headline',  color: '#C0392B' },
   brick: { id: 'brick', name: 'Roscoe Sunshine',  color: '#E67E22' },
   ricky: { id: 'ricky', name: 'Tex Thunderbird', color: '#3498DB' },
-  derek: { id: 'derek', name: 'Derek Zoolander', color: '#9B59B6' },
+  derek: { id: 'derek', name: 'Lance Sterling',  color: '#9B59B6' },
 };
 
 const MOOD_COACH_MAP: Record<MoodKey, CoachId> = {
@@ -73,10 +73,10 @@ const PHRASES: Record<CoachId, string[][]> = {
     ["We crossed the line. The stress did not.","Checkered flag, baby. Stress — eat my dust.","Stress brought nothing. I brought everything. Done.","Pole position on my own dang day.","Engine cooling. Heart settling. Mood: fixed."],
   ],
   derek: [
-    ["But why male models... I mean, why EXERCISE","I can't turn left AND I can't do this","This is NOT Blue Steel. This is Blue STRUGGLE.","I feel like I'm taking crazy pills","Is this a center for ANTS? Because I'm SWEATING like one"],
-    ["Wait... I think I just invented a new look. SWEAT STEEL.","I'm PRETTY sure I'm getting prettier right now","My body is like a RUNWAY and I just hit the turn","Moisture is the essence of wetness and I am MOIST","I feel a new look coming on..."],
-    ["MAGNUM. This is MAGNUM.","I am RIDICULOUSLY good looking AND strong","One look? ONE LOOK? I have MULTIPLE looks now","This body was MADE for this. And also for modeling.","Le Tigre WISHES it could feel this way"],
-    ["I think there's more to life than being really really ridiculously fit. But not much more.","Ferrari. That's what this feeling is. FERRARI.","I just Blue Steeled my own SOUL","Moisture, strength, and INCREDIBLE bone structure","I'm not just a model. I'm a MODEL ATHLETE."],
+    ["I can't sit still, so we are going to make sitting still irrelevant.","Restless legs? Restless brain? Wonderful — we have so much to work with.","I have been buzzing for hours. The buzz is about to become a vibe.","My body has been pacing in its own head. Now it gets to pace for real.","The energy is wild. We are about to give it a job."],
+    ["I am literally pacing this out and my body finally agrees.","The buzz in my chest just became a beat I can dance to.","I think I just turned 'too much energy' into 'just enough swagger.'","Look at me find my flow. Look at it. Wow.","I came in fidgety. Now I am fluid."],
+    ["I am so present I might charge admission.","This is what restless energy looks like with somewhere to go.","I have channeled the entire restlessness into motion and it is divine.","The fidget has become a flex.","Mirror says: stunning. Body says: deserved. Brain says: finally."],
+    ["And that is how you turn a buzz into a bow.","I came in restless. I leave in repose.","The fidget is gone. In its place: actual peace. Wild.","I am still gorgeous, but now I am also quiet.","I outran my own twitchiness and the trophy is calm."],
   ],
 };
 

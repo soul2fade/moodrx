@@ -43,13 +43,20 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
+  const [loaded, fontError] = useFonts({
     SpaceGrotesk_300Light,
     SpaceGrotesk_400Regular,
     SpaceGrotesk_700Bold,
     BarlowCondensed_400Regular,
     BarlowCondensed_700Bold,
   });
+  // Render once fonts resolve OR fail. Without the error branch, a failed
+  // font asset (corrupt download, OTA asset mismatch) leaves `loaded` false
+  // forever — `if (!loaded) return null` then renders nothing and the
+  // splash (hidden only on `loaded`) never lifts, so the app hangs on a
+  // frozen splash with no error and no recovery. Falling back to system
+  // fonts is strictly better than an unrecoverable hang.
+  const fontsReady = loaded || !!fontError;
 
   useEffect(() => {
     initCatDoesWatch();
@@ -65,12 +72,12 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (loaded) {
+    if (fontsReady) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontsReady]);
 
-  if (!loaded) {
+  if (!fontsReady) {
     return null;
   }
 

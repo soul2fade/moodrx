@@ -6,7 +6,7 @@
  */
 
 import React from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { WatchErrorBoundary } from "@catdoes/watch";
 import { VStack } from "./ui/vstack";
 import { Text } from "./ui/text";
@@ -19,9 +19,13 @@ interface ErrorFallbackProps {
 }
 
 /**
- * Fallback UI displayed when an error is caught
+ * Fallback UI displayed when an error is caught.
+ *
+ * Shows the error message plus a Try Again button bound to `resetError`,
+ * so a caught error doesn't become a permanent dead screen — the user
+ * can retry without force-quitting the app.
  */
-function ErrorFallback({ error }: ErrorFallbackProps) {
+function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   return (
     <View className="flex-1 bg-background-50 items-center justify-center p-6">
       <VStack space="lg" className="items-center max-w-md">
@@ -32,6 +36,16 @@ function ErrorFallback({ error }: ErrorFallbackProps) {
         <Text className="text-sm text-typography-500 text-center">
           {error?.message || "An unexpected error occurred"}
         </Text>
+        <Pressable
+          onPress={resetError}
+          accessibilityRole="button"
+          accessibilityLabel="Try again"
+          className="border border-typography-500 px-6 py-3 mt-2 active:opacity-70"
+        >
+          <Text className="text-sm font-semibold tracking-widest text-center">
+            TRY AGAIN
+          </Text>
+        </Pressable>
       </VStack>
     </View>
   );

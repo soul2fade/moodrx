@@ -27,17 +27,11 @@ interface SessionsContextValue {
   clearSessions: () => Promise<void>;
 }
 
-const SessionsContext = createContext<SessionsContextValue>({
-  sessions: [],
-  isLoading: true,
-  streak: 0,
-  sessionCount: 0,
-  avgChange: 0,
-  lastSession: null,
-  refresh: async () => {},
-  addSession: async () => {},
-  clearSessions: async () => {},
-});
+// Default is `null` (not an empty-shape stub) so that any consumer
+// rendered outside <SessionsProvider> fails loudly in useSessions()
+// instead of silently reading `sessions: []` and `isLoading: true`
+// forever (which masks real bugs as "no data yet").
+const SessionsContext = createContext<SessionsContextValue | null>(null);
 
 export function SessionsProvider({ children }: { children: React.ReactNode }) {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -68,25 +62,37 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
   const avgChange = useMemo(() => getAverageChange(sessions), [sessions]);
   const lastSession = sessionCount > 0 ? sessions[sessionCount - 1] : null;
 
+  // Memoize the context value so consumers don't re-render just because
+  // SessionsProvider itself re-rendered with an identical state. Without
+  // this, every render of the provider produced a new value object and
+  // every useContext(SessionsContext) consumer re-rendered — i.e. every
+  // screen that reads sessions/streak/etc., on every focus change.
+  const value = useMemo<SessionsContextValue>(
+    () => ({
+      sessions,
+      isLoading,
+      streak,
+      sessionCount,
+      avgChange,
+      lastSession,
+      refresh,
+      addSession,
+      clearSessions,
+    }),
+    [sessions, isLoading, streak, sessionCount, avgChange, lastSession, refresh, addSession, clearSessions],
+  );
+
   return (
-    <SessionsContext.Provider
-      value={{
-        sessions,
-        isLoading,
-        streak,
-        sessionCount,
-        avgChange,
-        lastSession,
-        refresh,
-        addSession,
-        clearSessions,
-      }}
-    >
+    <SessionsContext.Provider value={value}>
       {children}
     </SessionsContext.Provider>
   );
 }
 
-export function useSessions() {
-  return useContext(SessionsContext);
+export function useSessions(): SessionsContextValue {
+  const ctx = useContext(SessionsContext);
+  if (!ctx) {
+    throw new Error('useSessions must be used inside <SessionsProvider>');
+  }
+  return ctx;
 }

@@ -119,19 +119,12 @@ interface SubscriptionContextValue {
   devTogglePremium: () => void;
 }
 
-const SubscriptionContext = createContext<SubscriptionContextValue>({
-  isPremium: false,
-  isInTrial: false,
-  trialDaysLeft: 0,
-  hasUsedTrial: false,
-  isLoading: true,
-  offerings: null,
-  startTrial: async () => false,
-  purchaseMonthly: async () => false,
-  purchaseYearly: async () => false,
-  restorePurchases: async () => {},
-  devTogglePremium: () => {},
-});
+// Default is `null` so any consumer rendered outside <SubscriptionProvider>
+// fails loudly in useSubscription() instead of silently reading
+// `isPremium: false, isLoading: true` forever (which silently hides a real
+// bug — a paywall screen sitting outside the provider would lock everyone
+// out, or a gated check would briefly let users in then re-lock).
+const SubscriptionContext = createContext<SubscriptionContextValue | null>(null);
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const [isPaidPremium, setIsPaidPremium] = useState(false);
@@ -381,8 +374,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   );
 }
 
-export function useSubscription() {
-  return useContext(SubscriptionContext);
+export function useSubscription(): SubscriptionContextValue {
+  const ctx = useContext(SubscriptionContext);
+  if (!ctx) {
+    throw new Error('useSubscription must be used inside <SubscriptionProvider>');
+  }
+  return ctx;
 }
 
 const styles = StyleSheet.create({

@@ -79,16 +79,25 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
   const todayDate = today.getDate();
   const todayKey = toDateKey(year, month, todayDate);
 
-  const cells: { day: number | null; dateKey: string | null }[] = [];
-  for (let i = 0; i < firstDayOffset; i++) {
-    cells.push({ day: null, dateKey: null });
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({ day: d, dateKey: toDateKey(year, month, d) });
-  }
-  while (cells.length % 7 !== 0) {
-    cells.push({ day: null, dateKey: null });
-  }
+  // Cells only depend on year/month/firstDayOffset/daysInMonth — which all
+  // derive from `today` (and `today` is computed once per render). Stash
+  // the grid so it doesn't get rebuilt on every render of the parent
+  // (Insights re-renders on every Sessions context update, of which there
+  // are many; the calendar grid itself only needs to change when the month
+  // rolls over).
+  const cells = useMemo(() => {
+    const arr: { day: number | null; dateKey: string | null }[] = [];
+    for (let i = 0; i < firstDayOffset; i++) {
+      arr.push({ day: null, dateKey: null });
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      arr.push({ day: d, dateKey: toDateKey(year, month, d) });
+    }
+    while (arr.length % 7 !== 0) {
+      arr.push({ day: null, dateKey: null });
+    }
+    return arr;
+  }, [firstDayOffset, daysInMonth, year, month]);
 
   return (
     <View style={styles.container}>

@@ -32,7 +32,8 @@
       "package": "com.moodrx.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0a0a0a"
+        "backgroundColor": "#0a0a0a",
+        "monochromeImage": "./assets/images/monochrome-icon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,

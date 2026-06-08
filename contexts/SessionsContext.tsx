@@ -4,8 +4,10 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 import {
   addSession as addSessionStorage,
   clearSessions as clearSessionsStorage,
@@ -14,6 +16,7 @@ import {
   getStreak,
   Session,
 } from '@/lib/storage';
+import { syncWidget } from '@/lib/widget';
 
 interface SessionsContextValue {
   sessions: Session[];
@@ -46,6 +49,23 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // Keep the home-screen widget in sync. The sessions effect covers load,
+  // add, and clear; the AppState listener covers day rollover (streak /
+  // today's Rx change at midnight while the app was backgrounded). No-op on
+  // platforms without a widget bridge.
+  const sessionsRef = useRef(sessions);
+  useEffect(() => {
+    sessionsRef.current = sessions;
+    void syncWidget(sessions);
+  }, [sessions]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void syncWidget(sessionsRef.current);
+    });
+    return () => sub.remove();
+  }, []);
 
   const addSession = useCallback(async (session: Session) => {
     await addSessionStorage(session);

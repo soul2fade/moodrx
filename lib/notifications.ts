@@ -14,7 +14,18 @@ export const REMINDER_SCHEDULE_KEY = '@moodrx_reminder_schedule';
  *  Android 8+ or some OEMs silently drop the notification. */
 export const NOTIFICATION_CHANNEL_ID = 'moodrx-reminders';
 
+/** Notification action category for daily check-in reminders. Tapping the
+ *  "Log it" action (or the notification body) opens the app to the mood
+ *  picker — see the response listener in app/_layout.tsx. */
+export const CHECKIN_CATEGORY_ID = 'checkin';
+const LOG_MOOD_ACTION_ID = 'LOG_MOOD';
+
+/** Route opened when a check-in reminder (or its action) is tapped. Carried
+ *  in the notification's `data` so the response listener stays generic. */
+export const CHECKIN_NOTIF_ROUTE = '/home';
+
 let channelRegistered = false;
+let categoriesRegistered = false;
 
 export async function registerNotificationChannels(): Promise<void> {
   if (Platform.OS !== 'android') return;
@@ -30,6 +41,26 @@ export async function registerNotificationChannels(): Promise<void> {
     channelRegistered = true;
   } catch (e) {
     console.warn('[MoodRx] registerNotificationChannels failed:', e);
+  }
+}
+
+/** Register notification action categories (iOS + Android — NOT web). The
+ *  'checkin' category adds a one-tap "Log it" button to the daily reminder
+ *  that opens the app to the mood picker. Idempotent. */
+export async function registerNotificationCategories(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  if (categoriesRegistered) return;
+  try {
+    await Notifications.setNotificationCategoryAsync(CHECKIN_CATEGORY_ID, [
+      {
+        identifier: LOG_MOOD_ACTION_ID,
+        buttonTitle: 'Log it',
+        options: { opensAppToForeground: true },
+      },
+    ]);
+    categoriesRegistered = true;
+  } catch (e) {
+    console.warn('[MoodRx] registerNotificationCategories failed:', e);
   }
 }
 
@@ -226,7 +257,13 @@ async function scheduleWeeklyCheckin(
   body: string,
 ): Promise<string> {
   return Notifications.scheduleNotificationAsync({
-    content: { title: 'MoodRx', body, ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }) },
+    content: {
+      title: 'MoodRx',
+      body,
+      categoryIdentifier: CHECKIN_CATEGORY_ID,
+      data: { route: CHECKIN_NOTIF_ROUTE },
+      ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }),
+    },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday,
@@ -238,7 +275,13 @@ async function scheduleWeeklyCheckin(
 
 async function scheduleDailyCheckin(hour: number, minute: number, body: string): Promise<string> {
   return Notifications.scheduleNotificationAsync({
-    content: { title: 'MoodRx', body, ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }) },
+    content: {
+      title: 'MoodRx',
+      body,
+      categoryIdentifier: CHECKIN_CATEGORY_ID,
+      data: { route: CHECKIN_NOTIF_ROUTE },
+      ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }),
+    },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour,

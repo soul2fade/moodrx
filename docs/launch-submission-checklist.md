@@ -1,0 +1,105 @@
+# MoodRx — Store Submission Checklist
+
+**Date:** 2026-06-08
+**Goal:** Everything between "code complete" and "submitted for review" on both stores, in order.
+
+**App facts that drive this list (already true in the repo):**
+- Bundle / package id: **`com.moodrx.app`** (both platforms). Apple Team **`ST6C3ZM5C3`**.
+- **No accounts / no login** — all data is on-device (AsyncStorage). → No reviewer demo account needed; in-app data deletion already exists (`lib/reset-app.ts`).
+- **Subscriptions via RevenueCat** (`react-native-purchases`) → IAP products must be created in *both* stores and linked to RevenueCat.
+- **Health data:** iOS HealthKit (`expo-healthkit`) + Android Health Connect (`READ_STEPS/READ_SLEEP/READ_EXERCISE/WRITE_EXERCISE`). → Both stores have **extra health declarations** (see Landmines).
+- **Mental-health content** incl. a crisis screen → sensitive category; expect closer review.
+- Builds are produced by **EAS** (no Mac / no local Android SDK).
+
+> Legend: ☐ = do it · ⚠️ = common rejection / easy to miss · 🔎 = verify for your specific account.
+
+---
+
+## 0. Prerequisites (do once)
+
+- ☐ Apple Developer Program membership active (have it).
+- ☐ Google Play Developer account active (one-time $25). 🔎 If this is a **personal/individual** account created after **2023-11-13**, Google requires **closed testing with ≥12 testers for 14 days** before you can release to production. This can add ~2 weeks — check now (see Landmines L4).
+- ☐ **Privacy Policy** hosted at a stable public URL. Must cover: mood check-ins, health data (steps/sleep/exercise), on-device storage, no account, subscription billing, and how to delete data. *Required by both stores; health data makes it mandatory.*
+- ☐ **Terms of Use / EULA** hosted at a stable URL (Apple requires this for auto-renewing subscriptions — see L1).
+- ☐ **Support URL** (a simple contact/support page or email-backed page).
+- ☐ Decide pricing for the subscription tier(s) and any free trial / intro offer.
+
+---
+
+## 1. Shared assets to prepare once (reused on both stores)
+
+- ☐ **Screenshots** — capture on real devices/simulators. **Include the new home-screen widget** (small + medium) and a couple of core flows (mood pick, today's Rx, insights). Sizes:
+  - iPhone 6.9" (or 6.7") — required.
+  - iPhone 6.5" — required if not auto-scaled.
+  - iPad 13" (12.9") — **required because `supportsTablet: true`**.
+  - Android phone — ≥2, 16:9 or 9:16.
+  - Android tablet — recommended (you support tablets).
+- ☐ **App icon** — iOS uses the bundled icon; Play needs a **512×512** PNG separately.
+- ☐ **Play feature graphic** — **1024×500** PNG (Play-only, required).
+- ☐ Listing copy: app **name/subtitle**, **short description** (Play, ≤80 chars), **full description** (≤4000), **keywords** (App Store, ≤100 chars), **promo text** (App Store, optional).
+- ☐ (Optional) App preview video.
+
+---
+
+## 2. iOS — App Store Connect (in order)
+
+1. ☐ **Create the app record** (App Store Connect → Apps → +): platform iOS, name, primary language, bundle id `com.moodrx.app`, SKU.
+2. ☐ **Production build:** `eas build --profile production --platform ios` then `eas submit --profile production --platform ios` (set up the **App Store Connect API key** when prompted — also used by RevenueCat). Wait for it to appear under the app's TestFlight/Build list.
+3. ☐ **Subscriptions (IAP):** App Store Connect → your app → **Subscriptions**. Create the subscription group + product(s) with localized name/description, price, and a **review screenshot** of the paywall. ⚠️ First-time IAP must be **submitted *with* the app build** (attach the IAP to the version), or the version review won't include it.
+   - ☐ In **RevenueCat**: add the App Store app, paste the App Store Connect API key + the **app-specific shared secret**, map the product ids to your offerings/entitlements.
+4. ☐ **App Privacy** ("nutrition labels"): declare data types. Likely: **Health & Fitness**, **Sensitive Info** (mental health), **Purchases**, **Usage Data / Diagnostics** (if any analytics/crash). For each: linked to identity? (**No** — no accounts) and used for **tracking**? (**No**, assuming no ad SDK). ⚠️ Must match reality and the privacy policy.
+5. ☐ **Age Rating** questionnaire. Mental-health/medical references typically land **17+** — answer honestly (infrequent/mild medical or mature themes).
+6. ☐ **App Review Information:**
+   - No demo account needed → note: *"No login; all data is local."*
+   - ☐ **Reviewer notes** explaining: HealthKit usage (steps/sleep/exercise → mood trends; not used for ads), how to reach the **premium paywall**, and that the app includes **mental-health/crisis resources** (informational, not medical advice).
+   - Contact name/phone/email.
+7. ☐ **Version metadata:** description, keywords, support URL, marketing URL (optional), **privacy policy URL**.
+8. ☐ ⚠️ **Subscription legal links in the app metadata + binary:** the App Store description (and the in-app paywall) must link to **Terms of Use (EULA)** and **Privacy Policy**, and state subscription length/price/auto-renew. Missing EULA link is a top subscription rejection (see L1).
+9. ☐ **Export compliance:** already handled (`ITSAppUsesNonExemptEncryption: false`) — confirm no prompt blocks you.
+10. ☐ **IDFA / advertising:** answer **No** (no ad SDK) unless you add tracking.
+11. ☐ Pricing & availability (territories), then **Add build → Submit for Review**.
+
+---
+
+## 3. Android — Google Play Console (in order)
+
+1. ☐ **Create the app** (Play Console → Create app): name, default language, **App**, **Free/Paid**, declarations.
+2. ☐ **Production build (AAB):** `eas build --profile production --platform android` then `eas submit --profile production --platform android` (needs a **Google Play service-account JSON** key with release permissions — set up once). EAS uploads to the chosen track.
+3. ☐ **Store listing:** title, short + full description, **512 icon**, **1024×500 feature graphic**, screenshots (incl. widget + tablet).
+4. ☐ **Content rating** (IARC questionnaire) — answer for mental-health themes.
+5. ☐ **Target audience & content** (age groups).
+6. ☐ **App access:** select **"All functionality available without special access"** (no login). 
+7. ☐ ⚠️ **Data safety form** (App content → Data safety): declare data collected/shared, that it's stored on-device, **not shared**, encrypted in transit if any network calls, and that the user **can request deletion** (your in-app reset). Must match the privacy policy. Health data = sensitive.
+8. ☐ ⚠️ **Health Connect declaration** (App content → Health apps / sensitive permissions): you request `READ_STEPS/READ_SLEEP/READ_EXERCISE/WRITE_EXERCISE`. Complete the Health Connect/health-permissions form, justify each permission, link the privacy policy, and 🔎 be ready for a **demo video** of the health features (see L2).
+9. ☐ **Privacy policy URL** (App content).
+10. ☐ **Ads declaration:** "No ads" (assuming none).
+11. ☐ **Government/health declarations** if prompted (it's a wellness app, not a regulated medical device — answer accordingly).
+12. ☐ **Subscriptions (IAP):** Monetize → **Subscriptions** → create product(s) with base plans/offers, matching the ids RevenueCat expects.
+   - ☐ In **RevenueCat**: add the Play app, upload the **service-account JSON**, map product ids to offerings/entitlements.
+13. ☐ Pricing & **countries/regions**.
+14. ☐ 🔎 **Closed testing first if required** (new personal accounts — L4): create a closed track, add ≥12 testers, run 14 days, then apply for production access.
+15. ☐ Create a **Production release**, attach the build, add release notes, **review & roll out** (start at a staged % if you like).
+
+---
+
+## 4. App-specific landmines (the things most likely to bounce)
+
+- **L1 — Apple subscription legal text (⚠️ high-risk):** auto-renewable subs require, *in the app's paywall and in the App Store description*, links to **Privacy Policy** and **Terms (EULA)** plus a clear price/period/auto-renew disclosure. Verify the in-app paywall (`lib/revenuecat.tsx` / premium screen) shows these before submitting.
+- **L2 — Health permissions justification (both):** Apple checks HealthKit usage strings (present in `app.json`) and that health data isn't monetized/advertised; Google's Health Connect review may want a **screen-recording** showing exactly how each health permission is used. Have a 30–60s demo ready.
+- **L3 — Privacy/Data-Safety accuracy:** the App Store privacy labels and Play Data Safety form must agree with each other **and** with the privacy policy. Mismatches are a frequent, avoidable rejection. Since data is on-device with no account, keep it honest and minimal.
+- **L4 — Play closed-testing gate (🔎 schedule risk):** personal Play accounts created after 2023-11-13 must run **12-tester / 14-day closed testing** before production. If that's you, start this **now** — it's the longest pole on the Android side.
+- **L5 — Mental-health content:** include a visible disclaimer that MoodRx is **not medical advice** and surface crisis resources (you already have a crisis screen). Reviewers look for this in wellness/mental-health apps.
+- **L6 — Production build ≠ TestFlight build:** you've only run `development`/TestFlight on iOS. Smoke-test a **production** build of each platform once (paywall purchase in sandbox, health prompts, widget) before submitting.
+
+---
+
+## 5. Final submit sequence (once the above is filled in)
+
+1. ☐ Privacy policy + EULA URLs live.
+2. ☐ iOS: production build uploaded · IAP attached · privacy/age/review-notes done · **Submit for Review**.
+3. ☐ Android: production AAB uploaded · Data Safety + Health declaration + content rating done · (closed testing satisfied if required) · **Roll out to Production**.
+4. ☐ Pitch each store's editorial team (App Store: *Featuring nomination* form; Play: *Editorial* via your Play contact) — highlight the widget + themed icon + platform integration, per the featuring roadmap.
+
+---
+
+*Companion to `docs/featuring-roadmap.md`. The roadmap is "what to build for featuring"; this is "how to actually ship v1."*

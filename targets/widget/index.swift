@@ -130,17 +130,16 @@ struct MoodRxWidgetEntryView: View {
     }
   }
 
-  // systemMedium: streak hero on the left, today's Rx (or done state) on the right.
+  // systemMedium: streak hero on the left; today's Rx on the right, or a
+  // balanced "done" confirmation on the right once checked in — so the wide
+  // medium size never leaves an empty half.
   private var medium: some View {
     HStack(alignment: .center, spacing: 16) {
-      VStack(alignment: .leading, spacing: 0) {
-        streakHero
-        if entry.checkedInToday {
-          doneToday.padding(.top, 10)
-        }
-      }
+      streakHero
       Spacer(minLength: 0)
-      if !entry.checkedInToday && !entry.moodName.isEmpty {
+      if entry.checkedInToday {
+        doneBlock
+      } else if !entry.moodName.isEmpty {
         todayBlock
       }
     }
@@ -167,12 +166,27 @@ struct MoodRxWidgetEntryView: View {
     }
   }
 
+  // Compact inline confirmation used on the small size.
   private var doneToday: some View {
     Text("✓ DONE TODAY")
       .font(.system(size: 12, weight: .bold))
       .tracking(1)
       .foregroundStyle(entry.accent)
       .lineLimit(1)
+  }
+
+  // Larger right-side confirmation used on the medium size, balancing the streak hero.
+  private var doneBlock: some View {
+    VStack(alignment: .trailing, spacing: 4) {
+      Text("✓")
+        .font(.system(size: 40, weight: .bold))
+        .foregroundStyle(entry.accent)
+      Text("DONE TODAY")
+        .font(.system(size: 12, weight: .bold))
+        .tracking(1)
+        .foregroundStyle(entry.accent)
+        .lineLimit(1)
+    }
   }
 
   private var todayBlock: some View {

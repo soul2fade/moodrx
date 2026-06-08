@@ -32,6 +32,10 @@ github-debug.txt
 distribution.p12
 distribution.csr.txt
 
+# Local Claude Code settings + personal docs — never commit
+.claude/settings.local.json
+docs/moodrx-youtube-ep1-script.docx
+
 # CatDoes metadata (managed automatically)
 .catdoes/
 

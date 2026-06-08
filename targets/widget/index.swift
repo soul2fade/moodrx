@@ -208,7 +208,9 @@ struct MoodRxWidget: Widget {
     .configurationDisplayName("MoodRx")
     .description("Your streak and today's prescription.")
     .supportedFamilies([.systemSmall, .systemMedium])
-    .contentMarginsDisabled()
+    // Keep WidgetKit's default content margins so text doesn't clip at the
+    // edges. .containerBackground already fills the widget edge-to-edge, so the
+    // dark background stays full-bleed while the content stays inset.
   }
 }
 

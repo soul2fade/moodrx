@@ -84,6 +84,27 @@
             "targetSdkVersion": 35
           }
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "MoodRxWidget",
+              "label": "MoodRx",
+              "description": "Your streak and today's prescription",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "250dp",
+              "maxResizeHeight": "180dp",
+              "previewImage": "./assets/images/icon.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 0
+            }
+          ]
+        }
       ]
     ],
     "experiments": {

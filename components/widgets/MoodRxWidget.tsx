@@ -1,8 +1,7 @@
 'use no memo';
 import React from 'react';
 import { FlexWidget, TextWidget } from 'react-native-android-widget';
-import type { ColorProp } from 'react-native-android-widget/lib/typescript/widgets/utils/style.props';
-import type { TextWidgetStyle } from 'react-native-android-widget';
+import type { ColorProp, TextWidgetStyle } from 'react-native-android-widget';
 import type { WidgetSnapshot } from '@/lib/widget';
 
 const BG = '#0a0a0a';
@@ -14,16 +13,12 @@ const ACCENT_DEFAULT = '#ffffff';
 // this is treated as the "medium" layout that also shows today's Rx.
 const MEDIUM_MIN_WIDTH = 200;
 
-// TextWidgetStyle has no lineHeight prop — disable the project lint rule that
-// requires lineHeight for fontSize <= 12, since we cannot satisfy it here.
-// eslint-disable-next-line local/no-small-fontsize-without-lineheight
+/* eslint-disable local/no-small-fontsize-without-lineheight -- TextWidgetStyle has no lineHeight prop */
 const streakLabelStyle: TextWidgetStyle = { fontSize: 12, fontWeight: 'bold', letterSpacing: 2, color: MUTED, marginTop: 2 };
-// eslint-disable-next-line local/no-small-fontsize-without-lineheight
 const doneTodayStyleBase: TextWidgetStyle = { fontSize: 12, fontWeight: 'bold', letterSpacing: 1, marginTop: 10 };
-// eslint-disable-next-line local/no-small-fontsize-without-lineheight
 const todayLabelStyle: TextWidgetStyle = { fontSize: 12, fontWeight: 'bold', letterSpacing: 2, color: MUTED };
-// eslint-disable-next-line local/no-small-fontsize-without-lineheight
 const todaySmallStyle: TextWidgetStyle = { fontSize: 12, fontWeight: 'bold', letterSpacing: 1, color: MUTED, marginTop: 10 };
+/* eslint-enable local/no-small-fontsize-without-lineheight */
 
 export function MoodRxWidget({
   snapshot,
@@ -61,6 +56,7 @@ export function MoodRxWidget({
           <TextWidget
             text={String(snapshot.streak)}
             style={{ fontSize: 44, fontWeight: 'bold', color: accent }}
+            maxLines={1}
           />
           <TextWidget
             text="DAY STREAK"

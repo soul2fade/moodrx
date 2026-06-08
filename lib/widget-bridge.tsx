@@ -1,10 +1,13 @@
 import React from 'react';
 import { Platform } from 'react-native';
 import { requestWidgetUpdate } from 'react-native-android-widget';
+import { ExtensionStorage } from '@bacons/apple-targets';
 import { MoodRxWidget } from '@/components/widgets/MoodRxWidget';
 import type { WidgetSnapshot } from './widget';
 
 const WIDGET_NAME = 'MoodRxWidget';
+// Matches app.json ios.entitlements + targets/widget/expo-target.config.js.
+const IOS_APP_GROUP = 'group.com.moodrx.app';
 
 // Single bridge for all platforms, selected by an explicit Platform.OS check.
 //
@@ -16,11 +19,15 @@ const WIDGET_NAME = 'MoodRxWidget';
 // nothing and the widget only updated via headless add/resize events. An
 // explicit Platform.OS check is transparent and resolution-proof.
 //
-// react-native-android-widget is safe to import on iOS/web (its native module
-// resolves to a no-op there), and the guard means requestWidgetUpdate only
-// ever runs on Android. The iOS ExtensionStorage path (PR 2) will slot in
-// behind a `Platform.OS === 'ios'` branch here.
+// Both native modules are safe to import on every platform: react-native-android-widget
+// resolves to a no-op off Android, and @bacons/apple-targets' ExtensionStorage falls
+// back to a no-op stub when its native module is absent. The Platform.OS branches keep
+// each native call on its own platform; web hits neither and returns.
 export async function writeWidgetSnapshot(snapshot: WidgetSnapshot): Promise<void> {
+  if (Platform.OS === 'ios') {
+    writeWidgetSnapshotIOS(snapshot);
+    return;
+  }
   if (Platform.OS !== 'android') return;
   await requestWidgetUpdate({
     widgetName: WIDGET_NAME,
@@ -29,4 +36,25 @@ export async function writeWidgetSnapshot(snapshot: WidgetSnapshot): Promise<voi
       // No widget on the home screen — nothing to update.
     },
   });
+}
+
+// iOS: write flat primitive keys into the shared App Group UserDefaults suite,
+// then ask WidgetKit to reload. The SwiftUI TimelineProvider
+// (targets/widget/index.swift) reads these with typed accessors — no decoding.
+//
+// ExtensionStorage.set bridges only number/string/object, with no setBool, so
+// booleans are stored as 0/1 Ints; Swift's UserDefaults.bool reads Int 1 as true.
+// Every key is written every time (with empty/zero fallbacks when there's no
+// "today") so a previous day's values never linger in the suite.
+function writeWidgetSnapshotIOS(snapshot: WidgetSnapshot): void {
+  const storage = new ExtensionStorage(IOS_APP_GROUP);
+  const today = snapshot.today;
+  storage.set('streak', snapshot.streak);
+  storage.set('checkedInToday', snapshot.checkedInToday ? 1 : 0);
+  storage.set('hasSessions', snapshot.hasSessions ? 1 : 0);
+  storage.set('moodName', today?.moodName ?? '');
+  storage.set('moodColor', today?.moodColor ?? '');
+  storage.set('workoutName', today?.workoutName ?? '');
+  storage.set('durationMin', today?.durationMin ?? 0);
+  ExtensionStorage.reloadWidget(WIDGET_NAME);
 }

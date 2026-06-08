@@ -29,7 +29,13 @@ export function MoodRxWidget({
 }) {
   const accent = (snapshot.today?.moodColor ?? ACCENT_DEFAULT) as ColorProp;
   const isMedium = width >= MEDIUM_MIN_WIDTH;
+  const hasStreak = snapshot.streak > 0;
+  // A broken streak (0) reads as a deflating accent-colored zero — mute it and
+  // reframe the label as an invitation rather than a failure.
+  const streakColor: ColorProp = hasStreak ? accent : (MUTED as ColorProp);
   const doneTodayStyle: TextWidgetStyle = { ...doneTodayStyleBase, color: accent };
+  // Whether the bottom "today's Rx" block is shown (medium, not yet checked in).
+  const showTodayBlock = !snapshot.checkedInToday && snapshot.today != null && isMedium;
 
   return (
     <FlexWidget
@@ -52,30 +58,46 @@ export function MoodRxWidget({
           maxLines={2}
         />
       ) : (
-        <FlexWidget style={{ flexDirection: 'column', width: 'match_parent' }}>
-          <TextWidget
-            text={String(snapshot.streak)}
-            style={{ fontSize: 44, fontWeight: 'bold', color: accent }}
-            maxLines={1}
-          />
-          <TextWidget
-            text="DAY STREAK"
-            style={streakLabelStyle}
-          />
-
-          {snapshot.checkedInToday && (
+        // Fill the widget height: streak hero at the top, today's Rx anchored to
+        // the bottom on the medium size (space-between); centered otherwise.
+        <FlexWidget
+          style={{
+            width: 'match_parent',
+            height: 'match_parent',
+            flexDirection: 'column',
+            justifyContent: showTodayBlock ? 'space-between' : 'center',
+          }}
+        >
+          <FlexWidget style={{ flexDirection: 'column', width: 'match_parent' }}>
             <TextWidget
-              text="✓ DONE TODAY"
-              style={doneTodayStyle}
+              text={String(snapshot.streak)}
+              style={{ fontSize: 44, fontWeight: 'bold', color: streakColor }}
+              maxLines={1}
             />
-          )}
+            <TextWidget
+              text={hasStreak ? 'DAY STREAK' : 'START A NEW STREAK'}
+              style={streakLabelStyle}
+              maxLines={1}
+              truncate="END"
+            />
+
+            {snapshot.checkedInToday && (
+              <TextWidget text="✓ DONE TODAY" style={doneTodayStyle} />
+            )}
+
+            {!snapshot.checkedInToday && snapshot.today && !isMedium && (
+              <TextWidget
+                text={`TODAY: ${snapshot.today.moodName}`}
+                style={todaySmallStyle}
+                maxLines={1}
+                truncate="END"
+              />
+            )}
+          </FlexWidget>
 
           {!snapshot.checkedInToday && snapshot.today && isMedium && (
             <FlexWidget style={{ flexDirection: 'column', width: 'match_parent', marginTop: 12 }}>
-              <TextWidget
-                text="TODAY"
-                style={todayLabelStyle}
-              />
+              <TextWidget text="TODAY" style={todayLabelStyle} />
               <TextWidget
                 text={`${snapshot.today.moodName} · ${snapshot.today.durationMin} MIN`}
                 style={{ fontSize: 13, color: FG, marginTop: 2 }}
@@ -89,15 +111,6 @@ export function MoodRxWidget({
                 truncate="END"
               />
             </FlexWidget>
-          )}
-
-          {!snapshot.checkedInToday && snapshot.today && !isMedium && (
-            <TextWidget
-              text={`TODAY: ${snapshot.today.moodName}`}
-              style={todaySmallStyle}
-              maxLines={1}
-              truncate="END"
-            />
           )}
         </FlexWidget>
       )}

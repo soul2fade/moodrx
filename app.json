@@ -20,6 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.moodrx.app",
+      "appleTeamId": "ST6C3ZM5C3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },

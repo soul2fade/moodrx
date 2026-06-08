@@ -201,9 +201,33 @@ function buildContextualMessage(sessions: Session[]): string {
   return getStreakMessage(streak);
 }
 
+/** Format an hour (0–23) + minute into the app's "h:mm AM/PM" label. */
+export function formatTimeLabel(hour: number, minute: number): string {
+  const isPM = hour >= 12;
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12}:${String(minute).padStart(2, '0')} ${isPM ? 'PM' : 'AM'}`;
+}
+
+/** Parse a "h:mm AM/PM" label to 24-hour { hour, minute }, or null if it's
+ *  not a valid time label. */
+function parseTimeLabel(label: string): { hour: number; minute: number } | null {
+  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(label.trim());
+  if (!m) return null;
+  let hour = parseInt(m[1], 10);
+  const minute = parseInt(m[2], 10);
+  if (hour < 1 || hour > 12 || minute < 0 || minute > 59) return null;
+  if (hour === 12) hour = 0;
+  if (m[3].toUpperCase() === 'PM') hour += 12;
+  return { hour, minute };
+}
+
+/** Resolve a reminder label to { hour, minute }. Accepts the 4 quick presets
+ *  AND any custom "h:mm AM/PM" label (from the time picker); falls back to the
+ *  first preset for anything unrecognized. */
 export function getPresetFromLabel(label: string): { hour: number; minute: number } {
-  const preset = PRESET_TIMES.find((p) => p.label === label) ?? PRESET_TIMES[0];
-  return { hour: preset.hour, minute: preset.minute };
+  const preset = PRESET_TIMES.find((p) => p.label === label);
+  if (preset) return { hour: preset.hour, minute: preset.minute };
+  return parseTimeLabel(label) ?? { hour: PRESET_TIMES[0].hour, minute: PRESET_TIMES[0].minute };
 }
 
 export async function getReminderSchedule(): Promise<ReminderSchedule> {

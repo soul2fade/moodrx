@@ -14,8 +14,8 @@ import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
-import { Stack } from "expo-router";
-import { registerNotificationChannels } from "@/lib/notifications";
+import { Stack, router, type Href } from "expo-router";
+import { registerNotificationChannels, registerNotificationCategories } from "@/lib/notifications";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GluestackInitializer from "@/components/GluestackInitializer";
 import useColorScheme from "@/hooks/useColorScheme";
@@ -76,6 +76,25 @@ export default function RootLayout() {
       );
     }
     void registerNotificationChannels();
+    void registerNotificationCategories();
+  }, []);
+
+  // Route to the screen carried in a notification's `data.route` when the user
+  // taps the notification or one of its action buttons (e.g. the check-in
+  // reminder's "Log it"). Handles both cold start (app launched by the tap,
+  // via getLastNotificationResponseAsync) and warm taps (listener). The app
+  // had no notification-response handling before this.
+  useEffect(() => {
+    const goToRoute = (response: Notifications.NotificationResponse | null) => {
+      const data = response?.notification?.request?.content?.data;
+      const route = data && typeof data.route === "string" ? data.route : null;
+      if (route) router.navigate(route as Href);
+    };
+    Notifications.getLastNotificationResponseAsync()
+      .then(goToRoute)
+      .catch(() => {});
+    const sub = Notifications.addNotificationResponseReceivedListener(goToRoute);
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {

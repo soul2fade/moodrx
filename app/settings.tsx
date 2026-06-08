@@ -11,6 +11,7 @@ import {
   Linking,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
@@ -26,6 +27,8 @@ import {
   cancelReminders,
   getReminderSchedule,
   saveReminderSchedule,
+  getPresetFromLabel,
+  formatTimeLabel,
   type ReminderSchedule,
 } from '@/lib/notifications';
 import { useSubscription } from '@/contexts/SubscriptionContext';
@@ -52,6 +55,8 @@ export default function SettingsScreen() {
   });
   const [permDenied, setPermDenied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // Which reminder field the native time picker is currently editing (null = closed).
+  const [timePickerFor, setTimePickerFor] = useState<'weekday' | 'weekend' | null>(null);
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
   const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
@@ -242,6 +247,26 @@ export default function SettingsScreen() {
 
   const handleSelectWeekendTime = async (timeLabel: string) => {
     await applyReminderSchedule({ ...reminderSchedule, weekendLabel: timeLabel });
+  };
+
+  // True when a label is one of the 4 quick presets (vs. a custom time).
+  const isPresetLabel = (label: string) => PRESET_TIMES.some((p) => p.label === label);
+
+  // Seed the picker with the field's current time so it opens where the user left off.
+  const labelToDate = (label: string): Date => {
+    const { hour, minute } = getPresetFromLabel(label);
+    const d = new Date();
+    d.setHours(hour, minute, 0, 0);
+    return d;
+  };
+
+  const handleTimePicked = (event: DateTimePickerEvent, date?: Date) => {
+    const field = timePickerFor;
+    setTimePickerFor(null);
+    if (event.type !== 'set' || !date || !field) return;
+    const label = formatTimeLabel(date.getHours(), date.getMinutes());
+    if (field === 'weekday') void handleSelectWeekdayTime(label);
+    else void handleSelectWeekendTime(label);
   };
 
   const handleToggleSplitWeekends = async () => {
@@ -536,6 +561,27 @@ export default function SettingsScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
+              <TouchableOpacity
+                key="weekday-custom"
+                onPress={() => setTimePickerFor('weekday')}
+                activeOpacity={0.7}
+                style={[
+                  styles.timeChip,
+                  !isPresetLabel(reminderSchedule.weekdayLabel) ? styles.timeChipSelected : styles.timeChipUnselected,
+                ]}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: !isPresetLabel(reminderSchedule.weekdayLabel) }}
+                accessibilityLabel="Pick a custom weekday reminder time"
+              >
+                <Text
+                  style={[
+                    styles.timeChipText,
+                    !isPresetLabel(reminderSchedule.weekdayLabel) ? styles.timeChipTextSelected : styles.timeChipTextUnselected,
+                  ]}
+                >
+                  {isPresetLabel(reminderSchedule.weekdayLabel) ? 'CUSTOM' : reminderSchedule.weekdayLabel}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity
@@ -579,8 +625,40 @@ export default function SettingsScreen() {
                       </Text>
                     </TouchableOpacity>
                   ))}
+                  <TouchableOpacity
+                    key="weekend-custom"
+                    onPress={() => setTimePickerFor('weekend')}
+                    activeOpacity={0.7}
+                    style={[
+                      styles.timeChip,
+                      !isPresetLabel(reminderSchedule.weekendLabel) ? styles.timeChipSelected : styles.timeChipUnselected,
+                    ]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: !isPresetLabel(reminderSchedule.weekendLabel) }}
+                    accessibilityLabel="Pick a custom weekend reminder time"
+                  >
+                    <Text
+                      style={[
+                        styles.timeChipText,
+                        !isPresetLabel(reminderSchedule.weekendLabel) ? styles.timeChipTextSelected : styles.timeChipTextUnselected,
+                      ]}
+                    >
+                      {isPresetLabel(reminderSchedule.weekendLabel) ? 'CUSTOM' : reminderSchedule.weekendLabel}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </>
+            )}
+
+            {timePickerFor && (
+              <DateTimePicker
+                mode="time"
+                is24Hour={false}
+                value={labelToDate(
+                  timePickerFor === 'weekday' ? reminderSchedule.weekdayLabel : reminderSchedule.weekendLabel,
+                )}
+                onChange={handleTimePicked}
+              />
             )}
           </View>
         )}

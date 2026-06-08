@@ -24,7 +24,9 @@ export async function writeWidgetSnapshot(snapshot: WidgetSnapshot): Promise<voi
   if (Platform.OS !== 'android') return;
   await requestWidgetUpdate({
     widgetName: WIDGET_NAME,
-    renderWidget: (info) => <MoodRxWidget snapshot={snapshot} width={info.width} />,
+    renderWidget: (info) => (
+      <MoodRxWidget snapshot={snapshot} width={info.width} height={info.height} />
+    ),
     widgetNotFound: () => {
       // No widget on the home screen — nothing to update.
     },

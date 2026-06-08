@@ -18,7 +18,13 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
     case 'WIDGET_RESIZED': {
       const sessions = await getSessions();
       const snapshot = buildWidgetSnapshot(sessions);
-      props.renderWidget(<MoodRxWidget snapshot={snapshot} width={props.widgetInfo.width} />);
+      props.renderWidget(
+        <MoodRxWidget
+          snapshot={snapshot}
+          width={props.widgetInfo.width}
+          height={props.widgetInfo.height}
+        />,
+      );
       break;
     }
     default:

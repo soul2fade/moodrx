@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { router, usePathname } from 'expo-router';
+import { router, usePathname, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fonts } from '@/lib/typography';
 
@@ -59,7 +59,7 @@ export function BottomNav() {
         return (
           <TouchableOpacity
             key={tab.path}
-            onPress={() => router.push(tab.path as any)}
+            onPress={() => router.push(tab.path as Href)}
             activeOpacity={0.7}
             style={styles.tab}
             accessibilityRole="tab"

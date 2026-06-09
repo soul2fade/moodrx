@@ -2,29 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Session } from '@/lib/storage';
 import type { MoodKey } from '@/lib/storage';
+import { MOODS } from '@/lib/moods';
 import { type as t } from '../lib/typography';
 
 interface WorkoutCalendarProps {
   sessions: Session[];
 }
-
-const MOOD_COLORS: Record<MoodKey, string> = {
-  anxious: '#E8B84B',
-  low: '#6366F1',
-  foggy: '#5EAAB5',
-  restless: '#D97706',
-  stressed: '#E11D48',
-  good: '#059669',
-};
-
-const MOOD_NAMES: Record<MoodKey, string> = {
-  anxious: 'ANXIOUS',
-  low: 'LOW',
-  foggy: 'FOGGY',
-  restless: 'RESTLESS',
-  stressed: 'STRESSED',
-  good: 'GOOD',
-};
 
 const DAY_HEADERS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -118,9 +101,9 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
           const sessionsForDay = cell.dateKey ? (sessionsByDate[cell.dateKey] ?? []) : [];
           const hasSession = sessionsForDay.length > 0;
           const isToday = cell.dateKey === todayKey;
-          const accentColor = hasSession ? (MOOD_COLORS[sessionsForDay[0].mood as MoodKey] ?? '#525252') : null;
+          const accentColor = hasSession ? MOODS[sessionsForDay[0].mood as MoodKey].color : null;
           const hasMultiple = sessionsForDay.length > 1;
-          const secondMoodColor = hasMultiple ? (MOOD_COLORS[sessionsForDay[1].mood as MoodKey] ?? '#525252') : null;
+          const secondMoodColor = hasMultiple ? MOODS[sessionsForDay[1].mood as MoodKey].color : null;
 
           if (hasSession) {
             return (
@@ -186,7 +169,7 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
               </Text>
               <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
                 {selectedSessions.map((s, i) => {
-                  const color = MOOD_COLORS[s.mood as MoodKey] ?? '#525252';
+                  const color = MOODS[s.mood as MoodKey].color;
                   const change = formatChange(s.intensity, s.postScore);
                   const improved = s.postScore > s.intensity;
                   return (
@@ -195,7 +178,7 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
                       <View style={styles.sessionInfo}>
                         <View style={styles.sessionTopRow}>
                           <Text style={[styles.sessionMood, { color }]}>
-                            {MOOD_NAMES[s.mood as MoodKey] ?? s.mood.toUpperCase()}
+                            {MOODS[s.mood as MoodKey].name.toUpperCase()}
                           </Text>
                           <Text style={styles.sessionTime}>{formatTime(s.timestamp)}</Text>
                         </View>

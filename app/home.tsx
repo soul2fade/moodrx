@@ -9,7 +9,7 @@ import {
   TouchableWithoutFeedback,
   Dimensions,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -458,7 +458,7 @@ export default function HomeScreen() {
 
         {/* Breathe tool link */}
         <TouchableOpacity
-          onPress={() => router.push('/breathe' as any)}
+          onPress={() => router.push('/breathe' as Href)}
           activeOpacity={0.6}
           style={styles.breatheLink}
           accessibilityRole="button"
@@ -469,7 +469,7 @@ export default function HomeScreen() {
 
         {/* Safety net link */}
         <TouchableOpacity
-          onPress={() => router.push('/crisis' as any)}
+          onPress={() => router.push('/crisis' as Href)}
           activeOpacity={0.6}
           style={styles.safetyNetBtn}
           accessibilityRole="button"

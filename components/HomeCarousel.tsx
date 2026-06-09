@@ -21,7 +21,7 @@ import Animated, {
   Extrapolate,
   type SharedValue,
 } from 'react-native-reanimated';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { MOODS } from '@/lib/moods';
 import { fonts } from '@/lib/typography';
 import type { MoodKey, Session, UserProfile } from '@/lib/storage';
@@ -320,7 +320,7 @@ export function HomeCarousel({
               {sessionCount >= 2 && !selectedMood && (
                 <TouchableOpacity
                   style={styles.weeklyRxTeaser}
-                  onPress={() => router.push('/weekly-prescription' as any)}
+                  onPress={() => router.push('/weekly-prescription' as Href)}
                   activeOpacity={0.75}
                   accessibilityRole="button"
                   accessibilityLabel="Open your weekly prescription"
@@ -367,7 +367,7 @@ export function HomeCarousel({
               {sessionCount >= 2 && !selectedMood && (
                 <TouchableOpacity
                   style={[styles.quickRow, styles.weeklyRxRow]}
-                  onPress={() => router.push('/weekly-prescription' as any)}
+                  onPress={() => router.push('/weekly-prescription' as Href)}
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel="View your weekly prescription"

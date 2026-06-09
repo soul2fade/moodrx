@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { router, usePathname } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fonts } from '@/lib/typography';
 
 const TABS = [
@@ -16,6 +17,7 @@ const ANIMATION_DURATION = 150;
 
 export function BottomNav() {
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   const labelOpacities = useRef(
     TABS.map((tab) =>
@@ -50,7 +52,7 @@ export function BottomNav() {
   }, [pathname]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom + 16, 32) }]}>
       {TABS.map((tab, i) => {
         const isActive = pathname === tab.path;
 

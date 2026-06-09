@@ -30,8 +30,8 @@ export function PremiumSheet({
   const monthlyPkg = currentOffering?.availablePackages?.find((p) => p.identifier === '$rc_monthly');
   const yearlyPkg = currentOffering?.availablePackages?.find((p) => p.identifier === '$rc_annual');
 
-  const monthlyPrice = monthlyPkg?.product?.priceString ?? '$6.99';
-  const yearlyPrice = yearlyPkg?.product?.priceString ?? '$49.99';
+  const monthlyPrice = monthlyPkg?.product?.priceString ?? '$5.99';
+  const yearlyPrice = yearlyPkg?.product?.priceString ?? '$44.99';
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -75,7 +75,7 @@ export function PremiumSheet({
             <Text style={styles.bestValueText}>BEST VALUE</Text>
           </View>
           <Text style={styles.planPrice}>{yearlyPrice} / year</Text>
-          <Text style={styles.planSub}>save 40% — ~$4.17/mo</Text>
+          <Text style={styles.planSub}>save 37% — ~$3.75/mo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

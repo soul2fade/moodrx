@@ -70,8 +70,8 @@ export default function PremiumScreen() {
     (p) => p.identifier === '$rc_annual'
   );
 
-  const monthlyPrice = monthlyPkg?.product?.priceString ?? '$6.99';
-  const yearlyPrice = yearlyPkg?.product?.priceString ?? '$49.99';
+  const monthlyPrice = monthlyPkg?.product?.priceString ?? '$5.99';
+  const yearlyPrice = yearlyPkg?.product?.priceString ?? '$44.99';
   const hasPersonalStats = sessionCount >= 3;
   const personalDeltaLabel = formatSessionDelta(5, 5 + Math.round(avgChange * 10) / 10);
 
@@ -163,7 +163,7 @@ export default function PremiumScreen() {
               onPress={purchaseYearly}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel={`Yearly plan, ${yearlyPrice} per year, save 40%`}
+              accessibilityLabel={`Yearly plan, ${yearlyPrice} per year, save 37%`}
             >
               <View style={styles.bestValueBadge}>
                 <Text style={styles.bestValueText}>BEST VALUE</Text>
@@ -171,7 +171,7 @@ export default function PremiumScreen() {
               <Text style={styles.yearlyPrice}>
                 {yearlyPrice} <Text style={styles.yearlyPer}>/ year</Text>
               </Text>
-              <Text style={styles.yearlySub}>save 40% — ~$4.17/month</Text>
+              <Text style={styles.yearlySub}>save 37% — ~$3.75/month</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

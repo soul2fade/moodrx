@@ -211,6 +211,11 @@ export default function HomeScreen() {
     });
   }, [lastSession]);
 
+  const handleCarouselPageChange = useCallback((page: number) => {
+    setCarouselPage(page);
+    setLastCarouselPage(page);
+  }, []);
+
   const handlePrescribe = useCallback(() => {
     if (!selectedMood) return;
     router.push({
@@ -364,10 +369,7 @@ export default function HomeScreen() {
                 sessions={sessions}
                 onQuickSession={handleQuickSession}
                 initialPage={carouselPage}
-                onPageChange={(page) => {
-                  setCarouselPage(page);
-                  setLastCarouselPage(page);
-                }}
+                onPageChange={handleCarouselPageChange}
               />
             </Animated.View>
           )}

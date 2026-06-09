@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,10 @@ import { getLastNDays } from '@/lib/analytics';
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 24;
 const CARD_W = SCREEN_W - H_PADDING * 2;
+
+const PAGE_LABELS = ['YOUR PATTERN', 'QUICK ACTIONS'];
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
 interface MoodIdentity {
   dominantMood: MoodKey;
@@ -98,7 +102,7 @@ function AnimatedDot({
   );
 }
 
-export function HomeCarousel({
+function HomeCarouselInner({
   selectedMood,
   sessionCount,
   userProfile,
@@ -200,15 +204,16 @@ export function HomeCarousel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- labelTranslateX is a stable Reanimated SharedValue; activePage is the meaningful trigger.
   }, [activePage]);
 
-  const PAGE_LABELS = ['YOUR PATTERN', 'QUICK ACTIONS'];
-
-  const last7Days = getLastNDays(sessions, 7);
-  const trendDiff = last7Days.length >= 2 ? last7Days[last7Days.length - 1].intensity - last7Days[0].intensity : 0;
-  const trendLabel = Math.abs(trendDiff) < 1 ? '→ HOLDING STEADY' : trendDiff < 0 ? '↓ TRENDING BETTER' : '↑ TRENDING WORSE';
-  const trendColor = Math.abs(trendDiff) < 1 ? '#999999' : trendDiff < 0 ? '#059669' : '#b45309';
-  const patternCallout = getBestPatternCallout(sessions);
-  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const { last7Days, trendLabel, trendColor, patternCallout } = useMemo(() => {
+    const days = getLastNDays(sessions, 7);
+    const diff = days.length >= 2 ? days[days.length - 1].intensity - days[0].intensity : 0;
+    return {
+      last7Days: days,
+      trendLabel: Math.abs(diff) < 1 ? '→ HOLDING STEADY' : diff < 0 ? '↓ TRENDING BETTER' : '↑ TRENDING WORSE',
+      trendColor: Math.abs(diff) < 1 ? '#999999' : diff < 0 ? '#059669' : '#b45309',
+      patternCallout: getBestPatternCallout(sessions),
+    };
+  }, [sessions]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -519,6 +524,8 @@ export function HomeCarousel({
     </View>
   );
 }
+
+export const HomeCarousel = React.memo(HomeCarouselInner);
 
 const styles = StyleSheet.create({
   wrapper: {

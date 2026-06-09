@@ -41,15 +41,6 @@ export function isWorkoutUnlocked(
   return bonusIndex !== null && index === bonusIndex;
 }
 
-export function getWorkoutLockLabel(
-  isPremium: boolean,
-  index: number,
-  workoutCount: number,
-): string {
-  if (isWorkoutUnlocked(isPremium, index, workoutCount)) return '';
-  return 'PRO ONLY · FREE BONUS ROTATES WEEKLY';
-}
-
 export function getFreeTierSummary(workouts: Workout[], isPremium: boolean): string | null {
   if (isPremium || workouts.length === 0) return null;
 

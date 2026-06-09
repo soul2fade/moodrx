@@ -28,6 +28,7 @@ import {
   setTrialNudgeAnchor,
 } from '@/lib/subscription';
 import { scheduleTrialNudges } from '@/lib/notifications';
+import { colors } from '@/lib/colors';
 
 interface RCPurchaseError {
   userCancelled?: boolean | null;
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dialogTitle: {
-    color: '#E8B84B',
+    color: colors.premium,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '700',
@@ -435,12 +436,12 @@ const styles = StyleSheet.create({
   confirmBtn: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E8B84B',
+    borderColor: colors.premium,
     paddingVertical: 12,
     alignItems: 'center',
   },
   confirmBtnText: {
-    color: '#E8B84B',
+    color: colors.premium,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '700',

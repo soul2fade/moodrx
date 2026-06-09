@@ -16,6 +16,7 @@ import React, { useEffect } from "react";
 import "react-native-reanimated";
 import { Stack, router, type Href } from "expo-router";
 import { registerNotificationChannels, registerNotificationCategories } from "@/lib/notifications";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GluestackInitializer from "@/components/GluestackInitializer";
 import useColorScheme from "@/hooks/useColorScheme";
@@ -107,24 +108,26 @@ export default function RootLayout() {
    * not a permanent blank screen.
    */
   return (
-    <ErrorBoundary>
-      <SubscriptionProvider>
-        <SessionsProvider>
-          <GluestackInitializer colorScheme={colorScheme}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: '#0a0a0a' },
-                animation: 'fade',
-              }}
-            >
-              <Stack.Screen name="+not-found" />
-              <Stack.Screen name="premium" />
-            </Stack>
-            <StatusBar style="light" />
-          </GluestackInitializer>
-        </SessionsProvider>
-      </SubscriptionProvider>
-    </ErrorBoundary>
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <SubscriptionProvider>
+          <SessionsProvider>
+            <GluestackInitializer colorScheme={colorScheme}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: '#0a0a0a' },
+                  animation: 'fade',
+                }}
+              >
+                <Stack.Screen name="+not-found" />
+                <Stack.Screen name="premium" />
+              </Stack>
+              <StatusBar style="light" />
+            </GluestackInitializer>
+          </SessionsProvider>
+        </SubscriptionProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }

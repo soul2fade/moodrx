@@ -196,8 +196,8 @@ export default function PostWorkoutScreen() {
       }).then((result) => {
         // Don't surface a UI Alert — sync is opportunistic and the user
         // already completed their workout flow. But do log a structured
-        // breadcrumb so CatDoes Watch captures real sync failures (vs.
-        // the expected "user didn't opt in" no-op).
+        // console warning for real sync failures (vs. the expected
+        // "user didn't opt in" no-op).
         if (!result.ok && result.reason !== 'not_enabled') {
           console.warn('[MoodRx] HealthKit workout sync did not persist', result.reason);
         }

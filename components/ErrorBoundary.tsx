@@ -1,20 +1,20 @@
 /**
  * ErrorBoundary Component
  *
- * Wraps the app to catch React errors and report them to CatDoes Watch.
- * Displays a fallback UI when an error occurs.
+ * Self-contained React error boundary. Catches React render errors, logs them
+ * locally (no third-party transmission — data stays on-device), and displays a
+ * fallback UI so the user can retry without force-quitting the app.
  */
 
 import React from "react";
 import { Pressable, View } from "react-native";
-import { WatchErrorBoundary } from "@catdoes/watch";
 import { VStack } from "./ui/vstack";
 import { Text } from "./ui/text";
 import { AlertTriangle } from "lucide-react-native";
 
 interface ErrorFallbackProps {
   error: Error;
-  errorInfo: React.ErrorInfo;
+  errorInfo?: React.ErrorInfo;
   resetError: () => void;
 }
 
@@ -57,19 +57,33 @@ interface ErrorBoundaryProps {
 }
 
 /**
- * Error boundary component that integrates with CatDoes Watch
+ * Error boundary class component.
  *
- * Wraps children in a WatchErrorBoundary that automatically reports
- * errors to CatDoes Watch and displays a fallback UI.
+ * React error boundaries must be class components. Catches errors in the
+ * subtree, logs them locally, and renders the fallback UI with a reset button.
  */
-export function ErrorBoundary({ children, onError }: ErrorBoundaryProps) {
-  return (
-    <WatchErrorBoundary
-      fallback={ErrorFallback}
-      onError={onError}
-      captureErrors={true}
-    >
-      {children}
-    </WatchErrorBoundary>
-  );
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log locally only — no third-party transmission (data stays on-device).
+    console.error("[MoodRx] Uncaught error:", error, errorInfo);
+    this.props.onError?.(error, errorInfo);
+  }
+
+  reset = () => this.setState({ error: null });
+
+  render() {
+    if (this.state.error) {
+      return <ErrorFallback error={this.state.error} resetError={this.reset} />;
+    }
+    return this.props.children;
+  }
 }

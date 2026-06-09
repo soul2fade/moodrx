@@ -22,7 +22,6 @@ import useColorScheme from "@/hooks/useColorScheme";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { SessionsProvider } from "@/contexts/SessionsContext";
 import { initializeRevenueCat } from "@/lib/revenuecat";
-import { initCatDoesWatch } from "@/catdoes.watch";
 
 // Show notifications while app is in the foreground.
 // Stays at module top-level (not inside useEffect) so the handler is
@@ -59,14 +58,6 @@ export default function RootLayout() {
   const fontsReady = loaded || !!fontError;
 
   useEffect(() => {
-    try {
-      initCatDoesWatch();
-    } catch (err: unknown) {
-      console.warn(
-        "CatDoes Watch init failed:",
-        err instanceof Error ? err.message : String(err),
-      );
-    }
     try {
       initializeRevenueCat();
     } catch (err: unknown) {

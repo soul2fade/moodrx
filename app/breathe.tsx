@@ -57,8 +57,8 @@ export default function BreatheScreen() {
     }
     if (cyclesRef.current > 0) {
       // Opportunistic sync — log structured failures (not "user didn't
-      // opt in") so CatDoes Watch can flag real platform issues without
-      // interrupting the user's breathing session UI.
+      // opt in") to the console so real platform issues are visible in
+      // dev/logs without interrupting the user's breathing session UI.
       saveMindfulMinutesToHealth(cyclesRef.current).then((result) => {
         if (!result.ok && result.reason !== 'not_enabled') {
           console.warn('[MoodRx] HealthKit mindful sync did not persist', result.reason);

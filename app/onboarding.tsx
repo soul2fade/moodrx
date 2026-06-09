@@ -355,12 +355,12 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 20,
     borderLeftWidth: 2,
-    borderLeftColor: colors.accent,
+    borderLeftColor: colors.premium,
     paddingLeft: 16,
   },
   trialBannerLabel: {
     ...t.label,
-    color: colors.accent,
+    color: colors.premium,
     letterSpacing: 3,
   },
   trialBannerSub: {

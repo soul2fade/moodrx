@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@bacons/apple-targets": "^4.0.7",
-    "@catdoes/watch": "^1.0.0",
     "@expo-google-fonts/barlow-condensed": "^0.4.1",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo/html-elements": "^0.12.5",

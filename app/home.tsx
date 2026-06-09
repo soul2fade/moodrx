@@ -30,6 +30,7 @@ import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { createSessionId } from '@/lib/session-utils';
 import { maybeRequestReview } from '@/lib/review';
+import { colors } from '@/lib/colors';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.58;
 
@@ -607,13 +608,13 @@ const styles = StyleSheet.create({
   },
   proMemberBadge: {
     borderWidth: 1,
-    borderColor: '#E8B84B',
+    borderColor: colors.premium,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   proMemberBadgeText: {
     ...t.label,
-    color: '#E8B84B',
+    color: colors.premium,
     letterSpacing: 2,
     fontSize: 12,
     lineHeight: 17,
@@ -631,7 +632,7 @@ const styles = StyleSheet.create({
   },
   streakPillLabel: {
     ...t.label,
-    color: '#E8B84B',
+    color: colors.accent,
     letterSpacing: 2,
     fontSize: 12,
     lineHeight: 17,
@@ -680,7 +681,7 @@ const styles = StyleSheet.create({
   },
   streakBadgeText: {
     ...t.number,
-    color: '#E8B84B',
+    color: colors.accent,
     fontSize: 12,
     lineHeight: 17,
     letterSpacing: 1,

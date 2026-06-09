@@ -30,6 +30,11 @@ declare const __DEV__: boolean;
 export function initCatDoesWatch(
   options?: Partial<WatchConfig>,
 ): WatchClient | null {
+  // Disabled for v1: keeps the app's data fully on-device (no third-party
+  // crash/diagnostics egress) so the store privacy disclosures stay "local-only".
+  // Re-enable later with a privacy-policy + Data Safety disclosure.
+  if (true) return null;
+
   const apiKey = process.env.EXPO_PUBLIC_CATDOES_WATCH_KEY || "";
 
   // Don't initialize if no API key is provided

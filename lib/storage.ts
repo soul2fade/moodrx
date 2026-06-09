@@ -452,9 +452,10 @@ export async function getUserProfile(): Promise<UserProfile> {
   if (userProfileCache) return userProfileCache;
   try {
     const raw = await AsyncStorage.getItem(USER_PROFILE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as UserProfile) : {};
-    userProfileCache = parsed;
-    return parsed;
+    const parsed = raw ? JSON.parse(raw) : {};
+    const profile = (parsed && typeof parsed === 'object') ? parsed as UserProfile : {};
+    userProfileCache = profile;
+    return profile;
   } catch (e) {
     console.warn('[MoodRx] getUserProfile failed:', e);
     return {};

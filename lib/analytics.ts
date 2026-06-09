@@ -119,9 +119,11 @@ export function buildWeeklyPrescription(sessions: Session[]): DayRx[] {
   const hasHistory = sessions.length >= 5;
 
   return WEEK_DAYS.map(({ label, idx }, i) => {
-    // Sessions that historically fell on this day of the week
+    // Sessions that historically fell on this day of the week.
+    // Derive weekday from the persisted local date string (not UTC timestamp)
+    // so sessions logged near local midnight aren't attributed to the wrong day.
     const daySessions = sessions.filter(
-      (s) => new Date(s.timestamp).getDay() === idx,
+      (s) => new Date(sessionDateString(s) + 'T00:00:00').getDay() === idx,
     );
 
     const isDataDriven = daySessions.length >= 2;

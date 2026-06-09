@@ -15,16 +15,16 @@ import { fonts } from '@/lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const TODAY_IDX = new Date().getDay(); // 0=Sun … 6=Sat
-
 export default function WeeklyPrescriptionScreen() {
   const insets = useSafeAreaInsets();
   const [plan, setPlan] = useState<DayRx[]>([]);
+  const [todayIdx, setTodayIdx] = useState(() => new Date().getDay());
   const [isLoading, setIsLoading] = useState(true);
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
   useFocusEffect(
     useCallback(() => {
+      setTodayIdx(new Date().getDay()); // refresh on every focus so day is current
       getSessions().then((sessions) => {
         setPlan(buildWeeklyPrescription(sessions));
         setIsLoading(false);
@@ -32,7 +32,7 @@ export default function WeeklyPrescriptionScreen() {
     }, []),
   );
 
-  const todayRx = plan.find((d) => d.dayIndex === TODAY_IDX);
+  const todayRx = plan.find((d) => d.dayIndex === todayIdx);
 
   const handleDayPress = (day: DayRx) => {
     router.push({
@@ -85,7 +85,7 @@ export default function WeeklyPrescriptionScreen() {
           <Text style={styles.loadingText}>BUILDING PLAN…</Text>
         ) : (
           plan.map((day) => {
-            const isToday = day.dayIndex === TODAY_IDX;
+            const isToday = day.dayIndex === todayIdx;
             const mood = MOODS[day.mood];
             return (
               <TouchableOpacity

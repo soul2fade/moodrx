@@ -26,8 +26,10 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { createSessionId, formatSessionDelta } from '@/lib/session-utils';
 import { colors } from '@/lib/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BadDayScreen() {
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ mood?: string; intensity?: string }>();
   const initialMood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -85,7 +87,7 @@ export default function BadDayScreen() {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]} showsVerticalScrollIndicator={false}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
           <Text style={styles.backButton}>← HOME</Text>
         </TouchableOpacity>

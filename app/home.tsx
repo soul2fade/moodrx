@@ -31,12 +31,14 @@ import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { createSessionId } from '@/lib/session-utils';
 import { maybeRequestReview } from '@/lib/review';
 import { colors } from '@/lib/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PANEL_HEIGHT = Dimensions.get('window').height * 0.58;
 
 let greetingShownThisSession = false;
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const { sessions, isLoading, streak, sessionCount, lastSession, addSession } = useSessions();
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [intensity, setIntensity] = useState(5);
@@ -492,7 +494,7 @@ export default function HomeScreen() {
       </Animated.View>
 
       {/* Slide-up panel */}
-      <Animated.View style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}>
+      <Animated.View style={[styles.panel, { transform: [{ translateY: panelAnim }], paddingBottom: Math.max(insets.bottom + 16, 32) }]}>
         {selectedMood && (
           <>
             {/* Panel handle + mood name */}

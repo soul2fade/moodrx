@@ -14,6 +14,7 @@ import { useSessions } from '@/contexts/SessionsContext';
 import { formatSessionDelta } from '@/lib/session-utils';
 import { type as t, fonts } from '@/lib/typography';
 import { colors } from '@/lib/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const FEATURES = [
   '18 science-backed workouts',
@@ -25,6 +26,7 @@ const FEATURES = [
 ];
 
 export default function PremiumScreen() {
+  const insets = useSafeAreaInsets();
   const {
     purchaseMonthly,
     purchaseYearly,
@@ -75,7 +77,7 @@ export default function PremiumScreen() {
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: '#0a0a0a', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]} showsVerticalScrollIndicator={false}>
         <TouchableOpacity
           onPress={() => router.back()}
           activeOpacity={0.7}

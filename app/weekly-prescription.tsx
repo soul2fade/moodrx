@@ -13,10 +13,12 @@ import { buildWeeklyPrescription, DayRx } from '@/lib/analytics';
 import { MOODS } from '@/lib/moods';
 import { fonts } from '@/lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TODAY_IDX = new Date().getDay(); // 0=Sun … 6=Sat
 
 export default function WeeklyPrescriptionScreen() {
+  const insets = useSafeAreaInsets();
   const [plan, setPlan] = useState<DayRx[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { fadeAnim, slideAnim } = useScreenAnimation();
@@ -52,7 +54,7 @@ export default function WeeklyPrescriptionScreen() {
       style={[styles.root, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
     >
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 60) }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}

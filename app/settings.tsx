@@ -44,10 +44,12 @@ import {
   setHealthSyncEnabled,
 } from '@/lib/health';
 import { colors } from '@/lib/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [reminderSchedule, setReminderSchedule] = useState<ReminderSchedule>({
     weekdayLabel: '8:00 AM',
@@ -320,7 +322,7 @@ export default function SettingsScreen() {
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]}
         showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity

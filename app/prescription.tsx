@@ -27,10 +27,12 @@ import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 import { colors } from '@/lib/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Tab = 'workouts' | 'stack';
 
 export default function PrescriptionScreen() {
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ mood: string; intensity: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -90,7 +92,7 @@ export default function PrescriptionScreen() {
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Fixed header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 56) }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           activeOpacity={0.7}

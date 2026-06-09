@@ -25,6 +25,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { stepHasReps } from '@/lib/workout-ui';
 import {
   pickWorkoutGuideCue,
@@ -99,6 +100,7 @@ const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
 
 
 export default function WorkoutScreen() {
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -491,7 +493,7 @@ export default function WorkoutScreen() {
       </View>
 
       {/* Top row */}
-      <View style={styles.topRow}>
+      <View style={[styles.topRow, { paddingTop: Math.max(insets.top + 8, 48) }]}>
         <TouchableOpacity onPress={() => setShowQuitConfirm(true)} activeOpacity={0.7} style={styles.quitButton} accessibilityRole="button" accessibilityLabel="Quit workout">
           <Text style={styles.quitText} maxFontSizeMultiplier={1.3}>X QUIT</Text>
         </TouchableOpacity>

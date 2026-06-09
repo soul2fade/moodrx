@@ -33,6 +33,7 @@ import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { BottomNav } from '@/components/BottomNav';
 import { getHealthPlatformLabel, getHealthSnapshot, isHealthSyncAvailable, type HealthSnapshot } from '@/lib/health';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CASE_PANEL_HEIGHT = Math.min(Dimensions.get('window').height * 0.52, Dimensions.get('window').height - 200);
 
@@ -40,6 +41,7 @@ const BAR_MAX_HEIGHT = 60;
 const BAR_WIDTH = 18;
 
 export default function InsightsScreen() {
+  const insets = useSafeAreaInsets();
   const {
     sessions,
     isLoading,
@@ -140,7 +142,7 @@ export default function InsightsScreen() {
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Back button */}

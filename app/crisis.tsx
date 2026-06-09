@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const RESOURCES = [
   {
@@ -31,6 +32,7 @@ const RESOURCES = [
 ];
 
 export default function CrisisScreen() {
+  const insets = useSafeAreaInsets();
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
 
@@ -93,7 +95,7 @@ export default function CrisisScreen() {
   return (
     <Animated.View style={[styles.root, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Header bar */}
-      <View style={styles.headerBar}>
+      <View style={[styles.headerBar, { paddingTop: Math.max(insets.top + 8, 56) }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           activeOpacity={0.7}

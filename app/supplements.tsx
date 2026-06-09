@@ -34,6 +34,7 @@ import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { BottomNav } from '@/components/BottomNav';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type TabKey = 'TODAY' | 'HISTORY' | 'ALL';
 
@@ -125,6 +126,7 @@ function getMoodForDay(sessions: Session[], dateStr: string): MoodKey | null {
 }
 
 function SupplementsScreen() {
+  const insets = useSafeAreaInsets();
   const [logs, setLogs] = useState<SupplementLog[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lastMood, setLastMood] = useState<MoodKey | null>(null);
@@ -276,7 +278,7 @@ function SupplementsScreen() {
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 56) }]}>
         <Text style={styles.trackerLabel}>SUPPLEMENT PRO</Text>
         <Text style={styles.headline}>Your stack.</Text>
         <Text style={styles.dateLabel}>{formatTodayLabel()}</Text>

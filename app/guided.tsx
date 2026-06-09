@@ -18,9 +18,11 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t } from '@/lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useSessions } from '@/contexts/SessionsContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/lib/colors';
 
 export default function GuidedScreen() {
+  const insets = useSafeAreaInsets();
   const { sessionCount } = useSessions();
   const [selectedMood, setSelectedMood] = useState<MoodKey>('anxious');
   const [intensity, setIntensity] = useState(5);
@@ -59,7 +61,7 @@ export default function GuidedScreen() {
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.stepLabel}>FIRST SESSION</Text>

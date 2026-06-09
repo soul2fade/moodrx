@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { fonts } from '../lib/typography';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { saveMindfulMinutesToHealth } from '@/lib/health';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PHASES = [
   { label: 'INHALE',  guide: 'breathe in',  duration: 4, toValue: 1 },
@@ -23,6 +24,7 @@ const PHASES = [
 const PHASE_COLORS = ['#7EC8A0', '#A0C8A0', '#7EC8E0', '#A0A0C8'] as const;
 
 export default function BreatheScreen() {
+  const insets = useSafeAreaInsets();
   const [phaseIdx, setPhaseIdx] = useState<number>(0);
   const [countdown, setCountdown] = useState<number>(PHASES[0].duration);
   const [cycles, setCycles] = useState<number>(0);
@@ -136,7 +138,7 @@ export default function BreatheScreen() {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
 
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 56) }]}>
         <TouchableOpacity
           onPress={() => { stopBreathing(); router.back(); }}
           activeOpacity={0.7}

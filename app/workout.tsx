@@ -26,6 +26,7 @@ import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '@/lib/colors';
 import { stepHasReps } from '@/lib/workout-ui';
 import {
   pickWorkoutGuideCue,
@@ -567,13 +568,13 @@ export default function WorkoutScreen() {
         {stepTimerKind === 'rest' ? (
           <View style={styles.restBox}>
             <Text style={styles.restLabel}>REST</Text>
-            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? '#525252' : accentColor }]} maxFontSizeMultiplier={1.3}>
+            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColor }]} maxFontSizeMultiplier={1.3}>
               {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
             </Text>
             <View style={styles.restProgressBg}>
               <Animated.View style={[styles.restProgressFill, {
                 width: restProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                backgroundColor: stepTimerRemaining === 0 ? '#525252' : accentColor,
+                backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColor,
               }]} />
             </View>
             <Text style={styles.restSubtext}>
@@ -601,13 +602,13 @@ export default function WorkoutScreen() {
             </Text>
             {stepTimerKind === 'active' && (
               <View style={styles.activeTimerBox}>
-                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? '#525252' : accentColor }]} maxFontSizeMultiplier={1.3}>
+                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColor }]} maxFontSizeMultiplier={1.3}>
                   {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
                 </Text>
                 <View style={styles.activeProgressBg}>
                   <Animated.View style={[styles.activeProgressFill, {
                     width: activeProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                    backgroundColor: stepTimerRemaining === 0 ? '#525252' : accentColor,
+                    backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColor,
                   }]} />
                 </View>
                 {stepTimerRemaining === 0 && (

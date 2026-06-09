@@ -140,8 +140,11 @@ function SupplementsScreen() {
   const reminderToggleAnim = useRef(new Animated.Value(0)).current;
 
   const today = todayDateString();
-  const { isPremium, isInTrial } = useSubscription();
-  const canUseReminder = isPremium || isInTrial;
+  const { isPremium, isInTrial, isLoading: subLoading } = useSubscription();
+  // Wait for subscription state to resolve before gating the reminder UI —
+  // otherwise entitled users briefly see it locked on cold start (isPremium
+  // and isInTrial are both false until RevenueCat finishes loading).
+  const canUseReminder = !subLoading && (isPremium || isInTrial);
 
   const { fadeAnim, slideAnim } = useScreenAnimation();
 

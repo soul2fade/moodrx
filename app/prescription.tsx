@@ -96,6 +96,7 @@ export default function PrescriptionScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -189,7 +190,7 @@ export default function PrescriptionScreen() {
                 </View>
               </View>
               <View style={styles.workoutNameRow}>
-                <Text style={flattenStyle([styles.workoutName, { flex: 1, fontSize: 20 }])}>{workouts[0].name}</Text>
+                <Text style={flattenStyle([styles.workoutName, { flex: 1, fontSize: 20 }])} numberOfLines={2}>{workouts[0].name}</Text>
                 <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
               </View>
               {getWorkoutBadge(sessions, workouts[0]) && (
@@ -245,7 +246,7 @@ export default function PrescriptionScreen() {
                           </View>
                         </View>
                         <View style={styles.workoutNameRow}>
-                          <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
+                          <Text style={flattenStyle([styles.workoutName, { flex: 1 }])} numberOfLines={2}>{workout.name}</Text>
                           <Text style={styles.unlockProText}>UNLOCK PRO →</Text>
                         </View>
                         <Text style={styles.workoutVibe}>{workout.vibe}</Text>
@@ -276,7 +277,7 @@ export default function PrescriptionScreen() {
                         </View>
                       </View>
                       <View style={styles.workoutNameRow}>
-                        <Text style={flattenStyle([styles.workoutName, { flex: 1 }])}>{workout.name}</Text>
+                        <Text style={flattenStyle([styles.workoutName, { flex: 1 }])} numberOfLines={2}>{workout.name}</Text>
                         <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
                       </View>
                       {getWorkoutBadge(sessions, workout) && (

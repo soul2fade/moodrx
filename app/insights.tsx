@@ -149,6 +149,7 @@ export default function InsightsScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >

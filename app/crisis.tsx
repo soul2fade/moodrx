@@ -100,6 +100,7 @@ export default function CrisisScreen() {
           onPress={() => router.back()}
           activeOpacity={0.7}
           style={styles.backBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >

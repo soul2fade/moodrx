@@ -23,6 +23,7 @@ export const colors = {
   textDark: '#3a3a3a',
 
   // Semantic
+  accent: '#10B981',   // brand/chrome accent (emerald)
   success: '#059669',
   warning: '#D97706',
   danger: '#E11D48',

@@ -18,7 +18,9 @@ export function createSessionId(): string {
 
 /** Format mood intensity change: negative delta = improvement (feeling better). */
 export function formatSessionDelta(intensity: number, postScore: number): string {
-  const delta = postScore - intensity;
+  // Round to 1 decimal: the subtraction can introduce float artifacts
+  // (e.g. 3.8 - 5 = -1.2000000000000002) when called with fractional averages.
+  const delta = Math.round((postScore - intensity) * 10) / 10;
   if (delta > 0) return `+${delta}`;
   return String(delta);
 }

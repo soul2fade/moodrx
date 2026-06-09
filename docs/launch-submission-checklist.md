@@ -18,7 +18,7 @@
 ## 0. Prerequisites (do once)
 
 - ☐ Apple Developer Program membership active (have it).
-- ☐ Google Play Developer account active (one-time $25). 🔎 If this is a **personal/individual** account created after **2023-11-13**, Google requires **closed testing with ≥12 testers for 14 days** before you can release to production. This can add ~2 weeks — check now (see Landmines L4).
+- ✅ Google Play Developer account active **with production-track access already granted** — the 12-tester / 14-day closed-testing gate does **not** apply to this account. (Longest remaining Android pole is now the Health Connect review — see L2.)
 - ☐ **Privacy Policy** hosted at a stable public URL. Must cover: mood check-ins, health data (steps/sleep/exercise), on-device storage, no account, subscription billing, and how to delete data. *Required by both stores; health data makes it mandatory.*
 - ☐ **Terms of Use / EULA** hosted at a stable URL (Apple requires this for auto-renewing subscriptions — see L1).
 - ☐ **Support URL** (a simple contact/support page or email-backed page).
@@ -70,14 +70,14 @@
 5. ☐ **Target audience & content** (age groups).
 6. ☐ **App access:** select **"All functionality available without special access"** (no login). 
 7. ☐ ⚠️ **Data safety form** (App content → Data safety): declare data collected/shared, that it's stored on-device, **not shared**, encrypted in transit if any network calls, and that the user **can request deletion** (your in-app reset). Must match the privacy policy. Health data = sensitive.
-8. ☐ ⚠️ **Health Connect declaration** (App content → Health apps / sensitive permissions): you request `READ_STEPS/READ_SLEEP/READ_EXERCISE/WRITE_EXERCISE`. Complete the Health Connect/health-permissions form, justify each permission, link the privacy policy, and 🔎 be ready for a **demo video** of the health features (see L2).
+8. ☐ ⚠️ **Health Connect declaration — LEAD ANDROID ITEM** (App content → Health apps / sensitive permissions): you request `READ_STEPS/READ_SLEEP/READ_EXERCISE/WRITE_EXERCISE`. Complete the Health Connect/health-permissions form, justify each permission, link the privacy policy, and 🔎 be ready for a **demo video** of the health features (see L2). With closed-testing no longer a gate, this review is now the longest pole on Android — start it first. Ready-to-paste justifications: see `docs/play-health-and-data-safety.md`.
 9. ☐ **Privacy policy URL** (App content).
 10. ☐ **Ads declaration:** "No ads" (assuming none).
 11. ☐ **Government/health declarations** if prompted (it's a wellness app, not a regulated medical device — answer accordingly).
 12. ☐ **Subscriptions (IAP):** Monetize → **Subscriptions** → create product(s) with base plans/offers, matching the ids RevenueCat expects.
    - ☐ In **RevenueCat**: add the Play app, upload the **service-account JSON**, map product ids to offerings/entitlements.
 13. ☐ Pricing & **countries/regions**.
-14. ☐ 🔎 **Closed testing first if required** (new personal accounts — L4): create a closed track, add ≥12 testers, run 14 days, then apply for production access.
+14. ✅ **Closed testing — not required.** This account already has production-track access (L4 resolved); go straight to a production release.
 15. ☐ Create a **Production release**, attach the build, add release notes, **review & roll out** (start at a staged % if you like).
 
 ---
@@ -87,7 +87,7 @@
 - **L1 — Apple subscription legal text (⚠️ high-risk):** auto-renewable subs require, *in the app's paywall and in the App Store description*, links to **Privacy Policy** and **Terms (EULA)** plus a clear price/period/auto-renew disclosure. Verify the in-app paywall (`lib/revenuecat.tsx` / premium screen) shows these before submitting.
 - **L2 — Health permissions justification (both):** Apple checks HealthKit usage strings (present in `app.json`) and that health data isn't monetized/advertised; Google's Health Connect review may want a **screen-recording** showing exactly how each health permission is used. Have a 30–60s demo ready.
 - **L3 — Privacy/Data-Safety accuracy:** the App Store privacy labels and Play Data Safety form must agree with each other **and** with the privacy policy. Mismatches are a frequent, avoidable rejection. Since data is on-device with no account, keep it honest and minimal.
-- **L4 — Play closed-testing gate (🔎 schedule risk):** personal Play accounts created after 2023-11-13 must run **12-tester / 14-day closed testing** before production. If that's you, start this **now** — it's the longest pole on the Android side.
+- **L4 — Play closed-testing gate: ✅ N/A for this account.** Production-track access is already granted, so the 12-tester / 14-day requirement does not apply. The longest Android pole is now the **Health Connect review (L2)** — start that form first.
 - **L5 — Mental-health content:** include a visible disclaimer that MoodRx is **not medical advice** and surface crisis resources (you already have a crisis screen). Reviewers look for this in wellness/mental-health apps.
 - **L6 — Production build ≠ TestFlight build:** you've only run `development`/TestFlight on iOS. Smoke-test a **production** build of each platform once (paywall purchase in sandbox, health prompts, widget) before submitting.
 

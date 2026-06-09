@@ -24,7 +24,7 @@ export const colors = {
 
   // Semantic
   accent: '#10B981',   // brand/chrome accent (emerald)
-  success: '#059669',
+  success: '#059669',  // positive state / health metric (distinct from accent)
   warning: '#D97706',
   danger: '#E11D48',
   info: '#5EAAB5',

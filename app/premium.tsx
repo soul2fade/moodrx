@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   statusBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   trialBadge: {
     borderColor: colors.premium,
-    backgroundColor: 'rgba(232, 184, 75, 0.08)',
+    backgroundColor: `${colors.premium}14`, // ~8% premium wash
   },
   trialBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   expiredBadge: {

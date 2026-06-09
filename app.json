@@ -111,7 +111,8 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "./plugins/withStripUnusedAudioPermissions"
     ],
     "experiments": {
       "typedRoutes": true

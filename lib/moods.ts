@@ -24,7 +24,7 @@ export const MOODS: Record<MoodKey, MoodData> = {
     name: 'Low',
     code: 'LOW',
     description: 'Everything is heavy',
-    color: '#6366F1',
+    color: '#7B7DF5',
     drMoodRx: "Your brain's running on power-saving mode. Time to force a reboot.",
   },
   foggy: {
@@ -48,7 +48,7 @@ export const MOODS: Record<MoodKey, MoodData> = {
     name: 'Stressed',
     code: 'STR',
     description: "One more thing and I'm done",
-    color: '#E11D48',
+    color: '#F2547D',
     drMoodRx: "Your shoulders are up by your ears like they're trying to escape. We'll fix that.",
   },
   good: {

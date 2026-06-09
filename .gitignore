@@ -36,6 +36,9 @@ distribution.csr.txt
 .claude/settings.local.json
 docs/moodrx-youtube-ep1-script.docx
 
+# Brainstorming visual-companion mockups (local only)
+.superpowers/
+
 # CatDoes metadata (managed automatically)
 .catdoes/
 

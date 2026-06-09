@@ -20,7 +20,7 @@
 
 **Key facts:** no accounts/login; mood + health data are processed **on-device only**; the **only** off-device transmission is purchase/subscription data to RevenueCat. Users can erase all app data in-app (Settings → reset, `lib/reset-app.ts`).
 
-> **Crash/diagnostics:** the CatDoes Watch SDK is present but **disabled for v1** (`catdoes.watch.ts` early-returns before any initialization), so no diagnostics leave the device. The table above correctly shows no diagnostics row. If CatDoes is re-enabled later, declare 'Diagnostics' in App Privacy (iOS) and Play Data Safety (Android) and name CatDoes in the privacy policy.
+> **Crash/diagnostics:** no third-party analytics or crash SDK is bundled (CatDoes Watch was removed), so no diagnostics leave the device. The table above correctly shows no diagnostics row. OS-level crash reporting via Play Vitals / App Store Connect is aggregated by the platform and needs no privacy declaration.
 
 ---
 

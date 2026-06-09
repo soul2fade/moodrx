@@ -25,6 +25,7 @@ import { useSessions } from '@/contexts/SessionsContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { createSessionId, formatSessionDelta } from '@/lib/session-utils';
+import { colors } from '@/lib/colors';
 
 export default function BadDayScreen() {
   const params = useLocalSearchParams<{ mood?: string; intensity?: string }>();
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 48 },
   backButton: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
-  label: { ...t.label, color: '#E8B84B', letterSpacing: 3, marginTop: 24 },
+  label: { ...t.label, color: colors.accent, letterSpacing: 3, marginTop: 24 },
   headline: { ...t.headline, fontSize: 26, marginTop: 8 },
   subtext: { ...t.bodyMuted, marginTop: 12, lineHeight: 22 },
   moodSection: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 20 },

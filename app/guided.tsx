@@ -18,6 +18,7 @@ import { flattenStyle } from '@/utils/flatten-style';
 import { type as t } from '@/lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useSessions } from '@/contexts/SessionsContext';
+import { colors } from '@/lib/colors';
 
 export default function GuidedScreen() {
   const { sessionCount } = useSessions();
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   scroll: { flex: 1 },
   content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 48 },
-  stepLabel: { ...t.label, color: '#E8B84B', letterSpacing: 3 },
+  stepLabel: { ...t.label, color: colors.accent, letterSpacing: 3 },
   headline: { ...t.headline, fontSize: 28, marginTop: 12 },
   divider: { width: 32, height: 1, backgroundColor: '#333333', marginVertical: 20 },
   subtext: { ...t.bodyMuted, fontSize: 15, lineHeight: 22 },

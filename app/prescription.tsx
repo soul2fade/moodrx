@@ -26,6 +26,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { getDrMoodRxLine } from '@/utils/dr-moodrx';
+import { colors } from '@/lib/colors';
 
 type Tab = 'workouts' | 'stack';
 
@@ -657,7 +658,7 @@ const styles = StyleSheet.create({
   },
   workoutBadge: {
     ...t.label,
-    color: '#E8B84B',
+    color: colors.accent,
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,

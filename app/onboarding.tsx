@@ -12,6 +12,7 @@ import { getFirstLaunchDone, setFirstLaunchDone } from '@/lib/storage';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { colors } from '@/lib/colors';
 
 const STEPS = [
   {
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
   },
   stepNum: {
     ...t.number,
-    color: '#E8B84B',
+    color: colors.accent,
     paddingTop: 2,
     minWidth: 28,
   },
@@ -354,12 +355,12 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 20,
     borderLeftWidth: 2,
-    borderLeftColor: '#E8B84B',
+    borderLeftColor: colors.accent,
     paddingLeft: 16,
   },
   trialBannerLabel: {
     ...t.label,
-    color: '#E8B84B',
+    color: colors.accent,
     letterSpacing: 3,
   },
   trialBannerSub: {

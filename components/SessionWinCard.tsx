@@ -15,6 +15,7 @@ import {
   isMoodImprovement,
 } from '@/lib/session-utils';
 import { type as t } from '@/lib/typography';
+import { colors } from '@/lib/colors';
 
 interface SessionWinCardProps {
   visible: boolean;
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...t.label,
-    color: '#E8B84B',
+    color: colors.accent,
     letterSpacing: 3,
     textAlign: 'center',
   },

@@ -995,7 +995,7 @@ const styles = StyleSheet.create({
   },
   whatWorksLabel: {
     ...t.label,
-    color: '#E8B84B',
+    color: colors.accent,
     letterSpacing: 3,
     marginBottom: 12,
   },

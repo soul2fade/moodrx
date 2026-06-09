@@ -43,6 +43,7 @@ import {
   requestHealthPermissions,
   setHealthSyncEnabled,
 } from '@/lib/health';
+import { colors } from '@/lib/colors';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
@@ -477,9 +478,9 @@ export default function SettingsScreen() {
             step={0.05}
             value={trashTalkVolume}
             onValueChange={handleTrashTalkVolumeChange}
-            minimumTrackTintColor="#E8B84B"
+            minimumTrackTintColor={colors.accent}
             maximumTrackTintColor="#1a1a1a"
-            thumbTintColor="#E8B84B"
+            thumbTintColor={colors.accent}
             accessibilityLabel={`Trash talk volume ${Math.round(trashTalkVolume * 100)} percent`}
             accessibilityRole="adjustable"
           />
@@ -806,15 +807,15 @@ const styles = StyleSheet.create({
   },
   subStatusLabel: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   subStatusBadge: { alignSelf: 'flex-start' },
-  trialDaysText: { ...t.bodySm, color: '#E8B84B', marginTop: 4 },
+  trialDaysText: { ...t.bodySm, color: colors.premium, marginTop: 4 },
   expiredText: { ...t.bodySm, color: '#ffffff', marginTop: 4 },
   proBadge: {
     borderWidth: 1,
-    borderColor: '#E8B84B',
+    borderColor: colors.premium,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  proBadgeText: { ...t.label, color: '#E8B84B', letterSpacing: 2 },
+  proBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   upgradeBtn: {
     borderWidth: 1,
     borderColor: '#ffffff',
@@ -822,7 +823,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   upgradeBtnUrgent: {
-    borderColor: '#E8B84B',
+    borderColor: colors.premium,
   },
   upgradeBtnText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   toggleRow: {
@@ -895,7 +896,7 @@ const styles = StyleSheet.create({
   },
   volumeValue: {
     ...t.label,
-    color: '#E8B84B',
+    color: colors.accent,
     width: 44,
     letterSpacing: 1,
   },

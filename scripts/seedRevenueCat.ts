@@ -29,16 +29,17 @@ import {
 
 const PROJECT_NAME = 'MoodRx';
 
-// NOTE: product identifiers retain their original "_699"/"_4999" names on purpose —
-// store product IDs are immutable once created. The actual prices live in
-// *_PRICES below and in the stores; the number in the ID is just a label.
-const MONTHLY_IDENTIFIER = 'moodrx_monthly_699';
-const MONTHLY_PLAY_IDENTIFIER = 'moodrx_monthly_699:monthly';
+// Price-agnostic product IDs (store IDs are immutable, so they must NOT embed a
+// price). Prices live in *_PRICES below and in the stores. These IDs must match
+// the products created in App Store Connect + Play, and be attached to the
+// $rc_monthly / $rc_annual packages in RevenueCat's default offering.
+const MONTHLY_IDENTIFIER = 'moodrx_pro_monthly';
+const MONTHLY_PLAY_IDENTIFIER = 'moodrx_pro_monthly:monthly';
 const MONTHLY_DISPLAY_NAME = 'MoodRx Pro Monthly';
 const MONTHLY_TITLE = 'MoodRx Pro Monthly';
 
-const YEARLY_IDENTIFIER = 'moodrx_yearly_4999';
-const YEARLY_PLAY_IDENTIFIER = 'moodrx_yearly_4999:yearly';
+const YEARLY_IDENTIFIER = 'moodrx_pro_yearly';
+const YEARLY_PLAY_IDENTIFIER = 'moodrx_pro_yearly:yearly';
 const YEARLY_DISPLAY_NAME = 'MoodRx Pro Yearly';
 const YEARLY_TITLE = 'MoodRx Pro Yearly';
 

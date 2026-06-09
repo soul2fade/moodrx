@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { type as t } from '@/lib/typography';
+import { colors } from '@/lib/colors';
 
 interface PremiumSheetProps {
   visible: boolean;
@@ -141,19 +142,19 @@ const styles = StyleSheet.create({
   },
   trialNote: {
     borderLeftWidth: 2,
-    borderLeftColor: '#E8B84B',
+    borderLeftColor: colors.premium,
     paddingLeft: 12,
     paddingVertical: 8,
     marginBottom: 20,
   },
   trialLabel: {
     ...t.label,
-    color: '#E8B84B',
+    color: colors.premium,
     letterSpacing: 2,
   },
   yearlyButton: {
     borderWidth: 1,
-    borderColor: '#E8B84B',
+    borderColor: colors.premium,
     paddingVertical: 16,
     paddingHorizontal: 20,
     marginBottom: 12,
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     right: 16,
-    backgroundColor: '#E8B84B',
+    backgroundColor: colors.premium,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   },
   planPrice: {
     ...t.headlineSm,
-    color: '#E8B84B',
+    color: colors.premium,
   },
   planSub: {
     ...t.bodySm,

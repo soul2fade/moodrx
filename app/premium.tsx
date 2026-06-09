@@ -13,6 +13,7 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useSessions } from '@/contexts/SessionsContext';
 import { formatSessionDelta } from '@/lib/session-utils';
 import { type as t, fonts } from '@/lib/typography';
+import { colors } from '@/lib/colors';
 
 const FEATURES = [
   '18 science-backed workouts',
@@ -218,24 +219,24 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 32 },
   backButton: { ...t.label, color: '#ffffff', letterSpacing: 2 },
-  proLabel: { ...t.label, color: '#E8B84B', letterSpacing: 4, marginTop: 24 },
+  proLabel: { ...t.label, color: colors.premium, letterSpacing: 4, marginTop: 24 },
   headline: { ...t.headline, fontSize: 32, marginTop: 8 },
   divider: { width: 32, height: 1, backgroundColor: '#333333', marginVertical: 20 },
   subtext: { ...t.bodyMuted, color: '#ffffff' },
   statusBadge: {
     borderWidth: 1,
-    borderColor: '#E8B84B',
+    borderColor: colors.premium,
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginTop: 16,
     alignSelf: 'flex-start',
   },
-  statusBadgeText: { ...t.label, color: '#E8B84B', letterSpacing: 2 },
+  statusBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   trialBadge: {
-    borderColor: '#E8B84B',
+    borderColor: colors.premium,
     backgroundColor: 'rgba(232, 184, 75, 0.08)',
   },
-  trialBadgeText: { ...t.label, color: '#E8B84B', letterSpacing: 2 },
+  trialBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   expiredBadge: {
     borderColor: '#999999',
   },
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
-  checkmark: { ...t.label, color: '#E8B84B', fontSize: 14, paddingTop: 1 },
+  checkmark: { ...t.label, color: colors.premium, fontSize: 14, paddingTop: 1 },
   featureText: { ...t.body, flex: 1 },
   trialButton: {
     borderWidth: 1,
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
   pricingLabel: { ...t.label, color: '#ffffff', letterSpacing: 3, marginBottom: 16 },
   yearlyCard: {
     borderWidth: 1,
-    borderColor: '#E8B84B',
+    borderColor: colors.premium,
     paddingVertical: 18,
     paddingHorizontal: 20,
     marginBottom: 12,
@@ -305,13 +306,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     right: 16,
-    backgroundColor: '#E8B84B',
+    backgroundColor: colors.premium,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   // eslint-disable-next-line local/no-dark-text-color
   bestValueText: { ...t.label, color: '#0a0a0a', fontSize: 12, lineHeight: 17, letterSpacing: 1 },
-  yearlyPrice: { ...t.headlineMd, color: '#E8B84B' },
+  yearlyPrice: { ...t.headlineMd, color: colors.premium },
   yearlyPer: { ...t.bodyMuted, color: '#ffffff', fontSize: 16 },
   yearlySub: { ...t.bodySm, color: '#ffffff', marginTop: 4 },
   monthlyCard: {

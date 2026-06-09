@@ -338,8 +338,8 @@ export async function scheduleCheckinReminders(
     }
 
     await AsyncStorage.setItem(CHECKIN_NOTIF_IDS_KEY, JSON.stringify(ids));
-  } catch {
-    // silently fail — Expo Go or permissions not granted
+  } catch (e) {
+    console.warn('[MoodRx] scheduleCheckinReminders failed:', e);
   }
 }
 
@@ -383,8 +383,8 @@ export async function rescheduleAfterSession(sessions: Session[]): Promise<void>
         await scheduleSupplementReminder(preset.hour, preset.minute);
       }
     }
-  } catch {
-    // ignore — permissions may not be granted
+  } catch (e) {
+    console.warn('[MoodRx] rescheduleAfterSession failed:', e);
   }
 }
 
@@ -430,8 +430,8 @@ export async function scheduleTrialNudges(trialStartMs: number): Promise<void> {
     if (ids.length > 0) {
       await AsyncStorage.setItem(TRIAL_NOTIF_IDS_KEY, JSON.stringify(ids));
     }
-  } catch {
-    // permissions may not be granted
+  } catch (e) {
+    console.warn('[MoodRx] scheduleTrialNudges failed:', e);
   }
 }
 
@@ -521,8 +521,8 @@ export async function scheduleSupplementReminder(hour: number, minute: number): 
       },
     });
     await AsyncStorage.setItem(SUPPLEMENT_NOTIF_ID_KEY, id);
-  } catch {
-    // silently fail
+  } catch (e) {
+    console.warn('[MoodRx] scheduleSupplementReminder failed:', e);
   }
 }
 

@@ -24,6 +24,10 @@ import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { SessionsProvider } from "@/contexts/SessionsContext";
 import { initializeRevenueCat } from "@/lib/revenuecat";
 
+/** Routes that notification `data.route` is allowed to navigate to.
+ *  Prevents a stale/renamed route string from pushing to a dead screen. */
+const ALLOWED_NOTIF_ROUTES = ['/home'];
+
 // Show notifications while app is in the foreground.
 // Stays at module top-level (not inside useEffect) so the handler is
 // registered synchronously at module load — before any notification
@@ -80,7 +84,7 @@ export default function RootLayout() {
     const goToRoute = (response: Notifications.NotificationResponse | null) => {
       const data = response?.notification?.request?.content?.data;
       const route = data && typeof data.route === "string" ? data.route : null;
-      if (route) router.navigate(route as Href);
+      if (route && ALLOWED_NOTIF_ROUTES.includes(route)) router.navigate(route as Href);
     };
     Notifications.getLastNotificationResponseAsync()
       .then(goToRoute)

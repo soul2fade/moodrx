@@ -29,6 +29,9 @@ import {
 
 const PROJECT_NAME = 'MoodRx';
 
+// NOTE: product identifiers retain their original "_699"/"_4999" names on purpose —
+// store product IDs are immutable once created. The actual prices live in
+// *_PRICES below and in the stores; the number in the ID is just a label.
 const MONTHLY_IDENTIFIER = 'moodrx_monthly_699';
 const MONTHLY_PLAY_IDENTIFIER = 'moodrx_monthly_699:monthly';
 const MONTHLY_DISPLAY_NAME = 'MoodRx Pro Monthly';
@@ -56,8 +59,8 @@ const MONTHLY_PACKAGE_DISPLAY_NAME = 'Monthly';
 const YEARLY_PACKAGE_IDENTIFIER = '$rc_annual';
 const YEARLY_PACKAGE_DISPLAY_NAME = 'Yearly';
 
-const MONTHLY_PRICES = [{ amount_micros: 6990000, currency: 'USD' }];
-const YEARLY_PRICES = [{ amount_micros: 49990000, currency: 'USD' }];
+const MONTHLY_PRICES = [{ amount_micros: 5990000, currency: 'USD' }];
+const YEARLY_PRICES = [{ amount_micros: 44990000, currency: 'USD' }];
 
 interface TestStorePricesResponse {
   object: string;

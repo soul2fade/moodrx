@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  useWindowDimensions,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
@@ -102,6 +103,10 @@ const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
 
 export default function WorkoutScreen() {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+  // Coach video: big like before (up to 400), but never wider than the screen
+  // so it doesn't overflow on narrow phones (24pt side padding each side).
+  const coachSize = Math.min(screenWidth - 48, 400);
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -559,7 +564,7 @@ export default function WorkoutScreen() {
           mood={mood}
           step={Math.min(3, Math.floor((currentStep / Math.max(totalSteps, 1)) * 4))}
           phraseKey={currentStep}
-          figureSize={300}
+          figureSize={coachSize}
           accentColor={accentColor}
         />
         )}

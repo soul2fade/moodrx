@@ -16,18 +16,33 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const RESOURCES = [
+type Resource = {
+  title: string;
+  detail: string;
+  number: string;
+  url?: string;
+  action: 'CALL' | 'COPY NUMBER' | 'OPEN DIRECTORY';
+};
+
+const RESOURCES: Resource[] = [
+  {
+    title: 'Find a helpline in your country',
+    detail: 'findahelpline.com — local crisis lines worldwide',
+    number: 'findahelpline',
+    url: 'https://findahelpline.com',
+    action: 'OPEN DIRECTORY',
+  },
   {
     title: '988 Suicide & Crisis Lifeline',
     detail: 'Call or text 988 (US)',
     number: '988',
-    action: 'CALL' as const,
+    action: 'CALL',
   },
   {
     title: 'Crisis Text Line',
     detail: 'Text HOME to 741741 (US)',
     number: '741741',
-    action: 'COPY NUMBER' as const,
+    action: 'COPY NUMBER',
   },
 ];
 
@@ -57,7 +72,31 @@ export default function CrisisScreen() {
     }
   }, []);
 
-  const handleAction = async (resource: typeof RESOURCES[number]) => {
+  const handleAction = async (resource: Resource) => {
+    if (resource.action === 'OPEN DIRECTORY' && resource.url) {
+      const url = resource.url;
+      // Same graceful-degradation contract as CALL below: probe canOpenURL
+      // first, and if the link can't be opened (or throws), copy the address
+      // to the clipboard and tell the user where to go. A silent failure on
+      // the crisis screen is the worst-case outcome.
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          await Linking.openURL(url);
+          return;
+        }
+      } catch {
+        // canOpenURL/openURL can throw on some platforms; treat as "can't open"
+      }
+      const copied = await copyNumber(url);
+      Alert.alert(
+        "Couldn't open the link",
+        copied
+          ? `${url} has been copied to your clipboard. Open it in your browser to find a crisis helpline in your country.`
+          : `Open ${url} in your browser to find a crisis helpline in your country.`,
+      );
+      return;
+    }
     if (resource.action === 'CALL') {
       const url = `tel:${resource.number}`;
       // High-stakes context — silent failure is not acceptable. Probe
@@ -120,6 +159,11 @@ export default function CrisisScreen() {
 
         <View style={styles.divider} />
 
+        {/* Local emergency services — plain text so it can never fail */}
+        <Text style={styles.emergencyText}>
+          In immediate danger? Call your local emergency number — 911 (US/CA) · 112 (EU) · 999 (UK) · 000 (AU).
+        </Text>
+
         {/* Resource cards */}
         {RESOURCES.map((resource) => (
           <View key={resource.number} style={styles.card}>
@@ -130,7 +174,7 @@ export default function CrisisScreen() {
               activeOpacity={0.8}
               style={styles.actionBtn}
               accessibilityRole="button"
-              accessibilityLabel={`${resource.action} ${resource.number}`}
+              accessibilityLabel={`${resource.action} — ${resource.title}`}
             >
               <Text style={styles.actionBtnText}>
                 {copiedNumber === resource.number ? 'COPIED ✓' : resource.action}
@@ -201,6 +245,13 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#333333',
     marginTop: 20,
+    marginBottom: 28,
+  },
+  emergencyText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    color: '#ffffff',
+    lineHeight: 22,
     marginBottom: 28,
   },
   card: {

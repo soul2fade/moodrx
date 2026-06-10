@@ -39,7 +39,7 @@ const MONTHLY_DISPLAY_NAME = 'MoodRx Pro Monthly';
 const MONTHLY_TITLE = 'MoodRx Pro Monthly';
 
 const YEARLY_IDENTIFIER = 'moodrx_pro_yearly';
-const YEARLY_PLAY_IDENTIFIER = 'moodrx_pro_yearly:yearly';
+const YEARLY_PLAY_IDENTIFIER = 'moodrx_pro_yearly:annual';
 const YEARLY_DISPLAY_NAME = 'MoodRx Pro Yearly';
 const YEARLY_TITLE = 'MoodRx Pro Yearly';
 

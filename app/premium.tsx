@@ -7,6 +7,8 @@ import {
   StyleSheet,
   Animated,
   BackHandler,
+  Linking,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
@@ -74,6 +76,12 @@ export default function PremiumScreen() {
   const yearlyPrice = yearlyPkg?.product?.priceString ?? '$44.99';
   const hasPersonalStats = sessionCount >= 3;
   const personalDeltaLabel = formatSessionDelta(5, 5 + Math.round(avgChange * 10) / 10);
+
+  const openURL = (url: string) => {
+    void Linking.openURL(url).catch(() =>
+      Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')
+    );
+  };
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: '#0a0a0a', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -201,6 +209,35 @@ export default function PremiumScreen() {
             <Text style={styles.cancelNote}>Cancel anytime. No commitment.</Text>
           </>
         ) : null}
+
+        <View style={styles.legalBlock}>
+          <Text style={styles.legalDisclosure}>
+            MoodRx Pro is {yearlyPrice}/year or {monthlyPrice}/month. Your 7-day free trial
+            converts to a paid {yearlyPrice}/year subscription unless you cancel at least 24 hours
+            before it ends. Subscriptions auto-renew at the price shown until cancelled. Payment is
+            charged to your App Store or Google Play account at confirmation, and you can manage or
+            cancel anytime in your account settings.
+          </Text>
+          <View style={styles.legalLinksRow}>
+            <TouchableOpacity
+              onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
+              activeOpacity={0.7}
+              accessibilityRole="link"
+              accessibilityLabel="Terms of Use"
+            >
+              <Text style={styles.legalLinkText}>TERMS OF USE</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalDot}>·</Text>
+            <TouchableOpacity
+              onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
+              activeOpacity={0.7}
+              accessibilityRole="link"
+              accessibilityLabel="Privacy Policy"
+            >
+              <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <TouchableOpacity
           onPress={restorePurchases}
@@ -336,6 +373,17 @@ const styles = StyleSheet.create({
   },
   ctaText: { ...t.button, letterSpacing: 3 },
   cancelNote: { ...t.softMuted, textAlign: 'center', marginBottom: 16 },
+  legalBlock: { marginTop: 8, marginBottom: 8 },
+  legalDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 17 },
+  legalLinksRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 14,
+  },
+  legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
+  legalDot: { ...t.softMuted },
   restoreButton: { alignItems: 'center', paddingVertical: 8 },
   restoreText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
 });

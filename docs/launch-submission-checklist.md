@@ -68,14 +68,15 @@
 3. ☐ **Store listing:** title, short + full description, **512 icon**, **1024×500 feature graphic**, screenshots (incl. widget + tablet).
 4. ☐ **Content rating** (IARC questionnaire) — answer for mental-health themes.
 5. ☐ **Target audience & content** (age groups).
-6. ☐ **App access:** select **"All functionality available without special access"** (no login). 
+6. ☐ ⚠️ **App access / Sign in details:** the app has no login, BUT **Pro is paywalled**, so do **not** select "All functionality available without special access". Instead choose **"All or some functionality is restricted"** and provide reviewer instructions containing a **Google Play subscription promo code** that unlocks Pro (the only way reviewers can reach paid content — see item 12). ⚠️ The promo code can only be generated **after** the subscription products exist (item 12), so this field currently holds a placeholder `[PROMO CODE — to be added]` that **MUST be replaced with the real code before submitting** or the app may be rejected.
 7. ☐ ⚠️ **Data safety form** (App content → Data safety): declare data collected/shared, that it's stored on-device, **not shared**, encrypted in transit if any network calls, and that the user **can request deletion** (your in-app reset). Must match the privacy policy. Health data = sensitive. Crash/diagnostics: no third-party analytics/crash SDK is bundled (CatDoes Watch was removed), so no diagnostics leave the device — do **not** declare 'Diagnostics' in the Data Safety form. (OS-level crash reporting via Play Vitals needs no Data Safety declaration.)
-8. ☐ ⚠️ **Health Connect declaration — LEAD ANDROID ITEM** (App content → Health apps / sensitive permissions): you request `READ_STEPS/READ_SLEEP/READ_EXERCISE/WRITE_EXERCISE`. Complete the Health Connect/health-permissions form, justify each permission, link the privacy policy, and 🔎 be ready for a **demo video** of the health features (see L2). With closed-testing no longer a gate, this review is now the longest pole on Android — start it first. Ready-to-paste justifications: see `docs/play-health-and-data-safety.md`.
+8. ☐ ⚠️ **Health Connect declaration — LEAD ANDROID ITEM** (App content → Health apps / sensitive permissions): you request `READ_STEPS/READ_SLEEP/WRITE_EXERCISE` (the unused `READ_EXERCISE` was removed from `app.json`). Complete the Health Connect/health-permissions form, justify each permission, link the privacy policy, and 🔎 be ready for a **demo video** of the health features (see L2). With closed-testing no longer a gate, this review is now the longest pole on Android — start it first. Ready-to-paste justifications: see `docs/play-health-and-data-safety.md`.
 9. ☐ **Privacy policy URL** (App content).
 10. ☐ **Ads declaration:** "No ads" (assuming none).
 11. ☐ **Government/health declarations** if prompted (it's a wellness app, not a regulated medical device — answer accordingly).
-12. ☐ **Subscriptions (IAP):** Monetize → **Subscriptions** → create product(s) with base plans/offers, matching the ids RevenueCat expects.
+12. ☐ **Subscriptions (IAP):** Monetize → **Subscriptions** → create product(s) with base plans/offers, matching the ids RevenueCat expects (`moodrx_pro_monthly` $5.99 / `moodrx_pro_yearly` $44.99).
    - ☐ In **RevenueCat**: add the Play app, upload the **service-account JSON**, map product ids to offerings/entitlements.
+   - ☐ ⚠️ **Generate a subscription promo code** (Monetize → Promo codes / the subscription's promotions) that unlocks Pro, then **paste it into App access → Sign in details**, replacing the `[PROMO CODE — to be added]` placeholder (item 6). Reviewer-blocking — must be done before submission.
 13. ☐ Pricing & **countries/regions**.
 14. ✅ **Closed testing — not required.** This account already has production-track access (L4 resolved); go straight to a production release.
 15. ☐ Create a **Production release**, attach the build, add release notes, **review & roll out** (start at a staged % if you like).
@@ -96,8 +97,9 @@
 ## 5. Final submit sequence (once the above is filled in)
 
 1. ☐ Privacy policy + EULA URLs live.
-2. ☐ iOS: production build uploaded · IAP attached · privacy/age/review-notes done · **Submit for Review**.
-3. ☐ Android: production AAB uploaded · Data Safety + Health declaration + content rating done · (closed testing satisfied if required) · **Roll out to Production**.
+2. ☐ ⚠️ **BLOCKER — Play reviewer promo code:** App content → *Sign in details* declares **Yes** (Pro is a paid access tier). The reviewer instructions contain a placeholder `[PROMO CODE — to be added]`. Before submitting: create the subscriptions (Monetize → Subscriptions), generate a **one-time-use subscription promo code** (Monetize → Promotions), self-test that redeeming it unlocks Pro via RevenueCat on a production build, then paste the real code into Sign in details. Do **not** submit with the placeholder — reviewers have no login and cannot otherwise reach paid content → likely rejection.
+3. ☐ iOS: production build uploaded · IAP attached · privacy/age/review-notes done · **Submit for Review**.
+4. ☐ Android: production AAB uploaded · Data Safety + Health declaration + content rating done · **Sign in details promo code pasted (item 2)** · **Roll out to Production**.
 4. ☐ Pitch each store's editorial team (App Store: *Featuring nomination* form; Play: *Editorial* via your Play contact) — highlight the widget + themed icon + platform integration, per the featuring roadmap.
 
 ---

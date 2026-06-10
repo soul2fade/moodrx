@@ -6,6 +6,8 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  Linking,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { getFirstLaunchDone, setFirstLaunchDone } from '@/lib/storage';
@@ -68,6 +70,12 @@ export default function OnboardingScreen() {
     await setFirstLaunchDone();
     router.replace('/guided');
   }, []);
+
+  const openURL = (url: string) => {
+    void Linking.openURL(url).catch(() =>
+      Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')
+    );
+  };
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -166,6 +174,32 @@ export default function OnboardingScreen() {
             >
               <Text style={styles.freeButtonText}>CONTINUE WITH FREE VERSION</Text>
             </TouchableOpacity>
+
+            <Text style={styles.subDisclosure}>
+              Your 7-day free trial converts to MoodRx Pro at $44.99/year unless you cancel at
+              least 24 hours before it ends. The subscription auto-renews at $44.99/year until
+              cancelled. Payment is charged to your App Store or Google Play account at
+              confirmation; manage or cancel anytime in your account settings.
+            </Text>
+            <View style={styles.legalLinksRow}>
+              <TouchableOpacity
+                onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
+                activeOpacity={0.7}
+                accessibilityRole="link"
+                accessibilityLabel="Terms of Use"
+              >
+                <Text style={styles.legalLinkText}>TERMS OF USE</Text>
+              </TouchableOpacity>
+              <Text style={styles.legalDot}>·</Text>
+              <TouchableOpacity
+                onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
+                activeOpacity={0.7}
+                accessibilityRole="link"
+                accessibilityLabel="Privacy Policy"
+              >
+                <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
+              </TouchableOpacity>
+            </View>
           </>
         ) : (
           <Animated.View style={{ transform: [{ scale: trialScale }] }}>
@@ -398,6 +432,16 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 2,
   },
+  subDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 16, marginTop: 16 },
+  legalLinksRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+  },
+  legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
+  legalDot: { ...t.softMuted },
   disclaimer: {
     ...t.label,
     fontFamily: fonts.mono.regular,

@@ -6,6 +6,8 @@ import {
   Modal,
   StyleSheet,
   Pressable,
+  Linking,
+  Alert,
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { type as t } from '@/lib/typography';
@@ -32,6 +34,12 @@ export function PremiumSheet({
 
   const monthlyPrice = monthlyPkg?.product?.priceString ?? '$5.99';
   const yearlyPrice = yearlyPkg?.product?.priceString ?? '$44.99';
+
+  const openURL = (url: string) => {
+    void Linking.openURL(url).catch(() =>
+      Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')
+    );
+  };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -87,6 +95,32 @@ export function PremiumSheet({
         >
           <Text style={styles.monthlyPrice}>{monthlyPrice} / month</Text>
         </TouchableOpacity>
+
+        <Text style={styles.subDisclosure}>
+          MoodRx Pro is {yearlyPrice}/year or {monthlyPrice}/month. The 7-day free trial converts
+          to {yearlyPrice}/year unless cancelled at least 24 hours before it ends. Subscriptions
+          auto-renew at the price shown until cancelled; payment is charged to your App Store or
+          Google Play account at confirmation. Manage or cancel anytime in your account settings.
+        </Text>
+        <View style={styles.legalLinksRow}>
+          <TouchableOpacity
+            onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
+            activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="Terms of Use"
+          >
+            <Text style={styles.legalLinkText}>TERMS OF USE</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalDot}>·</Text>
+          <TouchableOpacity
+            onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
+            activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="Privacy Policy"
+          >
+            <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Dismiss">
           <Text style={styles.closeText}>NOT NOW</Text>
@@ -205,4 +239,14 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 3,
   },
+  subDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 16, marginBottom: 14 },
+  legalLinksRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
+  legalDot: { ...t.softMuted },
 });

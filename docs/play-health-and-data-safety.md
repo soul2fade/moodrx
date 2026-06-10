@@ -63,8 +63,9 @@ Google's definition of **"collected"** = transferred off the device. Under that 
 **Does your app collect or share any required user data?** → **Yes** (purchases via RevenueCat).
 
 **Data types — COLLECTED:**
-- **Financial info → Purchase history** — Collected · **Not shared** (processor) · Purpose: **App functionality** (subscription management) · Required (for purchasers). 🔎 confirm vs RevenueCat guidance.
-- 🔎 **Device or other IDs** — RevenueCat may generate/collect an app-user/device identifier. If so: Collected · Not shared · App functionality. *Verify against RevenueCat's Data Safety doc; declare only if true.*
+- **Financial info → Purchase history** — Collected · **Not shared** (RevenueCat = service provider; no non-service-provider integrations) · Processed ephemerally: **No** · Required ("cannot be turned off") · Purposes: **App functionality AND Analytics** (RevenueCat's doc explicitly says to check both — Analytics = RevenueCat's own revenue dashboards, not a third-party tracker).
+
+> ✅ **Verified 2026-06-10 against [RevenueCat's Google Play Data Safety doc](https://www.revenuecat.com/docs/platform-resources/google-platform-resources/google-plays-data-safety):** with default RevenueCat (no ad/analytics SDK), **Purchase history is the ONLY data type to declare.** Do **not** declare "Device or other IDs" — RevenueCat says that's only for integrations using an advertising identifier (`gpsAdId`/`androidId`), which MoodRx does not use. The anonymous App User ID is app-generated, not a device/ad identifier, so it has no Data Safety category. "Personal info" only applies if you collect identifiable customer attributes (name/email) — MoodRx doesn't.
 
 **Data types — NOT collected (declare absent):**
 - **Health & fitness** (steps, sleep, workouts) — processed **on-device only**, never transmitted → **not collected**. *(The Health Connect declaration in §2 still applies — it governs permission use, not transmission.)*
@@ -76,7 +77,7 @@ Google's definition of **"collected"** = transferred off the device. Under that 
 - **Can users request data deletion?** → **Yes.** Describe: "Users can delete all app data from within the app (Settings → reset). No account exists; uninstalling also removes all on-device data." Provide a deletion contact/URL in the privacy policy.
 - **Committed to Play Families policy?** → per your audience choice.
 
-**Data sharing:** aim for **"No data shared with third parties"** — RevenueCat acts as a processor on your behalf. 🔎 Confirm with RevenueCat's guidance; if they classify any field as "shared," declare it.
+**Data sharing:** **"No data shared with third parties"** — RevenueCat acts as a service provider (processor) on your behalf, which is not "sharing" under Google's definition. ✅ Confirmed against RevenueCat's doc: "Shared" would only apply if you set up integrations with third parties that aren't service providers — MoodRx has none.
 
 ---
 

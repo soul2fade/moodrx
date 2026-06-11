@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { selectEpisode, type Episode } from '@/lib/coach-insight';
 import { buildVentEpisodeMap } from '@/lib/coach-insight';
+import { buildCoachContext } from '@/lib/coach-insight';
 import type { Session } from '@/lib/storage';
 
 // Fixed "now" so daysAgo is deterministic. 2026-06-11T12:00:00Z.
@@ -125,5 +126,21 @@ describe('buildVentEpisodeMap', () => {
     // A naive fixed anchor of 5 would instead pick 'FarFromAnchor' (|5-4|=1), so
     // this asserts the anchor really is the most-recent session's intensity.
     expect(buildVentEpisodeMap(sessions, NOW).stressed?.workoutName).toBe('NearAnchor');
+  });
+});
+
+describe('buildCoachContext episode wiring', () => {
+  it('attaches a qualifying episode for the current mood', () => {
+    const sessions = [
+      mkSession({ mood: 'stressed', rating: 'no', workoutName: 'Cold Shower', timestamp: NOW - 3 * DAY }),
+    ];
+    const ctx = buildCoachContext({ mood: 'stressed', intensity: 6, workout: undefined }, sessions, NOW);
+    expect(ctx.episode?.workoutName).toBe('Cold Shower');
+    expect(ctx.episode?.helped).toBe('no');
+  });
+
+  it('sets episode to null when none qualifies', () => {
+    const ctx = buildCoachContext({ mood: 'stressed', intensity: 6, workout: undefined }, [], NOW);
+    expect(ctx.episode).toBeNull();
   });
 });

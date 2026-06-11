@@ -16,6 +16,9 @@ export interface CoachContext {
   recentTrend: 'improving' | 'flat' | 'declining' | 'new';
   /** True when signals suggest genuine distress — the coach pulls its punch. */
   crisis: boolean;
+  /** One decision-relevant past episode to reference, or null. Structured
+   *  facts only; populated by selectEpisode so the model can't fabricate it. */
+  episode: Episode | null;
 }
 
 /** Crisis floor: only the extreme tail, NOT everyday low moods.
@@ -47,6 +50,7 @@ function trend(sessions: Session[]): CoachContext['recentTrend'] {
 export function buildCoachContext(
   args: { mood: MoodKey; intensity: number; workout: Workout | undefined },
   sessions: Session[],
+  now: number = Date.now(),
 ): CoachContext {
   const { mood, intensity, workout } = args;
   const helped = workout != null ? getWorkoutEffectiveness(sessions, workout) : null;
@@ -61,6 +65,7 @@ export function buildCoachContext(
     workoutHelpedRate,
     recentTrend: trend(sessions),
     crisis: isCrisisSignal(mood, intensity, sessions),
+    episode: selectEpisode(mood, intensity, sessions, now),
   };
 }
 

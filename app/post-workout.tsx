@@ -20,6 +20,7 @@ import type { MoodKey } from '@/lib/storage';
 import { getAiCoachEnabled, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
 import { todayDateString } from '@/lib/dateUtils';
 import { useSessions } from '@/contexts/SessionsContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { SessionWinCard } from '@/components/SessionWinCard';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { saveWorkoutToHealth } from '@/lib/health';
@@ -53,6 +54,7 @@ function getScoreContext(score: number, lowerIsBetter: boolean): string {
 
 export default function PostWorkoutScreen() {
   const { addSession: addSessionToContext, sessionCount: cachedSessionCount } = useSessions();
+  const { isPremium } = useSubscription();
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -101,7 +103,9 @@ export default function PostWorkoutScreen() {
     let cancelled = false;
     (async () => {
       const enabled = await getAiCoachEnabled();
-      if (!enabled || postInsult === '') return; // opted out, or trash-talk off
+      // Gate on entitlement client-side too: avoids a pointless function +
+      // RevenueCat round-trip every workout for an opted-in but non-Pro user.
+      if (!enabled || !isPremium || postInsult === '') return;
       const sessions = await getSessions();
       const context = buildCoachContext({ mood, intensity, workout }, sessions);
       const line = await fetchDynamicLine(context);
@@ -111,7 +115,7 @@ export default function PostWorkoutScreen() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mood/intensity/workout are mount-fixed route params; postInsult gates on trash-talk/voice
-  }, [postInsult]);
+  }, [postInsult, isPremium]);
 
   const notePlaceholder = getFieldNotePlaceholder(cachedSessionCount);
   const breakthroughRef = useRef<ViewShot>(null);

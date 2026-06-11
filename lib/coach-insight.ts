@@ -1,6 +1,6 @@
 import type { MoodKey, Session } from '@/lib/storage';
 import type { Workout } from '@/lib/workouts';
-import { getWorkoutEffectiveness, getBestPatternCallout } from '@/lib/workout-insights';
+import { getWorkoutEffectiveness } from '@/lib/workout-insights';
 import { getLastNDays } from '@/lib/analytics';
 
 export type CoachTone = 'teasing' | 'roasting';
@@ -11,8 +11,6 @@ export interface CoachContext {
   workoutName: string;
   /** How often this workout has helped this user for this mood, if rated. */
   workoutHelpedRate: string | null; // e.g. "helped 3/4 times" or null
-  /** The user's single strongest mood→workout pattern, if any. */
-  bestPattern: string | null; // e.g. "Low lifts most after Dance It Out"
   /** Short recent-trend descriptor over the last logged days. */
   recentTrend: 'improving' | 'flat' | 'declining' | 'new';
   /** True when signals suggest genuine distress — the coach pulls its punch. */
@@ -33,9 +31,13 @@ function isCrisisSignal(mood: MoodKey, intensity: number, sessions: Session[]): 
 function trend(sessions: Session[]): CoachContext['recentTrend'] {
   const days = getLastNDays(sessions, 5);
   if (days.length < 2) return 'new';
-  const deltas = days.map((d) => d.postScore - d.intensity);
-  const first = deltas[0];
-  const last = deltas[deltas.length - 1];
+  // Improvement = effective delta rising. For every mood except 'good', a
+  // LOWER post-score is better, so flip the per-day sign before comparing.
+  const effective = days.map((d) =>
+    d.mood === 'good' ? d.postScore - d.intensity : d.intensity - d.postScore,
+  );
+  const first = effective[0];
+  const last = effective[effective.length - 1];
   if (last - first > 0.5) return 'improving';
   if (first - last > 0.5) return 'declining';
   return 'flat';
@@ -51,13 +53,11 @@ export function buildCoachContext(
     helped && helped.ratedCount > 0 && helped.yesCount > 0
       ? `helped ${helped.yesCount}/${helped.ratedCount} times`
       : null;
-  const best = getBestPatternCallout(sessions);
   return {
     mood,
     intensity,
     workoutName: workout?.name ?? 'that workout',
     workoutHelpedRate,
-    bestPattern: best ? best.text : null,
     recentTrend: trend(sessions),
     crisis: isCrisisSignal(mood, intensity, sessions),
   };

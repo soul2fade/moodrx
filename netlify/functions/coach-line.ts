@@ -57,7 +57,11 @@ export const handler: Handler = async (event) => {
   // 1. Entitlement — only paying (base-unlock) users trigger spend.
   if (!(await isEntitled(appUserId))) return { statusCode: 403, body: '' };
 
-  // 2. Rate + budget caps (Netlify Blobs as counter store).
+  // 2. Rate + budget caps (Netlify Blobs as counter store). The get-then-set
+  //    is non-atomic, so under concurrency the counts can drift slightly — this
+  //    is an approximate ceiling, not an exact quota. Acceptable: worst-case
+  //    overshoot is small at ~$0.001/call, and the cap exists to stop runaway
+  //    abuse, not to bill-to-the-cent.
   const store = getStore('coach-usage');
   const today = new Date().toISOString().slice(0, 10);
   const month = today.slice(0, 7);

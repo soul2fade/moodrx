@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
 import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
 
@@ -28,7 +29,7 @@ export function PremiumSheet({
 }: PremiumSheetProps) {
   const { purchaseBase, offerings } = useSubscription();
 
-  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === '$rc_lifetime');
+  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === BASE_UNLOCK_PACKAGE_ID);
   const basePrice = basePkg?.product?.priceString ?? '$9.99';
 
   const openURL = (url: string) => {

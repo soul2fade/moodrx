@@ -288,9 +288,9 @@ export default function InsightsScreen() {
                 onPress={() => setShowPremiumSheet(true)}
                 activeOpacity={0.8}
                 accessibilityRole="button"
-                accessibilityLabel="Start free trial to unlock calendar"
+                accessibilityLabel="Unlock Pro to see your calendar"
               >
-                <Text style={styles.lockedCalendarButtonText}>START FREE TRIAL</Text>
+                <Text style={styles.lockedCalendarButtonText}>UNLOCK PRO</Text>
               </TouchableOpacity>
             </View>
           </View>

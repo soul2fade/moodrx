@@ -332,8 +332,8 @@ export default function SettingsScreen() {
         <Text style={styles.settingsLabel}>SETTINGS</Text>
         <Text style={styles.headline}>Preferences.</Text>
 
-        {/* Subscription section */}
-        <Text style={styles.sectionHeader}>SUBSCRIPTION</Text>
+        {/* Pro section */}
+        <Text style={styles.sectionHeader}>MOODRX PRO</Text>
 
         {isPremium && (
           <View style={styles.subStatusRow}>

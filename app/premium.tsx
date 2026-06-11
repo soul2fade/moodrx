@@ -13,6 +13,7 @@ import {
 import { router, type Href } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useSessions } from '@/contexts/SessionsContext';
+import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
 import { formatSessionDelta } from '@/lib/session-utils';
 import { type as t, fonts } from '@/lib/typography';
 import { colors } from '@/lib/colors';
@@ -55,7 +56,7 @@ export default function PremiumScreen() {
     return () => backHandler.remove();
   }, []);
 
-  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === '$rc_lifetime');
+  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === BASE_UNLOCK_PACKAGE_ID);
   const basePrice = basePkg?.product?.priceString ?? '$9.99';
 
   const hasPersonalStats = sessionCount >= 3;

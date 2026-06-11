@@ -72,7 +72,9 @@ export interface Episode {
   mood: MoodKey;
   intensity: number;
   workoutName: string;
-  helped: 'yes' | 'somewhat' | 'no';
+  /** The clear outcome the selector keys on. 'somewhat'/unrated never qualify,
+   *  so an emitted episode is always a decisive win or flop. */
+  helped: 'yes' | 'no';
   /** Full weekday name of the session, e.g. 'Monday'. */
   dayLabel: string;
   /** Whole days between the session and `now`. */

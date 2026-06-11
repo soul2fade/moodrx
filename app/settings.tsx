@@ -766,8 +766,6 @@ const styles = StyleSheet.create({
   },
   subStatusLabel: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   subStatusBadge: { alignSelf: 'flex-start' },
-  trialDaysText: { ...t.bodySm, color: colors.premium, marginTop: 4 },
-  expiredText: { ...t.bodySm, color: '#ffffff', marginTop: 4 },
   proBadge: {
     borderWidth: 1,
     borderColor: colors.premium,
@@ -780,9 +778,6 @@ const styles = StyleSheet.create({
     borderColor: '#ffffff',
     paddingHorizontal: 12,
     paddingVertical: 6,
-  },
-  upgradeBtnUrgent: {
-    borderColor: colors.premium,
   },
   upgradeBtnText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   toggleRow: {

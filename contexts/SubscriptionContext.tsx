@@ -17,17 +17,17 @@ import {
   Platform,
 } from 'react-native';
 import Purchases, {
-  INTRO_ELIGIBILITY_STATUS,
   type CustomerInfo,
   type PurchasesOfferings,
   type PurchasesPackage,
 } from 'react-native-purchases';
-import { REVENUECAT_ENTITLEMENT_IDENTIFIER } from '@/lib/revenuecat';
 import {
-  hasLegacyTrialAnchor,
-  setTrialNudgeAnchor,
-} from '@/lib/subscription';
-import { scheduleTrialNudges } from '@/lib/notifications';
+  REVENUECAT_ENTITLEMENT_IDENTIFIER,
+  ALL_ACCESS_ENTITLEMENT_IDENTIFIER,
+  BASE_UNLOCK_PACKAGE_ID,
+  PACKS_OFFERING_ID,
+  packEntitlementId,
+} from '@/lib/revenuecat';
 import { colors } from '@/lib/colors';
 
 interface RCPurchaseError {
@@ -39,83 +39,17 @@ function isRCPurchaseError(err: unknown): err is RCPurchaseError {
   return typeof err === 'object' && err !== null;
 }
 
-interface SubscriptionSnapshot {
-  isPaidPremium: boolean;
-  isInTrial: boolean;
-  trialDaysLeft: number;
-  hasUsedTrial: boolean;
-}
-
-function deriveSubscriptionState(
-  customerInfo: CustomerInfo,
-  legacyTrialUsed: boolean,
-): SubscriptionSnapshot {
-  const activeEntitlement = customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER];
-  const allEntitlement = customerInfo.entitlements.all[REVENUECAT_ENTITLEMENT_IDENTIFIER];
-  const isPaidPremium = activeEntitlement !== undefined;
-  const isInTrial =
-    isPaidPremium &&
-    (activeEntitlement.periodType === 'TRIAL' || activeEntitlement.periodType === 'INTRO');
-
-  let trialDaysLeft = 0;
-  if (isInTrial && activeEntitlement.expirationDateMillis) {
-    trialDaysLeft = Math.max(
-      0,
-      Math.ceil((activeEntitlement.expirationDateMillis - Date.now()) / (1000 * 60 * 60 * 24)),
-    );
-  }
-
-  const hasUsedTrial = allEntitlement !== undefined || legacyTrialUsed;
-
-  return { isPaidPremium, isInTrial, trialDaysLeft, hasUsedTrial };
-}
-
-/** Ask RevenueCat directly whether this user is still eligible for a free
- *  trial on the annual product. Returns true when RC says INELIGIBLE (the
- *  user has used the trial), false when ELIGIBLE, and null when RC can't
- *  determine (UNKNOWN, no offer exists, offerings missing, network error).
- *  The fallback (legacy + has-any-entitlement heuristic) handles null. */
-async function checkTrialUsedFromRC(
-  rcOfferings: PurchasesOfferings | null,
-): Promise<boolean | null> {
-  if (Platform.OS === 'web') return null;
-  const annualPkg = rcOfferings?.current?.availablePackages?.find(
-    (p) => p.identifier === '$rc_annual',
-  );
-  const productId = annualPkg?.product?.identifier;
-  if (!productId) return null;
-  try {
-    const result = await Purchases.checkTrialOrIntroductoryPriceEligibility([productId]);
-    const status = result[productId]?.status;
-    if (status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_INELIGIBLE) return true;
-    if (status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE) return false;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-async function maybeScheduleTrialNudges(customerInfo: CustomerInfo): Promise<void> {
-  const entitlement = customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER];
-  if (!entitlement) return;
-  if (entitlement.periodType !== 'TRIAL' && entitlement.periodType !== 'INTRO') return;
-
-  const anchorMs = entitlement.originalPurchaseDateMillis || Date.now();
-  await setTrialNudgeAnchor(anchorMs);
-  await scheduleTrialNudges(anchorMs);
-}
-
 interface SubscriptionContextValue {
+  /** True when the user holds the `premium` entitlement (owns the base unlock). */
   isPremium: boolean;
-  isInTrial: boolean;
-  trialDaysLeft: number;
-  hasUsedTrial: boolean;
+  /** True when the user owns the given pack (or has all-access). */
+  ownsPack: (packId: string) => boolean;
   isLoading: boolean;
   offerings: PurchasesOfferings | null;
-  /** Resolves to true when an entitlement was actually granted (purchase/trial succeeded). False on cancel, error, or unavailable platform. */
-  startTrial: () => Promise<boolean>;
-  purchaseMonthly: () => Promise<boolean>;
-  purchaseYearly: () => Promise<boolean>;
+  /** Resolves true when the base unlock was actually granted. */
+  purchaseBase: () => Promise<boolean>;
+  /** Resolves true when the given pack was actually granted. */
+  purchasePack: (packId: string) => Promise<boolean>;
   restorePurchases: () => Promise<void>;
   devTogglePremium: () => void;
 }
@@ -129,63 +63,46 @@ const SubscriptionContext = createContext<SubscriptionContextValue | null>(null)
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const [isPaidPremium, setIsPaidPremium] = useState(false);
-  const [isInTrial, setIsInTrial] = useState(false);
-  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
-  const [hasUsedTrial, setHasUsedTrial] = useState(false);
+  const [ownedEntitlements, setOwnedEntitlements] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
 
   const [confirmVisible, setConfirmVisible] = useState(false);
   const pendingPurchaseRef = useRef<PurchasesPackage | null>(null);
   const pendingResolveRef = useRef<((granted: boolean) => void) | null>(null);
-  const legacyTrialUsedRef = useRef(false);
-  // Latest offerings, mirrored to a ref so applyCustomerInfo can check
-  // trial eligibility without re-subscribing on every render.
-  const offeringsRef = useRef<PurchasesOfferings | null>(null);
+  const pendingGrantsRef = useRef<string | null>(null); // dev: entitlement to mock-grant
 
   const isPremium = isPaidPremium;
 
-  const applyCustomerInfo = useCallback(async (customerInfo: CustomerInfo) => {
-    const snapshot = deriveSubscriptionState(customerInfo, legacyTrialUsedRef.current);
-    setIsPaidPremium(snapshot.isPaidPremium);
-    setIsInTrial(snapshot.isInTrial);
-    setTrialDaysLeft(snapshot.trialDaysLeft);
-    // Initial value from the legacy heuristic — overridden below if RC gives
-    // us a definitive answer. Users who bought monthly directly (no trial)
-    // get a true positive from the heuristic but ELIGIBLE from RC; we trust
-    // RC and let them start a trial.
-    setHasUsedTrial(snapshot.hasUsedTrial);
-    const eligibility = await checkTrialUsedFromRC(offeringsRef.current);
-    if (eligibility !== null) {
-      setHasUsedTrial(eligibility);
-    }
-    await maybeScheduleTrialNudges(customerInfo);
+  const applyCustomerInfo = useCallback((customerInfo: CustomerInfo) => {
+    const active = customerInfo.entitlements.active;
+    setIsPaidPremium(active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined);
+    setOwnedEntitlements(new Set(Object.keys(active)));
   }, []);
+
+  const ownsPack = useCallback(
+    (packId: string): boolean =>
+      ownedEntitlements.has(packEntitlementId(packId)) ||
+      ownedEntitlements.has(ALL_ACCESS_ENTITLEMENT_IDENTIFIER),
+    [ownedEntitlements],
+  );
 
   useEffect(() => {
     let mounted = true;
     const onCustomerInfoUpdate = (info: CustomerInfo) => {
-      if (mounted) void applyCustomerInfo(info);
+      if (mounted) applyCustomerInfo(info);
     };
 
     async function init() {
       try {
-        legacyTrialUsedRef.current = await hasLegacyTrialAnchor();
-
         const [customerInfo, rcOfferings] = await Promise.all([
           Purchases.getCustomerInfo(),
           Purchases.getOfferings(),
         ]);
-
         if (mounted) {
-          // Seed offeringsRef BEFORE applyCustomerInfo so the eligibility
-          // check inside it has the annual product to query against on the
-          // very first run.
-          offeringsRef.current = rcOfferings;
           setOfferings(rcOfferings);
-          await applyCustomerInfo(customerInfo);
+          applyCustomerInfo(customerInfo);
         }
-
         Purchases.addCustomerInfoUpdateListener(onCustomerInfoUpdate);
       } catch (err: unknown) {
         console.warn('SubscriptionContext init error:', isRCPurchaseError(err) ? err.message : String(err));
@@ -193,7 +110,6 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         if (mounted) setIsLoading(false);
       }
     }
-
     init();
 
     return () => {
@@ -205,8 +121,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const executePurchase = useCallback(async (pkg: PurchasesPackage): Promise<boolean> => {
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
-      await applyCustomerInfo(customerInfo);
-      return customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
+      applyCustomerInfo(customerInfo);
+      return Object.keys(customerInfo.entitlements.active).length > 0;
     } catch (err: unknown) {
       if (isRCPurchaseError(err) && err.userCancelled) return false;
       const msg = isRCPurchaseError(err) ? (err.message ?? 'Something went wrong.') : 'Something went wrong.';
@@ -216,46 +132,41 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [applyCustomerInfo]);
 
   const triggerPurchase = useCallback(
-    async (packageId: string): Promise<boolean> => {
-      const pkg = offerings?.current?.availablePackages?.find(
-        (p) => p.identifier === packageId
-      );
-
+    async (pkg: PurchasesPackage | null | undefined, mockEntitlement: string): Promise<boolean> => {
       if (__DEV__) {
-        // The dev/preview path opens a confirm modal; await its outcome via the
-        // resolver that handleConfirmPurchase / handleCancelPurchase invoke.
         return new Promise<boolean>((resolve) => {
           pendingPurchaseRef.current = pkg ?? null;
           pendingResolveRef.current = resolve;
+          pendingGrantsRef.current = mockEntitlement;
           setConfirmVisible(true);
         });
       }
-
       if (Platform.OS === 'web') {
         Alert.alert('Unavailable', 'Purchases are only available in the iOS and Android apps.');
         return false;
       }
-
       if (!pkg) {
-        Alert.alert('Unavailable', 'This plan is not available right now. Please try again later.');
+        Alert.alert('Unavailable', 'This item is not available right now. Please try again later.');
         return false;
       }
-
       return executePurchase(pkg);
     },
-    [offerings, executePurchase]
+    [executePurchase],
   );
 
-  const purchaseMonthly = useCallback(async (): Promise<boolean> => {
-    return triggerPurchase('$rc_monthly');
-  }, [triggerPurchase]);
+  const purchaseBase = useCallback((): Promise<boolean> => {
+    const pkg = offerings?.current?.availablePackages?.find(
+      (p) => p.identifier === BASE_UNLOCK_PACKAGE_ID,
+    );
+    return triggerPurchase(pkg, REVENUECAT_ENTITLEMENT_IDENTIFIER);
+  }, [offerings, triggerPurchase]);
 
-  const purchaseYearly = useCallback(async (): Promise<boolean> => {
-    return triggerPurchase('$rc_annual');
-  }, [triggerPurchase]);
-
-  /** Starts the App Store / Play free trial via the annual subscription. */
-  const startTrial = purchaseYearly;
+  const purchasePack = useCallback((packId: string): Promise<boolean> => {
+    const pkg = offerings?.all?.[PACKS_OFFERING_ID]?.availablePackages?.find(
+      (p) => p.identifier === packId,
+    );
+    return triggerPurchase(pkg, packEntitlementId(packId));
+  }, [offerings, triggerPurchase]);
 
   const devTogglePremium = useCallback(() => {
     if (!__DEV__) return;
@@ -269,9 +180,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const hasEntitlement =
         customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
       if (hasEntitlement) {
-        Alert.alert('Restored', 'Your Pro subscription has been restored.');
+        Alert.alert('Restored', 'Your MoodRx Pro purchase has been restored.');
       } else {
-        Alert.alert('No purchases found', 'No previous Pro subscription was found.');
+        Alert.alert('No purchases found', 'No previous MoodRx Pro purchase was found.');
       }
     } catch (err: unknown) {
       const msg = isRCPurchaseError(err) ? (err.message ?? 'Could not connect to the store. Please try again.') : 'Could not connect to the store. Please try again.';
@@ -287,16 +198,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     pendingResolveRef.current = null;
     if (pkg) {
       const granted = await executePurchase(pkg);
+      pendingGrantsRef.current = null;
       resolve?.(granted);
     } else {
-      // Dev/preview: no real package available — mock the unlock directly
-      setIsPaidPremium(true);
-      setIsInTrial(true);
-      setTrialDaysLeft(7);
-      setHasUsedTrial(true);
-      const anchorMs = Date.now();
-      await setTrialNudgeAnchor(anchorMs);
-      await scheduleTrialNudges(anchorMs);
+      // Dev/preview: no real package — mock-grant the pending entitlement.
+      const ent = pendingGrantsRef.current;
+      if (ent === REVENUECAT_ENTITLEMENT_IDENTIFIER) setIsPaidPremium(true);
+      if (ent) setOwnedEntitlements((prev) => new Set(prev).add(ent));
+      pendingGrantsRef.current = null;
       resolve?.(true);
     }
   }, [executePurchase]);
@@ -304,6 +213,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const handleCancelPurchase = useCallback(() => {
     setConfirmVisible(false);
     pendingPurchaseRef.current = null;
+    pendingGrantsRef.current = null;
     pendingResolveRef.current?.(false);
     pendingResolveRef.current = null;
   }, []);
@@ -311,27 +221,21 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const value = useMemo<SubscriptionContextValue>(
     () => ({
       isPremium,
-      isInTrial,
-      trialDaysLeft,
-      hasUsedTrial,
+      ownsPack,
       isLoading,
       offerings,
-      startTrial,
-      purchaseMonthly,
-      purchaseYearly,
+      purchaseBase,
+      purchasePack,
       restorePurchases,
       devTogglePremium,
     }),
     [
       isPremium,
-      isInTrial,
-      trialDaysLeft,
-      hasUsedTrial,
+      ownsPack,
       isLoading,
       offerings,
-      startTrial,
-      purchaseMonthly,
-      purchaseYearly,
+      purchaseBase,
+      purchasePack,
       restorePurchases,
       devTogglePremium,
     ]

@@ -1,6 +1,7 @@
 import type { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import Anthropic from '@anthropic-ai/sdk';
+import { coachSystemPrompt } from './lib/coach-prompt';
 
 // Env var names map to the user's existing Netlify secrets:
 //   MOODRX_COACH_KEY      → Anthropic API key
@@ -28,16 +29,6 @@ async function isEntitled(appUserId: string): Promise<boolean> {
   return ent.expires_date == null || new Date(ent.expires_date).getTime() > Date.now();
 }
 
-function systemPrompt(tone: 'teasing' | 'roasting', crisis: boolean): string {
-  if (crisis) {
-    return `You are Dr. MoodRx, a darkly funny but ultimately caring fitness-for-mental-health coach. The user is showing signs of genuine distress right now. Drop the roasting entirely. In 1-2 sentences, acknowledge they showed up and gently encourage them — warm, not clinical, no diagnoses, no jokes at their expense. Use ONLY the facts provided. Never invent numbers.`;
-  }
-  const intensity =
-    tone === 'roasting'
-      ? 'Sharper, funnier, more intense — but LIGHTHEARTED. Rib their resistance/excuses to work out, never their worth, body, or anything self-harm-adjacent.'
-      : 'Playful, teasing, light jabs.';
-  return `You are Dr. MoodRx, a darkly funny fitness-for-mental-health coach with a film-noir, deadpan voice. Tone: ${intensity} Speak directly to the user about the workout they just did. Use ONLY the facts provided — never invent statistics, numbers, or history. Never give clinical labels, diagnoses, or medical advice. 1-2 sentences. No preamble.`;
-}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST' || !event.body) return { statusCode: 400, body: '' };
@@ -79,7 +70,7 @@ export const handler: Handler = async (event) => {
       model: 'claude-haiku-4-5',
       max_tokens: 150,
       temperature: 0.9,
-      system: systemPrompt(tone, Boolean(context.crisis)),
+      system: coachSystemPrompt(tone, Boolean(context.crisis), Boolean(context.episode)),
       messages: [{ role: 'user', content: JSON.stringify(context) }],
     });
     const block = msg.content.find((b) => b.type === 'text');

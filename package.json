@@ -11,7 +11,8 @@
     "lint:ci": "eslint app/ lib/ components/ contexts/ hooks/ utils/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "eval:vent": "tsx scripts/eval-vent.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
@@ -86,6 +87,7 @@
     "expo-build-properties": "^56.0.15",
     "sharp": "^0.34.5",
     "typescript": "~5.9.2",
+    "tsx": "^4.19.2",
     "vitest": "^2.1.9"
   },
   "private": true

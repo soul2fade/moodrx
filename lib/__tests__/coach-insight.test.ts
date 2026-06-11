@@ -114,12 +114,16 @@ describe('buildVentEpisodeMap', () => {
 
   it('anchors intensity closeness on the most recent same-mood session', () => {
     const sessions = [
-      // most recent stressed session sets the anchor intensity (=9)
-      mkSession({ mood: 'stressed', intensity: 9, rating: 'yes', workoutName: 'Anchor', timestamp: NOW - 1 * DAY }),
-      mkSession({ mood: 'stressed', intensity: 9, rating: 'yes', workoutName: 'Match', timestamp: NOW - 6 * DAY }),
-      mkSession({ mood: 'stressed', intensity: 2, rating: 'yes', workoutName: 'Mismatch', timestamp: NOW - 6 * DAY }),
+      // Most recent stressed session is UNRATED — it can't be selected, but its
+      // intensity (8) sets the closeness anchor for this mood.
+      mkSession({ mood: 'stressed', intensity: 8, rating: undefined, workoutName: 'AnchorSetter', timestamp: NOW - 1 * DAY }),
+      // Two equally-recent rated candidates — only the anchor breaks the tie.
+      mkSession({ mood: 'stressed', intensity: 9, rating: 'yes', workoutName: 'NearAnchor', timestamp: NOW - 6 * DAY }),
+      mkSession({ mood: 'stressed', intensity: 4, rating: 'yes', workoutName: 'FarFromAnchor', timestamp: NOW - 6 * DAY }),
     ];
-    // Anchor (most recent) wins on recency; the test just asserts it picks a real entry.
-    expect(buildVentEpisodeMap(sessions, NOW).stressed?.workoutName).toBe('Anchor');
+    // Anchor intensity 8 → 'NearAnchor' (|8-9|=1) beats 'FarFromAnchor' (|8-4|=4).
+    // A naive fixed anchor of 5 would instead pick 'FarFromAnchor' (|5-4|=1), so
+    // this asserts the anchor really is the most-recent session's intensity.
+    expect(buildVentEpisodeMap(sessions, NOW).stressed?.workoutName).toBe('NearAnchor');
   });
 });

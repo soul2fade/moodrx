@@ -26,14 +26,10 @@ export function PremiumSheet({
   headline = 'Unlock all 18 workouts.',
   description = '3 science-backed options for every mood state. Plus supplement tracking, full insights, and the neuroscience behind every rep.',
 }: PremiumSheetProps) {
-  const { purchaseMonthly, purchaseYearly, offerings, hasUsedTrial } = useSubscription();
+  const { purchaseBase, offerings } = useSubscription();
 
-  const currentOffering = offerings?.current;
-  const monthlyPkg = currentOffering?.availablePackages?.find((p) => p.identifier === '$rc_monthly');
-  const yearlyPkg = currentOffering?.availablePackages?.find((p) => p.identifier === '$rc_annual');
-
-  const monthlyPrice = monthlyPkg?.product?.priceString ?? '$5.99';
-  const yearlyPrice = yearlyPkg?.product?.priceString ?? '$44.99';
+  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === '$rc_lifetime');
+  const basePrice = basePkg?.product?.priceString ?? '$9.99';
 
   const openURL = (url: string) => {
     void Linking.openURL(url).catch(() =>
@@ -54,53 +50,19 @@ export function PremiumSheet({
         <Text style={styles.headline}>{headline}</Text>
         <Text style={styles.description}>{description}</Text>
 
-        {!hasUsedTrial && (
-          <TouchableOpacity
-            style={styles.trialButton}
-            onPress={async () => { await purchaseYearly(); onClose(); }}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Start 7-day free trial via annual subscription"
-          >
-            <Text style={styles.trialButtonText}>START 7-DAY FREE TRIAL →</Text>
-          </TouchableOpacity>
-        )}
-
-        <View style={styles.trialNote}>
-          <Text style={styles.trialLabel}>
-            {hasUsedTrial ? 'SUBSCRIBE TO UNLOCK PRO' : 'OR SUBSCRIBE DIRECTLY'}
-          </Text>
-        </View>
-
         <TouchableOpacity
           style={styles.yearlyButton}
-          onPress={purchaseYearly}
+          onPress={async () => { await purchaseBase(); onClose(); }}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel={`Yearly plan, ${yearlyPrice} per year`}
+          accessibilityLabel={`Unlock MoodRx Pro, ${basePrice} one time`}
         >
-          <View style={styles.bestValue}>
-            <Text style={styles.bestValueText}>BEST VALUE</Text>
-          </View>
-          <Text style={styles.planPrice}>{yearlyPrice} / year</Text>
-          <Text style={styles.planSub}>save 37% — ~$3.75/mo</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.monthlyButton}
-          onPress={purchaseMonthly}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={`Monthly plan, ${monthlyPrice} per month`}
-        >
-          <Text style={styles.monthlyPrice}>{monthlyPrice} / month</Text>
+          <Text style={styles.planPrice}>UNLOCK MOODRX PRO — {basePrice}</Text>
+          <Text style={styles.planSub}>One-time purchase. Yours forever.</Text>
         </TouchableOpacity>
 
         <Text style={styles.subDisclosure}>
-          MoodRx Pro is {yearlyPrice}/year or {monthlyPrice}/month. The 7-day free trial converts
-          to {yearlyPrice}/year unless cancelled at least 24 hours before it ends. Subscriptions
-          auto-renew at the price shown until cancelled; payment is charged to your App Store or
-          Google Play account at confirmation. Manage or cancel anytime in your account settings.
+          One-time purchase — no subscription, no auto-renew.
         </Text>
         <View style={styles.legalLinksRow}>
           <TouchableOpacity
@@ -160,32 +122,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
   },
-  trialButton: {
-    borderWidth: 1,
-    borderColor: '#ffffff',
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  trialButtonText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 3,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  trialNote: {
-    borderLeftWidth: 2,
-    borderLeftColor: colors.premium,
-    paddingLeft: 12,
-    paddingVertical: 8,
-    marginBottom: 20,
-  },
-  trialLabel: {
-    ...t.label,
-    color: colors.premium,
-    letterSpacing: 2,
-  },
   yearlyButton: {
     borderWidth: 1,
     borderColor: colors.premium,
@@ -193,22 +129,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 12,
     position: 'relative',
-  },
-  bestValue: {
-    position: 'absolute',
-    top: -10,
-    right: 16,
-    backgroundColor: colors.premium,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  bestValueText: {
-    ...t.label,
-    // eslint-disable-next-line local/no-dark-text-color
-    color: '#0a0a0a',
-    fontSize: 12,
-    letterSpacing: 1,
-    lineHeight: 17,
   },
   planPrice: {
     ...t.headlineSm,
@@ -218,17 +138,6 @@ const styles = StyleSheet.create({
     ...t.bodySm,
     color: '#ffffff',
     marginTop: 2,
-  },
-  monthlyButton: {
-    borderWidth: 1,
-    borderColor: '#525252',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  monthlyPrice: {
-    ...t.headlineSm,
-    color: '#ffffff',
   },
   closeButton: {
     alignItems: 'center',

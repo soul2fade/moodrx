@@ -1,14 +1,19 @@
 import { defineConfig } from 'vitest/config';
 import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 
-const root = fileURLToPath(new URL('.', import.meta.url));
+// Derive the repo root from this file. Pass the import.meta.url STRING straight
+// to fileURLToPath (no `new URL()`) — the app's tsconfig includes the DOM lib,
+// whose global URL type is incompatible with node:url's URL, which would break
+// `npm run typecheck`.
+const root = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   resolve: {
     alias: {
       // React-Native-only native module → in-memory stub so lib/* loads in Node.
       // Listed BEFORE '@/' so it wins (Vite matches longest/first applicable).
-      '@react-native-async-storage/async-storage': `${root}test/stubs/async-storage.ts`,
+      '@react-native-async-storage/async-storage': resolve(root, 'test/stubs/async-storage.ts'),
       // Mirror the tsconfig path alias so tests can import '@/lib/...'.
       // '@/' never collides with '@react-native-...' (that doesn't start with '@/').
       '@': root,

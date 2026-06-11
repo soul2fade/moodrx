@@ -2,7 +2,24 @@ import { Platform } from 'react-native';
 import Purchases from 'react-native-purchases';
 import Constants from 'expo-constants';
 
-export const REVENUECAT_ENTITLEMENT_IDENTIFIER = 'premium';
+export const REVENUECAT_ENTITLEMENT_IDENTIFIER = 'premium'; // base unlock (non-consumable)
+
+/** RevenueCat package identifier for the one-time base unlock, in the
+ *  `default` offering. ($rc_lifetime is RevenueCat's reserved package
+ *  slot for a non-consumable/lifetime product.) */
+export const BASE_UNLOCK_PACKAGE_ID = '$rc_lifetime';
+
+/** Offering that holds purchasable content packs (empty at launch). */
+export const PACKS_OFFERING_ID = 'packs';
+
+/** Entitlement granted by a future all-access subscription. Checked by
+ *  ownsPack() so adding the sub later needs no consumer changes. */
+export const ALL_ACCESS_ENTITLEMENT_IDENTIFIER = 'all_access';
+
+/** Per-pack entitlements are namespaced `pack_<id>`. */
+export function packEntitlementId(packId: string): string {
+  return `pack_${packId}`;
+}
 
 function getRevenueCatApiKey(): string | null {
   const testKey    = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY    ?? '';

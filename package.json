@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
     "@bacons/apple-targets": "^4.0.7",
     "@expo-google-fonts/barlow-condensed": "^0.4.1",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
@@ -21,6 +22,7 @@
     "@gluestack-ui/core": "^3.0.0",
     "@gluestack-ui/utils": "^3.0.0",
     "@kayzmann/expo-healthkit": "^2.0.0",
+    "@netlify/blobs": "^10.7.9",
     "@react-native-async-storage/async-storage": "^2.1.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/slider": "^5.0.1",

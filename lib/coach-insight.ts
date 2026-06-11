@@ -1,4 +1,4 @@
-import type { MoodKey, Session } from '@/lib/storage';
+import { sessionDateString, type MoodKey, type Session } from '@/lib/storage';
 import type { Workout } from '@/lib/workouts';
 import { getWorkoutEffectiveness } from '@/lib/workout-insights';
 import { getLastNDays } from '@/lib/analytics';
@@ -60,5 +60,72 @@ export function buildCoachContext(
     workoutHelpedRate,
     recentTrend: trend(sessions),
     crisis: isCrisisSignal(mood, intensity, sessions),
+  };
+}
+
+// ─── Episodic memory (Unit B) ────────────────────────────────────────────────
+//
+// A specific past session the coach/vent reply may reference. Structured facts
+// ONLY — never a transcript. Emitted only when a session genuinely teaches a
+// lesson, so the model can never fabricate significance.
+export interface Episode {
+  mood: MoodKey;
+  intensity: number;
+  workoutName: string;
+  helped: 'yes' | 'somewhat' | 'no';
+  /** Full weekday name of the session, e.g. 'Monday'. */
+  dayLabel: string;
+  /** Whole days between the session and `now`. */
+  daysAgo: number;
+}
+
+/** Older than this teaches little; excluded from recall. */
+const EPISODE_RECENCY_DAYS = 30;
+
+const WEEKDAY_NAMES = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+] as const;
+
+/** Pick at most one decision-relevant prior episode for the given state, or
+ *  null. Qualifiers: same mood, a clear 'yes'/'no' outcome, within the recency
+ *  window, not in the future. Among qualifiers, score = recency + intensity
+ *  closeness (recency dominates), ties broken toward the more recent session. */
+export function selectEpisode(
+  mood: MoodKey,
+  intensity: number,
+  sessions: Session[],
+  now: number = Date.now(),
+): Episode | null {
+  const windowMs = EPISODE_RECENCY_DAYS * 86_400_000;
+  const candidates = sessions.filter(
+    (s) =>
+      s.mood === mood &&
+      (s.rating === 'yes' || s.rating === 'no') &&
+      s.timestamp <= now &&
+      now - s.timestamp <= windowMs,
+  );
+  if (candidates.length === 0) return null;
+
+  let best: Session | null = null;
+  let bestScore = -Infinity;
+  for (const s of candidates) {
+    const daysAgo = Math.floor((now - s.timestamp) / 86_400_000);
+    const recencyScore = EPISODE_RECENCY_DAYS - daysAgo;        // newer → higher
+    const closenessScore = 10 - Math.abs(intensity - s.intensity); // similar → higher
+    const score = recencyScore + closenessScore;
+    if (score > bestScore || (score === bestScore && best != null && s.timestamp > best.timestamp)) {
+      bestScore = score;
+      best = s;
+    }
+  }
+  if (!best) return null;
+
+  return {
+    mood: best.mood,
+    intensity: best.intensity,
+    workoutName: best.workoutName,
+    helped: best.rating as 'yes' | 'no',
+    dayLabel: WEEKDAY_NAMES[new Date(sessionDateString(best) + 'T00:00:00').getDay()],
+    daysAgo: Math.floor((now - best.timestamp) / 86_400_000),
   };
 }

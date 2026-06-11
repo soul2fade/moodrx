@@ -5,8 +5,9 @@ describe('coachSystemPrompt', () => {
   it('crisis mode drops jokes and never adds the episode rule', () => {
     const p = coachSystemPrompt('roasting', true, true).toLowerCase();
     expect(p).toContain('distress');
-    expect(p).not.toContain('roast');     // no roasting in crisis
-    expect(p).not.toContain('episode');   // no callbacks in crisis
+    expect(p).toContain('drop the roasting');  // explicitly instructs no roasting
+    expect(p).not.toContain('sharper');        // the roasting-tone block is absent
+    expect(p).not.toContain('episode');        // no callbacks in crisis
   });
 
   it('adds an episode rule only when an episode is present', () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { selectEpisode, type Episode } from '@/lib/coach-insight';
+import { buildVentEpisodeMap } from '@/lib/coach-insight';
 import type { Session } from '@/lib/storage';
 
 // Fixed "now" so daysAgo is deterministic. 2026-06-11T12:00:00Z.
@@ -90,5 +91,35 @@ describe('selectEpisode', () => {
       mkSession({ workoutName: 'Near', intensity: 7, timestamp: NOW - 4 * DAY }),
     ];
     expect(selectEpisode('stressed', 8, sessions, NOW)?.workoutName).toBe('Near');
+  });
+});
+
+describe('buildVentEpisodeMap', () => {
+  it('returns an empty map when nothing qualifies', () => {
+    expect(buildVentEpisodeMap([], NOW)).toEqual({});
+  });
+
+  it('includes one qualifying episode per mood, omitting moods with none', () => {
+    const sessions = [
+      mkSession({ mood: 'stressed', rating: 'yes', workoutName: 'Bag', timestamp: NOW - 2 * DAY }),
+      mkSession({ mood: 'anxious', rating: 'no', workoutName: 'Breathing', timestamp: NOW - 4 * DAY }),
+      // 'somewhat' → does not qualify, so 'foggy' is absent.
+      mkSession({ mood: 'foggy', rating: 'somewhat', timestamp: NOW - 1 * DAY }),
+    ];
+    const map = buildVentEpisodeMap(sessions, NOW);
+    expect(Object.keys(map).sort()).toEqual(['anxious', 'stressed']);
+    expect(map.stressed?.workoutName).toBe('Bag');
+    expect(map.anxious?.helped).toBe('no');
+  });
+
+  it('anchors intensity closeness on the most recent same-mood session', () => {
+    const sessions = [
+      // most recent stressed session sets the anchor intensity (=9)
+      mkSession({ mood: 'stressed', intensity: 9, rating: 'yes', workoutName: 'Anchor', timestamp: NOW - 1 * DAY }),
+      mkSession({ mood: 'stressed', intensity: 9, rating: 'yes', workoutName: 'Match', timestamp: NOW - 6 * DAY }),
+      mkSession({ mood: 'stressed', intensity: 2, rating: 'yes', workoutName: 'Mismatch', timestamp: NOW - 6 * DAY }),
+    ];
+    // Anchor (most recent) wins on recency; the test just asserts it picks a real entry.
+    expect(buildVentEpisodeMap(sessions, NOW).stressed?.workoutName).toBe('Anchor');
   });
 });

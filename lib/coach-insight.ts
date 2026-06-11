@@ -2,6 +2,7 @@ import { sessionDateString, type MoodKey, type Session } from '@/lib/storage';
 import type { Workout } from '@/lib/workouts';
 import { getWorkoutEffectiveness } from '@/lib/workout-insights';
 import { getLastNDays } from '@/lib/analytics';
+import { MOOD_ORDER } from '@/lib/moods';
 
 export type CoachTone = 'teasing' | 'roasting';
 
@@ -130,4 +131,24 @@ export function selectEpisode(
     dayLabel: WEEKDAY_NAMES[new Date(sessionDateString(best) + 'T00:00:00').getDay()],
     daysAgo: Math.floor((now - best.timestamp) / 86_400_000),
   };
+}
+
+/** Build a per-mood map of qualifying episodes for the vent reply. For each
+ *  mood, anchor intensity closeness on the user's most recent session of that
+ *  mood (their typical level for it), then run the same selector. Only moods
+ *  with a qualifying episode appear. */
+export function buildVentEpisodeMap(
+  sessions: Session[],
+  now: number = Date.now(),
+): Partial<Record<MoodKey, Episode>> {
+  const map: Partial<Record<MoodKey, Episode>> = {};
+  for (const mood of MOOD_ORDER) {
+    const recent = sessions
+      .filter((s) => s.mood === mood)
+      .reduce<Session | null>((a, b) => (a == null || b.timestamp > a.timestamp ? b : a), null);
+    const anchorIntensity = recent ? recent.intensity : 5;
+    const ep = selectEpisode(mood, anchorIntensity, sessions, now);
+    if (ep) map[mood] = ep;
+  }
+  return map;
 }

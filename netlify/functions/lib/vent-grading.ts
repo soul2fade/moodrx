@@ -1,0 +1,95 @@
+export type Risk = 'none' | 'elevated' | 'acute';
+
+/** Narrow, high-precision self-harm phrasings. Multi-word and specific on
+ *  purpose — single words like "kill"/"die" are excluded because they fire on
+ *  hyperbole ("this traffic is killing me"). This net can only RAISE the floor
+ *  to 'elevated'; it never forces 'acute' (only the model can). */
+const SELF_HARM_PHRASES = [
+  'kill myself',
+  'killing myself',
+  'end my life',
+  'ending my life',
+  'want to die',
+  "don't want to be alive",
+  'do not want to be alive',
+  "don't want to live",
+  'take my own life',
+  'taking my own life',
+];
+
+export function classifyKeywordFloor(transcript: string): 'none' | 'elevated' {
+  const t = transcript.toLowerCase();
+  return SELF_HARM_PHRASES.some((p) => t.includes(p)) ? 'elevated' : 'none';
+}
+
+const RANK: Record<Risk, number> = { none: 0, elevated: 1, acute: 2 };
+
+/** Model tier is authoritative for 'acute'. The keyword floor can only raise
+ *  the result to 'elevated' (never to 'acute', never downward). */
+export function resolveRisk(modelRisk: Risk, keywordFloor: 'none' | 'elevated'): Risk {
+  if (modelRisk === 'acute') return 'acute';
+  return RANK[modelRisk] >= RANK[keywordFloor] ? modelRisk : keywordFloor;
+}
+
+// Canonical mood keys — MUST match lib/moods.ts MOOD_ORDER in the app.
+export const MOOD_KEYS = ['anxious', 'low', 'foggy', 'restless', 'stressed', 'good'] as const;
+export type MoodKey = (typeof MOOD_KEYS)[number];
+
+export interface Assessment {
+  mood: MoodKey;
+  intensity: number; // 1–10
+  reply: string;
+  risk: Risk;
+}
+
+const RISKS: Risk[] = ['none', 'elevated', 'acute'];
+
+export function validateAssessment(raw: unknown): Assessment | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  const mood = o.mood;
+  const intensityRaw = o.intensity;
+  const reply = typeof o.reply === 'string' ? o.reply.trim() : '';
+  const risk = o.risk;
+
+  if (typeof mood !== 'string' || !MOOD_KEYS.includes(mood as MoodKey)) return null;
+  if (typeof intensityRaw !== 'number' || !Number.isFinite(intensityRaw)) return null;
+  const intensity = Math.round(intensityRaw);
+  if (intensity < 1 || intensity > 10) return null;
+  if (reply.length === 0) return null;
+  if (typeof risk !== 'string' || !RISKS.includes(risk as Risk)) return null;
+
+  return { mood: mood as MoodKey, intensity, reply, risk: risk as Risk };
+}
+
+export const ASSESS_TOOL = {
+  name: 'record_assessment',
+  description: "Record the user's inferred mood, intensity, a short in-character reply, and a crisis-risk tier.",
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      mood: { type: 'string', enum: [...MOOD_KEYS], description: 'Best-fit mood for what the user described.' },
+      intensity: { type: 'integer', minimum: 1, maximum: 10, description: 'How intense the state is, 1 (mild) to 10 (overwhelming).' },
+      reply: { type: 'string', description: '1-2 sentence in-character Dr. MoodRx reply. Tone scales with risk (see system).' },
+      risk: { type: 'string', enum: ['none', 'elevated', 'acute'], description: 'Crisis tier (see system prompt definitions).' },
+    },
+    required: ['mood', 'intensity', 'reply', 'risk'],
+    additionalProperties: false,
+  },
+};
+
+export const VENT_SYSTEM_PROMPT = `You are Dr. MoodRx, a darkly funny but ultimately caring fitness-for-mental-health coach with a film-noir, deadpan voice. The user just spoke for ~20 seconds about how they feel. From their words ONLY, do four things via the record_assessment tool.
+
+1. mood: pick the single best-fit from: anxious, low, foggy, restless, stressed, good.
+2. intensity: 1 (mild) to 10 (overwhelming).
+3. risk — grade carefully; this gates the user experience:
+   - "none": ordinary venting — frustration, anger, sadness, hyperbole, profanity, "I hate my job", "I'm so done". This is the DEFAULT. Hyperbole like "this is killing me" or "I could die" is NOT crisis.
+   - "elevated": heavy distress with NO self-harm intent — hopelessness, "what's the point", crying, overwhelmed beyond venting.
+   - "acute": genuine self-harm or suicidal ideation/intent. Reserve for real risk, not figures of speech.
+   When unsure between two tiers, choose the LOWER one — except never downgrade genuine self-harm intent.
+4. reply: 1-2 sentences, in voice, using ONLY what they said.
+   - risk "none": teasing/deadpan, rib their resistance, never their worth or body.
+   - risk "elevated": drop the teasing entirely. Warm, plain, supportive. No jokes at their expense.
+   - risk "acute": brief, warm, non-clinical. Acknowledge them; do not joke; do not give medical advice.
+
+NEVER invent facts, numbers, or history. NEVER give clinical labels, diagnoses, or medical advice. Use only what the user said.`;

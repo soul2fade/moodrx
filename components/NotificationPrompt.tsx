@@ -8,7 +8,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { setNotifPromptShown } from '@/lib/storage';
-import { getTrialNudgeAnchorMs } from '@/lib/subscription';
 import { enableRemindersFromPrompt } from '@/lib/notifications';
 import { type as t } from '@/lib/typography';
 
@@ -20,8 +19,7 @@ interface NotificationPromptProps {
 export function NotificationPrompt({ visible, onClose }: NotificationPromptProps) {
   const handleEnable = async () => {
     await setNotifPromptShown();
-    const trialStartMs = await getTrialNudgeAnchorMs();
-    await enableRemindersFromPrompt(trialStartMs);
+    await enableRemindersFromPrompt();
     onClose();
   };
 

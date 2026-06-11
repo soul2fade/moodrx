@@ -261,6 +261,19 @@ export default function InsightsScreen() {
           </Text>
         </TouchableOpacity>
 
+        {/* Programs button */}
+        <TouchableOpacity
+          style={styles.supplementBtn}
+          onPress={() => (isPremium ? router.push('/programs') : setShowPremiumSheet(true))}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={isPremium ? 'Open programs' : 'Unlock programs with Pro'}
+        >
+          <Text style={styles.supplementBtnText}>
+            {isPremium ? 'PROGRAMS →' : 'PROGRAMS [PRO] →'}
+          </Text>
+        </TouchableOpacity>
+
         {/* Calendar */}
         {isPremium ? (
           <View style={styles.calendarWrap}>
@@ -275,9 +288,9 @@ export default function InsightsScreen() {
                 onPress={() => setShowPremiumSheet(true)}
                 activeOpacity={0.8}
                 accessibilityRole="button"
-                accessibilityLabel="Start free trial to unlock calendar"
+                accessibilityLabel="Unlock Pro to see your calendar"
               >
-                <Text style={styles.lockedCalendarButtonText}>START FREE TRIAL</Text>
+                <Text style={styles.lockedCalendarButtonText}>UNLOCK PRO</Text>
               </TouchableOpacity>
             </View>
           </View>

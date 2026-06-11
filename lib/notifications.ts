@@ -393,48 +393,6 @@ export async function cancelReminders(): Promise<void> {
   await cancelCheckinReminder();
 }
 
-const TRIAL_NUDGES: { offsetDays: number; body: string }[] = [
-  { offsetDays: 2, body: "Day 2. Your brain's trying to trick you again. Check in." },
-  { offsetDays: 5, body: "5 sessions deep. The data doesn't lie. Keep going." },
-  { offsetDays: 6, body: "1 day left on your trial. Don't let momentum die here." },
-];
-
-export async function scheduleTrialNudges(trialStartMs: number): Promise<void> {
-  if (Platform.OS === 'web') return;
-  try {
-    await cancelTrialNudges();
-    const now = Date.now();
-    const ids: string[] = [];
-    // Anchor on local-midnight of the start date BEFORE adding offset days,
-    // and step days via setDate(getDate()+N) which is DST-safe. Adding raw
-    // 86 400 000 ms to a unix timestamp and then calling setHours(18,...)
-    // misfires by one day for users whose local date of trialStartMs
-    // differs from the UTC date (trials started near local midnight).
-    const startLocalMidnight = new Date(trialStartMs);
-    startLocalMidnight.setHours(0, 0, 0, 0);
-    for (const nudge of TRIAL_NUDGES) {
-      const triggerDate = new Date(startLocalMidnight.getTime());
-      triggerDate.setDate(triggerDate.getDate() + nudge.offsetDays);
-      triggerDate.setHours(18, 0, 0, 0);
-      if (triggerDate.getTime() > now) {
-        const id = await Notifications.scheduleNotificationAsync({
-          content: { title: 'MoodRx', body: nudge.body, ...(Platform.OS === 'android' && { channelId: NOTIFICATION_CHANNEL_ID }) },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DATE,
-            date: triggerDate,
-          },
-        });
-        ids.push(id);
-      }
-    }
-    if (ids.length > 0) {
-      await AsyncStorage.setItem(TRIAL_NOTIF_IDS_KEY, JSON.stringify(ids));
-    }
-  } catch (e) {
-    console.warn('[MoodRx] scheduleTrialNudges failed:', e);
-  }
-}
-
 export async function cancelTrialNudges(): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
@@ -449,7 +407,7 @@ export async function cancelTrialNudges(): Promise<void> {
   }
 }
 
-export async function enableRemindersFromPrompt(trialStartMs?: number | null): Promise<boolean> {
+export async function enableRemindersFromPrompt(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   try {
     const { status } = await Notifications.requestPermissionsAsync();
@@ -458,10 +416,6 @@ export async function enableRemindersFromPrompt(trialStartMs?: number | null): P
     await AsyncStorage.setItem(NOTIFICATIONS_ENABLED_KEY, 'true');
     const schedule = await getReminderSchedule();
     await scheduleCheckinReminders(schedule);
-
-    if (trialStartMs) {
-      await scheduleTrialNudges(trialStartMs);
-    }
     return true;
   } catch {
     return false;

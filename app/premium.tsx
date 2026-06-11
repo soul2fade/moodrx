@@ -10,9 +10,10 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useSessions } from '@/contexts/SessionsContext';
+import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
 import { formatSessionDelta } from '@/lib/session-utils';
 import { type as t, fonts } from '@/lib/typography';
 import { colors } from '@/lib/colors';
@@ -30,15 +31,10 @@ const FEATURES = [
 export default function PremiumScreen() {
   const insets = useSafeAreaInsets();
   const {
-    purchaseMonthly,
-    purchaseYearly,
+    purchaseBase,
     restorePurchases,
     isPremium,
-    isInTrial,
-    trialDaysLeft,
-    hasUsedTrial,
     offerings,
-    isLoading: subLoading,
   } = useSubscription();
   const { sessionCount, avgChange } = useSessions();
 
@@ -60,20 +56,9 @@ export default function PremiumScreen() {
     return () => backHandler.remove();
   }, []);
 
-  // Gate the "TRIAL ENDED" badge on RC having finished loading — otherwise a
-  // paying user briefly sees the expired warning on cold start.
-  const trialExpired = !subLoading && hasUsedTrial && !isInTrial && !isPremium;
+  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === BASE_UNLOCK_PACKAGE_ID);
+  const basePrice = basePkg?.product?.priceString ?? '$9.99';
 
-  const currentOffering = offerings?.current;
-  const monthlyPkg = currentOffering?.availablePackages?.find(
-    (p) => p.identifier === '$rc_monthly'
-  );
-  const yearlyPkg = currentOffering?.availablePackages?.find(
-    (p) => p.identifier === '$rc_annual'
-  );
-
-  const monthlyPrice = monthlyPkg?.product?.priceString ?? '$5.99';
-  const yearlyPrice = yearlyPkg?.product?.priceString ?? '$44.99';
   const hasPersonalStats = sessionCount >= 3;
   const personalDeltaLabel = formatSessionDelta(5, 5 + Math.round(avgChange * 10) / 10);
 
@@ -103,24 +88,20 @@ export default function PremiumScreen() {
 
         <Text style={styles.subtext}>Your brain deserves the upgrade.</Text>
 
-        {isPremium && !isInTrial && (
+        {isPremium ? (
           <View style={styles.statusBadge}>
             <Text style={styles.statusBadgeText}>YOU HAVE PRO</Text>
           </View>
-        )}
-
-        {isInTrial && (
-          <View style={[styles.statusBadge, styles.trialBadge]}>
-            <Text style={styles.trialBadgeText}>
-              {trialDaysLeft === 1 ? 'TRIAL — 1 DAY REMAINING' : `TRIAL — ${trialDaysLeft} DAYS REMAINING`}
-            </Text>
-          </View>
-        )}
-
-        {trialExpired && (
-          <View style={[styles.statusBadge, styles.expiredBadge]}>
-            <Text style={styles.expiredBadgeText}>YOUR TRIAL HAS ENDED</Text>
-          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.ctaButton}
+            onPress={purchaseBase}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`Unlock MoodRx Pro, ${basePrice} one time`}
+          >
+            <Text style={styles.ctaText}>UNLOCK MOODRX PRO — {basePrice} →</Text>
+          </TouchableOpacity>
         )}
 
         <View style={styles.socialProofBox}>
@@ -148,75 +129,9 @@ export default function PremiumScreen() {
 
         <View style={styles.divider} />
 
-        {!isPremium || isInTrial ? (
-          <>
-            {!hasUsedTrial && !isInTrial && (
-              <TouchableOpacity
-                style={styles.trialButton}
-                onPress={purchaseYearly}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel="Start 7-day free trial via annual subscription"
-              >
-                <Text style={styles.trialButtonText}>START 7-DAY FREE TRIAL →</Text>
-              </TouchableOpacity>
-            )}
-
-            <Text style={styles.pricingLabel}>
-              {hasUsedTrial ? 'CHOOSE YOUR PLAN' : 'OR SUBSCRIBE DIRECTLY'}
-            </Text>
-
-            <TouchableOpacity
-              style={styles.yearlyCard}
-              onPress={purchaseYearly}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={`Yearly plan, ${yearlyPrice} per year, save 37%`}
-            >
-              <View style={styles.bestValueBadge}>
-                <Text style={styles.bestValueText}>BEST VALUE</Text>
-              </View>
-              <Text style={styles.yearlyPrice}>
-                {yearlyPrice} <Text style={styles.yearlyPer}>/ year</Text>
-              </Text>
-              <Text style={styles.yearlySub}>save 37% — ~$3.75/month</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.monthlyCard}
-              onPress={purchaseMonthly}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={`Monthly plan, ${monthlyPrice} per month`}
-            >
-              <Text style={styles.monthlyPrice}>
-                {monthlyPrice} <Text style={styles.monthlyPer}>/ month</Text>
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.ctaButton}
-              onPress={purchaseYearly}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Unlock MoodRx Pro"
-            >
-              <Text style={styles.ctaText}>
-                {isInTrial ? 'KEEP PRO ACCESS →' : 'UNLOCK MOODRX PRO →'}
-              </Text>
-            </TouchableOpacity>
-
-            <Text style={styles.cancelNote}>Cancel anytime. No commitment.</Text>
-          </>
-        ) : null}
-
         <View style={styles.legalBlock}>
           <Text style={styles.legalDisclosure}>
-            MoodRx Pro is {yearlyPrice}/year or {monthlyPrice}/month. Your 7-day free trial
-            converts to a paid {yearlyPrice}/year subscription unless you cancel at least 24 hours
-            before it ends. Subscriptions auto-renew at the price shown until cancelled. Payment is
-            charged to your App Store or Google Play account at confirmation, and you can manage or
-            cancel anytime in your account settings.
+            One-time purchase of {basePrice}. No subscription, no auto-renew. Payment is charged to your App Store or Google Play account at confirmation.
           </Text>
           <View style={styles.legalLinksRow}>
             <TouchableOpacity
@@ -249,6 +164,16 @@ export default function PremiumScreen() {
           <Text style={styles.restoreText}>RESTORE PURCHASES</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          onPress={() => router.push('/packs' as Href)}
+          activeOpacity={0.7}
+          style={styles.restoreButton}
+          accessibilityRole="button"
+          accessibilityLabel="Browse packs"
+        >
+          <Text style={styles.restoreText}>BROWSE PACKS →</Text>
+        </TouchableOpacity>
+
         <View style={{ height: 32 }} />
       </ScrollView>
     </Animated.View>
@@ -272,15 +197,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   statusBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
-  trialBadge: {
-    borderColor: colors.premium,
-    backgroundColor: `${colors.premium}14`, // ~8% premium wash
-  },
-  trialBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
-  expiredBadge: {
-    borderColor: '#999999',
-  },
-  expiredBadgeText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   socialProofBox: {
     marginTop: 20,
     borderWidth: 1,
@@ -324,55 +240,15 @@ const styles = StyleSheet.create({
   },
   checkmark: { ...t.label, color: colors.premium, fontSize: 14, paddingTop: 1 },
   featureText: { ...t.body, flex: 1 },
-  trialButton: {
-    borderWidth: 1,
-    borderColor: '#ffffff',
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  trialButtonText: { ...t.label, color: '#ffffff', letterSpacing: 3, fontSize: 13, lineHeight: 18 },
-  pricingLabel: { ...t.label, color: '#ffffff', letterSpacing: 3, marginBottom: 16 },
-  yearlyCard: {
-    borderWidth: 1,
-    borderColor: colors.premium,
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    position: 'relative',
-  },
-  bestValueBadge: {
-    position: 'absolute',
-    top: -10,
-    right: 16,
-    backgroundColor: colors.premium,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  // eslint-disable-next-line local/no-dark-text-color
-  bestValueText: { ...t.label, color: '#0a0a0a', fontSize: 12, lineHeight: 17, letterSpacing: 1 },
-  yearlyPrice: { ...t.headlineMd, color: colors.premium },
-  yearlyPer: { ...t.bodyMuted, color: '#ffffff', fontSize: 16 },
-  yearlySub: { ...t.bodySm, color: '#ffffff', marginTop: 4 },
-  monthlyCard: {
-    borderWidth: 1,
-    borderColor: '#333333',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  monthlyPrice: { ...t.headlineSm, color: '#ffffff' },
-  monthlyPer: { ...t.bodyMuted, color: '#ffffff', fontSize: 14 },
   ctaButton: {
     borderWidth: 1,
     borderColor: '#ffffff',
     paddingVertical: 16,
     alignItems: 'center',
+    marginTop: 16,
     marginBottom: 16,
   },
   ctaText: { ...t.button, letterSpacing: 3 },
-  cancelNote: { ...t.softMuted, textAlign: 'center', marginBottom: 16 },
   legalBlock: { marginTop: 8, marginBottom: 8 },
   legalDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 17 },
   legalLinksRow: {

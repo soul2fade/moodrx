@@ -118,18 +118,21 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     };
   }, [applyCustomerInfo]);
 
-  const executePurchase = useCallback(async (pkg: PurchasesPackage): Promise<boolean> => {
-    try {
-      const { customerInfo } = await Purchases.purchasePackage(pkg);
-      applyCustomerInfo(customerInfo);
-      return Object.keys(customerInfo.entitlements.active).length > 0;
-    } catch (err: unknown) {
-      if (isRCPurchaseError(err) && err.userCancelled) return false;
-      const msg = isRCPurchaseError(err) ? (err.message ?? 'Something went wrong.') : 'Something went wrong.';
-      Alert.alert('Purchase failed', msg);
-      return false;
-    }
-  }, [applyCustomerInfo]);
+  const executePurchase = useCallback(
+    async (pkg: PurchasesPackage, expectedEntitlement: string): Promise<boolean> => {
+      try {
+        const { customerInfo } = await Purchases.purchasePackage(pkg);
+        applyCustomerInfo(customerInfo);
+        return customerInfo.entitlements.active[expectedEntitlement] !== undefined;
+      } catch (err: unknown) {
+        if (isRCPurchaseError(err) && err.userCancelled) return false;
+        const msg = isRCPurchaseError(err) ? (err.message ?? 'Something went wrong.') : 'Something went wrong.';
+        Alert.alert('Purchase failed', msg);
+        return false;
+      }
+    },
+    [applyCustomerInfo],
+  );
 
   const triggerPurchase = useCallback(
     async (pkg: PurchasesPackage | null | undefined, mockEntitlement: string): Promise<boolean> => {
@@ -149,7 +152,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         Alert.alert('Unavailable', 'This item is not available right now. Please try again later.');
         return false;
       }
-      return executePurchase(pkg);
+      return executePurchase(pkg, mockEntitlement);
     },
     [executePurchase],
   );
@@ -176,7 +179,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const restorePurchases = useCallback(async () => {
     try {
       const customerInfo = await Purchases.restorePurchases();
-      await applyCustomerInfo(customerInfo);
+      applyCustomerInfo(customerInfo);
       const hasEntitlement =
         customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
       if (hasEntitlement) {
@@ -197,8 +200,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     pendingPurchaseRef.current = null;
     pendingResolveRef.current = null;
     if (pkg) {
-      const granted = await executePurchase(pkg);
+      const ent = pendingGrantsRef.current ?? '';
       pendingGrantsRef.current = null;
+      const granted = await executePurchase(pkg, ent);
       resolve?.(granted);
     } else {
       // Dev/preview: no real package — mock-grant the pending entitlement.

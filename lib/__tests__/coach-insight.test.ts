@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { selectEpisode, type Episode } from '@/lib/coach-insight';
-import { buildVentEpisodeMap } from '@/lib/coach-insight';
-import { buildCoachContext } from '@/lib/coach-insight';
+import { selectEpisode, buildVentEpisodeMap, buildCoachContext, type Episode } from '@/lib/coach-insight';
 import type { Session } from '@/lib/storage';
 
 // Fixed "now" so daysAgo is deterministic. 2026-06-11T12:00:00Z.

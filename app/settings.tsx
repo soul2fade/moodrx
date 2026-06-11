@@ -75,7 +75,7 @@ export default function SettingsScreen() {
   const [healthEnabled, setHealthEnabledState] = useState(false);
   const voiceToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
-  const { restorePurchases, isPremium, isInTrial, trialDaysLeft, hasUsedTrial, devTogglePremium, isLoading: subLoading } = useSubscription();
+  const { restorePurchases, isPremium, devTogglePremium, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -312,12 +312,6 @@ export default function SettingsScreen() {
     outputRange: [3, 25],
   });
 
-  // `trialExpired` and the "FREE VERSION" CTA must wait for RC to load — otherwise
-  // a paying user briefly sees "TRIAL ENDED / Upgrade to restore full access" on
-  // cold start while customerInfo is in flight.
-  const trialExpired = !subLoading && hasUsedTrial && !isInTrial && !isPremium;
-  const showFreeVersionCTA = !subLoading && !hasUsedTrial && !isPremium;
-
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
@@ -341,7 +335,7 @@ export default function SettingsScreen() {
         {/* Subscription section */}
         <Text style={styles.sectionHeader}>SUBSCRIPTION</Text>
 
-        {isPremium && !isInTrial && (
+        {isPremium && (
           <View style={styles.subStatusRow}>
             <Text style={styles.subStatusLabel}>STATUS</Text>
             <View style={[styles.subStatusBadge, styles.proBadge]}>
@@ -350,45 +344,7 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {isInTrial && (
-          <View style={styles.subStatusRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.subStatusLabel}>FREE TRIAL</Text>
-              <Text style={styles.trialDaysText}>
-                {trialDaysLeft === 1 ? '1 day remaining' : `${trialDaysLeft} days remaining`}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => router.push('/premium')}
-              activeOpacity={0.7}
-              style={styles.upgradeBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Upgrade to Pro"
-            >
-              <Text style={styles.upgradeBtnText}>UPGRADE →</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {trialExpired && (
-          <View style={styles.subStatusRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.subStatusLabel}>TRIAL ENDED</Text>
-              <Text style={styles.expiredText}>Upgrade to restore full access</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => router.push('/premium')}
-              activeOpacity={0.7}
-              style={[styles.upgradeBtn, styles.upgradeBtnUrgent]}
-              accessibilityRole="button"
-              accessibilityLabel="Upgrade to Pro"
-            >
-              <Text style={styles.upgradeBtnText}>UPGRADE →</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {showFreeVersionCTA && (
+        {!subLoading && !isPremium && (
           <View style={styles.subStatusRow}>
             <Text style={styles.subStatusLabel}>FREE VERSION</Text>
             <TouchableOpacity
@@ -396,9 +352,9 @@ export default function SettingsScreen() {
               activeOpacity={0.7}
               style={styles.upgradeBtn}
               accessibilityRole="button"
-              accessibilityLabel="View Pro plans"
+              accessibilityLabel="Unlock MoodRx Pro"
             >
-              <Text style={styles.upgradeBtnText}>TRY PRO →</Text>
+              <Text style={styles.upgradeBtnText}>UNLOCK PRO →</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -688,7 +644,7 @@ export default function SettingsScreen() {
         >
           <Text style={styles.appVersion}>Version 1.0.0</Text>
         </TouchableOpacity>
-        {isPremium && !isInTrial && (
+        {isPremium && (
           <View style={[styles.subStatusBadge, styles.proBadge, styles.versionProBadge]}>
             <Text style={styles.proBadgeText}>PRO MEMBER</Text>
           </View>

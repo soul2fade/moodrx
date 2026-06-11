@@ -43,7 +43,7 @@ const TRIAL_FEATURES = [
 export default function OnboardingScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const trialScale = useRef(new Animated.Value(1)).current;
-  const { purchaseYearly, hasUsedTrial } = useSubscription();
+  const { purchaseBase } = useSubscription();
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -57,14 +57,14 @@ export default function OnboardingScreen() {
     Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
   const handleStartTrial = useCallback(async () => {
-    const granted = await purchaseYearly();
-    // Only mark onboarding done if the user actually started the trial / got
-    // an entitlement. Otherwise (cancel, error, web), leave them on this
-    // screen so they can retry or pick "Continue with free version".
+    const granted = await purchaseBase();
+    // Only mark onboarding done if the user actually unlocked Pro.
+    // Otherwise (cancel, error, web), leave them on this screen so they can
+    // retry or pick "Continue with free version".
     if (!granted) return;
     await setFirstLaunchDone();
     router.replace('/guided');
-  }, [purchaseYearly]);
+  }, [purchaseBase]);
 
   const handleFreeVersion = useCallback(async () => {
     await setFirstLaunchDone();
@@ -139,83 +139,59 @@ export default function OnboardingScreen() {
           MoodRx is a wellness tool, not a substitute for professional mental health care.
         </Text>
 
-        {!hasUsedTrial ? (
-          <>
-            <View style={styles.trialBanner}>
-              <Text style={styles.trialBannerLabel}>7-DAY FREE TRIAL</Text>
-              <Text style={styles.trialBannerSub}>Full access. No charge until day 8.</Text>
-              <View style={styles.trialFeatures}>
-                {TRIAL_FEATURES.map((f) => (
-                  <Text key={f} style={styles.trialFeatureItem}>+ {f}</Text>
-                ))}
-              </View>
-            </View>
+        <View style={styles.trialBanner}>
+          <Text style={styles.trialBannerLabel}>MOODRX PRO</Text>
+          <Text style={styles.trialBannerSub}>One-time unlock. Full access forever.</Text>
+          <View style={styles.trialFeatures}>
+            {TRIAL_FEATURES.map((f) => (
+              <Text key={f} style={styles.trialFeatureItem}>+ {f}</Text>
+            ))}
+          </View>
+        </View>
 
-            <Animated.View style={{ transform: [{ scale: trialScale }] }}>
-              <TouchableOpacity
-                style={styles.trialButton}
-                onPress={handleStartTrial}
-                onPressIn={() => onPressIn(trialScale)}
-                onPressOut={() => onPressOut(trialScale)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Start 7-day free trial"
-              >
-                <Text style={styles.trialButtonText}>TRY 7 DAYS FREE →</Text>
-              </TouchableOpacity>
-            </Animated.View>
+        <Animated.View style={{ transform: [{ scale: trialScale }] }}>
+          <TouchableOpacity
+            style={styles.trialButton}
+            onPress={handleStartTrial}
+            onPressIn={() => onPressIn(trialScale)}
+            onPressOut={() => onPressOut(trialScale)}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Unlock MoodRx Pro"
+          >
+            <Text style={styles.trialButtonText}>UNLOCK MOODRX PRO →</Text>
+          </TouchableOpacity>
+        </Animated.View>
 
-            <TouchableOpacity
-              style={styles.freeButton}
-              onPress={handleFreeVersion}
-              activeOpacity={0.6}
-              accessibilityRole="button"
-              accessibilityLabel="Continue with free version"
-            >
-              <Text style={styles.freeButtonText}>CONTINUE WITH FREE VERSION</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.freeButton}
+          onPress={handleFreeVersion}
+          activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel="Continue with free version"
+        >
+          <Text style={styles.freeButtonText}>CONTINUE WITH FREE VERSION</Text>
+        </TouchableOpacity>
 
-            <Text style={styles.subDisclosure}>
-              Your 7-day free trial converts to MoodRx Pro at $44.99/year unless you cancel at
-              least 24 hours before it ends. The subscription auto-renews at $44.99/year until
-              cancelled. Payment is charged to your App Store or Google Play account at
-              confirmation; manage or cancel anytime in your account settings.
-            </Text>
-            <View style={styles.legalLinksRow}>
-              <TouchableOpacity
-                onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
-                activeOpacity={0.7}
-                accessibilityRole="link"
-                accessibilityLabel="Terms of Use"
-              >
-                <Text style={styles.legalLinkText}>TERMS OF USE</Text>
-              </TouchableOpacity>
-              <Text style={styles.legalDot}>·</Text>
-              <TouchableOpacity
-                onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
-                activeOpacity={0.7}
-                accessibilityRole="link"
-                accessibilityLabel="Privacy Policy"
-              >
-                <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        ) : (
-          <Animated.View style={{ transform: [{ scale: trialScale }] }}>
-            <TouchableOpacity
-              style={styles.trialButton}
-              onPress={handleFreeVersion}
-              onPressIn={() => onPressIn(trialScale)}
-              onPressOut={() => onPressOut(trialScale)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Get started"
-            >
-              <Text style={styles.trialButtonText}>LET&apos;S GO →</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
+        <View style={styles.legalLinksRow}>
+          <TouchableOpacity
+            onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
+            activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="Terms of Use"
+          >
+            <Text style={styles.legalLinkText}>TERMS OF USE</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalDot}>·</Text>
+          <TouchableOpacity
+            onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
+            activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="Privacy Policy"
+          >
+            <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.disclaimer}>
           MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
@@ -432,7 +408,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 2,
   },
-  subDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 16, marginTop: 16 },
   legalLinksRow: {
     flexDirection: 'row',
     justifyContent: 'center',

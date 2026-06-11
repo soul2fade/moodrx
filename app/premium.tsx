@@ -34,7 +34,6 @@ export default function PremiumScreen() {
     restorePurchases,
     isPremium,
     offerings,
-    isLoading: subLoading,
   } = useSubscription();
   const { sessionCount, avgChange } = useSessions();
 
@@ -67,9 +66,6 @@ export default function PremiumScreen() {
       Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')
     );
   };
-
-  // Suppress the unused variable warning — subLoading is kept for future use
-  void subLoading;
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: '#0a0a0a', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>

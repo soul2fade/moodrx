@@ -49,7 +49,7 @@ export const handler: Handler = async (event) => {
       max_tokens: 300,
       temperature: 0.9,
       system: VENT_SYSTEM_PROMPT,
-      tools: [ASSESS_TOOL], // SDK type workaround
+      tools: [ASSESS_TOOL],
       tool_choice: { type: 'tool', name: ASSESS_TOOL.name },
       messages: [{ role: 'user', content: transcript }],
     });

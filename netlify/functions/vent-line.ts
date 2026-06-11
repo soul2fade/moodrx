@@ -3,7 +3,7 @@ import { getStore } from '@netlify/blobs';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   ASSESS_TOOL,
-  VENT_SYSTEM_PROMPT,
+  buildVentSystem,
   classifyKeywordFloor,
   resolveRisk,
   validateAssessment,
@@ -21,7 +21,7 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST' || !event.body) return { statusCode: 400, body: '' };
   if (!ANTHROPIC_KEY) return { statusCode: 500, body: '' };
 
-  let payload: { transcript?: string; deviceId?: string };
+  let payload: { transcript?: string; deviceId?: string; episodes?: Record<string, unknown> | null };
   try {
     payload = JSON.parse(event.body);
   } catch {
@@ -48,7 +48,7 @@ export const handler: Handler = async (event) => {
       model: 'claude-haiku-4-5',
       max_tokens: 300,
       temperature: 0.9,
-      system: VENT_SYSTEM_PROMPT,
+      system: buildVentSystem(payload.episodes),
       tools: [ASSESS_TOOL],
       tool_choice: { type: 'tool', name: ASSESS_TOOL.name },
       messages: [{ role: 'user', content: transcript }],

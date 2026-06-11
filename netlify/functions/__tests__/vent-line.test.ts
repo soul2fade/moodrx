@@ -80,4 +80,28 @@ describe('vent-line handler', () => {
     const res = await call({ transcript: 'x', deviceId: 'd1' });
     expect(res.statusCode).toBe(502);
   });
+
+  it('passes a rendered memory block to the model when episodes are provided', async () => {
+    createMock.mockResolvedValue(TOOL_OK({ mood: 'stressed' }));
+    await call({
+      transcript: 'work is crushing me',
+      deviceId: 'd1',
+      episodes: {
+        stressed: {
+          mood: 'stressed', intensity: 7, workoutName: 'Heavy Bag',
+          helped: 'no', dayLabel: 'Monday', daysAgo: 3,
+        },
+      },
+    });
+    const sentSystem = createMock.mock.calls[0][0].system as string;
+    expect(sentSystem).toContain('Heavy Bag');
+    expect(sentSystem.toLowerCase()).toContain('never invent');
+  });
+
+  it('sends the base prompt (no memory block) when episodes are absent', async () => {
+    createMock.mockResolvedValue(TOOL_OK());
+    await call({ transcript: 'just venting', deviceId: 'd1' });
+    const sentSystem = createMock.mock.calls[0][0].system as string;
+    expect(sentSystem).not.toContain('MEMORY —');
+  });
 });

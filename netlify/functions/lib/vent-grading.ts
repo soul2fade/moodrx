@@ -92,3 +92,54 @@ export const VENT_SYSTEM_PROMPT = `You are Dr. MoodRx, a darkly funny but ultima
    - risk "acute": brief, warm, non-clinical. Acknowledge them; do not joke; do not give medical advice.
 
 NEVER invent facts, numbers, or history. NEVER give clinical labels, diagnoses, or medical advice. Use only what the user said.`;
+
+/** Structured facts for one past episode, as sent by the client (mirrors the
+ *  app's Episode shape; this module stays app-independent). */
+export interface EpisodeFacts {
+  mood: string;
+  intensity: number;
+  workoutName: string;
+  helped: 'yes' | 'somewhat' | 'no';
+  dayLabel: string;
+  daysAgo: number;
+}
+
+function isEpisodeFacts(v: unknown): v is EpisodeFacts {
+  if (!v || typeof v !== 'object') return false;
+  const o = v as Record<string, unknown>;
+  return (
+    typeof o.workoutName === 'string' && o.workoutName.trim().length > 0 &&
+    (o.helped === 'yes' || o.helped === 'somewhat' || o.helped === 'no') &&
+    typeof o.dayLabel === 'string' &&
+    typeof o.daysAgo === 'number' && Number.isFinite(o.daysAgo)
+  );
+}
+
+function whenLabel(e: EpisodeFacts): string {
+  if (e.daysAgo <= 0) return 'today';
+  if (e.daysAgo === 1) return 'yesterday';
+  return `${e.dayLabel}, ${e.daysAgo} days ago`;
+}
+
+function helpedLabel(e: EpisodeFacts): string {
+  return e.helped === 'yes' ? 'helped' : e.helped === 'no' ? "didn't help" : 'sort of helped';
+}
+
+/** Append a per-mood memory block + a strict reference rule to the base vent
+ *  prompt. Only valid entries for known mood keys are rendered. Returns the
+ *  unmodified base prompt when there are none. */
+export function buildVentSystem(episodes?: Record<string, unknown> | null): string {
+  const valid = Object.entries(episodes ?? {}).filter(
+    ([mood, e]) => (MOOD_KEYS as readonly string[]).includes(mood) && isEpisodeFacts(e),
+  ) as [MoodKey, EpisodeFacts][];
+  if (valid.length === 0) return VENT_SYSTEM_PROMPT;
+
+  const lines = valid.map(
+    ([mood, e]) => `- ${mood}: ${whenLabel(e)}, they did "${e.workoutName}" and it ${helpedLabel(e)}.`,
+  );
+  return `${VENT_SYSTEM_PROMPT}
+
+MEMORY — real past sessions, one per mood:
+${lines.join('\n')}
+If (and only if) the mood you assign appears above and it naturally fits, you may briefly reference that specific past session in your reply, in voice. Never reference a memory for a different mood. Never invent a past session. Use only these facts.`;
+}

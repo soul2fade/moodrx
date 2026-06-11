@@ -7,6 +7,7 @@ import {
   VENT_SYSTEM_PROMPT,
   ASSESS_TOOL,
 } from '../lib/vent-grading';
+import { buildVentSystem, type EpisodeFacts } from '../lib/vent-grading';
 
 describe('classifyKeywordFloor', () => {
   it('does NOT fire on hyperbole/frustration', () => {
@@ -97,5 +98,39 @@ describe('prompt + tool schema', () => {
     expect(p).toContain('hyperbole');
     expect(p).toContain('acute');
     expect(p).toContain('never');
+  });
+});
+
+describe('buildVentSystem', () => {
+  const ep: EpisodeFacts = {
+    mood: 'stressed', intensity: 7, workoutName: 'Heavy Bag',
+    helped: 'no', dayLabel: 'Monday', daysAgo: 3,
+  };
+
+  it('returns the base prompt unchanged when no episodes are given', () => {
+    expect(buildVentSystem()).toBe(VENT_SYSTEM_PROMPT);
+    expect(buildVentSystem(null)).toBe(VENT_SYSTEM_PROMPT);
+    expect(buildVentSystem({})).toBe(VENT_SYSTEM_PROMPT);
+  });
+
+  it('appends a memory block + strict rule when an episode is present', () => {
+    const sys = buildVentSystem({ stressed: ep });
+    expect(sys.startsWith(VENT_SYSTEM_PROMPT)).toBe(true);
+    expect(sys).toContain('Heavy Bag');
+    expect(sys.toLowerCase()).toContain('never invent');
+    expect(sys.toLowerCase()).toContain('different mood'); // forbids cross-mood reference
+  });
+
+  it('drops unknown mood keys and malformed entries', () => {
+    const sys = buildVentSystem({
+      stressed: ep,
+      bogus: ep,                                  // not a real mood key
+      anxious: { mood: 'anxious' } as EpisodeFacts, // missing fields
+    });
+    // Only the valid 'stressed' entry should appear in the memory block
+    const memoryBlock = sys.slice(VENT_SYSTEM_PROMPT.length);
+    expect(sys).toContain('stressed');
+    expect(memoryBlock).not.toContain('bogus');
+    expect(memoryBlock).not.toContain('anxious'); // malformed entry filtered out
   });
 });

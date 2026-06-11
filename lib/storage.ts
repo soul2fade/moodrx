@@ -659,6 +659,22 @@ export async function setTrashTalkVolume(volume: number): Promise<void> {
   }
 }
 
+const AI_COACH_KEY = '@moodrx_ai_coach_enabled';
+
+/** Opt-in for the dynamic AI coach. Default false — sending mood facts
+ *  off-device is a separate consent from the trash-talk toggle. */
+export async function getAiCoachEnabled(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(AI_COACH_KEY)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setAiCoachEnabled(value: boolean): Promise<void> {
+  await AsyncStorage.setItem(AI_COACH_KEY, value ? 'true' : 'false');
+}
+
 const VOICE_ENABLED_KEY = '@moodrx_voice_enabled';
 
 export async function getVoiceEnabled(): Promise<boolean> {

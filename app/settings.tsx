@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { getTrashTalkVolume, getUserProfile, getVoiceEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVoiceEnabled, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
 import { exportSessionsJson } from '@/lib/export-sessions';
 import { resetAllAppData } from '@/lib/reset-app';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -74,6 +74,8 @@ export default function SettingsScreen() {
   const [healthPlatformLabel, setHealthPlatformLabel] = useState('Health');
   const [healthEnabled, setHealthEnabledState] = useState(false);
   const voiceToggleAnim = useRef(new Animated.Value(1)).current;
+  const [aiCoachEnabled, setAiCoachEnabledState] = useState(false);
+  const aiCoachToggleAnim = useRef(new Animated.Value(0)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
   const { restorePurchases, isPremium, devTogglePremium, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
@@ -118,6 +120,13 @@ export default function SettingsScreen() {
       }).catch(() => {});
     }
   }, [toggleAnim, voiceToggleAnim, healthToggleAnim]);
+
+  useEffect(() => {
+    getAiCoachEnabled().then((on) => {
+      setAiCoachEnabledState(on);
+      aiCoachToggleAnim.setValue(on ? 1 : 0);
+    }).catch(() => {});
+  }, [aiCoachToggleAnim]);
 
   const handleTrashTalkVolumeChange = async (value: number) => {
     setTrashTalkVolumeState(value);
@@ -173,6 +182,22 @@ export default function SettingsScreen() {
     inputRange: [0, 1],
     outputRange: [2, 22],
   });
+
+  const aiCoachTranslateX = aiCoachToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
+
+  const handleAiCoachToggle = async () => {
+    const next = !aiCoachEnabled;
+    setAiCoachEnabledState(next);
+    await setAiCoachEnabled(next);
+    Animated.timing(aiCoachToggleAnim, {
+      toValue: next ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const handleSelectPreferredTime = async (value: UserProfile['preferredTime']) => {
     setPreferredTimeState(value);
@@ -443,6 +468,23 @@ export default function SettingsScreen() {
             accessibilityLabel={`Trash talk volume ${Math.round(trashTalkVolume * 100)} percent`}
             accessibilityRole="adjustable"
           />
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLabelBlock}>
+            <Text style={styles.toggleLabel}>AI coach (live)</Text>
+            <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default; Pro feature.</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleAiCoachToggle}
+            activeOpacity={0.8}
+            style={[styles.toggle, aiCoachEnabled ? styles.toggleOn : styles.toggleOff]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: aiCoachEnabled }}
+            accessibilityLabel="AI coach"
+          >
+            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: aiCoachTranslateX }] }]} />
+          </TouchableOpacity>
         </View>
 
         {healthAvailable && (

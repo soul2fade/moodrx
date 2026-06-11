@@ -105,4 +105,16 @@ Make sure the hosted privacy policy explicitly covers:
 
 ---
 
+## 6. ⚠️ AI Coach (opt-in) — CHANGES the "data never leaves the device" story
+
+The dynamic AI Coach (shipping in v1, **off by default**) means that **for users who opt in**, a minimal set of mood-derived facts **is transmitted off the device**: current mood, pre-workout intensity, workout name, and derived summaries (workout-helped rate, recent trend) — sent to a MoodRx Netlify function → Anthropic to generate one coaching line. No name, no field-note text; only an anonymous RevenueCat app-user-id (for the entitlement check). It is **not** used for ads, sold, or used to train models.
+
+**Declaration impact (must re-derive before submitting v1):**
+- **Play Data Safety:** the prior "Health & fitness / mood data is processed on-device only → not collected" is no longer universally true. For the opted-in subset, you likely must now declare **Personal info** and/or **Health & fitness** as **Collected** (transmitted) · **Not shared** (MoodRx + Anthropic act as processors) · Purpose: **App functionality** · **Optional** (user opts in). Re-derive against Google's current definitions and Anthropic's processor status.
+- **App Store App Privacy:** add the corresponding transmitted data type(s), not linked to identity, not for tracking, purpose App Functionality.
+- **Privacy policy:** already updated — `docs/privacy-policy.html` now has an "AI Coach (Optional, Off by Default)" section naming exactly what's sent, that it's opt-in, and linking Anthropic's policy.
+- 🔎 Confirm whether the data counts as "Health" vs "Personal info" under each store's taxonomy; mood + intensity are mood/health-adjacent.
+
+---
+
 *Companion to `docs/launch-submission-checklist.md`. Items marked 🔎 need a quick verification against the vendor's current docs before you submit.*

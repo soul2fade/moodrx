@@ -17,9 +17,10 @@ import Slider from '@react-native-community/slider';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { getAiCoachEnabled, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
 import { todayDateString } from '@/lib/dateUtils';
 import { useSessions } from '@/contexts/SessionsContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { SessionWinCard } from '@/components/SessionWinCard';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { saveWorkoutToHealth } from '@/lib/health';
@@ -33,6 +34,8 @@ import { BreakthroughCard } from '@/components/BreakthroughCard';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
+import { buildCoachContext } from '@/lib/coach-insight';
+import { fetchDynamicLine } from '@/lib/coach-client';
 import { getFieldNotePlaceholder } from '@/lib/workout-ui';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react-native';
 
@@ -51,6 +54,7 @@ function getScoreContext(score: number, lowerIsBetter: boolean): string {
 
 export default function PostWorkoutScreen() {
   const { addSession: addSessionToContext, sessionCount: cachedSessionCount } = useSessions();
+  const { isPremium } = useSubscription();
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -73,6 +77,7 @@ export default function PostWorkoutScreen() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [previousBest, setPreviousBest] = useState<PersonalBest | null>(null);
   const [note, setNote] = useState('');
+  const [dynamicLine, setDynamicLine] = useState<string | null>(null);
   const workout = getWorkoutById(workoutId) ?? getWorkoutsForMood(mood)[0];
 
   useEffect(() => {
@@ -90,6 +95,28 @@ export default function PostWorkoutScreen() {
   const accentColor = moodData.color;
   const lowerIsBetter = mood !== 'good';
   const postInsult = useDrMoodRxLine(mood, 'post');
+
+  // Dynamic AI coach line (opt-in): the static line shows instantly; if the
+  // user opted in and is entitled/online, swap in a dynamic line when it
+  // arrives. Any failure leaves the static line — never blocks, never spins.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const enabled = await getAiCoachEnabled();
+      // Gate on entitlement client-side too: avoids a pointless function +
+      // RevenueCat round-trip every workout for an opted-in but non-Pro user.
+      if (!enabled || !isPremium || postInsult === '') return;
+      const sessions = await getSessions();
+      const context = buildCoachContext({ mood, intensity, workout }, sessions);
+      const line = await fetchDynamicLine(context);
+      if (!cancelled && line) setDynamicLine(line);
+    })().catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mood/intensity/workout are mount-fixed route params; postInsult gates on trash-talk/voice
+  }, [postInsult, isPremium]);
+
   const notePlaceholder = getFieldNotePlaceholder(cachedSessionCount);
   const breakthroughRef = useRef<ViewShot>(null);
 
@@ -258,8 +285,8 @@ export default function PostWorkoutScreen() {
         <Text style={styles.subtext}>
           You showed up when your brain said don&apos;t. That takes guts.
         </Text>
-        {postInsult !== '' && (
-          <Text style={styles.insultLine}>{postInsult}</Text>
+        {(dynamicLine ?? postInsult) !== '' && (
+          <Text style={styles.insultLine}>{dynamicLine ?? postInsult}</Text>
         )}
 
         {sessionReps > 0 && (

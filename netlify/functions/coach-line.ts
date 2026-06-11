@@ -29,7 +29,6 @@ async function isEntitled(appUserId: string): Promise<boolean> {
   return ent.expires_date == null || new Date(ent.expires_date).getTime() > Date.now();
 }
 
-
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST' || !event.body) return { statusCode: 400, body: '' };
   if (!ANTHROPIC_KEY || !REVENUECAT_SECRET) return { statusCode: 500, body: '' };

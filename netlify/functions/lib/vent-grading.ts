@@ -97,7 +97,7 @@ NEVER invent facts, numbers, or history. NEVER give clinical labels, diagnoses, 
  *  app's Episode shape; this module stays app-independent). */
 export interface EpisodeFacts {
   mood: string;
-  intensity: number;
+  intensity: number; // part of the wire shape; not rendered in the memory line
   workoutName: string;
   helped: 'yes' | 'somewhat' | 'no';
   dayLabel: string;
@@ -110,15 +110,22 @@ function isEpisodeFacts(v: unknown): v is EpisodeFacts {
   return (
     typeof o.workoutName === 'string' && o.workoutName.trim().length > 0 &&
     (o.helped === 'yes' || o.helped === 'somewhat' || o.helped === 'no') &&
-    typeof o.dayLabel === 'string' &&
+    typeof o.dayLabel === 'string' && o.dayLabel.trim().length > 0 &&
     typeof o.daysAgo === 'number' && Number.isFinite(o.daysAgo)
   );
+}
+
+/** workoutName/dayLabel come from the user's session log over HTTP and are
+ *  interpolated into the system prompt. Strip newlines/backticks and clamp
+ *  length so a crafted value can't inject prompt structure or instructions. */
+function sanitizeFact(s: string): string {
+  return s.replace(/[\r\n`]+/g, ' ').trim().slice(0, 80);
 }
 
 function whenLabel(e: EpisodeFacts): string {
   if (e.daysAgo <= 0) return 'today';
   if (e.daysAgo === 1) return 'yesterday';
-  return `${e.dayLabel}, ${e.daysAgo} days ago`;
+  return `${sanitizeFact(e.dayLabel)}, ${e.daysAgo} days ago`;
 }
 
 function helpedLabel(e: EpisodeFacts): string {
@@ -135,11 +142,11 @@ export function buildVentSystem(episodes?: Record<string, unknown> | null): stri
   if (valid.length === 0) return VENT_SYSTEM_PROMPT;
 
   const lines = valid.map(
-    ([mood, e]) => `- ${mood}: ${whenLabel(e)}, they did "${e.workoutName}" and it ${helpedLabel(e)}.`,
+    ([mood, e]) => `- ${mood}: ${whenLabel(e)}, they did "${sanitizeFact(e.workoutName)}" and it ${helpedLabel(e)}.`,
   );
   return `${VENT_SYSTEM_PROMPT}
 
 MEMORY — real past sessions, one per mood:
 ${lines.join('\n')}
-If (and only if) the mood you assign appears above and it naturally fits, you may briefly reference that specific past session in your reply, in voice. Never reference a memory for a different mood. Never invent a past session. Use only these facts.`;
+If (and only if) the mood you assign appears above and it naturally fits, you may briefly reference that specific past session in your reply, in voice. Never reference a memory for a different mood. Never reference a past session when the risk is elevated or acute — only at risk "none". Never invent a past session. Use only these facts.`;
 }

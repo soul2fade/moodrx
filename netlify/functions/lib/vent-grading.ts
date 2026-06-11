@@ -9,7 +9,6 @@ const SELF_HARM_PHRASES = [
   'killing myself',
   'end my life',
   'ending my life',
-  'want to die',
   "don't want to be alive",
   'do not want to be alive',
   "don't want to live",
@@ -45,7 +44,7 @@ export interface Assessment {
 const RISKS: Risk[] = ['none', 'elevated', 'acute'];
 
 export function validateAssessment(raw: unknown): Assessment | null {
-  if (!raw || typeof raw !== 'object') return null;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const o = raw as Record<string, unknown>;
   const mood = o.mood;
   const intensityRaw = o.intensity;

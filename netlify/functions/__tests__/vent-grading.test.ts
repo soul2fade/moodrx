@@ -16,6 +16,8 @@ describe('classifyKeywordFloor', () => {
       'I could die of embarrassment',
       "I'm so done with this job, I hate my life",
       'I am dead tired and everything sucks',
+      'I want to die laughing',
+      'I want to die of embarrassment',
     ]) {
       expect(classifyKeywordFloor(t)).toBe('none');
     }
@@ -75,7 +77,7 @@ describe('validateAssessment', () => {
     expect(validateAssessment('nope')).toBeNull();
   });
 
-  it('clamps/rounds intensity and trims reply', () => {
+  it('rounds intensity and trims reply', () => {
     const r = validateAssessment({ ...ok, intensity: 7.6, reply: '  hi  ' });
     expect(r).toEqual({ mood: 'stressed', intensity: 8, reply: 'hi', risk: 'none' });
   });

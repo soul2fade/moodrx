@@ -1,4 +1,4 @@
-import { type Session } from '@/lib/storage';
+import { sessionDateString, type Session } from '@/lib/storage';
 
 // ─── Pattern engine (Unit A) ─────────────────────────────────────────────────
 //
@@ -72,4 +72,41 @@ export function detectTimeOfDay(sessions: Session[]): PatternItem | null {
       ? `Your mood lifts most after ${part} sessions.`
       : `${Part} sessions might be landing better for you — worth watching?`;
   return { id: 'time-of-day', text, kind: tier };
+}
+
+const WEEKDAY_NAMES = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+] as const;
+
+/** Day-of-week roughness: the weekday with the biggest positive gap in mean
+ *  pre-workout intensity vs every other day — "you show up more wound up". */
+export function detectDayOfWeek(sessions: Session[]): PatternItem | null {
+  const byDow: number[][] = [[], [], [], [], [], [], []];
+  for (const s of sessions) {
+    const dow = new Date(sessionDateString(s) + 'T00:00:00').getDay();
+    byDow[dow].push(s.intensity);
+  }
+  let best = -1;
+  let bestEffect = 0; // only a strictly-rougher weekday qualifies
+  for (let dow = 0; dow < 7; dow++) {
+    if (byDow[dow].length < MIN_OBS_PER_WEEKDAY) continue;
+    const others = byDow.filter((_, i) => i !== dow).flat();
+    if (others.length === 0) continue;
+    const effect = mean(byDow[dow]) - mean(others);
+    if (effect > bestEffect) {
+      bestEffect = effect;
+      best = dow;
+    }
+  }
+  if (best === -1) return null;
+
+  const tier = classifyTier(byDow[best].length, MIN_OBS_PER_WEEKDAY, bestEffect, ROUGH_GRAY, ROUGH_STRONG);
+  if (tier === 'none') return null;
+
+  const day = WEEKDAY_NAMES[best];
+  const text =
+    tier === 'finding'
+      ? `${day}s run rough — you show up more wound up than on your other days.`
+      : `Your ${day}s have been running a little rough — anything recurring?`;
+  return { id: 'day-of-week', text, kind: tier };
 }

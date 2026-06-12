@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sessionImprovement, classifyTier, detectTimeOfDay } from '@/lib/patterns';
+import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek } from '@/lib/patterns';
 import type { MoodKey, Session } from '@/lib/storage';
 
 // ── Shared fixture helpers (used by all pattern tests) ───────────────────────
@@ -103,5 +103,47 @@ describe('detectTimeOfDay', () => {
       sess(2, 19, 6, 4), sess(4, 19, 6, 4), sess(6, 19, 6, 4), sess(8, 19, 6, 4), // imp 2
     ];
     expect(detectTimeOfDay(sessions)).toBeNull();
+  });
+});
+
+describe('detectDayOfWeek', () => {
+  it('emits a finding when one weekday runs much rougher', () => {
+    const sessions = [
+      // 4 Wednesdays at intensity 9
+      sess(3, 9, 9, 4), sess(10, 9, 9, 4), sess(17, 9, 9, 4), sess(24, 9, 9, 4),
+      // other days at intensity 5 (≤2 per weekday so none else is eligible)
+      sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4),
+      sess(5, 9, 5, 4), sess(8, 9, 5, 4), sess(9, 9, 5, 4),
+    ];
+    const item = detectDayOfWeek(sessions);
+    expect(item?.kind).toBe('finding');
+    expect(item?.id).toBe('day-of-week');
+    expect(item?.text.toLowerCase()).toContain('wednesday');
+  });
+
+  it('emits a question for a milder weekday spike', () => {
+    const sessions = [
+      sess(3, 9, 7, 4), sess(10, 9, 7, 4), sess(17, 9, 7, 4), // 3 Wednesdays at 7
+      sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4), sess(5, 9, 5, 4), // others at 5 → effect 2.0
+    ];
+    const item = detectDayOfWeek(sessions);
+    expect(item?.kind).toBe('question');
+    expect(item?.text.toLowerCase()).toContain('wednesday');
+  });
+
+  it('returns null below the per-weekday floor', () => {
+    const sessions = [
+      sess(3, 9, 9, 4), sess(10, 9, 9, 4), // only 2 Wednesdays
+      sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4), sess(5, 9, 5, 4),
+    ];
+    expect(detectDayOfWeek(sessions)).toBeNull();
+  });
+
+  it('returns null when no weekday stands out', () => {
+    const sessions = [
+      sess(3, 9, 5, 4), sess(10, 9, 5, 4), sess(17, 9, 5, 4), // Wednesdays at 5
+      sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4),   // others at 5
+    ];
+    expect(detectDayOfWeek(sessions)).toBeNull();
   });
 });

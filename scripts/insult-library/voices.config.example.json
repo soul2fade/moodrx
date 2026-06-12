@@ -1,0 +1,14 @@
+[
+  {
+    "name": "noir",
+    "label": "Dr. MoodRx",
+    "voiceId": "REPLACE_WITH_ELEVENLABS_VOICE_ID",
+    "free": true
+  },
+  {
+    "name": "velvet",
+    "label": "Velvet",
+    "voiceId": "REPLACE_WITH_ELEVENLABS_VOICE_ID",
+    "free": false
+  }
+]

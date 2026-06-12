@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sessionImprovement, classifyTier } from '@/lib/patterns';
+import { sessionImprovement, classifyTier, detectTimeOfDay } from '@/lib/patterns';
 import type { MoodKey, Session } from '@/lib/storage';
 
 // ── Shared fixture helpers (used by all pattern tests) ───────────────────────
@@ -60,5 +60,48 @@ describe('classifyTier', () => {
   it('emits a finding at or above the strong threshold', () => {
     expect(classifyTier(5, 4, 2, 1, 2)).toBe('finding');
     expect(classifyTier(10, 4, 4, 1, 2)).toBe('finding');
+  });
+});
+
+describe('detectTimeOfDay', () => {
+  it('emits a finding when one part of day clearly helps more', () => {
+    const sessions = [
+      // 4 morning sessions, improvement 4 (int 8 - post 4)
+      sess(1, 9, 8, 4), sess(3, 9, 8, 4), sess(5, 9, 8, 4), sess(7, 9, 8, 4),
+      // 4 evening sessions, improvement 1 (int 6 - post 5)
+      sess(2, 19, 6, 5), sess(4, 19, 6, 5), sess(6, 19, 6, 5), sess(8, 19, 6, 5),
+    ];
+    const item = detectTimeOfDay(sessions);
+    expect(item?.kind).toBe('finding');
+    expect(item?.id).toBe('time-of-day');
+    expect(item?.text.toLowerCase()).toContain('morning');
+  });
+
+  it('emits a hedged question in the gray zone', () => {
+    const sessions = [
+      // morning improvement 3 (int 7 - post 4)
+      sess(1, 9, 7, 4), sess(3, 9, 7, 4), sess(5, 9, 7, 4), sess(7, 9, 7, 4),
+      // evening improvement 1.5 (int 6 - post 4.5) → effect 1.5
+      sess(2, 19, 6, 4.5), sess(4, 19, 6, 4.5), sess(6, 19, 6, 4.5), sess(8, 19, 6, 4.5),
+    ];
+    const item = detectTimeOfDay(sessions);
+    expect(item?.kind).toBe('question');
+    expect(item?.text.toLowerCase()).toContain('morning');
+  });
+
+  it('returns null below the per-bucket floor', () => {
+    const sessions = [
+      sess(1, 9, 8, 4), sess(3, 9, 8, 4), sess(5, 9, 8, 4), // only 3 morning
+      sess(2, 19, 6, 5), sess(4, 19, 6, 5), sess(6, 19, 6, 5), sess(8, 19, 6, 5), sess(10, 19, 6, 5),
+    ];
+    expect(detectTimeOfDay(sessions)).toBeNull();
+  });
+
+  it('returns null when the two parts of day are equivalent', () => {
+    const sessions = [
+      sess(1, 9, 6, 4), sess(3, 9, 6, 4), sess(5, 9, 6, 4), sess(7, 9, 6, 4),   // imp 2
+      sess(2, 19, 6, 4), sess(4, 19, 6, 4), sess(6, 19, 6, 4), sess(8, 19, 6, 4), // imp 2
+    ];
+    expect(detectTimeOfDay(sessions)).toBeNull();
   });
 });

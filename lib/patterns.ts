@@ -48,3 +48,28 @@ export function classifyTier(
   if (obs < minObs || effect < gray) return 'none';
   return effect >= strong ? 'finding' : 'question';
 }
+
+/** Time-of-day: does morning or evening reliably help more? Buckets by the
+ *  session's LOCAL hour (getHours on the stored epoch ms). */
+export function detectTimeOfDay(sessions: Session[]): PatternItem | null {
+  const morning: number[] = [];
+  const evening: number[] = [];
+  for (const s of sessions) {
+    const hour = new Date(s.timestamp).getHours();
+    (hour < 12 ? morning : evening).push(sessionImprovement(s));
+  }
+  const obs = Math.min(morning.length, evening.length);
+  const mMean = mean(morning);
+  const eMean = mean(evening);
+  const effect = Math.abs(mMean - eMean);
+  const tier = classifyTier(obs, MIN_OBS_PER_BUCKET, effect, EFFECT_GRAY, EFFECT_STRONG);
+  if (tier === 'none') return null;
+
+  const part = mMean >= eMean ? 'morning' : 'evening';
+  const Part = part === 'morning' ? 'Morning' : 'Evening';
+  const text =
+    tier === 'finding'
+      ? `Your mood lifts most after ${part} sessions.`
+      : `${Part} sessions might be landing better for you — worth watching?`;
+  return { id: 'time-of-day', text, kind: tier };
+}

@@ -28,8 +28,12 @@ review files** — the approved text is the curated asset.
 
 ## Phase 2 — human review (the gate; do this before voicing)
 Open each `data/<tier>.review.json`. For every entry set `"status"` to
-`"approved"` or `"rejected"` (you may also tweak `"text"`). Only `approved`
-lines are ever voiced — no un-reviewed line spends credits.
+`"approved"` or `"rejected"`. Only `approved` lines are ever voiced — no
+un-reviewed line spends credits. **Don't edit a line's `"text"` in place** —
+its `"id"` (and audio filename) is derived from the original text and is not
+recomputed, and a later re-generate would no longer dedup against the edit. To
+change a line, `"rejected"` it and let the next `insults:generate` propose a
+fresh one.
 
 ## Phase 3 — voice approved lines (spends ElevenLabs credits)
 ```

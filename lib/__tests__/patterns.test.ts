@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek, detectConsistency } from '@/lib/patterns';
+import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek, detectConsistency, buildPatterns } from '@/lib/patterns';
 import type { MoodKey, Session } from '@/lib/storage';
 
 // ── Shared fixture helpers (used by all pattern tests) ───────────────────────
@@ -188,5 +188,42 @@ describe('detectConsistency', () => {
       sess(13, 9, 6, 5), sess(17, 9, 6, 5), sess(21, 9, 6, 5),
     ];
     expect(detectConsistency(sessions)).toBeNull();
+  });
+});
+
+describe('buildPatterns', () => {
+  it('produces ZERO findings on a flat/noise session set', () => {
+    // Uniform improvement (imp 2) and intensity (5); alternating morning/evening;
+    // no two days consecutive; no weekday reaching the floor. Nothing must fire.
+    const noise = [
+      sess(1, 9, 5, 3), sess(3, 19, 5, 3), sess(5, 9, 5, 3), sess(7, 19, 5, 3),
+      sess(9, 9, 5, 3), sess(11, 19, 5, 3), sess(13, 9, 5, 3), sess(15, 19, 5, 3),
+      sess(17, 9, 5, 3), sess(19, 19, 5, 3),
+    ];
+    const items = buildPatterns(noise);
+    expect(items.filter((i) => i.kind === 'finding')).toHaveLength(0);
+    expect(items).toEqual([]); // gray zone is quiet too on genuine noise
+  });
+
+  it('orders findings before questions', () => {
+    // All hour 9 → time-of-day silent (evening bucket empty).
+    // Consistency: Jun 2-5 back-to-back (imp 4) vs 6 after-gap days (imp 1) → FINDING.
+    // Day-of-week: 3 Saturdays (Jun 13,20,27) at intensity 9 vs others ~7.14 → effect ~1.86 → QUESTION.
+    const sessions = [
+      sess(1, 9, 6, 5),                                                   // after-gap, imp 1, Mon
+      sess(2, 9, 8, 4), sess(3, 9, 8, 4), sess(4, 9, 8, 4), sess(5, 9, 8, 4), // back-to-back, imp 4
+      sess(9, 9, 6, 5), sess(11, 9, 6, 5),                                // after-gap, imp 1
+      sess(13, 9, 9, 8), sess(20, 9, 9, 8), sess(27, 9, 9, 8),            // Saturdays, int 9, imp 1
+    ];
+    const items = buildPatterns(sessions);
+    const kinds = items.map((i) => i.kind);
+    expect(kinds).toContain('finding');
+    expect(kinds).toContain('question');
+    // every finding precedes every question
+    expect(kinds.lastIndexOf('finding')).toBeLessThan(kinds.indexOf('question'));
+  });
+
+  it('returns an empty list when there is no data', () => {
+    expect(buildPatterns([])).toEqual([]);
   });
 });

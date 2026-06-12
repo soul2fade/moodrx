@@ -157,3 +157,19 @@ export function detectConsistency(sessions: Session[]): PatternItem | null {
         : 'A rest day between sessions might be helping — worth noticing?';
   return { id: 'consistency', text, kind: tier };
 }
+
+/** The public engine: run every signal, drop the silent ones, and order
+ *  confident findings ahead of hedged questions (the insights UI renders them
+ *  in this order; the free-teaser pick is the UI's concern, not the engine's).
+ *  A fourth detector (sleep/steps) is added in the per-session-health plan. */
+export function buildPatterns(sessions: Session[]): PatternItem[] {
+  const detected = [
+    detectTimeOfDay(sessions),
+    detectDayOfWeek(sessions),
+    detectConsistency(sessions),
+  ].filter((x): x is PatternItem => x !== null);
+
+  const findings = detected.filter((i) => i.kind === 'finding');
+  const questions = detected.filter((i) => i.kind === 'question');
+  return [...findings, ...questions];
+}

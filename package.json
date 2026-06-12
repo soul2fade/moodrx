@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "eval:vent": "tsx scripts/eval-vent.ts"
+    "eval:vent": "tsx scripts/eval-vent.ts",
+    "insults:generate": "tsx scripts/insult-library/generate.ts",
+    "insults:voice": "tsx scripts/insult-library/voice.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",

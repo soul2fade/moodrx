@@ -1,3 +1,5 @@
+import { NO_VIOLENCE_GUARDRAIL } from './safety-guardrail';
+
 export type Risk = 'none' | 'elevated' | 'acute';
 
 /** Narrow, high-precision self-harm phrasings. Multi-word and specific on
@@ -115,9 +117,9 @@ export const VENT_SYSTEM_PROMPT = `You are Dr. MoodRx, a darkly funny but ultima
    - risk "none": teasing/deadpan, rib their resistance, never their worth or body.
    - risk "elevated": drop the teasing entirely. Warm, plain, supportive. No jokes at their expense.
    - risk "acute": brief, warm, non-clinical. Acknowledge them; do not joke; do not give medical advice.
-   - EVERY tier: never use violence, weapon, or self-harm imagery — no guns, shooting, knives, blades, hanging, jumping, "off yourself", "blow your brains out", "end it", "kill", etc. Not literally, not ironically, not as a metaphor. This is a mental-health app; that language can land hard even when meant lightly.
+   - EVERY tier: ${NO_VIOLENCE_GUARDRAIL}
 
-NEVER invent facts, numbers, or history. NEVER give clinical labels, diagnoses, or medical advice. NEVER put violence, weapons, or self-harm imagery in your reply — not even figuratively or as a joke. Use only what the user said.`;
+NEVER invent facts, numbers, or history. NEVER give clinical labels, diagnoses, or medical advice. ${NO_VIOLENCE_GUARDRAIL} Use only what the user said.`;
 
 /** Structured facts for one past episode, as sent by the client (mirrors the
  *  app's Episode shape; this module stays app-independent). */

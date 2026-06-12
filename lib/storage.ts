@@ -437,6 +437,8 @@ export async function clearAllData(): Promise<void> {
       // the next launch silently re-syncs to HealthKit/Health Connect even
       // though the rest of the app behaves like a clean install.
       '@moodrx_health_enabled',
+      '@moodrx_vent_consent',
+      '@moodrx_vent_enabled',
       'notifications_enabled',
       'reminder_time',
       '@moodrx_reminder_schedule',
@@ -687,6 +689,46 @@ export async function getAiCoachEnabled(): Promise<boolean> {
 
 export async function setAiCoachEnabled(value: boolean): Promise<void> {
   await AsyncStorage.setItem(AI_COACH_KEY, value ? 'true' : 'false');
+}
+
+const VENT_CONSENT_KEY = '@moodrx_vent_consent';
+const VENT_ENABLED_KEY = '@moodrx_vent_enabled';
+
+/** One-time first-run consent for voice venting (sending the transcript to the
+ *  AI). Gates the first tap on "Need to vent?". */
+export async function getVentConsent(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(VENT_CONSENT_KEY)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setVentConsent(value: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(VENT_CONSENT_KEY, value ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
+}
+
+/** Settings toggle to disable voice venting after consent (defaults ON once
+ *  consent is given — absence of the key is treated as enabled). */
+export async function getVentEnabled(): Promise<boolean> {
+  try {
+    const raw = await AsyncStorage.getItem(VENT_ENABLED_KEY);
+    return raw === null ? true : raw === 'true';
+  } catch {
+    return true;
+  }
+}
+
+export async function setVentEnabled(value: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(VENT_ENABLED_KEY, value ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
 }
 
 const VOICE_ENABLED_KEY = '@moodrx_voice_enabled';

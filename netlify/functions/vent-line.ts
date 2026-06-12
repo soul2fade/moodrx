@@ -33,13 +33,24 @@ export const handler: Handler = async (event) => {
 
   // Rate + global budget caps (approximate; see coach-line note on non-atomic
   // get-then-set under concurrency — acceptable for a runaway-abuse ceiling).
-  const store = getStore('vent-usage');
+  // Best-effort: the counter store (Netlify Blobs) is defensive infrastructure,
+  // so if it's unavailable we degrade to "skip the cap" rather than failing the
+  // whole request — a counter outage must never take venting down. Caps resume
+  // automatically once Blobs is reachable again.
   const today = new Date().toISOString().slice(0, 10);
   const deviceKey = `device:${deviceId}:${today}`;
   const globalKey = `global:${today}`;
-  const deviceCount = Number((await store.get(deviceKey)) ?? 0);
-  const globalCount = Number((await store.get(globalKey)) ?? 0);
-  if (deviceCount >= PER_DEVICE_DAILY_CAP || globalCount >= GLOBAL_DAILY_CAP) {
+  let store: ReturnType<typeof getStore> | undefined;
+  let deviceCount = 0;
+  let globalCount = 0;
+  try {
+    store = getStore('vent-usage');
+    deviceCount = Number((await store.get(deviceKey)) ?? 0);
+    globalCount = Number((await store.get(globalKey)) ?? 0);
+  } catch {
+    store = undefined; // Blobs unavailable → skip caps for this request
+  }
+  if (store && (deviceCount >= PER_DEVICE_DAILY_CAP || globalCount >= GLOBAL_DAILY_CAP)) {
     return { statusCode: 429, body: '' }; // client falls back to the mood form
   }
 
@@ -59,8 +70,16 @@ export const handler: Handler = async (event) => {
 
     const risk = resolveRisk(assessment.risk, classifyKeywordFloor(transcript));
 
-    await store.set(deviceKey, String(deviceCount + 1));
-    await store.set(globalKey, String(globalCount + 1));
+    // Best-effort counter increment; a Blobs write failure must not 502 a reply
+    // we already generated.
+    if (store) {
+      try {
+        await store.set(deviceKey, String(deviceCount + 1));
+        await store.set(globalKey, String(globalCount + 1));
+      } catch {
+        /* counter write failed — ignore, the reply still stands */
+      }
+    }
 
     return {
       statusCode: 200,

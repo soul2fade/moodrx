@@ -4,7 +4,17 @@ import { clearUiState, invalidateUiStateCache, loadUiState, patchUiState } from 
 
 export type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
-export interface Session {
+/** Optional on-device health readings captured at session-log time
+ *  (HealthKit / Health Connect). Absent on sessions logged without health
+ *  sync — purely additive, so old records remain valid (no schema bump). */
+export interface SessionHealthFields {
+  /** Steps recorded for the day at log time, if health was available. */
+  stepsToday?: number;
+  /** Hours of sleep the night before the session, if available. */
+  sleepHoursLastNight?: number;
+}
+
+export interface Session extends SessionHealthFields {
   id: string;
   mood: MoodKey;
   intensity: number;

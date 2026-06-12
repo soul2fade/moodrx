@@ -22,4 +22,9 @@ describe('coachSystemPrompt', () => {
     expect(coachSystemPrompt('roasting', false, false).toLowerCase()).toContain('sharper');
     expect(coachSystemPrompt('teasing', false, false).toLowerCase()).toContain('teasing');
   });
+
+  it('forbids violence/weapon/self-harm imagery in both non-crisis tones', () => {
+    expect(coachSystemPrompt('roasting', false, false).toLowerCase()).toContain('weapon');
+    expect(coachSystemPrompt('teasing', false, false).toLowerCase()).toContain('weapon');
+  });
 });

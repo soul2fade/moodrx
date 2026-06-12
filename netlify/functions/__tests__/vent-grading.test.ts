@@ -130,6 +130,12 @@ describe('prompt + tool schema', () => {
     expect(p).toContain('acute');
     expect(p).toContain('never');
   });
+
+  it('system prompt forbids violence/weapon/self-harm imagery in the reply', () => {
+    const p = VENT_SYSTEM_PROMPT.toLowerCase();
+    expect(p).toContain('weapon');
+    expect(p).toContain('self-harm imagery');
+  });
 });
 
 describe('buildVentSystem', () => {

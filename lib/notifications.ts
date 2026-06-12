@@ -451,11 +451,6 @@ export async function clearAllNotificationState(): Promise<void> {
   }
 }
 
-/** @deprecated Use clearAllNotificationState for reset flows or
- *  cancelAllScheduledNotifications for cancel-only flows. Kept as an alias
- *  for one release so external callers don't break. */
-export const cancelAllNotifications = clearAllNotificationState;
-
 export async function scheduleSupplementReminder(hour: number, minute: number): Promise<void> {
   if (Platform.OS === 'web') return;
   try {

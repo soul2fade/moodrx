@@ -242,11 +242,8 @@ const styles = StyleSheet.create({
   bubble: { maxWidth: 300, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 6 },
   phraseText: { fontSize: 17, color: '#e0e0e0', textAlign: 'center', lineHeight: 26 },
   coachName: { fontSize: 14, fontFamily: 'BarlowCondensed_700Bold', letterSpacing: 2, marginBottom: 10 },
-  dotRow: { flexDirection: 'row', gap: 6, marginBottom: 4 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#2a2a2a' },
-  stepLabel: { fontSize: 12, color: '#ffffff', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase', lineHeight: 17 },
   controls: { flexDirection: 'row', gap: 8 },
   ctrlBtn: { paddingHorizontal: 20, paddingVertical: 9, borderRadius: 8, borderWidth: 0.5, borderColor: '#333' },
   ctrlText: { fontSize: 13, color: '#bbb' },
-  videoContainer: { borderRadius: 8, overflow: 'hidden', borderWidth: 1, backgroundColor: '#111' },
 });

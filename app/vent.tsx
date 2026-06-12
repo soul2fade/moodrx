@@ -30,7 +30,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type VentState = 'consent' | 'invite' | 'recording' | 'thinking' | 'reply' | 'error';
+type VentState = 'consent' | 'invite' | 'recording' | 'thinking' | 'reply';
 
 interface Correction {
   mood: MoodKey;

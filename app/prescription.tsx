@@ -526,11 +526,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-  },
   scroll: {
     flex: 1,
   },

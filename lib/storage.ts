@@ -314,11 +314,6 @@ export async function saveSupplementLog(log: SupplementLog): Promise<void> {
   return supplementWriteChain;
 }
 
-export async function getSupplementLogsForDate(date: string): Promise<SupplementLog[]> {
-  const all = await getSupplementLogs();
-  return all.filter((l) => l.date === date);
-}
-
 export async function toggleSupplementLog(supplementName: string, date: string): Promise<void> {
   supplementWriteChain = supplementWriteChain.then(async () => {
     try {

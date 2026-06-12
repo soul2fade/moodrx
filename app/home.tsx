@@ -678,29 +678,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
-  checkInLabel: {
-    ...t.label,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
-  },
-  topRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 18,
-  },
-  sessionCount: {
-    ...t.timestamp,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
-  },
-  settingsText: {
-    ...t.timestamp,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
-  },
   streakBadge: {
     backgroundColor: 'transparent',
     borderWidth: 1,

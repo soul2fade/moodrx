@@ -1397,7 +1397,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 2,
   },
-  bottomSpacer: {
-    height: 32,
-  },
 });

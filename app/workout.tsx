@@ -691,11 +691,11 @@ export default function WorkoutScreen() {
               <TouchableOpacity
                 onPress={handleRepTap}
                 activeOpacity={0.75}
-                style={[styles.repCircle, { borderColor: repCount > 0 && previousBest !== null && repCount > previousBest ? accentColor : accentColor }]}
+                style={[styles.repCircle, { borderColor: accentColor }]}
                 accessibilityRole="button"
                 accessibilityLabel={`Rep count ${repCount}, tap to increment`}
               >
-                <Text style={[styles.repNum, { color: previousBest !== null && repCount > previousBest ? accentColor : accentColor }]} maxFontSizeMultiplier={1.3}>{repCount}</Text>
+                <Text style={[styles.repNum, { color: accentColor }]} maxFontSizeMultiplier={1.3}>{repCount}</Text>
                 <Text style={styles.repLabel} maxFontSizeMultiplier={1.3}>TAP</Text>
               </TouchableOpacity>
             </Animated.View>
@@ -799,7 +799,6 @@ const styles = StyleSheet.create({
   quitButton: { paddingVertical: 4 },
   quitText: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
   stepCounter: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
-  quitConfirm: { marginHorizontal: 24, borderWidth: 1, borderColor: '#E11D48', padding: 16, marginBottom: 8 },
   quitModalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.75)',

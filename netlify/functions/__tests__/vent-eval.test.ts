@@ -9,9 +9,9 @@ describe('crisis eval (offline, deterministic layer)', () => {
     }
   });
 
-  it('keyword net fires on every acute case (floor safety net)', () => {
+  it('keyword net catches every acute case (at least elevated, never none)', () => {
     for (const c of VENT_CASES.filter((c) => c.expected === 'acute')) {
-      expect(classifyKeywordFloor(c.transcript), c.transcript).toBe('elevated');
+      expect(classifyKeywordFloor(c.transcript), c.transcript).not.toBe('none');
     }
   });
 });

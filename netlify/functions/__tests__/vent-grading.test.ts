@@ -24,19 +24,43 @@ describe('classifyKeywordFloor', () => {
     }
   });
 
-  it('fires (elevated) on unambiguous self-harm phrasing', () => {
+  it('fires (elevated) on a self-harm phrase with no method/imminence signal', () => {
     for (const t of [
       'I want to kill myself',
       'I want to end my life',
       "I don't want to be alive anymore",
-      'thinking about killing myself tonight',
+      'I want to kill myself, I cannot do this anymore',
+      'taking my own life feels like the only option',
     ]) {
       expect(classifyKeywordFloor(t)).toBe('elevated');
     }
   });
 
+  it('forces acute when a self-harm phrase co-occurs with a method/imminence signal', () => {
+    for (const t of [
+      'I want to kill myself tonight, I have the pills ready',
+      'thinking about killing myself tonight',
+      "I'm going to end my life, I'll jump off the bridge",
+      'I want to kill myself and I have a plan',
+      'I keep thinking about ending my life tonight',
+    ]) {
+      expect(classifyKeywordFloor(t)).toBe('acute');
+    }
+  });
+
+  it('does NOT force acute on a method/imminence word WITHOUT a self-harm phrase', () => {
+    for (const t of [
+      'I have a plan to finish everything tonight',
+      'I took my pills this morning like usual',
+      'driving over the bridge tomorrow for work',
+    ]) {
+      expect(classifyKeywordFloor(t)).toBe('none');
+    }
+  });
+
   it('is case- and whitespace-insensitive', () => {
     expect(classifyKeywordFloor('  I Want To KILL MYSELF  ')).toBe('elevated');
+    expect(classifyKeywordFloor('  KILL MYSELF TONIGHT  ')).toBe('acute');
   });
 });
 
@@ -51,8 +75,15 @@ describe('resolveRisk', () => {
     expect(resolveRisk('none', 'elevated')).toBe('elevated');
   });
 
-  it('keyword net never downgrades or forces acute', () => {
+  it('forces acute when the keyword net detects an imminent plan (model under-flagged)', () => {
+    expect(resolveRisk('none', 'acute')).toBe('acute');
+    expect(resolveRisk('elevated', 'acute')).toBe('acute');
+    expect(resolveRisk('acute', 'acute')).toBe('acute');
+  });
+
+  it('takes the higher tier; never downgrades the model', () => {
     expect(resolveRisk('acute', 'elevated')).toBe('acute');
+    expect(resolveRisk('acute', 'none')).toBe('acute');
     expect(resolveRisk('elevated', 'elevated')).toBe('elevated');
   });
 });

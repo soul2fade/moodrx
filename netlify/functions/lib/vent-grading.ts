@@ -2,8 +2,9 @@ export type Risk = 'none' | 'elevated' | 'acute';
 
 /** Narrow, high-precision self-harm phrasings. Multi-word and specific on
  *  purpose — single words like "kill"/"die" are excluded because they fire on
- *  hyperbole ("this traffic is killing me"). This net can only RAISE the floor
- *  to 'elevated'; it never forces 'acute' (only the model can). */
+ *  hyperbole ("this traffic is killing me"). A bare phrase raises the floor to
+ *  'elevated' (resource link); paired with a method/imminence signal below it
+ *  forces 'acute' (the hard crisis redirect). */
 const SELF_HARM_PHRASES = [
   'kill myself',
   'killing myself',
@@ -16,17 +17,41 @@ const SELF_HARM_PHRASES = [
   'taking my own life',
 ];
 
-export function classifyKeywordFloor(transcript: string): 'none' | 'elevated' {
+/** Method, plan, or imminence signals. On their own these are innocuous
+ *  ("a plan", "tonight", "bridge") — they ONLY escalate when they co-occur with
+ *  a self-harm phrase above. The conjunction is what keeps hyperbole ("I'd kill
+ *  myself before that meeting") at 'elevated' rather than forcing a redirect.
+ *  Plan phrasings are affirmative ("i have a plan", not bare "a plan") so the
+ *  negation "i don't have a plan" doesn't falsely trip the net. */
+const IMMINENCE_OR_METHOD = [
+  // imminence / timing
+  'tonight', 'right now', 'tomorrow',
+  // concrete method
+  'pills', 'overdose', 'gun', 'shoot myself', 'rope', 'hang myself',
+  'hanging myself', 'noose', 'jump off', 'jump from', 'off a bridge',
+  'off the bridge', 'slit', 'my wrists', 'razor blade', 'bleed out',
+  'carbon monoxide',
+  // plan / preparation
+  'i have a plan', 'have a way', 'going to do it', 'wrote a note',
+  'suicide note', 'left a note', 'said goodbye', 'saying goodbye',
+];
+
+/** Deterministic keyword backstop for the model's risk grade. 'acute' when a
+ *  self-harm phrase co-occurs with a method/imminence signal; 'elevated' on a
+ *  self-harm phrase alone; otherwise 'none'. It only ever RAISES the model's
+ *  grade (see resolveRisk), never lowers it. */
+export function classifyKeywordFloor(transcript: string): Risk {
   const t = transcript.toLowerCase();
-  return SELF_HARM_PHRASES.some((p) => t.includes(p)) ? 'elevated' : 'none';
+  if (!SELF_HARM_PHRASES.some((p) => t.includes(p))) return 'none';
+  return IMMINENCE_OR_METHOD.some((m) => t.includes(m)) ? 'acute' : 'elevated';
 }
 
 const RANK: Record<Risk, number> = { none: 0, elevated: 1, acute: 2 };
 
-/** Model tier is authoritative for 'acute'. The keyword floor can only raise
- *  the result to 'elevated' (never to 'acute', never downward). */
-export function resolveRisk(modelRisk: Risk, keywordFloor: 'none' | 'elevated'): Risk {
-  if (modelRisk === 'acute') return 'acute';
+/** Combine the model's grade with the keyword backstop, taking the HIGHER of
+ *  the two. The model's 'acute' always stands; the keyword net can raise an
+ *  under-flagged grade up to 'elevated' (phrase) or 'acute' (phrase + plan). */
+export function resolveRisk(modelRisk: Risk, keywordFloor: Risk): Risk {
   return RANK[modelRisk] >= RANK[keywordFloor] ? modelRisk : keywordFloor;
 }
 

@@ -1,6 +1,8 @@
 // Strips Android permissions that `expo-audio` declares in its library manifest
-// but MoodRx never uses. The app only PLAYS audio (soundscapes, coach voice) —
-// it never records, and it does not play in the background.
+// but MoodRx never uses. The app plays audio (soundscapes, coach voice) and now
+// records the microphone for on-device voice venting — but it never plays in the
+// background, so the foreground-service permissions stay unused. (RECORD_AUDIO is
+// kept; see the array below.)
 //
 //   (RECORD_AUDIO is KEPT — voice venting uses on-device STT; see array below)
 //   FOREGROUND_SERVICE                 → no background/foreground audio service

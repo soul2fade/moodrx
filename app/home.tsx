@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { router, useFocusEffect, type Href } from 'expo-router';
-import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
+import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, getVentEnabled, UserProfile } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
@@ -46,6 +46,7 @@ export default function HomeScreen() {
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const [carouselPage, setCarouselPage] = useState<number | null>(null);
   const [showNavHint, setShowNavHint] = useState(false);
+  const [ventEnabled, setVentLinkEnabled] = useState(true);
   const carouselFadeAnim = useRef(new Animated.Value(0)).current;
   const carouselVisible = carouselPage !== null;
 
@@ -150,6 +151,10 @@ export default function HomeScreen() {
       });
     }, [dismissPanel, sessions, greetingAnim, moodAnims])
   );
+
+  useEffect(() => {
+    getVentEnabled().then(setVentLinkEnabled).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -461,6 +466,19 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
           </View>
+        )}
+
+        {/* Vent tool link */}
+        {ventEnabled && (
+          <TouchableOpacity
+            onPress={() => router.push('/vent' as Href)}
+            activeOpacity={0.6}
+            style={styles.breatheLink}
+            accessibilityRole="button"
+            accessibilityLabel="Open voice venting"
+          >
+            <Text style={styles.breatheLinkText}>Need to vent? →</Text>
+          </TouchableOpacity>
         )}
 
         {/* Breathe tool link */}

@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVoiceEnabled, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVentEnabled, getVoiceEnabled, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVentEnabled, setVoiceEnabled, UserProfile } from '@/lib/storage';
 import { exportSessionsJson } from '@/lib/export-sessions';
 import { resetAllAppData } from '@/lib/reset-app';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -76,6 +76,8 @@ export default function SettingsScreen() {
   const voiceToggleAnim = useRef(new Animated.Value(1)).current;
   const [aiCoachEnabled, setAiCoachEnabledState] = useState(false);
   const aiCoachToggleAnim = useRef(new Animated.Value(0)).current;
+  const [ventEnabled, setVentEnabledState] = useState(true);
+  const ventToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
   const { restorePurchases, isPremium, devTogglePremium, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
@@ -127,6 +129,13 @@ export default function SettingsScreen() {
       aiCoachToggleAnim.setValue(on ? 1 : 0);
     }).catch(() => {});
   }, [aiCoachToggleAnim]);
+
+  useEffect(() => {
+    getVentEnabled().then((on) => {
+      setVentEnabledState(on);
+      ventToggleAnim.setValue(on ? 1 : 0);
+    }).catch(() => {});
+  }, [ventToggleAnim]);
 
   const handleTrashTalkVolumeChange = async (value: number) => {
     setTrashTalkVolumeState(value);
@@ -188,11 +197,27 @@ export default function SettingsScreen() {
     outputRange: [2, 22],
   });
 
+  const ventTranslateX = ventToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
+
   const handleAiCoachToggle = async () => {
     const next = !aiCoachEnabled;
     setAiCoachEnabledState(next);
     await setAiCoachEnabled(next);
     Animated.timing(aiCoachToggleAnim, {
+      toValue: next ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleVentToggle = async () => {
+    const next = !ventEnabled;
+    setVentEnabledState(next);
+    await setVentEnabled(next);
+    Animated.timing(ventToggleAnim, {
       toValue: next ? 1 : 0,
       duration: 200,
       useNativeDriver: true,
@@ -484,6 +509,23 @@ export default function SettingsScreen() {
             accessibilityLabel="AI coach"
           >
             <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: aiCoachTranslateX }] }]} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLabelBlock}>
+            <Text style={styles.toggleLabel}>Voice venting</Text>
+            <Text style={styles.prefHint}>Talk it out; we transcribe on your device and never save audio.</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleVentToggle}
+            activeOpacity={0.8}
+            style={[styles.toggle, ventEnabled ? styles.toggleOn : styles.toggleOff]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: ventEnabled }}
+            accessibilityLabel="Voice venting"
+          >
+            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: ventTranslateX }] }]} />
           </TouchableOpacity>
         </View>
 

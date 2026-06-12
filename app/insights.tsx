@@ -971,7 +971,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#999',
+    color: '#cdcdcd',
     letterSpacing: 2,
   },
   workoutHistAvgVal: {
@@ -1013,13 +1013,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#999',
+    color: '#cdcdcd',
     letterSpacing: 1,
   },
   noteWorkoutName: {
     fontFamily: fonts.primary.regular,
     fontSize: 13,
-    color: '#999',
+    color: '#cdcdcd',
     marginBottom: 6,
   },
   noteText: {
@@ -1059,7 +1059,7 @@ const styles = StyleSheet.create({
   },
   recentLightBadge: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     fontSize: 12,
     lineHeight: 17,
     letterSpacing: 1.5,
@@ -1078,7 +1078,7 @@ const styles = StyleSheet.create({
   },
   whatWorksItem: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -1123,7 +1123,7 @@ const styles = StyleSheet.create({
   },
   burnButtonText: {
     ...t.label,
-    color: '#999',
+    color: '#cdcdcd',
     letterSpacing: 3,
   },
   burnConfirm: {
@@ -1295,7 +1295,7 @@ const styles = StyleSheet.create({
   caseNoteText: {
     fontFamily: fonts.mono.regular,
     fontSize: 14,
-    color: '#888',
+    color: '#c5c5c5',
     lineHeight: 20,
   },
   casePrescribeBtn: {
@@ -1339,7 +1339,7 @@ const styles = StyleSheet.create({
   },
   healthCardLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     letterSpacing: 3,
     marginBottom: 10,
   },
@@ -1357,7 +1357,7 @@ const styles = StyleSheet.create({
   },
   healthStatLabel: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
@@ -1365,7 +1365,7 @@ const styles = StyleSheet.create({
   },
   healthHint: {
     ...t.bodySm,
-    color: '#999999',
+    color: '#cdcdcd',
     marginTop: 10,
   },
   supplementBtn: {

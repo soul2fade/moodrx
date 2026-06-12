@@ -188,12 +188,12 @@ export default function BadDayScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 48 },
-  backButton: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  backButton: { ...t.label, color: '#d8d8d8', letterSpacing: 2 },
   label: { ...t.label, color: colors.accent, letterSpacing: 3, marginTop: 24 },
   headline: { ...t.headline, fontSize: 26, marginTop: 8 },
   subtext: { ...t.bodyMuted, marginTop: 12, lineHeight: 22 },
   moodSection: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 20 },
-  sectionLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2, marginBottom: 12 },
+  sectionLabel: { ...t.label, color: '#d8d8d8', letterSpacing: 2, marginBottom: 12 },
   moodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   moodChip: {
     borderWidth: 1,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   intensityRow: { marginTop: 16 },
-  intensityLabel: { ...t.label, color: '#c8c8c8' },
+  intensityLabel: { ...t.label, color: '#d8d8d8' },
   slider: { width: '100%', height: 36, marginTop: 4 },
   stepCard: {
     marginTop: 24,
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
   },
-  stepLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  stepLabel: { ...t.label, color: '#d8d8d8', letterSpacing: 2 },
   stepText: { ...t.body, marginTop: 10, lineHeight: 24 },
   primaryBtn: {
     marginTop: 24,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   primaryBtnText: { ...t.button, letterSpacing: 2 },
   afterSection: { marginTop: 28, alignItems: 'center' },
   postScore: { ...t.dataValue, fontSize: 40, marginTop: 8 },
-  deltaHint: { ...t.bodySm, color: '#c8c8c8', marginTop: 4, marginBottom: 8 },
+  deltaHint: { ...t.bodySm, color: '#d8d8d8', marginTop: 4, marginBottom: 8 },
   logBtn: {
     marginTop: 24,
     backgroundColor: '#059669',

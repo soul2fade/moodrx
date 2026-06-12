@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   pbLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#999',
+    color: '#cdcdcd',
     letterSpacing: 3,
     marginBottom: 8,
     lineHeight: 17,
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   pbNewBest: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#888',
+    color: '#c5c5c5',
     letterSpacing: 3,
     marginTop: 8,
     lineHeight: 17,
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
   pbPrev: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#999',
+    color: '#cdcdcd',
     letterSpacing: 2,
     marginTop: 8,
     lineHeight: 17,
@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
   changeHeroLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#888',
+    color: '#c5c5c5',
     letterSpacing: 4,
     marginBottom: 8,
     lineHeight: 17,
@@ -739,7 +739,7 @@ const styles = StyleSheet.create({
   changeHeroSub: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#999',
+    color: '#cdcdcd',
     letterSpacing: 0.5,
     marginTop: 10,
   },
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   },
   deltaBlockLabel: {
     ...t.label,
-    color: '#999',
+    color: '#cdcdcd',
     letterSpacing: 2,
     fontSize: 12,
     marginBottom: 3,
@@ -769,11 +769,11 @@ const styles = StyleSheet.create({
     ...t.dataValue,
     fontSize: 22,
     lineHeight: undefined,
-    color: '#888',
+    color: '#c5c5c5',
   },
   deltaArrow: {
     ...t.label,
-    color: '#999',
+    color: '#cdcdcd',
     fontSize: 14,
     marginHorizontal: 4,
   },

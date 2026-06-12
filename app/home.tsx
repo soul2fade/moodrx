@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   },
   tryProBadgeText: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,
@@ -668,13 +668,13 @@ const styles = StyleSheet.create({
   },
   streakPillText: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     flex: 1,
     fontSize: 13,
   },
   streakPillDismiss: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     fontSize: 12,
     lineHeight: 17,
   },
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
   subtext: {
     ...t.bodyMuted,
     fontSize: 18,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     marginTop: 12,
   },
   breatheLink: {
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
   },
   badDayText: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#cdcdcd',
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,
@@ -805,14 +805,14 @@ const styles = StyleSheet.create({
   },
   sameDayLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     letterSpacing: 2,
     fontSize: 12,
     lineHeight: 17,
   },
   sameDaySub: {
     ...t.bodySm,
-    color: '#999999',
+    color: '#cdcdcd',
     marginTop: 6,
     fontSize: 14,
   },
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
   },
   sameDayBtnOutlineText: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   },
   justLogButtonText: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,
@@ -884,14 +884,14 @@ const styles = StyleSheet.create({
   },
   navHintText: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
   },
   navHintDismiss: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,
@@ -920,7 +920,7 @@ const styles = StyleSheet.create({
   },
   moodDesc: {
     ...t.label,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     marginTop: 2,
   },
   moodRight: {
@@ -982,7 +982,7 @@ const styles = StyleSheet.create({
   },
   drLabel: {
     ...t.label,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     letterSpacing: 2,
   },
   drText: {

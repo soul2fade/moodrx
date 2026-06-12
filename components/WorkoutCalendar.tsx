@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   sheetDate: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     letterSpacing: 2,
     marginBottom: 2,
   },
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   },
   sessionTime: {
     ...t.timestamp,
-    color: '#999999',
+    color: '#cdcdcd',
     fontSize: 12,
     lineHeight: 17,
   },

@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   moodCode: { ...t.label, fontSize: 12, lineHeight: 17, letterSpacing: 2 },
   intensitySection: { marginTop: 24, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 20 },
   intensityRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  intensityLabel: { ...t.label, color: '#c8c8c8' },
+  intensityLabel: { ...t.label, color: '#d8d8d8' },
   intensityValue: { ...t.dataValue, fontSize: 24 },
   workoutPreview: {
     marginTop: 24,
@@ -188,9 +188,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
-  workoutPreviewLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  workoutPreviewLabel: { ...t.label, color: '#d8d8d8', letterSpacing: 2 },
   workoutPreviewName: { ...t.headlineSm, fontSize: 17, marginTop: 6 },
-  workoutPreviewMeta: { ...t.bodySm, color: '#a3a3a3', marginTop: 4 },
+  workoutPreviewMeta: { ...t.bodySm, color: '#cdcdcd', marginTop: 4 },
   startButton: {
     marginTop: 28,
     borderWidth: 1,
@@ -199,5 +199,5 @@ const styles = StyleSheet.create({
   },
   startButtonText: { ...t.button, letterSpacing: 2, fontSize: 12, lineHeight: 17 },
   skipButton: { paddingVertical: 16, alignItems: 'center', marginTop: 4 },
-  skipText: { ...t.label, color: '#999999', letterSpacing: 2, lineHeight: 17 },
+  skipText: { ...t.label, color: '#cdcdcd', letterSpacing: 2, lineHeight: 17 },
 });

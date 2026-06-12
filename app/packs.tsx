@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   emptyBody: {
     fontFamily: fonts.primary.regular,
     fontSize: 16,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     lineHeight: 24,
   },
   packList: {
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   packPrice: {
     fontFamily: fonts.mono.regular,
     fontSize: 13,
-    color: '#999999',
+    color: '#cdcdcd',
     letterSpacing: 1,
     lineHeight: 18,
     marginTop: 2,

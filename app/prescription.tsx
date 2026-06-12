@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   },
   drLabel: {
     ...t.label,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     letterSpacing: 2,
   },
   drText: {
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   },
   workoutBadgeMuted: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     letterSpacing: 1.5,
     fontSize: 12,
     lineHeight: 17,
@@ -680,12 +680,12 @@ const styles = StyleSheet.create({
   },
   alternateBannerText: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     lineHeight: 20,
   },
   freeTierSummary: {
     ...t.bodySm,
-    color: '#a3a3a3',
+    color: '#cdcdcd',
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -834,14 +834,14 @@ const styles = StyleSheet.create({
   },
   suppModalDose: {
     ...t.label,
-    color: '#999999',
+    color: '#cdcdcd',
     fontSize: 13,
     marginTop: 4,
     lineHeight: undefined,
   },
   suppModalClose: {
     fontSize: 18,
-    color: '#999999',
+    color: '#cdcdcd',
     paddingLeft: 16,
     paddingTop: 2,
   },
@@ -871,13 +871,13 @@ const styles = StyleSheet.create({
   },
   suppModalScience: {
     ...t.body,
-    color: '#cccccc',
+    color: '#dcdcdc',
     fontSize: 15,
     lineHeight: 23,
   },
   suppModalSource: {
     ...t.body,
-    color: '#888888',
+    color: '#c5c5c5',
     fontSize: 13,
     lineHeight: 20,
     marginTop: 6,

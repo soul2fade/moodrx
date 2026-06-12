@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   subtext: {
     fontFamily: fonts.primary.regular,
     fontSize: 16,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     lineHeight: 24,
     marginTop: 4,
     marginBottom: 8,
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   lockedText: {
     fontFamily: fonts.primary.regular,
     fontSize: 16,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   programDescription: {
     fontFamily: fonts.primary.regular,
     fontSize: 15,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     lineHeight: 22,
     marginTop: 6,
     marginBottom: 16,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   sessionDay: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#999999',
+    color: '#cdcdcd',
     letterSpacing: 1.5,
     lineHeight: 17,
     width: 44,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   sessionMetaText: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#999999',
+    color: '#cdcdcd',
     letterSpacing: 1.5,
     lineHeight: 17,
     textTransform: 'uppercase',
@@ -251,13 +251,13 @@ const styles = StyleSheet.create({
   sessionMetaDot: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#999999',
+    color: '#cdcdcd',
     lineHeight: 17,
   },
   sessionArrow: {
     fontFamily: fonts.mono.regular,
     fontSize: 16,
-    color: '#999999',
+    color: '#cdcdcd',
     marginLeft: 8,
   },
 });

@@ -695,14 +695,14 @@ const styles = StyleSheet.create({
   patternCalloutLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 12,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     letterSpacing: 2,
     lineHeight: 17,
   },
   patternCalloutText: {
     fontFamily: fonts.primary.regular,
     fontSize: 14,
-    color: '#999999',
+    color: '#cdcdcd',
     marginTop: 6,
     lineHeight: 20,
   },

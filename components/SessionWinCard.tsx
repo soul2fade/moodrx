@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   },
   deltaLabel: {
     ...t.label,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     letterSpacing: 3,
   },
   deltaRow: {
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   },
   workoutLine: {
     ...t.bodySm,
-    color: '#a3a3a3',
+    color: '#cdcdcd',
     textAlign: 'center',
     marginTop: 16,
   },
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#cdcdcd',
     letterSpacing: 2,
   },
 });

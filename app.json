@@ -25,7 +25,9 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
-        "com.apple.security.application-groups": ["group.com.moodrx.app"]
+        "com.apple.security.application-groups": [
+          "group.com.moodrx.app"
+        ]
       }
     },
     "android": {
@@ -112,6 +114,14 @@
       ],
       "@react-native-community/datetimepicker",
       "@bacons/apple-targets",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "MoodRx uses the microphone only while you're venting, to turn your words into text on your device.",
+          "speechRecognitionPermission": "MoodRx transcribes your venting on your device so you can talk instead of typing. Audio is never saved.",
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
+        }
+      ],
       "./plugins/withStripUnusedAudioPermissions"
     ],
     "experiments": {

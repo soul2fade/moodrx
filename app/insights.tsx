@@ -15,7 +15,7 @@ import * as Sharing from 'expo-sharing';
 import {
   Session,
 } from '@/lib/storage';
-import { buildPatterns, type PatternItem } from '@/lib/patterns';
+import { buildPatterns, sessionImprovement, type PatternItem } from '@/lib/patterns';
 import { getTopEffectiveCombinations } from '@/lib/workout-insights';
 import { useSessions } from '@/contexts/SessionsContext';
 import { MOODS } from '@/lib/moods';
@@ -100,17 +100,18 @@ export default function InsightsScreen() {
   const lockedPatternCount = isPremium ? 0 : Math.max(patterns.length - 1, 0);
 
   const workoutStats = useMemo(() => {
-    const map: Record<string, { name: string; count: number; totalChange: number }> = {};
+    const map: Record<string, { name: string; count: number; totalChange: number; totalImprovement: number }> = {};
     for (const s of sessions) {
       if (!s.workoutName) continue;
       const key = s.workoutId ?? s.workoutName;
-      if (!map[key]) map[key] = { name: s.workoutName, count: 0, totalChange: 0 };
+      if (!map[key]) map[key] = { name: s.workoutName, count: 0, totalChange: 0, totalImprovement: 0 };
       map[key].count += 1;
-      map[key].totalChange += (s.postScore - s.intensity);
+      map[key].totalChange += (s.postScore - s.intensity); // raw delta (factual, displayed)
+      map[key].totalImprovement += sessionImprovement(s);  // mood-aware (drives color)
     }
     const all = Object.values(map)
       .sort((a, b) => b.count - a.count)
-      .map(w => ({ ...w, avgChange: w.totalChange / w.count }));
+      .map(w => ({ ...w, avgChange: w.totalChange / w.count, avgImprovement: w.totalImprovement / w.count }));
     return { visible: isPremium ? all : all.slice(0, 3), total: all.length };
   }, [sessions, isPremium]);
 
@@ -428,7 +429,8 @@ export default function InsightsScreen() {
             <Text style={styles.workoutHistLabel}>WORKOUT HISTORY</Text>
             {workoutStats.visible.map((w, i) => {
               const avgStr = w.avgChange >= 0 ? `+${w.avgChange.toFixed(1)}` : w.avgChange.toFixed(1);
-              const avgColor = w.avgChange >= 0 ? '#059669' : '#999999';
+              // Color by mood-aware improvement, not the raw delta sign.
+              const avgColor = w.avgImprovement > 0 ? '#059669' : w.avgImprovement < 0 ? '#E11D48' : '#999999';
               return (
                 <View key={i} style={styles.workoutHistRow}>
                   <View style={styles.workoutHistInfo}>
@@ -465,7 +467,8 @@ export default function InsightsScreen() {
             {recentSessions.map((session) => {
               const change = session.postScore - session.intensity;
               const changeStr = change >= 0 ? `+${change}` : `${change}`;
-              const changeColor = change >= 0 ? '#059669' : '#999999';
+              const imp = sessionImprovement(session);
+              const changeColor = imp > 0 ? '#059669' : imp < 0 ? '#E11D48' : '#999999';
               const moodColor = MOODS[session.mood]?.color ?? '#999999';
               const date = new Date(session.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()] ?? ''}`;
@@ -640,7 +643,8 @@ export default function InsightsScreen() {
           const cs = caseSession;
           const change = cs.postScore - cs.intensity;
           const changeStr = change >= 0 ? `+${change}` : `${change}`;
-          const changeColor = change >= 0 ? '#059669' : '#999999';
+          const imp = sessionImprovement(cs);
+          const changeColor = imp > 0 ? '#059669' : imp < 0 ? '#E11D48' : '#999999';
           const moodColor = MOODS[cs.mood]?.color ?? '#999999';
           const date = new Date(cs.timestamp);
           const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()] ?? ''}`;

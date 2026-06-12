@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'rea
 import { Session } from '@/lib/storage';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
+import { sessionImprovement } from '@/lib/patterns';
 import { type as t } from '../lib/typography';
 
 interface WorkoutCalendarProps {
@@ -171,7 +172,8 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
                 {selectedSessions.map((s, i) => {
                   const color = MOODS[s.mood as MoodKey].color;
                   const change = formatChange(s.intensity, s.postScore);
-                  const improved = s.postScore > s.intensity;
+                  // Mood-aware: for every mood except 'good', a lower post-score is the win.
+                  const improved = sessionImprovement(s) > 0;
                   return (
                     <View key={s.id ?? i} style={[styles.sessionRow, i < selectedSessions.length - 1 && styles.sessionBorder]}>
                       <View style={[styles.moodBar, { backgroundColor: color }]} />

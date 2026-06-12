@@ -15,6 +15,7 @@ import * as Sharing from 'expo-sharing';
 import {
   Session,
 } from '@/lib/storage';
+import { buildPatterns, type PatternItem } from '@/lib/patterns';
 import { getTopEffectiveCombinations } from '@/lib/workout-insights';
 import { useSessions } from '@/contexts/SessionsContext';
 import { MOODS } from '@/lib/moods';
@@ -22,7 +23,7 @@ import { MoodIcon } from '@/components/MoodIcon';
 import { WorkoutCalendar } from '@/components/WorkoutCalendar';
 import { MoodArc } from '@/components/MoodArc';
 import { ShareCard } from '@/components/ShareCard';
-import { getMostCommonMood, formatChange, getLastNDays } from '@/lib/analytics';
+import { formatChange, getLastNDays } from '@/lib/analytics';
 import { DAY_ABBREVS } from '@/lib/dateUtils';
 import { colors } from '@/lib/colors';
 import { type as t, fonts } from '../lib/typography';
@@ -87,6 +88,17 @@ export default function InsightsScreen() {
     return isPremium ? reversed : reversed.slice(0, 3);
   }, [sessions, isPremium]);
 
+  /** On-device pattern engine (templated, no LLM, no network). `buildPatterns`
+   *  already orders confident findings ahead of hedged questions, so items[0]
+   *  is the single strongest signal the user has earned. Free users see exactly
+   *  that one teaser ("it notices me"); Pro unlocks the full set. */
+  const patterns = useMemo<PatternItem[]>(() => buildPatterns(sessions), [sessions]);
+  const visiblePatterns = useMemo(
+    () => (isPremium ? patterns : patterns.slice(0, 1)),
+    [patterns, isPremium],
+  );
+  const lockedPatternCount = isPremium ? 0 : Math.max(patterns.length - 1, 0);
+
   const workoutStats = useMemo(() => {
     const map: Record<string, { name: string; count: number; totalChange: number }> = {};
     for (const s of sessions) {
@@ -108,8 +120,6 @@ export default function InsightsScreen() {
       .filter(s => s.note && s.note.trim().length > 0);
     return { visible: isPremium ? withNotes : withNotes.slice(0, 3), total: withNotes.length };
   }, [sessions, isPremium]);
-
-  const mostCommonMood = useMemo(() => sessionCount >= 3 ? getMostCommonMood(sessions) : null, [sessions, sessionCount]);
 
   const handleBurn = async () => {
     await clearSessions();
@@ -367,14 +377,36 @@ export default function InsightsScreen() {
         {/* Mood Arc */}
         {sessions.length >= 2 && <MoodArc sessions={sessions} />}
 
-        {/* Pattern section */}
-        {sessionCount >= 3 && mostCommonMood && (
-          <View style={styles.patternBox}>
-            <Text style={styles.patternLabel}>PATTERN</Text>
-            <Text style={styles.patternText}>
-              Your most common mood is {MOODS[mostCommonMood].name}. Your average improvement
-              is {formatChange(avgChange)} points.
-            </Text>
+        {/* What I've noticed — on-device pattern engine (findings vs hunches) */}
+        {visiblePatterns.length > 0 && (
+          <View style={styles.noticedSection}>
+            <Text style={styles.noticedLabel}>WHAT I&apos;VE NOTICED</Text>
+            {visiblePatterns.map((p) => (
+              <View
+                key={p.id}
+                style={[styles.noticedCard, p.kind === 'finding' ? styles.noticedFinding : styles.noticedQuestion]}
+                accessible={true}
+                accessibilityLabel={p.kind === 'finding' ? `Pattern: ${p.text}` : `Dr. MoodRx asks: ${p.text}`}
+              >
+                <Text style={p.kind === 'finding' ? styles.noticedFindingTag : styles.noticedQuestionTag}>
+                  {p.kind === 'finding' ? 'PATTERN' : 'DR. MOODRX ASKS'}
+                </Text>
+                <Text style={styles.noticedText}>{p.text}</Text>
+              </View>
+            ))}
+            {!subLoading && lockedPatternCount > 0 && (
+              <TouchableOpacity
+                style={styles.historyUpsellRow}
+                onPress={() => setShowPremiumSheet(true)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`See ${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'} with Pro`}
+              >
+                <Text style={styles.historyUpsellText}>
+                  +{lockedPatternCount} MORE {lockedPatternCount === 1 ? 'PATTERN' : 'PATTERNS'} — UNLOCK PRO →
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -847,22 +879,47 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 1,
   },
-  patternBox: {
-    borderLeftWidth: 2,
-    borderLeftColor: '#059669',
-    backgroundColor: '#111111',
-    padding: 16,
-    marginTop: 24,
+  noticedSection: {
+    marginTop: 32,
   },
-  patternLabel: {
+  noticedLabel: {
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
+    marginBottom: 12,
   },
-  patternText: {
+  noticedCard: {
+    backgroundColor: '#111111',
+    borderLeftWidth: 2,
+    padding: 16,
+    marginBottom: 10,
+  },
+  noticedFinding: {
+    borderLeftColor: '#059669',
+  },
+  noticedQuestion: {
+    borderLeftColor: '#D97706',
+  },
+  noticedFindingTag: {
+    ...t.label,
+    color: '#059669',
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  noticedQuestionTag: {
+    ...t.label,
+    color: '#D97706',
+    letterSpacing: 2,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  noticedText: {
     ...t.body,
     fontSize: 16,
-    marginTop: 8,
+    lineHeight: 23,
   },
   workoutHistSection: {
     marginTop: 32,

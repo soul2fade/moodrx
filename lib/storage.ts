@@ -688,7 +688,11 @@ export async function getAiCoachEnabled(): Promise<boolean> {
 }
 
 export async function setAiCoachEnabled(value: boolean): Promise<void> {
-  await AsyncStorage.setItem(AI_COACH_KEY, value ? 'true' : 'false');
+  try {
+    await AsyncStorage.setItem(AI_COACH_KEY, value ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
 }
 
 const VENT_CONSENT_KEY = '@moodrx_vent_consent';

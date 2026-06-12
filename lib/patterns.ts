@@ -1,4 +1,5 @@
 import { sessionDateString, type Session } from '@/lib/storage';
+import { toDateString } from '@/lib/dateUtils';
 
 // ─── Pattern engine (Unit A) ─────────────────────────────────────────────────
 //
@@ -109,4 +110,50 @@ export function detectDayOfWeek(sessions: Session[]): PatternItem | null {
       ? `${day}s run rough — you show up more wound up than on your other days.`
       : `Your ${day}s have been running a little rough — anything recurring?`;
   return { id: 'day-of-week', text, kind: tier };
+}
+
+/** The local YYYY-MM-DD calendar day before `dateStr` (DST-safe via setDate). */
+function prevDay(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  return toDateString(d.getTime());
+}
+
+/** Consistency: does stacking days back-to-back help more than starting cold
+ *  after a gap? Compares mean day-level improvement between the two groups. */
+export function detectConsistency(sessions: Session[]): PatternItem | null {
+  // Day-level mean improvement.
+  const byDay = new Map<string, { sum: number; count: number }>();
+  for (const s of sessions) {
+    const d = sessionDateString(s);
+    const agg = byDay.get(d) ?? { sum: 0, count: 0 };
+    agg.sum += sessionImprovement(s);
+    agg.count += 1;
+    byDay.set(d, agg);
+  }
+  const present = new Set(byDay.keys());
+  const backToBack: number[] = [];
+  const afterGap: number[] = [];
+  for (const [d, agg] of byDay) {
+    const dayImprovement = agg.sum / agg.count;
+    (present.has(prevDay(d)) ? backToBack : afterGap).push(dayImprovement);
+  }
+
+  const obs = Math.min(backToBack.length, afterGap.length);
+  const bMean = mean(backToBack);
+  const gMean = mean(afterGap);
+  const effect = Math.abs(bMean - gMean);
+  const tier = classifyTier(obs, MIN_OBS_PER_BUCKET, effect, EFFECT_GRAY, EFFECT_STRONG);
+  if (tier === 'none') return null;
+
+  const stackedBetter = bMean >= gMean;
+  const text =
+    tier === 'finding'
+      ? stackedBetter
+        ? "You get more out of your sessions when you don't skip days."
+        : 'A day off between sessions seems to set up a better one.'
+      : stackedBetter
+        ? 'Stacking days back-to-back might be working better — worth keeping up?'
+        : 'A rest day between sessions might be helping — worth noticing?';
+  return { id: 'consistency', text, kind: tier };
 }

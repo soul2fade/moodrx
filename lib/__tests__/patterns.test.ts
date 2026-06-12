@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek } from '@/lib/patterns';
+import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek, detectConsistency } from '@/lib/patterns';
 import type { MoodKey, Session } from '@/lib/storage';
 
 // ── Shared fixture helpers (used by all pattern tests) ───────────────────────
@@ -145,5 +145,48 @@ describe('detectDayOfWeek', () => {
       sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4),   // others at 5
     ];
     expect(detectDayOfWeek(sessions)).toBeNull();
+  });
+});
+
+describe('detectConsistency', () => {
+  it('emits a finding when stacked days clearly help more', () => {
+    const sessions = [
+      // Run Jun 1-5: Jun 1 is after-gap; Jun 2-5 are back-to-back, improvement 4.
+      sess(1, 9, 6, 5),                                   // after-gap, imp 1
+      sess(2, 9, 8, 4), sess(3, 9, 8, 4), sess(4, 9, 8, 4), sess(5, 9, 8, 4), // back-to-back, imp 4
+      // Isolated after-gap days, improvement 1 → gap group has 4 days total.
+      sess(9, 9, 6, 5), sess(11, 9, 6, 5), sess(13, 9, 6, 5),
+    ];
+    const item = detectConsistency(sessions);
+    expect(item?.kind).toBe('finding');
+    expect(item?.id).toBe('consistency');
+    expect(item?.text.toLowerCase()).toContain("skip"); // "don't skip days"
+  });
+
+  it('emits a question for a milder consistency effect', () => {
+    const sessions = [
+      sess(1, 9, 6, 4.5),                                       // after-gap, imp 1.5
+      sess(2, 9, 7, 4), sess(3, 9, 7, 4), sess(4, 9, 7, 4), sess(5, 9, 7, 4), // back-to-back, imp 3
+      sess(9, 9, 6, 4.5), sess(11, 9, 6, 4.5), sess(13, 9, 6, 4.5),           // gap, imp 1.5 → effect 1.5
+    ];
+    const item = detectConsistency(sessions);
+    expect(item?.kind).toBe('question');
+  });
+
+  it('returns null below the per-group floor', () => {
+    const sessions = [
+      // Run Jun 1-3 → only 2 back-to-back days (Jun 2, 3).
+      sess(1, 9, 6, 5), sess(2, 9, 8, 4), sess(3, 9, 8, 4),
+      sess(9, 9, 6, 5), sess(11, 9, 6, 5), sess(13, 9, 6, 5), sess(15, 9, 6, 5),
+    ];
+    expect(detectConsistency(sessions)).toBeNull();
+  });
+
+  it('returns null when there are no back-to-back days at all', () => {
+    const sessions = [
+      sess(1, 9, 8, 4), sess(5, 9, 8, 4), sess(9, 9, 8, 4),
+      sess(13, 9, 6, 5), sess(17, 9, 6, 5), sess(21, 9, 6, 5),
+    ];
+    expect(detectConsistency(sessions)).toBeNull();
   });
 });

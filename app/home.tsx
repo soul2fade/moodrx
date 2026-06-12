@@ -152,9 +152,11 @@ export default function HomeScreen() {
     }, [dismissPanel, sessions, greetingAnim, moodAnims])
   );
 
-  useEffect(() => {
-    getVentEnabled().then(setVentLinkEnabled).catch(() => {});
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getVentEnabled().then(setVentLinkEnabled).catch(() => {});
+    }, []),
+  );
 
   useEffect(() => {
     if (isLoading) return;

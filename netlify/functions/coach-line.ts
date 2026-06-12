@@ -17,16 +17,28 @@ const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY });
 /** Verify the caller holds the base-unlock `premium` entitlement via the
  *  RevenueCat v1 REST API. 🔎 Re-verify response shape against current docs. */
 async function isEntitled(appUserId: string): Promise<boolean> {
-  const res = await fetch(
-    `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
-    { headers: { Authorization: `Bearer ${REVENUECAT_SECRET}` } },
-  );
-  if (!res.ok) return false;
-  const data: any = await res.json();
-  const ent = data?.subscriber?.entitlements?.premium;
-  if (!ent) return false;
-  // Non-consumable base unlock: present + no expiry (or a future expiry).
-  return ent.expires_date == null || new Date(ent.expires_date).getTime() > Date.now();
+  // Time-box the RevenueCat call so a slow/hung response can't eat the whole
+  // Netlify function budget (leaving no headroom for the Anthropic call). Any
+  // network error or timeout resolves to "not entitled" — the client then
+  // falls back to a static line, so the degradation is graceful.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3500);
+  try {
+    const res = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
+      { headers: { Authorization: `Bearer ${REVENUECAT_SECRET}` }, signal: controller.signal },
+    );
+    if (!res.ok) return false;
+    const data: any = await res.json();
+    const ent = data?.subscriber?.entitlements?.premium;
+    if (!ent) return false;
+    // Non-consumable base unlock: present + no expiry (or a future expiry).
+    return ent.expires_date == null || new Date(ent.expires_date).getTime() > Date.now();
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export const handler: Handler = async (event) => {

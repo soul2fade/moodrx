@@ -30,6 +30,9 @@ export const handler: Handler = async (event) => {
   const transcript = typeof payload.transcript === 'string' ? payload.transcript.trim() : '';
   const deviceId = typeof payload.deviceId === 'string' && payload.deviceId ? payload.deviceId : 'anon';
   if (!transcript) return { statusCode: 400, body: '' };
+  // Bound input cost on this ungated endpoint: ~2000 chars is ~400 words, far
+  // beyond any real 20–30s spoken vent. A direct caller can't burn input tokens.
+  if (transcript.length > 2000) return { statusCode: 400, body: '' };
 
   // Rate + global budget caps (approximate; see coach-line note on non-atomic
   // get-then-set under concurrency — acceptable for a runaway-abuse ceiling).

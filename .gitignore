@@ -1,6 +1,9 @@
 node_modules/
 .expo/
 
+# Expo web export output (build artifact)
+dist/
+
 # Replit-specific — never commit
 artifacts/
 .local/

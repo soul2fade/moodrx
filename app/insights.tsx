@@ -394,7 +394,7 @@ export default function InsightsScreen() {
                 <Text style={styles.noticedText}>{p.text}</Text>
               </View>
             ))}
-            {!subLoading && lockedPatternCount > 0 && (
+            {!subLoading && !isPremium && lockedPatternCount > 0 && (
               <TouchableOpacity
                 style={styles.historyUpsellRow}
                 onPress={() => setShowPremiumSheet(true)}

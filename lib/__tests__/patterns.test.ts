@@ -107,18 +107,20 @@ describe('detectTimeOfDay', () => {
 });
 
 describe('detectDayOfWeek', () => {
-  it('emits a finding when one weekday runs much rougher', () => {
+  it('emits a finding when a weekday runs much rougher with enough evidence', () => {
     const sessions = [
-      // 4 Wednesdays at intensity 9
-      sess(3, 9, 9, 4), sess(10, 9, 9, 4), sess(17, 9, 9, 4), sess(24, 9, 9, 4),
-      // other days at intensity 5 (≤2 per weekday so none else is eligible)
-      sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4),
-      sess(5, 9, 5, 4), sess(8, 9, 5, 4), sess(9, 9, 5, 4),
+      // 5 Mondays at intensity 9 (June 1/8/15/22/29 2026 are Mondays) → clears
+      // the finding floor of 5 weekday observations.
+      sess(1, 9, 9, 4), sess(8, 9, 9, 4), sess(15, 9, 9, 4), sess(22, 9, 9, 4), sess(29, 9, 9, 4),
+      // 8 other-day sessions at intensity 5: a non-thin comparison pool (≥8) and
+      // ≤2 per weekday so no other day is eligible. Monday mean 9 vs others 5 → effect 4.
+      sess(2, 9, 5, 4), sess(3, 9, 5, 4), sess(4, 9, 5, 4), sess(5, 9, 5, 4),
+      sess(9, 9, 5, 4), sess(10, 9, 5, 4), sess(11, 9, 5, 4), sess(12, 9, 5, 4),
     ];
     const item = detectDayOfWeek(sessions);
     expect(item?.kind).toBe('finding');
     expect(item?.id).toBe('day-of-week');
-    expect(item?.text.toLowerCase()).toContain('wednesday');
+    expect(item?.text.toLowerCase()).toContain('monday');
   });
 
   it('emits a question for a milder weekday spike', () => {
@@ -300,5 +302,41 @@ describe('buildPatterns includes the sleep signal', () => {
     const items = buildPatterns(sessions);
     expect(items.some((i) => i.id === 'sleep' && i.kind === 'finding')).toBe(true);
     expect(items.filter((i) => i.kind === 'finding')).toHaveLength(1);
+  });
+});
+
+describe('detectDayOfWeek finding-floor calibration', () => {
+  it('downgrades a strong-effect spike to a question when the weekday bucket is too shallow', () => {
+    // 4 Wednesdays at intensity 9 vs 8 others at 5 → effect 4 (≥ ROUGH_STRONG),
+    // but only 4 weekday observations (< the finding floor of 5) → at most a hunch.
+    const sessions = [
+      sess(3, 9, 9, 4), sess(10, 9, 9, 4), sess(17, 9, 9, 4), sess(24, 9, 9, 4),
+      sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4), sess(5, 9, 5, 4),
+      sess(8, 9, 5, 4), sess(9, 9, 5, 4), sess(11, 9, 5, 4), sess(12, 9, 5, 4),
+    ];
+    const item = detectDayOfWeek(sessions);
+    expect(item?.kind).toBe('question');
+    expect(item?.text.toLowerCase()).toContain('wednesday');
+  });
+
+  it('downgrades a strong-effect spike to a question when the comparison pool is thin', () => {
+    // 5 Mondays at intensity 9 (clears the 5-observation floor) but only 4 other-day
+    // sessions (< the 8-session pool floor) → not enough baseline to claim a finding.
+    const sessions = [
+      sess(1, 9, 9, 4), sess(8, 9, 9, 4), sess(15, 9, 9, 4), sess(22, 9, 9, 4), sess(29, 9, 9, 4),
+      sess(2, 9, 5, 4), sess(9, 9, 5, 4), sess(16, 9, 5, 4), sess(23, 9, 5, 4), // 4 Tuesdays → not eligible (effect would be negative), thin pool
+    ];
+    const item = detectDayOfWeek(sessions);
+    expect(item?.kind).toBe('question');
+    expect(item?.text.toLowerCase()).toContain('monday');
+  });
+
+  it('still emits a question at the entry floor of 3 weekday observations', () => {
+    // Unchanged behavior: 3 Wednesdays at 7 vs others at 5 → effect 2.0 ∈ [1.5, 2.5) → question.
+    const sessions = [
+      sess(3, 9, 7, 4), sess(10, 9, 7, 4), sess(17, 9, 7, 4),
+      sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4), sess(5, 9, 5, 4),
+    ];
+    expect(detectDayOfWeek(sessions)?.kind).toBe('question');
   });
 });

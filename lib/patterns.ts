@@ -22,9 +22,11 @@ export interface PatternItem {
 const MIN_OBS_PER_BUCKET = 4;   // time-of-day & consistency: per-bucket minimum
 const EFFECT_GRAY = 1.0;        // improvement-point gap → hedged question
 const EFFECT_STRONG = 2.0;      // improvement-point gap → confident finding
-const MIN_OBS_PER_WEEKDAY = 3;  // day-of-week: sessions needed on a weekday
-const ROUGH_GRAY = 1.5;         // intensity-point gap above other days → question
-const ROUGH_STRONG = 2.5;       // intensity-point gap above other days → finding
+const MIN_OBS_PER_WEEKDAY = 3;         // day-of-week: entry floor → at most a question
+const MIN_FINDING_OBS_PER_WEEKDAY = 5; // a confident finding needs a deeper weekday bucket
+const MIN_OTHERS_FOR_FINDING = 8;      // …measured against a non-thin comparison pool
+const ROUGH_GRAY = 1.5;                // intensity-point gap above other days → question
+const ROUGH_STRONG = 2.5;              // intensity-point gap above other days → finding
 const REST_THRESHOLD_HOURS = 7; // sleep at/above this counts as a "rested" night
 
 /** Sign-adjusted so a larger number always means a better outcome: for every
@@ -90,6 +92,7 @@ export function detectDayOfWeek(sessions: Session[]): PatternItem | null {
   }
   let best = -1;
   let bestEffect = 0; // only a strictly-rougher weekday qualifies
+  let bestOthersLen = 0;
   for (let dow = 0; dow < 7; dow++) {
     if (byDow[dow].length < MIN_OBS_PER_WEEKDAY) continue;
     const others = byDow.filter((_, i) => i !== dow).flat();
@@ -98,6 +101,7 @@ export function detectDayOfWeek(sessions: Session[]): PatternItem | null {
     if (effect > bestEffect) {
       bestEffect = effect;
       best = dow;
+      bestOthersLen = others.length;
     }
   }
   if (best === -1) return null;
@@ -105,12 +109,18 @@ export function detectDayOfWeek(sessions: Session[]): PatternItem | null {
   const tier = classifyTier(byDow[best].length, MIN_OBS_PER_WEEKDAY, bestEffect, ROUGH_GRAY, ROUGH_STRONG);
   if (tier === 'none') return null;
 
+  // Honesty downgrade: a confident weekday claim needs a deeper bucket AND a
+  // non-thin comparison pool; thin evidence is at most a hunch (question).
+  const earnedFinding =
+    byDow[best].length >= MIN_FINDING_OBS_PER_WEEKDAY && bestOthersLen >= MIN_OTHERS_FOR_FINDING;
+  const finalTier: 'finding' | 'question' = tier === 'finding' && earnedFinding ? 'finding' : 'question';
+
   const day = WEEKDAY_NAMES[best];
   const text =
-    tier === 'finding'
+    finalTier === 'finding'
       ? `${day}s run rough — you show up more wound up than on your other days.`
       : `Your ${day}s have been running a little rough — anything recurring?`;
-  return { id: 'day-of-week', text, kind: tier };
+  return { id: 'day-of-week', text, kind: finalTier };
 }
 
 /** The local YYYY-MM-DD calendar day before `dateStr` (DST-safe via setDate). */

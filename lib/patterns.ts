@@ -11,7 +11,7 @@ export type Tier = 'none' | 'question' | 'finding';
 
 export interface PatternItem {
   /** Stable per-signal key (also a React key for the insights UI). */
-  id: 'time-of-day' | 'day-of-week' | 'consistency';
+  id: 'time-of-day' | 'day-of-week' | 'consistency' | 'sleep';
   /** Templated, in-app-voice phrasing. */
   text: string;
   kind: 'finding' | 'question';
@@ -25,6 +25,7 @@ const EFFECT_STRONG = 2.0;      // improvement-point gap → confident finding
 const MIN_OBS_PER_WEEKDAY = 3;  // day-of-week: sessions needed on a weekday
 const ROUGH_GRAY = 1.5;         // intensity-point gap above other days → question
 const ROUGH_STRONG = 2.5;       // intensity-point gap above other days → finding
+const REST_THRESHOLD_HOURS = 7; // sleep at/above this counts as a "rested" night
 
 /** Sign-adjusted so a larger number always means a better outcome: for every
  *  mood except 'good' a LOWER post-score is better, so flip the sign there. */
@@ -158,6 +159,36 @@ export function detectConsistency(sessions: Session[]): PatternItem | null {
   return { id: 'consistency', text, kind: tier };
 }
 
+/** Sleep: do sessions after a fuller night's sleep improve more? Compares mean
+ *  improvement on rested (>= REST_THRESHOLD_HOURS) vs short nights. Only sessions
+ *  that captured `sleepHoursLastNight` are considered, so it's silent until the
+ *  per-session health capture has accrued enough data. */
+export function detectSleep(sessions: Session[]): PatternItem | null {
+  const rested: number[] = [];
+  const short: number[] = [];
+  for (const s of sessions) {
+    if (typeof s.sleepHoursLastNight !== 'number') continue;
+    (s.sleepHoursLastNight >= REST_THRESHOLD_HOURS ? rested : short).push(sessionImprovement(s));
+  }
+  const obs = Math.min(rested.length, short.length);
+  const rMean = mean(rested);
+  const sMean = mean(short);
+  const effect = Math.abs(rMean - sMean);
+  const tier = classifyTier(obs, MIN_OBS_PER_BUCKET, effect, EFFECT_GRAY, EFFECT_STRONG);
+  if (tier === 'none') return null;
+
+  const restedBetter = rMean >= sMean;
+  const text =
+    tier === 'finding'
+      ? restedBetter
+        ? 'You get more out of your sessions after a fuller night of sleep.'
+        : 'Your sessions have been landing better on less sleep — worth a look.'
+      : restedBetter
+        ? 'A fuller night of sleep might be helping your sessions — worth watching?'
+        : 'Shorter nights might be tracking with better sessions — odd, worth noticing?';
+  return { id: 'sleep', text, kind: tier };
+}
+
 /** The public engine: run every signal, drop the silent ones, and order
  *  confident findings ahead of hedged questions (the insights UI renders them
  *  in this order; the free-teaser pick is the UI's concern, not the engine's).
@@ -167,6 +198,7 @@ export function buildPatterns(sessions: Session[]): PatternItem[] {
     detectTimeOfDay(sessions),
     detectDayOfWeek(sessions),
     detectConsistency(sessions),
+    detectSleep(sessions),
   ].filter((x): x is PatternItem => x !== null);
 
   const findings = detected.filter((i) => i.kind === 'finding');

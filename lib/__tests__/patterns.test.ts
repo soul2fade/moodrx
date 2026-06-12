@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek, detectConsistency, buildPatterns } from '@/lib/patterns';
+import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek, detectConsistency, buildPatterns, detectSleep } from '@/lib/patterns';
 import type { MoodKey, Session } from '@/lib/storage';
 
 // ── Shared fixture helpers (used by all pattern tests) ───────────────────────
@@ -225,5 +225,80 @@ describe('buildPatterns', () => {
 
   it('returns an empty list when there is no data', () => {
     expect(buildPatterns([])).toEqual([]);
+  });
+});
+
+describe('detectSleep', () => {
+  it('emits a finding when rested nights clearly help more', () => {
+    const sessions = [
+      { ...sess(1, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(2, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(3, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(4, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(5, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(6, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(7, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(8, 9, 6, 5), sleepHoursLastNight: 5 },
+    ];
+    const item = detectSleep(sessions);
+    expect(item?.kind).toBe('finding');
+    expect(item?.id).toBe('sleep');
+    expect(item?.text.toLowerCase()).toContain('sleep');
+  });
+
+  it('emits a hedged question in the gray zone', () => {
+    const sessions = [
+      { ...sess(1, 9, 7, 4), sleepHoursLastNight: 8 },
+      { ...sess(2, 9, 7, 4), sleepHoursLastNight: 8 },
+      { ...sess(3, 9, 7, 4), sleepHoursLastNight: 8 },
+      { ...sess(4, 9, 7, 4), sleepHoursLastNight: 8 },
+      { ...sess(5, 9, 6, 4.5), sleepHoursLastNight: 5 },
+      { ...sess(6, 9, 6, 4.5), sleepHoursLastNight: 5 },
+      { ...sess(7, 9, 6, 4.5), sleepHoursLastNight: 5 },
+      { ...sess(8, 9, 6, 4.5), sleepHoursLastNight: 5 },
+    ];
+    expect(detectSleep(sessions)?.kind).toBe('question');
+  });
+
+  it('returns null below the per-bucket floor', () => {
+    const sessions = [
+      { ...sess(1, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(2, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(3, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(5, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(6, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(7, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(8, 9, 6, 5), sleepHoursLastNight: 5 },
+    ];
+    expect(detectSleep(sessions)).toBeNull();
+  });
+
+  it('ignores sessions that did not capture sleep (quiet until data accrues)', () => {
+    const sessions = [
+      { ...sess(1, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(2, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(3, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(4, 9, 8, 4), sleepHoursLastNight: 8 },
+      sess(5, 9, 6, 5), sess(6, 9, 6, 5), sess(7, 9, 6, 5), sess(8, 9, 6, 5),
+    ];
+    expect(detectSleep(sessions)).toBeNull();
+  });
+});
+
+describe('buildPatterns includes the sleep signal', () => {
+  it('surfaces a sleep finding (and nothing spurious) on sleep-only data', () => {
+    const sessions = [
+      { ...sess(1, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(5, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(9, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(13, 9, 8, 4), sleepHoursLastNight: 8 },
+      { ...sess(17, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(21, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(25, 9, 6, 5), sleepHoursLastNight: 5 },
+      { ...sess(28, 9, 6, 5), sleepHoursLastNight: 5 },
+    ];
+    const items = buildPatterns(sessions);
+    expect(items.some((i) => i.id === 'sleep' && i.kind === 'finding')).toBe(true);
+    expect(items.filter((i) => i.kind === 'finding')).toHaveLength(1);
   });
 });

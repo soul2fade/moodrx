@@ -100,6 +100,14 @@ const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
   { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/brownnoise.mp3') },
 ];
 
+// Per-track loop volume. FOCUS is brown noise — bass-heavy, so it *reads* much
+// louder than rain/forest at the same numeric level; keep it noticeably lower.
+const SOUNDSCAPE_VOLUME: Record<Exclude<Soundscape, null>, number> = {
+  rain: 0.35,
+  forest: 0.35,
+  focus: 0.18,
+};
+
 
 export default function WorkoutScreen() {
   const insets = useSafeAreaInsets();
@@ -160,7 +168,7 @@ export default function WorkoutScreen() {
   useEffect(() => {
     if (audioSrc && activeSoundscape) {
       player.loop = true;
-      player.volume = 0.35;
+      player.volume = SOUNDSCAPE_VOLUME[activeSoundscape];
       player.play();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- expo-audio player is a stable ref; effect intentionally only re-runs on src/activeSoundscape changes.

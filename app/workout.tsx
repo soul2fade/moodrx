@@ -97,15 +97,17 @@ type StepTimerKind = 'rest' | 'active';
 const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
   { key: 'rain',   label: 'RAIN',    src: require('../assets/audio/rain.mp3') },
   { key: 'forest', label: 'FOREST',  src: require('../assets/audio/forest.mp3') },
-  { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/brownnoise.mp3') },
+  { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/greennoise.mp3') },
 ];
 
-// Per-track loop volume. FOCUS is brown noise — bass-heavy, so it *reads* much
-// louder than rain/forest at the same numeric level; keep it noticeably lower.
+// Per-track loop volume — starting points, tune on-device. FOCUS is green noise
+// now (gentler/mid-frequency than the old brown), so it can sit a bit higher
+// than brown did without rumbling. The rain/green assets aren't loudness-
+// normalized yet, so these may need a nudge after the build.
 const SOUNDSCAPE_VOLUME: Record<Exclude<Soundscape, null>, number> = {
-  rain: 0.35,
+  rain: 0.32,
   forest: 0.35,
-  focus: 0.18,
+  focus: 0.3,
 };
 
 

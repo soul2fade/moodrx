@@ -26,6 +26,10 @@ export interface Session extends SessionHealthFields {
   rating?: 'yes' | 'somewhat' | 'no';
   note?: string;
   lightDay?: boolean;
+  /** Origin of the check-in. 'vent' = logged from the voice-vent flow. Absent
+   *  for the normal prescription/form/quick-log paths. Additive + optional, so
+   *  old records remain valid. */
+  source?: 'vent';
   /** YYYY-MM-DD in the local timezone at write time. Persisted so streak
    *  and "today" checks survive timezone changes (travel, DST) without
    *  recomputing from the unix timestamp. Optional for sessions logged

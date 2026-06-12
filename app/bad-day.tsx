@@ -25,6 +25,7 @@ import { useSessions } from '@/contexts/SessionsContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { createSessionId, formatSessionDelta } from '@/lib/session-utils';
+import { captureSessionHealth } from '@/lib/health';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -66,6 +67,7 @@ export default function BadDayScreen() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const health = await captureSessionHealth();
       await addSession({
         id: createSessionId(),
         mood,
@@ -77,6 +79,7 @@ export default function BadDayScreen() {
         timestamp: Date.now(),
         lightDay: true,
         rating: 'somewhat',
+        ...health,
       });
       router.replace('/home');
     } catch {

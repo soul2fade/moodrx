@@ -30,6 +30,7 @@ import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { createSessionId } from '@/lib/session-utils';
 import { maybeRequestReview } from '@/lib/review';
+import { captureSessionHealth } from '@/lib/health';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -226,6 +227,7 @@ export default function HomeScreen() {
 
   const handleJustLogIt = useCallback(async () => {
     if (!selectedMood) return;
+    const health = await captureSessionHealth();
     const session = {
       id: createSessionId(),
       mood: selectedMood,
@@ -235,6 +237,7 @@ export default function HomeScreen() {
       duration: 0,
       timestamp: Date.now(),
       lightDay: true as const,
+      ...health,
     };
     await addSession(session);
     await rescheduleAfterSession([...sessions, session]);
@@ -243,6 +246,7 @@ export default function HomeScreen() {
 
   const handleSameAsYesterdayLog = useCallback(async () => {
     if (!lastSession) return;
+    const health = await captureSessionHealth();
     const session = {
       id: createSessionId(),
       mood: lastSession.mood,
@@ -252,6 +256,7 @@ export default function HomeScreen() {
       duration: 0,
       timestamp: Date.now(),
       lightDay: true as const,
+      ...health,
     };
     await addSession(session);
     await rescheduleAfterSession([...sessions, session]);

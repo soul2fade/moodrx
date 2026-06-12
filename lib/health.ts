@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { healthFieldsFromSnapshot } from './session-health';
+import type { SessionHealthFields } from './storage';
 import {
   ExerciseType,
   isHealthConnectPlatform,
@@ -260,6 +262,17 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot> {
       sleepHoursLastNight: null,
       readError: 'unknown',
     };
+  }
+}
+
+/** Capture the current health snapshot as Session health fields for logging.
+ *  Returns {} when health is unavailable/disabled or the read fails, so callers
+ *  can spread it into a Session unconditionally. No-op-safe and never throws. */
+export async function captureSessionHealth(): Promise<SessionHealthFields> {
+  try {
+    return healthFieldsFromSnapshot(await getHealthSnapshot());
+  } catch {
+    return {};
   }
 }
 

@@ -23,7 +23,7 @@ import { useSessions } from '@/contexts/SessionsContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { SessionWinCard } from '@/components/SessionWinCard';
 import { rescheduleAfterSession } from '@/lib/notifications';
-import { saveWorkoutToHealth } from '@/lib/health';
+import { saveWorkoutToHealth, captureSessionHealth } from '@/lib/health';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
@@ -185,6 +185,7 @@ export default function PostWorkoutScreen() {
     if (isSubmitting) return; // prevent double-tap
     setIsSubmitting(true);
     try {
+      const health = await captureSessionHealth();
       await addSessionToContext({
         id: createSessionId(),
         mood,
@@ -196,6 +197,7 @@ export default function PostWorkoutScreen() {
         timestamp: Date.now(),
         note: note.trim() || undefined,
         rating: rating ?? undefined,
+        ...health,
       });
       if (sessionReps > 0) {
         const isNewBest = previousBest === null || sessionReps > previousBest.reps;

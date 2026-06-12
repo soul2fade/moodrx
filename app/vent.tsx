@@ -1,0 +1,756 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Animated,
+  Alert,
+} from 'react-native';
+import { router } from 'expo-router';
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
+import Slider from '@react-native-community/slider';
+import { MoodIcon } from '@/components/MoodIcon';
+import { flattenStyle } from '@/utils/flatten-style';
+import { type as t, fonts } from '@/lib/typography';
+import { colors } from '@/lib/colors';
+import { MOODS, MOOD_ORDER } from '@/lib/moods';
+import type { MoodKey } from '@/lib/storage';
+import { getVentConsent, setVentConsent, getVentEnabled } from '@/lib/storage';
+import { fetchVentReply } from '@/lib/vent-client';
+import { ventAction, buildVentSession, type VentAssessment } from '@/lib/vent';
+import { captureSessionHealth } from '@/lib/health';
+import { createSessionId } from '@/lib/session-utils';
+import { useSessions } from '@/contexts/SessionsContext';
+import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+type VentState = 'consent' | 'invite' | 'recording' | 'thinking' | 'reply' | 'error';
+
+interface Correction {
+  mood: MoodKey;
+  intensity: number;
+}
+
+const HARD_STOP_MS = 30_000;
+
+export default function VentScreen() {
+  const insets = useSafeAreaInsets();
+  const { addSession } = useSessions();
+  const { fadeAnim, slideAnim } = useScreenAnimation();
+
+  const [ventState, setVentState] = useState<VentState>('invite');
+  const [transcript, setTranscript] = useState('');
+  const [assessment, setAssessment] = useState<VentAssessment | null>(null);
+  const [corrected, setCorrected] = useState<Correction | null>(null);
+  const [showCorrection, setShowCorrection] = useState(false);
+  const [showResource, setShowResource] = useState(false);
+  const [isConsentLoading, setIsConsentLoading] = useState(true);
+
+  // Refs for timer IDs so we can clean them up reliably
+  const hardStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref for latest transcript so the 'end' event handler reads the final value
+  const transcriptRef = useRef('');
+  // Ref to track whether we're actively recording (guards cleanup stop call)
+  const isRecordingRef = useRef(false);
+  // Double-persist guard: flipped to true the first time persist is called
+  const persistedRef = useRef(false);
+
+  const backHandler = useCallback(() => {
+    router.back();
+    return true;
+  }, []);
+  useHardwareBack(backHandler);
+
+  // ─── Consent gate on mount ───────────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const enabled = await getVentEnabled();
+      if (!enabled) {
+        router.back();
+        return;
+      }
+      const consent = await getVentConsent();
+      if (!cancelled) {
+        setVentState(consent ? 'invite' : 'consent');
+        setIsConsentLoading(false);
+      }
+    })().catch(() => {
+      if (!cancelled) {
+        setVentState('invite');
+        setIsConsentLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // ─── Unmount cleanup ─────────────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (hardStopTimerRef.current) clearTimeout(hardStopTimerRef.current);
+      if (isRecordingRef.current) {
+        try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+      }
+    };
+  }, []);
+
+  // ─── STT event: result ───────────────────────────────────────────────────
+  useSpeechRecognitionEvent('result', (event) => {
+    const t2 = event.results[0]?.transcript ?? '';
+    setTranscript(t2);
+    transcriptRef.current = t2;
+  });
+
+  // ─── STT event: end ──────────────────────────────────────────────────────
+  useSpeechRecognitionEvent('end', () => {
+    if (!isRecordingRef.current) return; // already handled (e.g. fallback called)
+    isRecordingRef.current = false;
+    if (hardStopTimerRef.current) {
+      clearTimeout(hardStopTimerRef.current);
+      hardStopTimerRef.current = null;
+    }
+    const finalTranscript = transcriptRef.current;
+    if (finalTranscript.trim().length > 0) {
+      void handleSubmit(finalTranscript);
+    } else {
+      fallbackToForm("Couldn't catch that — tap it in instead");
+    }
+  });
+
+  // ─── STT event: error ────────────────────────────────────────────────────
+  useSpeechRecognitionEvent('error', () => {
+    if (!isRecordingRef.current) return;
+    isRecordingRef.current = false;
+    if (hardStopTimerRef.current) {
+      clearTimeout(hardStopTimerRef.current);
+      hardStopTimerRef.current = null;
+    }
+    fallbackToForm("Couldn't catch that — tap it in instead");
+  });
+
+  // ─── Fallback to form ────────────────────────────────────────────────────
+  const fallbackToForm = useCallback((note: string) => {
+    if (isRecordingRef.current) {
+      isRecordingRef.current = false;
+      try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+    }
+    if (hardStopTimerRef.current) {
+      clearTimeout(hardStopTimerRef.current);
+      hardStopTimerRef.current = null;
+    }
+    Alert.alert('', note);
+    router.replace('/home');
+  }, []);
+
+  // ─── Persist (once) ──────────────────────────────────────────────────────
+  const persist = useCallback(async (a: VentAssessment, corr: Correction | null) => {
+    if (persistedRef.current) return;
+    persistedRef.current = true;
+    try {
+      const health = await captureSessionHealth();
+      await addSession(buildVentSession({
+        id: createSessionId(),
+        mood: corr?.mood ?? a.mood,
+        intensity: corr?.intensity ?? a.intensity,
+        timestamp: Date.now(),
+        health,
+      }));
+    } catch {
+      // persist failure: non-blocking, don't surface to user
+    }
+  }, [addSession]);
+
+  // ─── Tap to start recording ───────────────────────────────────────────────
+  const handleStartRecording = async () => {
+    const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!perm.granted) {
+      fallbackToForm("MoodRx needs the mic to hear you — tap it in instead");
+      return;
+    }
+    setTranscript('');
+    transcriptRef.current = '';
+    persistedRef.current = false;
+    isRecordingRef.current = true;
+    setVentState('recording');
+    ExpoSpeechRecognitionModule.start({
+      lang: 'en-US',
+      interimResults: true,
+      continuous: false,
+      requiresOnDeviceRecognition: true,
+      addsPunctuation: true,
+    });
+    // Hard auto-stop at 30s
+    hardStopTimerRef.current = setTimeout(() => {
+      if (isRecordingRef.current) {
+        try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+      }
+    }, HARD_STOP_MS);
+  };
+
+  // ─── Manual stop ─────────────────────────────────────────────────────────
+  const handleManualStop = () => {
+    try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+  };
+
+  // ─── Submit transcript to API ─────────────────────────────────────────────
+  const handleSubmit = async (text: string) => {
+    setVentState('thinking');
+    const a = await fetchVentReply(text);
+    if (!a) {
+      fallbackToForm("Couldn't reach Dr. MoodRx — tap it in instead");
+      return;
+    }
+    setAssessment(a);
+    const action = ventAction(a.risk);
+    if (action === 'crisis-redirect') {
+      // Persist before redirect with inferred values
+      await persist(a, null);
+      router.replace('/crisis');
+    } else if (action === 'reply-with-resource') {
+      setShowResource(true);
+      setVentState('reply');
+    } else {
+      setVentState('reply');
+    }
+  };
+
+  // ─── Prescription handoff ─────────────────────────────────────────────────
+  const handlePrescription = async () => {
+    if (!assessment) return;
+    await persist(assessment, corrected);
+    router.push({
+      pathname: '/prescription',
+      params: {
+        mood: corrected?.mood ?? assessment.mood,
+        intensity: String(corrected?.intensity ?? assessment.intensity),
+      },
+    });
+  };
+
+  // ─── I'm good ────────────────────────────────────────────────────────────
+  const handleImGood = async () => {
+    if (!assessment) return;
+    await persist(assessment, corrected);
+    router.replace('/home');
+  };
+
+  const moodForChip = corrected?.mood ?? assessment?.mood ?? 'anxious';
+  const intensityForChip = corrected?.intensity ?? assessment?.intensity ?? 5;
+  const accentColor = MOODS[moodForChip].color;
+
+  if (isConsentLoading) {
+    return <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]} />;
+  }
+
+  return (
+    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Back nav */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.backButton}>← BACK</Text>
+        </TouchableOpacity>
+
+        {/* ── CONSENT ─────────────────────────────────────────── */}
+        {ventState === 'consent' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionEyebrow}>BEFORE YOU VENT</Text>
+            <Text style={styles.headline}>One quick thing.</Text>
+            <View style={styles.consentCard}>
+              <Text style={styles.consentText}>
+                This sends your words to our AI to write a response.{'\n'}
+                It&apos;s not stored or used to train AI.
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.primaryBtn}
+              onPress={async () => {
+                await setVentConsent(true);
+                setVentState('invite');
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.primaryBtnText}>GOT IT — LET&apos;S GO →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ── INVITE ──────────────────────────────────────────── */}
+        {ventState === 'invite' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionEyebrow}>DR. MOODRX</Text>
+            <Text style={styles.headline}>What&apos;s actually going on?</Text>
+            <Text style={styles.inviteSubtext}>
+              Tap and talk. 20 seconds. Dr. MoodRx is listening.
+            </Text>
+            <View style={styles.micCenterRow}>
+              <TouchableOpacity
+                onPress={handleStartRecording}
+                activeOpacity={0.75}
+                style={styles.micButton}
+                accessibilityRole="button"
+                accessibilityLabel="Start voice venting"
+              >
+                <View style={styles.micButtonInner}>
+                  <Text style={styles.micIcon}>●</Text>
+                </View>
+                <View style={[styles.micRing, styles.micRing1]} />
+                <View style={[styles.micRing, styles.micRing2]} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.micHint}>TAP THE MIC</Text>
+          </View>
+        )}
+
+        {/* ── RECORDING ───────────────────────────────────────── */}
+        {ventState === 'recording' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionEyebrow}>LISTENING</Text>
+            <Text style={styles.headline}>I&apos;m all ears.</Text>
+            <Text style={styles.recordingHint}>~20 seconds · stops automatically</Text>
+            {/* Live transcript */}
+            <View style={styles.transcriptBox}>
+              <Text style={styles.transcriptText} numberOfLines={6}>
+                {transcript.length > 0 ? transcript : '…'}
+              </Text>
+            </View>
+            <View style={styles.pulseDot} />
+            <TouchableOpacity
+              style={styles.stopBtn}
+              onPress={handleManualStop}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Stop recording"
+            >
+              <Text style={styles.stopBtnText}>■  DONE TALKING</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ── THINKING ────────────────────────────────────────── */}
+        {ventState === 'thinking' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionEyebrow}>DR. MOODRX</Text>
+            <Text style={styles.headline}>Let me hear you out…</Text>
+            <View style={styles.thinkingBox}>
+              <Text style={styles.thinkingText}>
+                Sitting with what you said.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* ── REPLY ───────────────────────────────────────────── */}
+        {ventState === 'reply' && assessment && (
+          <View style={styles.section}>
+            <Text style={styles.sectionEyebrow}>DR. MOODRX SAYS</Text>
+
+            {/* The reply line — prominent */}
+            <View style={[styles.replyCard, { borderLeftColor: accentColor }]}>
+              <Text style={styles.replyText}>{assessment.reply}</Text>
+            </View>
+
+            {/* Tappable mood chip */}
+            <TouchableOpacity
+              onPress={() => setShowCorrection((v) => !v)}
+              activeOpacity={0.8}
+              style={[styles.moodChip, { borderColor: accentColor }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Sounds like ${MOODS[moodForChip].name} at intensity ${intensityForChip} out of 10. Tap to correct.`}
+            >
+              <MoodIcon mood={moodForChip} size={16} color={accentColor} opacity={1} />
+              <Text style={[styles.moodChipText, { color: accentColor }]}>
+                Sounds like: {MOODS[moodForChip].name} · {intensityForChip}/10
+              </Text>
+              <Text style={[styles.moodChipCaret, { color: accentColor }]}>
+                {showCorrection ? '▲' : '▼'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Correction control */}
+            {showCorrection && (
+              <View style={styles.correctionPanel}>
+                <Text style={styles.correctionLabel}>CORRECT THE MOOD</Text>
+                <View style={styles.moodRow}>
+                  {MOOD_ORDER.map((moodKey) => {
+                    const selected = moodForChip === moodKey;
+                    return (
+                      <TouchableOpacity
+                        key={moodKey}
+                        onPress={() => setCorrected({ mood: moodKey, intensity: intensityForChip })}
+                        style={selected
+                          ? flattenStyle([styles.moodChipSmall, { borderColor: MOODS[moodKey].color }])
+                          : styles.moodChipSmall}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected }}
+                      >
+                        <MoodIcon mood={moodKey} size={18} color={MOODS[moodKey].color} opacity={selected ? 1 : 0.5} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <Text style={styles.correctionLabel}>INTENSITY {intensityForChip}/10</Text>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={1}
+                  maximumValue={10}
+                  step={1}
+                  value={intensityForChip}
+                  onValueChange={(v) => setCorrected({ mood: moodForChip, intensity: v })}
+                  minimumTrackTintColor={accentColor}
+                  maximumTrackTintColor="#1a1a1a"
+                  thumbTintColor={accentColor}
+                  accessibilityLabel={`Intensity: ${intensityForChip} out of 10`}
+                  accessibilityRole="adjustable"
+                />
+              </View>
+            )}
+
+            {/* Elevated resource link */}
+            {showResource && (
+              <TouchableOpacity
+                onPress={() => router.push('/crisis')}
+                activeOpacity={0.7}
+                style={styles.resourceLink}
+                accessibilityRole="button"
+                accessibilityLabel="Want to talk to someone? Crisis resources"
+              >
+                <Text style={styles.resourceLinkText}>Want to talk to someone? →</Text>
+                <TouchableOpacity
+                  onPress={() => setShowResource(false)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Dismiss resource link"
+                >
+                  <Text style={styles.resourceLinkDismiss}>✕</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            )}
+
+            {/* Actions */}
+            <TouchableOpacity
+              style={[styles.primaryBtn, { borderColor: accentColor }]}
+              onPress={handlePrescription}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Get my prescription"
+            >
+              <Text style={[styles.primaryBtnText, { color: accentColor }]}>
+                GET MY PRESCRIPTION →
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={handleImGood}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="I'm good"
+            >
+              <Text style={styles.secondaryBtnText}>I&apos;M GOOD</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingBottom: 56,
+    flexGrow: 1,
+  },
+  backButton: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  section: {
+    marginTop: 28,
+  },
+  sectionEyebrow: {
+    ...t.label,
+    color: colors.accent,
+    letterSpacing: 3,
+    marginBottom: 8,
+  },
+  headline: {
+    ...t.headline,
+    fontSize: 28,
+    marginBottom: 12,
+  },
+
+  // ── Consent ─────────────────────────────────────────────────────────────
+  consentCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 20,
+    marginTop: 4,
+    marginBottom: 28,
+  },
+  consentText: {
+    ...t.body,
+    fontSize: 16,
+    lineHeight: 25,
+    color: colors.textMuted,
+  },
+
+  // ── Invite ───────────────────────────────────────────────────────────────
+  inviteSubtext: {
+    ...t.bodyMuted,
+    fontSize: 16,
+    marginBottom: 40,
+    lineHeight: 24,
+  },
+  micCenterRow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  micButton: {
+    width: 96,
+    height: 96,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micButtonInner: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micIcon: {
+    fontSize: 28,
+    // eslint-disable-next-line local/no-dark-text-color
+    color: '#0a0a0a',
+    lineHeight: 32,
+  },
+  micRing: {
+    position: 'absolute',
+    borderRadius: 48,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  micRing1: {
+    width: 84,
+    height: 84,
+    opacity: 0.3,
+  },
+  micRing2: {
+    width: 96,
+    height: 96,
+    opacity: 0.12,
+  },
+  micHint: {
+    ...t.label,
+    textAlign: 'center',
+    color: colors.textSubtle,
+    letterSpacing: 3,
+    marginTop: 4,
+  },
+
+  // ── Recording ────────────────────────────────────────────────────────────
+  recordingHint: {
+    ...t.bodySm,
+    color: colors.textSubtle,
+    marginBottom: 20,
+  },
+  transcriptBox: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 16,
+    minHeight: 100,
+    marginBottom: 20,
+  },
+  transcriptText: {
+    ...t.body,
+    fontSize: 15,
+    lineHeight: 23,
+    color: colors.text,
+  },
+  pulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.danger,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  stopBtn: {
+    borderWidth: 1,
+    borderColor: colors.danger,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  stopBtnText: {
+    ...t.button,
+    color: colors.danger,
+    letterSpacing: 2,
+  },
+
+  // ── Thinking ─────────────────────────────────────────────────────────────
+  thinkingBox: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+    backgroundColor: colors.surface,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  thinkingText: {
+    ...t.bodyMuted,
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: colors.textMuted,
+  },
+
+  // ── Reply ─────────────────────────────────────────────────────────────────
+  replyCard: {
+    borderLeftWidth: 3,
+    backgroundColor: colors.surface,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
+    marginBottom: 20,
+  },
+  replyText: {
+    ...t.body,
+    fontSize: 17,
+    lineHeight: 27,
+    color: colors.text,
+  },
+  moodChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+  moodChipText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    letterSpacing: 1,
+    flex: 1,
+    textTransform: 'uppercase',
+    lineHeight: 18,
+  },
+  moodChipCaret: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+
+  // ── Correction panel ──────────────────────────────────────────────────────
+  correctionPanel: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 16,
+    marginBottom: 16,
+  },
+  correctionLabel: {
+    ...t.label,
+    color: colors.textSecondary,
+    letterSpacing: 2,
+    marginBottom: 10,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  moodRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  moodChipSmall: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 8,
+  },
+  slider: {
+    width: '100%',
+    height: 36,
+    marginTop: 4,
+  },
+
+  // ── Resource link (elevated) ───────────────────────────────────────────────
+  resourceLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: colors.borderMedium,
+    backgroundColor: colors.surfaceDark,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  resourceLinkText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    color: '#7EC8A0',
+    letterSpacing: 1,
+    lineHeight: 18,
+  },
+  resourceLinkDismiss: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: colors.textSubtle,
+    letterSpacing: 1,
+    lineHeight: 18,
+  },
+
+  // ── Shared buttons ────────────────────────────────────────────────────────
+  primaryBtn: {
+    borderWidth: 1,
+    borderColor: colors.accent,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  primaryBtnText: {
+    ...t.button,
+    color: colors.accent,
+    letterSpacing: 2,
+  },
+  secondaryBtn: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 4,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  secondaryBtnText: {
+    ...t.label,
+    color: colors.textSubtle,
+    letterSpacing: 2,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+});

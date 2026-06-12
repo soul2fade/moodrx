@@ -1,7 +1,7 @@
 # Voiced Insult Library — Generation Pipeline Design Spec
 
 **Date:** 2026-06-12
-**Status:** Approved design, pre-plan. **Gated on an external precondition:** an ElevenLabs voice clone of the insult talent must exist (with her written consent/license for AI use) before the pipeline can produce audio.
+**Status:** Approved design, pre-plan. **No external blocker** — the voices are ElevenLabs voices (premade/Voice-Library), not a recording of a real person, so there is NO cloning, consent, or 30-min-audio requirement. The owner is on the Creator plan (commercial license). The only prep is choosing the voice(s) + confirming each is commercial-cleared.
 **Decision context:** Owner wants the AI trash-talk *spoken* in the same voice as the 15 pre-recorded insults. Live per-insult TTS is incompatible with MoodRx's **$9.99 one-time** pricing (recurring, user-scaling cost vs a one-time fee). So the during-workout trash talk is delivered from a **pre-generated, pre-voiced library** (one-time build cost, $0 marginal at runtime). This spec covers the **offline pipeline** that builds that library. (The personalized **post-workout** roast — voiced live, Pro-gated — is a separate, later piece.)
 
 ## Summary
@@ -69,11 +69,20 @@ A few-hundred-clip library bundled in the app would balloon its size (we just fo
 - Generation: Claude Haiku, fractions of a cent per line — negligible.
 - Voicing: ElevenLabs credits ≈ characters (Flash ≈ half). A 300-line library × ~150 chars ≈ ~45k characters ≈ fits one month of the **Creator** tier (121k credits) or ~2 months of **Starter** (30k). I.e. a **~$11–22 one-time** spend, after which the subscription can be cancelled and runtime cost is **$0**. Top-ups are similarly cheap.
 
+## Multiple voices + monetization (decided 2026-06-12)
+
+The "voice" is an **ElevenLabs voice** (premade/Voice-Library), NOT a recording of a real person — so **no cloning, no consent, no 30-min audio**. The pipeline just consumes a `voice_id`. Owner is on the **Creator** plan ($11/mo first month; has commercial license + 121k credits + pay-as-you-go).
+
+- **2–3 selectable voices, user picks** (a "Coach voice" picker in Settings). Run the pipeline **once per voice** → a library per (voice × tier). Cost scales one-time with voice count (~45k chars/voice; 3 voices ≈ 135k ≈ ~1 month of Creator, less with the Flash model). Runtime cost stays $0 (cached audio).
+- **Monetization = freemium voice packs** (fits the `$9.99 one-time base + content packs` model): **one default voice FREE**, additional voices as **one-time IAP packs via RevenueCat** (new entitlements; RevenueCat already wired). Because the audio is pre-generated/cached, free-vs-paid is a pure product choice — $0 to serve either way.
+- **Per-voice commercial clearance** is required: ElevenLabs *premade* voices are commercial-OK on a paid plan; *Voice Library* (community) voices vary — verify each one's terms (premade safest). Note: you are selling **your generated audio content**, not the voice — users never touch ElevenLabs (allowed under the Creator commercial license).
+- Manifest gains a voice dimension: `{ voices: { "<voiceName>": { voice_id, free: bool, tiers: { ... } } } }`. The app filters to owned/free voices.
+
 ## Open decisions for the plan
 1. **Hosting**: remote-fetch+cache (recommended) vs bundled.
 2. **Library size** per tier to start (e.g. 50–100) and tier count (3, matching the slider).
-3. **Free vs Pro access** to the dynamic library (cached audio is ~free to serve, so it *could* be free; or reserved as a Pro perk). Note: the live post-workout roast stays Pro-gated regardless.
-4. **Cloning fidelity**: IVC (works from ~1 min existing audio, lower fidelity) vs PVC (needs ~30 min of her clean audio, better match) — determined by how much of her audio is available + her participation.
+3. **Which voices** (names + `voice_id`s), which one is the free default, and pack pricing for the rest.
+4. **During-workout library access** — free to all, or also gated? (The live post-workout roast stays Pro-gated regardless; the cached library is $0 to serve so it *can* be free.)
 
 ## Success criteria
 - Running the pipeline produces, per tier, approved + voiced clips + a valid manifest, with no un-reviewed line ever voiced.

@@ -36,7 +36,9 @@ import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { buildCoachContext } from '@/lib/coach-insight';
 import { fetchDynamicLine } from '@/lib/coach-client';
-import { getFieldNotePlaceholder } from '@/lib/workout-ui';
+import { appendDictation, getFieldNotePlaceholder } from '@/lib/workout-ui';
+import { colors } from '@/lib/colors';
+import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react-native';
 
 function getScoreContext(score: number, lowerIsBetter: boolean): string {
@@ -77,6 +79,10 @@ export default function PostWorkoutScreen() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [previousBest, setPreviousBest] = useState<PersonalBest | null>(null);
   const [note, setNote] = useState('');
+  const [isDictating, setIsDictating] = useState(false);
+  const dictatingRef = useRef(false);
+  // The note text as it was when dictation started; new speech appends onto this.
+  const dictateBaseRef = useRef('');
   const [dynamicLine, setDynamicLine] = useState<string | null>(null);
   const workout = getWorkoutById(workoutId) ?? getWorkoutsForMood(mood)[0];
 
@@ -271,6 +277,53 @@ export default function PostWorkoutScreen() {
   const handleWinDone = async () => {
     setShowWinCard(false);
     await finishFlow();
+  };
+
+  useSpeechRecognitionEvent('result', (event) => {
+    if (!dictatingRef.current) return;
+    const transcript = event.results[0]?.transcript ?? '';
+    setNote(appendDictation(dictateBaseRef.current, transcript, 140));
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    if (!dictatingRef.current) return;
+    dictatingRef.current = false;
+    setIsDictating(false);
+  });
+
+  useSpeechRecognitionEvent('error', () => {
+    if (!dictatingRef.current) return;
+    dictatingRef.current = false;
+    setIsDictating(false);
+  });
+
+  // Stop dictation on unmount.
+  useEffect(() => {
+    return () => {
+      if (dictatingRef.current) {
+        dictatingRef.current = false;
+        try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+      }
+    };
+  }, []);
+
+  const handleDictateToggle = async () => {
+    if (dictatingRef.current) {
+      try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+      return;
+    }
+    const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!perm.granted) return; // no mic — keyboard still works; stay silent
+    dictateBaseRef.current = note;
+    dictatingRef.current = true;
+    setIsDictating(true);
+    ExpoSpeechRecognitionModule.start({
+      lang: 'en-US',
+      interimResults: true,
+      continuous: false,
+      requiresOnDeviceRecognition: true,
+      addsPunctuation: true,
+    });
   };
 
   const isFirstSession = isGuided || cachedSessionCount === 0;
@@ -475,7 +528,20 @@ export default function PostWorkoutScreen() {
         <View style={styles.noteSection}>
           <View style={styles.noteHeader}>
             <Text style={styles.noteLabel}>FIELD NOTES</Text>
-            <Text style={styles.noteCount}>{note.length}/140</Text>
+            <View style={styles.noteHeaderRight}>
+              <TouchableOpacity
+                onPress={handleDictateToggle}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={isDictating ? 'Stop dictation' : 'Dictate field notes'}
+              >
+                <Text style={[styles.dictateBtnText, isDictating && styles.dictateBtnTextActive]}>
+                  {isDictating ? '■ STOP' : '● DICTATE'}
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.noteCount}>{note.length}/140</Text>
+            </View>
           </View>
           <TextInput
             style={[styles.noteInput, note.length > 0 && { borderColor: '#2a2a2a' }]}
@@ -806,6 +872,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginBottom: 10,
+  },
+  noteHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dictateBtnText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: colors.textSecondary,
+    letterSpacing: 1,
+    lineHeight: 17,
+  },
+  dictateBtnTextActive: {
+    color: colors.accent,
   },
   noteLabel: {
     fontFamily: fonts.mono.regular,

@@ -93,6 +93,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 },
   labelBlock: { flex: 1, paddingRight: 12 },
   label: { color: '#f0f0f0', fontSize: 16, fontWeight: '600', lineHeight: 20 },
-  hint: { color: '#cfcfcf', fontSize: 12, lineHeight: 16, marginTop: 3 },
+  hint: { color: '#cfcfcf', fontSize: 15, lineHeight: 16, marginTop: 3 },
   value: { color: '#e8e8e8', fontSize: 15, fontWeight: '700', lineHeight: 20 },
 });

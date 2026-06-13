@@ -152,14 +152,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#c5c5c5',
     letterSpacing: 3,
     lineHeight: 17,
   },
   sub: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 1,
     lineHeight: 17,
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 1.5,
     lineHeight: 17,

@@ -74,10 +74,10 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, paddingVertical: 13, paddingLeft: 16 },
   rowLabel: { color: '#f0f0f0', fontSize: 17, fontWeight: '700' },
   rowLabelSelected: { color: '#ffffff' },
-  rowState: { color: '#cfcfcf', fontSize: 12, lineHeight: 16, marginTop: 2 },
+  rowState: { color: '#cfcfcf', fontSize: 15, lineHeight: 16, marginTop: 2 },
   sampleBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: '#3a3a3a' },
   sampleBtnDisabled: { opacity: 0.4 },
-  sampleText: { color: '#e8e8e8', fontSize: 13, fontWeight: '600' },
+  sampleText: { color: '#e8e8e8', fontSize: 15, fontWeight: '600' },
   cta: { marginTop: 18, backgroundColor: ACCENT, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   ctaText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
 });

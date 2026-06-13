@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     ...t.softMuted,
     textAlign: 'center',
     marginTop: 12,
-    fontSize: 13,
+    fontSize: 15,
   },
   primaryBtn: {
     borderWidth: 1,

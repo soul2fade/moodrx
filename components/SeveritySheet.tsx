@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   rowBlurb: {
     color: '#cfcfcf',
-    fontSize: 13,
+    fontSize: 15,
     marginTop: 3,
   },
 });

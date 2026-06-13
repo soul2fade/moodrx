@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   dialogTitle: {
     color: colors.premium,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     fontWeight: '700',
     letterSpacing: 3,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     fontWeight: '700',
     letterSpacing: 2,
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   },
   confirmBtnText: {
     color: colors.premium,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     fontWeight: '700',
     letterSpacing: 2,

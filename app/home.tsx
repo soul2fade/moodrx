@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#d8d8d8',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   proMemberBadge: {
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.premium,
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   streakPill: {
@@ -663,19 +663,19 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.accent,
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   streakPillText: {
     ...t.bodySm,
     color: '#d8d8d8',
     flex: 1,
-    fontSize: 13,
+    fontSize: 15,
   },
   streakPillDismiss: {
     ...t.label,
     color: '#cdcdcd',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   streakBadge: {
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
   streakBadgeText: {
     ...t.number,
     color: colors.accent,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1,
   },
@@ -717,7 +717,7 @@ const styles = StyleSheet.create({
   },
   breatheLinkText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#7EC8A0',
     letterSpacing: 1,
   },
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   sameDayCard: {
@@ -807,7 +807,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#d8d8d8',
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   sameDaySub: {
@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   sameDayBtnOutline: {
@@ -850,7 +850,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   justLogButton: {
@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   navHintPill: {
@@ -886,14 +886,14 @@ const styles = StyleSheet.create({
     ...t.bodySm,
     color: '#d8d8d8',
     flex: 1,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 18,
   },
   navHintDismiss: {
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   moodRow: {

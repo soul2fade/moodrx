@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
   },
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     marginTop: 16,
     lineHeight: 18,
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
   },
   pbLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 3,
     marginBottom: 8,
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
   },
   pbNewBest: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#c5c5c5',
     letterSpacing: 3,
     marginTop: 8,
@@ -735,7 +735,7 @@ const styles = StyleSheet.create({
   },
   pbPrev: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 2,
     marginTop: 8,
@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
   },
   changeHeroLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#c5c5c5',
     letterSpacing: 4,
     marginBottom: 8,
@@ -807,7 +807,7 @@ const styles = StyleSheet.create({
   },
   changeHeroSub: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 0.5,
     marginTop: 10,
@@ -830,7 +830,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 15,
     marginBottom: 3,
     lineHeight: 17,
   },
@@ -883,7 +883,7 @@ const styles = StyleSheet.create({
   },
   dictateBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: colors.textSecondary,
     letterSpacing: 1,
     lineHeight: 17,
@@ -893,14 +893,14 @@ const styles = StyleSheet.create({
   },
   noteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 17,
   },
   noteCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 1,
     lineHeight: 17,
@@ -945,7 +945,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 1,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 18,
   },
   contextQuestion: {
@@ -983,7 +983,7 @@ const styles = StyleSheet.create({
   },
   shareButtonEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 4,
     lineHeight: 17,
@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
   },
   modalEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 4,
     lineHeight: 17,
@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
   },
   modalShareBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     letterSpacing: 3,
     lineHeight: 18,
   },
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
   },
   modalCloseBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 17,

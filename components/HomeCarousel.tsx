@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   },
   pageLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 2,
     lineHeight: 17,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   },
   emptyStateLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 15,
     marginBottom: 4,
     lineHeight: 17,
   },
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
     letterSpacing: 1,
-    fontSize: 12,
+    fontSize: 15,
     marginTop: 4,
     lineHeight: 17,
   },
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   },
   sparklineHeader: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   },
   sparklineTrend: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     letterSpacing: 2,
     marginTop: 6,
     lineHeight: 17,
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   },
   weeklyRxTeaserLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#059669',
     letterSpacing: 3,
     lineHeight: 17,
@@ -694,7 +694,7 @@ const styles = StyleSheet.create({
   },
   patternCalloutLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#d8d8d8',
     letterSpacing: 2,
     lineHeight: 17,
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   },
   patternCalloutAction: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 1.5,
     marginTop: 10,
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
   },
   quickRowLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 17,
@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
   },
   swipeHintText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: 'rgba(255,255,255,0.45)',
     letterSpacing: 2,
     lineHeight: 17,

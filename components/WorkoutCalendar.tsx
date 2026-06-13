@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   headerText: {
     ...t.timestamp,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 15,
     letterSpacing: 1,
     lineHeight: 17,
   },
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   dayText: {
     ...t.number,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   dayTextActive: {
@@ -332,13 +332,13 @@ const styles = StyleSheet.create({
   sessionMood: {
     ...t.label,
     letterSpacing: 1,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   sessionTime: {
     ...t.timestamp,
     color: '#cdcdcd',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   sessionWorkout: {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   },
   sessionChange: {
     ...t.label,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 0.5,
   },

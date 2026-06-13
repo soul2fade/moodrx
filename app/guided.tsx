@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   headline: { ...t.headline, fontSize: 28, marginTop: 12 },
   divider: { width: 32, height: 1, backgroundColor: '#333333', marginVertical: 20 },
   subtext: { ...t.bodyMuted, fontSize: 15, lineHeight: 22 },
-  hint: { ...t.softMuted, fontSize: 13, marginTop: 8, fontStyle: 'italic' },
+  hint: { ...t.softMuted, fontSize: 15, marginTop: 8, fontStyle: 'italic' },
   moodList: { marginTop: 24, gap: 2 },
   moodRow: {
     flexDirection: 'row',
@@ -175,8 +175,8 @@ const styles = StyleSheet.create({
   },
   moodTextBlock: { flex: 1 },
   moodName: { ...t.headlineSm, fontSize: 16 },
-  moodDesc: { ...t.bodySm, fontSize: 12, lineHeight: 17, marginTop: 2 },
-  moodCode: { ...t.label, fontSize: 12, lineHeight: 17, letterSpacing: 2 },
+  moodDesc: { ...t.bodySm, fontSize: 15, lineHeight: 17, marginTop: 2 },
+  moodCode: { ...t.label, fontSize: 15, lineHeight: 17, letterSpacing: 2 },
   intensitySection: { marginTop: 24, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 20 },
   intensityRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   intensityLabel: { ...t.label, color: '#d8d8d8' },
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  startButtonText: { ...t.button, letterSpacing: 2, fontSize: 12, lineHeight: 17 },
+  startButtonText: { ...t.button, letterSpacing: 2, fontSize: 15, lineHeight: 17 },
   skipButton: { paddingVertical: 16, alignItems: 'center', marginTop: 4 },
   skipText: { ...t.label, color: '#cdcdcd', letterSpacing: 2, lineHeight: 17 },
 });

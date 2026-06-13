@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 1.5,
     lineHeight: 20,

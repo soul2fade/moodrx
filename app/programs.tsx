@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   },
   sessionDay: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 1.5,
     lineHeight: 17,
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   sessionMetaText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 1.5,
     lineHeight: 17,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   sessionMetaDot: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     lineHeight: 17,
   },

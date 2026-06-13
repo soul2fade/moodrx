@@ -222,13 +222,13 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 1,
   },
   screenTitle: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 3,
     lineHeight: 18,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   cyclesText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 2,
   },
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   },
   phaseLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     letterSpacing: 4,
     marginBottom: 10,
     lineHeight: 18,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   phaseGuide: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 2,
     marginTop: 10,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   patternNote: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 3,
     marginBottom: 32,
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: '#cdcdcd',
     letterSpacing: 1,
     marginBottom: 110,

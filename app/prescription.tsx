@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#ffffff',
     marginTop: 12,
     textAlign: 'left',
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   personalizationNote: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1,
     marginTop: 8,
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   heroRxLabel: {
     ...t.label,
     letterSpacing: 4,
-    fontSize: 12,
+    fontSize: 15,
     marginBottom: 10,
     marginTop: 4,
     lineHeight: undefined,
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   startButtonText: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: undefined,
   },
   alternativesToggle: {
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: undefined,
   },
   alternativesArrow: {
@@ -585,7 +585,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 15,
     marginBottom: 8,
     marginTop: 4,
     lineHeight: undefined,
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
   workoutDuration: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     fontWeight: '600',
   },
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   intensityBadgeText: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1,
     fontWeight: '600',
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.accent,
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     marginTop: 6,
   },
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     marginTop: 4,
   },
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
   supplementDose: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 15,
   },
   supplementBenefitRow: {
     flexDirection: 'row',
@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
   suppModalDose: {
     ...t.label,
     color: '#cdcdcd',
-    fontSize: 13,
+    fontSize: 15,
     marginTop: 4,
     lineHeight: undefined,
   },
@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: undefined,
     marginBottom: 10,
   },
@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
   },
   suppModalMoodTagText: {
     ...t.label,
-    fontSize: 12,
+    fontSize: 15,
     letterSpacing: 1,
     lineHeight: undefined,
   },
@@ -878,7 +878,7 @@ const styles = StyleSheet.create({
   suppModalSource: {
     ...t.body,
     color: '#c5c5c5',
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 20,
     marginTop: 6,
   },
@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
   },
   suppModalUnlockText: {
     ...t.label,
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 2,
     lineHeight: undefined,
   },

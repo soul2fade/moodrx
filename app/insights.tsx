@@ -866,7 +866,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#059669',
     letterSpacing: 3,
-    fontSize: 13,
+    fontSize: 15,
   },
   chart: {
     flexDirection: 'row',
@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
   chartDay: {
     ...t.timestamp,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1,
     marginTop: 4,
@@ -932,7 +932,7 @@ const styles = StyleSheet.create({
   },
   noticedEmptyText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 20,
     letterSpacing: 0.5,
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#059669',
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     marginBottom: 6,
   },
@@ -955,7 +955,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#D97706',
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     marginBottom: 6,
   },
@@ -969,7 +969,7 @@ const styles = StyleSheet.create({
   },
   workoutHistLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -997,7 +997,7 @@ const styles = StyleSheet.create({
   },
   workoutHistCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#ffffff',
     letterSpacing: 1,
   },
@@ -1008,7 +1008,7 @@ const styles = StyleSheet.create({
   },
   workoutHistAvgLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     color: '#cdcdcd',
     letterSpacing: 2,
@@ -1025,7 +1025,7 @@ const styles = StyleSheet.create({
   },
   notesLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -1044,20 +1044,20 @@ const styles = StyleSheet.create({
   },
   noteMood: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 2,
   },
   noteDate: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     color: '#cdcdcd',
     letterSpacing: 1,
   },
   noteWorkoutName: {
     fontFamily: fonts.primary.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#cdcdcd',
     marginBottom: 6,
   },
@@ -1099,7 +1099,7 @@ const styles = StyleSheet.create({
   recentLightBadge: {
     ...t.label,
     color: '#cdcdcd',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1.5,
   },
@@ -1131,7 +1131,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 15,
   },
   recentWorkout: {
     ...t.body,
@@ -1256,7 +1256,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 13,
+    fontSize: 15,
     marginBottom: 14,
   },
   casePanelMoodRow: {
@@ -1295,7 +1295,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 15,
   },
   casePanelScoreVal: {
     ...t.dataValue,
@@ -1313,7 +1313,7 @@ const styles = StyleSheet.create({
   casePanelRating: {
     ...t.label,
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 15,
     marginBottom: 4,
   },
   caseNoteBox: {
@@ -1325,7 +1325,7 @@ const styles = StyleSheet.create({
   },
   caseNoteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -1397,7 +1397,7 @@ const styles = StyleSheet.create({
   healthStatLabel: {
     ...t.label,
     color: '#cdcdcd',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     marginTop: 4,
     letterSpacing: 1.5,
@@ -1409,7 +1409,7 @@ const styles = StyleSheet.create({
   },
   healthSleepMissing: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: colors.textSubtle,
     letterSpacing: 0.5,
     marginTop: 8,

@@ -236,8 +236,8 @@ const styles = StyleSheet.create({
   coachRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginBottom: 8 },
   coachBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 0.5, borderColor: '#333' },
   coachDot: { width: 7, height: 7, borderRadius: 4 },
-  coachLabel: { fontSize: 12, color: '#cdcdcd', lineHeight: 17 },
-  moodNote: { fontSize: 12, color: '#ffffff', fontStyle: 'italic', marginBottom: 10, lineHeight: 17 },
+  coachLabel: { fontSize: 15, color: '#cdcdcd', lineHeight: 17 },
+  moodNote: { fontSize: 15, color: '#ffffff', fontStyle: 'italic', marginBottom: 10, lineHeight: 17 },
   figureWrap: { width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   bubble: { maxWidth: 300, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 6 },
   phraseText: { fontSize: 17, color: '#e0e0e0', textAlign: 'center', lineHeight: 26 },
@@ -245,5 +245,5 @@ const styles = StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#2a2a2a' },
   controls: { flexDirection: 'row', gap: 8 },
   ctrlBtn: { paddingHorizontal: 20, paddingVertical: 9, borderRadius: 8, borderWidth: 0.5, borderColor: '#333' },
-  ctrlText: { fontSize: 13, color: '#d8d8d8' },
+  ctrlText: { fontSize: 15, color: '#d8d8d8' },
 });

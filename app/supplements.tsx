@@ -820,7 +820,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 18,
   },
   moodFilterMood: {
@@ -870,7 +870,7 @@ const styles = StyleSheet.create({
   },
   adherenceDayLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 16,
     color: '#cdcdcd',
     letterSpacing: 0,
@@ -927,7 +927,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   priorityCardHeadline: {
@@ -1020,7 +1020,7 @@ const styles = StyleSheet.create({
   supplementBenefit: {
     ...t.bodyMuted,
     color: '#cdcdcd',
-    fontSize: 13,
+    fontSize: 15,
     marginTop: 2,
   },
   supplementRight: {
@@ -1029,7 +1029,7 @@ const styles = StyleSheet.create({
   supplementDose: {
     ...t.label,
     color: '#cdcdcd',
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 18,
   },
   supplementTiming: {
@@ -1037,7 +1037,7 @@ const styles = StyleSheet.create({
     color: '#cdcdcd',
     letterSpacing: 2,
     marginTop: 2,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 18,
   },
   expandChevron: {
@@ -1057,7 +1057,7 @@ const styles = StyleSheet.create({
     color: '#cdcdcd',
     letterSpacing: 3,
     marginBottom: 8,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   sciencePanelText: {
@@ -1069,7 +1069,7 @@ const styles = StyleSheet.create({
   sourceText: {
     ...t.soft,
     color: '#d6d6d6',
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 18,
     marginTop: 4,
   },
@@ -1086,7 +1086,7 @@ const styles = StyleSheet.create({
   },
   moodTagText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1,
   },
@@ -1109,7 +1109,7 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 18,
     color: '#cdcdcd',
     letterSpacing: 1.5,
@@ -1127,12 +1127,12 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#cdcdcd',
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 18,
   },
   weekMoodBadge: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1.5,
   },
@@ -1151,14 +1151,14 @@ const styles = StyleSheet.create({
   },
   historyDayHeader: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 16,
     color: '#cdcdcd',
     letterSpacing: 0,
   },
   historySupName: {
     fontFamily: fonts.primary.regular,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 18,
     color: '#d8d8d8',
   },
@@ -1183,7 +1183,7 @@ const styles = StyleSheet.create({
   },
   historyDotNa: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 14,
     color: '#cdcdcd',
   },
@@ -1204,7 +1204,7 @@ const styles = StyleSheet.create({
   },
   reminderLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     color: '#cdcdcd',
     letterSpacing: 3,
@@ -1226,14 +1226,14 @@ const styles = StyleSheet.create({
   },
   reminderPermDenied: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     color: '#E11D48',
     marginTop: 8,
   },
   reminderLockedText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     color: '#cdcdcd',
     marginTop: 8,
@@ -1253,7 +1253,7 @@ const styles = StyleSheet.create({
   reminderTimeChipOff: { borderColor: '#1a1a1a' },
   reminderTimeChipText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1,
   },

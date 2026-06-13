@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
   },
   moodChipText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 1,
     flex: 1,
     textTransform: 'uppercase',
@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
   },
   moodChipCaret: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
 
@@ -804,7 +804,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 2,
     marginBottom: 10,
-    fontSize: 12,
+    fontSize: 15,
     lineHeight: 17,
   },
   moodRow: {
@@ -838,14 +838,14 @@ const styles = StyleSheet.create({
   },
   resourceLinkText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 15,
     color: '#7EC8A0',
     letterSpacing: 1,
     lineHeight: 18,
   },
   resourceLinkDismiss: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 15,
     color: colors.textSubtle,
     letterSpacing: 1,
     lineHeight: 18,
@@ -875,7 +875,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.textSubtle,
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 18,
   },
 });

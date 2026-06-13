@@ -46,9 +46,10 @@ re-runs only voice new approvals / new voices. `output/` is gitignored
 (destined for remote hosting).
 
 ## Out of scope here (separate pieces)
-App-side voice picker + fetch/cache playback + severity sheet + RevenueCat voice
-packs; the live Pro-gated post-workout roast; uploading `output/` to remote
-hosting (Netlify Blobs — also pending Blobs provisioning).
+The app-side **severity sheet** + **voice picker** (Phase 2 of the app wiring) and
+**RevenueCat voice packs** (Phase 3); plus the live Pro-gated post-workout roast.
+(Phase 1 — static hosting + on-device fetch/cache playback — is covered in the
+Hosting section below.)
 
 ## Hosting (Phase 1 — static CDN)
 

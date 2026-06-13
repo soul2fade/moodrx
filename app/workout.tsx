@@ -796,21 +796,30 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
               );
             })}
-            <TouchableOpacity
-              onPress={handleTrashTalk}
-              activeOpacity={0.7}
-              style={[styles.soundBtn, trashTalkOn && { borderColor: '#E11D48', backgroundColor: '#E11D4818' }]}
-              accessibilityRole="button"
-              accessibilityLabel={`Trash talk mode ${trashTalkOn ? 'on' : 'off'}`}
-            >
-              <Text style={[styles.soundBtnText, trashTalkOn && { color: '#E11D48' }]}>TRASH TALK</Text>
-            </TouchableOpacity>
             {(activeSoundscape || trashTalkOn) && (
               <TouchableOpacity onPress={() => { handleSoundscape(null); if (trashTalkOn) handleTrashTalk(); }} activeOpacity={0.7} style={styles.soundOffBtn}>
                 <Text style={styles.soundOffText}>OFF</Text>
               </TouchableOpacity>
             )}
           </View>
+        </View>
+
+        {/* ── TRASH TALK LAYER ── */}
+        <View style={styles.trashRow}>
+          <View style={styles.trashLabelBlock}>
+            <Text style={styles.trashLabel}>DR. MOODRX TRASH TALK</Text>
+            <Text style={styles.trashHint}>A fresh roast about once a minute — plays over your soundscape.</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleTrashTalk}
+            activeOpacity={0.8}
+            style={[styles.trashToggle, trashTalkOn ? styles.trashToggleOn : styles.trashToggleOff]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: trashTalkOn }}
+            accessibilityLabel="Dr. MoodRx trash talk"
+          >
+            <View style={[styles.trashKnob, trashTalkOn && styles.trashKnobOn]} />
+          </TouchableOpacity>
         </View>
 
         {/* ── KEEP AWAKE ── */}
@@ -949,6 +958,16 @@ const styles = StyleSheet.create({
   soundBtnText: { ...t.label, color: '#ffffff', fontSize: 15, lineHeight: 17, letterSpacing: 1 },
   soundOffBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
   soundOffText: { ...t.label, color: '#ffffff', fontSize: 15, letterSpacing: 1.5 },
+
+  trashRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18, paddingVertical: 4 },
+  trashLabelBlock: { flex: 1, paddingRight: 14 },
+  trashLabel: { ...t.label, color: '#e2e2e2', fontSize: 15, letterSpacing: 1.5 },
+  trashHint: { fontFamily: fonts.mono.regular, color: '#cfcfcf', fontSize: 14, lineHeight: 18, letterSpacing: 0.5, marginTop: 4, textTransform: 'none' },
+  trashToggle: { width: 52, height: 30, borderRadius: 15, padding: 3, justifyContent: 'center' },
+  trashToggleOn: { backgroundColor: colors.danger },
+  trashToggleOff: { backgroundColor: '#2a2a2a' },
+  trashKnob: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#f0f0f0' },
+  trashKnobOn: { alignSelf: 'flex-end' },
 
   keepAwakeBtn: { marginTop: 16, borderWidth: 1, borderColor: '#333', paddingVertical: 10, alignItems: 'center' },
   keepAwakeBtnText: { ...t.label, color: '#cdcdcd', fontSize: 15, letterSpacing: 1.5 },

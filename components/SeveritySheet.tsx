@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { SEVERITIES } from '@/lib/insult-severity';
 import type { InsultTier } from '@/lib/insult-library';
+import { fonts } from '@/lib/typography';
 
 interface Props {
   visible: boolean;
@@ -19,6 +20,7 @@ export function SeveritySheet({ visible, current, onConfirm, onCancel }: Props) 
         <Pressable style={styles.card} onPress={() => {}}>
           <Text style={styles.header}>PREPARE TO LAUGH</Text>
           <Text style={styles.sub}>How hard should Dr. MoodRx go?</Text>
+          <Text style={styles.frequencyNote}>He cuts in over your soundscape every minute or so.</Text>
           {SEVERITIES.map((s) => {
             const selected = s.key === current;
             return (
@@ -69,6 +71,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 18,
   },
+  frequencyNote: { fontFamily: fonts.mono.regular, fontSize: 14, color: '#cfcfcf', textAlign: 'center', lineHeight: 18, letterSpacing: 0.5, marginTop: 6, marginBottom: 4 },
   row: {
     borderWidth: 1,
     borderColor: '#333333',

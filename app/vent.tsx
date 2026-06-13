@@ -53,9 +53,13 @@ export default function VentScreen() {
   const [showCorrection, setShowCorrection] = useState(false);
   const [showResource, setShowResource] = useState(false);
   const [isConsentLoading, setIsConsentLoading] = useState(true);
+  const [showSilenceCheckin, setShowSilenceCheckin] = useState(false);
 
   // Refs for timer IDs so we can clean them up reliably
   const hardStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const silencePromptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const silenceAutoFinishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const checkinAnim = useRef(new Animated.Value(0)).current;
   // Ref for latest transcript so the 'end' event handler reads the final value
   const transcriptRef = useRef('');
   // Ref for the accumulated, finalized portion of a continuous-STT transcript.
@@ -99,6 +103,8 @@ export default function VentScreen() {
   useEffect(() => {
     return () => {
       if (hardStopTimerRef.current) clearTimeout(hardStopTimerRef.current);
+      if (silencePromptTimerRef.current) clearTimeout(silencePromptTimerRef.current);
+      if (silenceAutoFinishTimerRef.current) clearTimeout(silenceAutoFinishTimerRef.current);
       if (isRecordingRef.current) {
         try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
       }
@@ -116,6 +122,7 @@ export default function VentScreen() {
     committedTranscriptRef.current = committed;
     setTranscript(display);
     transcriptRef.current = display;
+    resetSilenceTimer();
   });
 
   // ─── STT event: end ──────────────────────────────────────────────────────
@@ -126,6 +133,8 @@ export default function VentScreen() {
       clearTimeout(hardStopTimerRef.current);
       hardStopTimerRef.current = null;
     }
+    clearSilenceTimers();
+    setShowSilenceCheckin(false);
     const finalTranscript = transcriptRef.current;
     if (finalTranscript.trim().length > 0) {
       void handleSubmit(finalTranscript);
@@ -142,8 +151,22 @@ export default function VentScreen() {
       clearTimeout(hardStopTimerRef.current);
       hardStopTimerRef.current = null;
     }
+    clearSilenceTimers();
+    setShowSilenceCheckin(false);
     fallbackToForm("Couldn't catch that — tap it in instead");
   });
+
+  // ─── Silence timer management ────────────────────────────────────────────
+  const clearSilenceTimers = useCallback(() => {
+    if (silencePromptTimerRef.current) {
+      clearTimeout(silencePromptTimerRef.current);
+      silencePromptTimerRef.current = null;
+    }
+    if (silenceAutoFinishTimerRef.current) {
+      clearTimeout(silenceAutoFinishTimerRef.current);
+      silenceAutoFinishTimerRef.current = null;
+    }
+  }, []);
 
   // ─── Fallback to form ────────────────────────────────────────────────────
   const fallbackToForm = useCallback((note: string) => {
@@ -155,9 +178,37 @@ export default function VentScreen() {
       clearTimeout(hardStopTimerRef.current);
       hardStopTimerRef.current = null;
     }
+    clearSilenceTimers();
+    setShowSilenceCheckin(false);
     Alert.alert('', note);
     router.replace('/home');
-  }, []);
+  }, [clearSilenceTimers]);
+
+  // Restart the silence countdown. Called on recording start, on every speech
+  // result, and on "Keep going". Hides the check-in and schedules: (a) show the
+  // check-in after SILENCE_PROMPT_MS, then (b) graceful auto-finish after a
+  // further SILENCE_AUTOFINISH_MS.
+  const resetSilenceTimer = useCallback(() => {
+    clearSilenceTimers();
+    if (showSilenceCheckin) {
+      setShowSilenceCheckin(false);
+      checkinAnim.setValue(0);
+    }
+    silencePromptTimerRef.current = setTimeout(() => {
+      if (!isRecordingRef.current) return;
+      setShowSilenceCheckin(true);
+      Animated.timing(checkinAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+      silenceAutoFinishTimerRef.current = setTimeout(() => {
+        if (isRecordingRef.current) {
+          try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+        }
+      }, SILENCE_AUTOFINISH_MS);
+    }, SILENCE_PROMPT_MS);
+  }, [clearSilenceTimers, showSilenceCheckin, checkinAnim]);
 
   // ─── Persist (once) ──────────────────────────────────────────────────────
   const persist = useCallback(async (a: VentAssessment, corr: Correction | null) => {
@@ -203,6 +254,9 @@ export default function VentScreen() {
         try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
       }
     }, HARD_STOP_MS);
+    setShowSilenceCheckin(false);
+    checkinAnim.setValue(0);
+    resetSilenceTimer();
   };
 
   // ─── Manual stop ─────────────────────────────────────────────────────────
@@ -340,6 +394,33 @@ export default function VentScreen() {
               </Text>
             </View>
             <View style={styles.pulseDot} />
+            {showSilenceCheckin && (
+              <Animated.View
+                style={[
+                  styles.checkinBlock,
+                  {
+                    opacity: checkinAnim,
+                    transform: [{
+                      translateY: checkinAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [8, 0],
+                      }),
+                    }],
+                  },
+                ]}
+              >
+                <Text style={styles.checkinText}>Still here — take your time.</Text>
+                <TouchableOpacity
+                  style={styles.checkinBtn}
+                  onPress={resetSilenceTimer}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Keep going"
+                >
+                  <Text style={styles.checkinBtnText}>KEEP GOING</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
             <TouchableOpacity
               style={styles.stopBtn}
               onPress={handleManualStop}
@@ -622,6 +703,31 @@ const styles = StyleSheet.create({
   stopBtnText: {
     ...t.button,
     color: colors.danger,
+    letterSpacing: 2,
+  },
+  checkinBlock: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  checkinText: {
+    ...t.bodySm,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  checkinBtn: {
+    borderWidth: 1,
+    borderColor: colors.accent,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+  },
+  checkinBtnText: {
+    ...t.label,
+    color: colors.accent,
     letterSpacing: 2,
   },
 

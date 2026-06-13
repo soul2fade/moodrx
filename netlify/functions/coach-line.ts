@@ -45,14 +45,14 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST' || !event.body) return { statusCode: 400, body: '' };
   if (!ANTHROPIC_KEY || !REVENUECAT_SECRET) return { statusCode: 500, body: '' };
 
-  let payload: { context?: any; tone?: 'teasing' | 'roasting'; appUserId?: string };
+  let payload: { context?: any; tone?: string; appUserId?: string };
   try {
     payload = JSON.parse(event.body);
   } catch {
     return { statusCode: 400, body: '' };
   }
   const { context, tone, appUserId } = payload;
-  if (!context || !appUserId || (tone !== 'teasing' && tone !== 'roasting')) {
+  if (!context || !appUserId || typeof tone !== 'string' || !tone.trim()) {
     return { statusCode: 400, body: '' };
   }
 

@@ -4,7 +4,7 @@ import { getWorkoutEffectiveness } from '@/lib/workout-insights';
 import { getLastNDays } from '@/lib/analytics';
 import { MOOD_ORDER } from '@/lib/moods';
 
-export type CoachTone = 'teasing' | 'roasting';
+export type CoachTone = 'glass-house' | 'sticks' | 'roast';
 
 export interface CoachContext {
   mood: MoodKey;

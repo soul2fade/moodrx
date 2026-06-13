@@ -91,7 +91,7 @@ export default function BadDayScreen() {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56), paddingBottom: Math.max(insets.bottom + 16, 24) }]} showsVerticalScrollIndicator={false}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Text style={styles.backButton}>← HOME</Text>
         </TouchableOpacity>
@@ -143,6 +143,8 @@ export default function BadDayScreen() {
           <Text style={styles.stepText}>{MICRO_WORKOUT_STEPS[step]}</Text>
         </View>
 
+        <View style={{ flex: 1, minHeight: 16 }} />
+
         {!onLastStep ? (
           <TouchableOpacity
             style={[styles.primaryBtn, { borderColor: accentColor }]}
@@ -188,7 +190,7 @@ export default function BadDayScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
-  content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 48 },
+  content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 48, flexGrow: 1 },
   backButton: { ...t.label, color: '#d8d8d8', letterSpacing: 2 },
   label: { ...t.label, color: colors.accent, letterSpacing: 3, marginTop: 24 },
   headline: { ...t.headline, fontSize: 26, marginTop: 8 },

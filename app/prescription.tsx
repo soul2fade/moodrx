@@ -156,7 +156,7 @@ export default function PrescriptionScreen() {
       {/* Tab content */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 16, 24) }]}
         showsVerticalScrollIndicator={false}
       >
         {activeTab === 'workouts' && workouts.length > 0 && (
@@ -294,7 +294,7 @@ export default function PrescriptionScreen() {
         )}
 
         {activeTab === 'stack' && (
-          <View>
+          <View style={styles.tabFill}>
             <Text style={styles.stackTitle}>Supplements that actually do something.</Text>
             <Text style={styles.stackSub}>According to science, not Instagram.</Text>
 
@@ -330,6 +330,8 @@ export default function PrescriptionScreen() {
                 );
               })}
             </View>
+
+            <View style={{ flex: 1 }} />
 
             <TouchableOpacity
               style={styles.trackStackBtn}
@@ -529,9 +531,13 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
+  tabFill: {
+    flexGrow: 1,
+  },
   scrollContent: {
     padding: 24,
     paddingBottom: 48,
+    flexGrow: 1,
   },
   heroRxLabel: {
     ...t.label,

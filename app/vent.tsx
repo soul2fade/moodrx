@@ -340,7 +340,7 @@ export default function VentScreen() {
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]}
+        contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56), paddingBottom: Math.max(insets.bottom + 16, 56) }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -379,12 +379,13 @@ export default function VentScreen() {
 
         {/* ── INVITE ──────────────────────────────────────────── */}
         {ventState === 'invite' && (
-          <View style={styles.section}>
+          <View style={[styles.section, styles.sectionFill]}>
             <Text style={styles.sectionEyebrow}>DR. MOODRX</Text>
             <Text style={styles.headline}>What&apos;s actually going on?</Text>
             <Text style={styles.inviteSubtext}>
               Tap and talk. 20 seconds. Dr. MoodRx is listening.
             </Text>
+            <View style={{ flex: 1 }} />
             <View style={styles.micCenterRow}>
               <TouchableOpacity
                 onPress={handleStartRecording}
@@ -471,7 +472,7 @@ export default function VentScreen() {
 
         {/* ── REPLY ───────────────────────────────────────────── */}
         {ventState === 'reply' && assessment && (
-          <View style={styles.section}>
+          <View style={[styles.section, styles.sectionFill]}>
             <Text style={styles.sectionEyebrow}>DR. MOODRX SAYS</Text>
 
             {/* The reply line — prominent */}
@@ -556,6 +557,8 @@ export default function VentScreen() {
               </TouchableOpacity>
             )}
 
+            <View style={{ flex: 1 }} />
+
             {/* Actions */}
             <TouchableOpacity
               style={[styles.primaryBtn, { borderColor: accentColor }]}
@@ -604,6 +607,9 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 28,
+  },
+  sectionFill: {
+    flexGrow: 1,
   },
   sectionEyebrow: {
     ...t.label,

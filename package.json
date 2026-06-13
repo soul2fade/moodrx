@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "eval:vent": "tsx scripts/eval-vent.ts",
     "insults:generate": "tsx scripts/insult-library/generate.ts",
-    "insults:voice": "tsx scripts/insult-library/voice.ts"
+    "insults:voice": "tsx scripts/insult-library/voice.ts",
+    "insults:deploy": "netlify deploy --dir scripts/insult-library/output"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",

@@ -49,3 +49,26 @@ re-runs only voice new approvals / new voices. `output/` is gitignored
 App-side voice picker + fetch/cache playback + severity sheet + RevenueCat voice
 packs; the live Pro-gated post-workout roast; uploading `output/` to remote
 hosting (Netlify Blobs — also pending Blobs provisioning).
+
+## Hosting (Phase 1 — static CDN)
+
+The app fetches the library from a static CDN and caches it on device. Host the
+**contents of `output/`** (the `audio/` tree + `insult-library.json`) on a
+**dedicated Netlify site** (keeps the ~82 MB off git and off the function site).
+
+One-time setup (owner):
+1. Create a Netlify site for assets (e.g. `moodrx-assets`) — `npx netlify sites:create` or the dashboard.
+2. Deploy the built library to it:
+   ```
+   npx netlify deploy --dir scripts/insult-library/output --site <assets-site-id> --prod
+   ```
+   (Run `npm run insults:deploy` for a preview deploy first; add `--site` + `--prod` to publish.)
+3. Set the app env var to the site's URL, in `.env` and EAS:
+   ```
+   EXPO_PUBLIC_INSULTS_BASE_URL=https://<assets-site>.netlify.app
+   ```
+
+The manifest is then at `${BASE}/insult-library.json` and clips at
+`${BASE}/audio/<voice>/<tier>/<id>.mp3`. Re-deploy after topping up the library
+(`insults:voice`). If the env var is unset, the app silently uses the bundled
+fallback clips.

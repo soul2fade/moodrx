@@ -72,7 +72,10 @@ export function CoachVoicePicker() {
           <Text style={styles.label}>Coach voice</Text>
           <Text style={styles.hint}>The voice that trash-talks you during a workout.</Text>
         </View>
-        <Text style={styles.value}>{currentLabel}</Text>
+        <View style={styles.valueBlock}>
+          <Text style={styles.value}>{currentLabel}</Text>
+          <Text style={styles.caret}>›</Text>
+        </View>
       </Pressable>
       <VoiceSheet
         visible={open}
@@ -94,5 +97,7 @@ const styles = StyleSheet.create({
   labelBlock: { flex: 1, paddingRight: 12 },
   label: { color: '#f0f0f0', fontSize: 16, fontWeight: '600', lineHeight: 20 },
   hint: { color: '#cfcfcf', fontSize: 16, lineHeight: 16, marginTop: 3 },
+  valueBlock: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   value: { color: '#e8e8e8', fontSize: 16, fontWeight: '700', lineHeight: 20 },
+  caret: { color: '#9a9a9a', fontSize: 22, lineHeight: 22, marginTop: -2 },
 });

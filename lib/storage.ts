@@ -3,6 +3,7 @@ import { toDateString, todayDateString, yesterdayDateString } from './dateUtils'
 import { clearUiState, invalidateUiStateCache, loadUiState, patchUiState } from './ui-state';
 import type { InsultTier } from '@/lib/insult-library';
 import { normalizeSeverity } from '@/lib/insult-severity';
+import { normalizeVoice } from '@/lib/voices';
 
 export type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
@@ -428,6 +429,7 @@ export async function clearAllData(): Promise<void> {
       SUPPLEMENT_REMINDER_PREFS_KEY,
       TRASH_TALK_VOLUME_KEY,
       INSULT_SEVERITY_KEY,
+      COACH_VOICE_KEY,
       VOICE_ENABLED_KEY,
       WORKOUT_FOCUS_MODE_KEY,
       WORKOUT_VOICE_MODE_KEY,
@@ -688,6 +690,26 @@ export async function getInsultSeverity(): Promise<InsultTier> {
 export async function setInsultSeverity(tier: InsultTier): Promise<void> {
   try {
     await AsyncStorage.setItem(INSULT_SEVERITY_KEY, tier);
+  } catch {
+    // best-effort persistence
+  }
+}
+
+const COACH_VOICE_KEY = '@moodrx_coach_voice';
+
+/** The chosen coach voice name (drives workout playback). Defaults to 'rachel';
+ *  an unknown stored value is coerced to 'rachel'. */
+export async function getCoachVoice(): Promise<string> {
+  try {
+    return normalizeVoice(await AsyncStorage.getItem(COACH_VOICE_KEY));
+  } catch {
+    return 'rachel';
+  }
+}
+
+export async function setCoachVoice(name: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(COACH_VOICE_KEY, name);
   } catch {
     // best-effort persistence
   }

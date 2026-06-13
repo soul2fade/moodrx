@@ -40,6 +40,7 @@ interface Correction {
 const HARD_STOP_MS = 60_000;        // absolute ceiling (was 30s)
 const SILENCE_PROMPT_MS = 12_000;   // continuous silence before the check-in fades in (Task 3)
 const SILENCE_AUTOFINISH_MS = 15_000; // further silence after the check-in shows → graceful auto-finish (Task 3)
+const NO_VOICE_MESSAGE = "Didn't catch your voice that time — tap it in instead.";
 
 export default function VentScreen() {
   const insets = useSafeAreaInsets();
@@ -144,7 +145,7 @@ export default function VentScreen() {
     if (finalTranscript.trim().length > 0) {
       void handleSubmit(finalTranscript);
     } else {
-      fallbackToForm("Didn't catch your voice that time — tap it in instead.");
+      fallbackToForm(NO_VOICE_MESSAGE);
     }
   });
 
@@ -158,7 +159,7 @@ export default function VentScreen() {
     }
     clearSilenceTimers();
     setShowSilenceCheckin(false);
-    fallbackToForm("Couldn't catch that — tap it in instead");
+    fallbackToForm(NO_VOICE_MESSAGE);
   });
 
   // ─── Silence timer management ────────────────────────────────────────────

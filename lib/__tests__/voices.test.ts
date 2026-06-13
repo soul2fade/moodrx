@@ -10,6 +10,15 @@ describe('VOICES', () => {
   });
 });
 
+describe('isVoiceName', () => {
+  it('narrows known voice names, rejects junk', () => {
+    expect(isVoiceName('rachel')).toBe(true);
+    expect(isVoiceName('ed')).toBe(true);
+    expect(isVoiceName('nope')).toBe(false);
+    expect(isVoiceName(null)).toBe(false);
+  });
+});
+
 describe('normalizeVoice', () => {
   it('passes known voices, defaults unknown/missing to rachel', () => {
     expect(normalizeVoice('grampa')).toBe('grampa');

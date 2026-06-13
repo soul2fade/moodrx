@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { useAudioPlayer } from 'expo-audio';
 import Slider from '@react-native-community/slider';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
@@ -47,6 +49,8 @@ export default function BadDayScreen() {
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { fadeAnim, slideAnim } = useScreenAnimation();
+  const chimePlayer = useAudioPlayer(require('../assets/audio/step-chime.mp3'));
+  const pulseAnim = useRef(new Animated.Value(0)).current;
 
   const accentColor = MOODS[mood].color;
   const accentColorDeep = MOODS[mood].colorDeep;
@@ -60,6 +64,13 @@ export default function BadDayScreen() {
 
   const handleNext = () => {
     if (!onLastStep) {
+      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+      try { chimePlayer.seekTo(0); chimePlayer.play(); } catch {}
+      pulseAnim.setValue(0);
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1, duration: 140, useNativeDriver: false }),
+        Animated.timing(pulseAnim, { toValue: 0, duration: 320, useNativeDriver: false }),
+      ]).start();
       setStep((s) => s + 1);
     }
   };
@@ -138,10 +149,19 @@ export default function BadDayScreen() {
           />
         </View>
 
-        <View style={[styles.stepCard, { borderLeftColor: accentColorDeep }]}>
+        <View style={styles.dotsRow}>
+          {MICRO_WORKOUT_STEPS.map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot, i <= step ? { backgroundColor: accentColorDeep } : styles.dotEmpty]}
+            />
+          ))}
+        </View>
+
+        <Animated.View style={[styles.stepCard, { borderLeftColor: accentColorDeep, backgroundColor: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: ['#111111', accentColorDeep + '26'] }) }]}>
           <Text style={styles.stepLabel}>STEP {step + 1} / {MICRO_WORKOUT_STEPS.length}</Text>
           <Text style={styles.stepText}>{MICRO_WORKOUT_STEPS[step]}</Text>
-        </View>
+        </Animated.View>
 
         <View style={{ flex: 1, minHeight: 16 }} />
 
@@ -206,8 +226,10 @@ const styles = StyleSheet.create({
   intensityRow: { marginTop: 16 },
   intensityLabel: { ...t.label, color: '#d8d8d8' },
   slider: { width: '100%', height: 36, marginTop: 4 },
+  dotsRow: { flexDirection: 'row', gap: 8, marginBottom: 12, marginTop: 24 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  dotEmpty: { backgroundColor: '#2a2a2a' },
   stepCard: {
-    marginTop: 24,
     borderLeftWidth: 3,
     backgroundColor: '#111111',
     paddingVertical: 16,

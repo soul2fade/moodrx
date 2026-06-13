@@ -22,7 +22,7 @@ import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { getVentConsent, setVentConsent, getVentEnabled } from '@/lib/storage';
 import { fetchVentReply } from '@/lib/vent-client';
-import { ventAction, buildVentSession, type VentAssessment } from '@/lib/vent';
+import { ventAction, buildVentSession, accumulateTranscript, type VentAssessment } from '@/lib/vent';
 import { captureSessionHealth } from '@/lib/health';
 import { createSessionId } from '@/lib/session-utils';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -37,7 +37,9 @@ interface Correction {
   intensity: number;
 }
 
-const HARD_STOP_MS = 30_000;
+const HARD_STOP_MS = 60_000;        // absolute ceiling (was 30s)
+const SILENCE_PROMPT_MS = 12_000;   // continuous silence before the check-in fades in (Task 3)
+const SILENCE_AUTOFINISH_MS = 15_000; // further silence after the check-in shows → graceful auto-finish (Task 3)
 
 export default function VentScreen() {
   const insets = useSafeAreaInsets();
@@ -56,6 +58,9 @@ export default function VentScreen() {
   const hardStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ref for latest transcript so the 'end' event handler reads the final value
   const transcriptRef = useRef('');
+  // Ref for the accumulated, finalized portion of a continuous-STT transcript.
+  // Interim segments are appended to this for display but only folded in on isFinal.
+  const committedTranscriptRef = useRef('');
   // Ref to track whether we're actively recording (guards cleanup stop call)
   const isRecordingRef = useRef(false);
   // Double-persist guard: flipped to true the first time persist is called
@@ -102,9 +107,15 @@ export default function VentScreen() {
 
   // ─── STT event: result ───────────────────────────────────────────────────
   useSpeechRecognitionEvent('result', (event) => {
-    const t2 = event.results[0]?.transcript ?? '';
-    setTranscript(t2);
-    transcriptRef.current = t2;
+    const segment = event.results[0]?.transcript ?? '';
+    const { committed, display } = accumulateTranscript(
+      committedTranscriptRef.current,
+      segment,
+      event.isFinal,
+    );
+    committedTranscriptRef.current = committed;
+    setTranscript(display);
+    transcriptRef.current = display;
   });
 
   // ─── STT event: end ──────────────────────────────────────────────────────
@@ -175,13 +186,14 @@ export default function VentScreen() {
     }
     setTranscript('');
     transcriptRef.current = '';
+    committedTranscriptRef.current = '';
     persistedRef.current = false;
     isRecordingRef.current = true;
     setVentState('recording');
     ExpoSpeechRecognitionModule.start({
       lang: 'en-US',
       interimResults: true,
-      continuous: false,
+      continuous: true,
       requiresOnDeviceRecognition: true,
       addsPunctuation: true,
     });
@@ -320,7 +332,7 @@ export default function VentScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionEyebrow}>LISTENING</Text>
             <Text style={styles.headline}>I&apos;m all ears.</Text>
-            <Text style={styles.recordingHint}>~20 seconds · stops automatically</Text>
+            <Text style={styles.recordingHint}>Take your time — tap done when you&apos;re ready</Text>
             {/* Live transcript */}
             <View style={styles.transcriptBox}>
               <Text style={styles.transcriptText} numberOfLines={6}>

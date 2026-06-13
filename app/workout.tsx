@@ -386,7 +386,7 @@ export default function WorkoutScreen() {
     }
     let cancelled = false;
 
-    // Load the hosted manifest once and warm the cache for the default tier.
+    // Load the hosted manifest once and warm the cache for the selected tier.
     void (async () => {
       const m = await fetchManifest().catch(() => null);
       if (cancelled) return;

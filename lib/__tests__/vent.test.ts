@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVentResponse, ventAction, buildVentSession } from '@/lib/vent';
+import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript } from '@/lib/vent';
 
 describe('parseVentResponse', () => {
   const ok = { mood: 'stressed', intensity: 7, reply: 'You showed up.', risk: 'none' };
@@ -55,5 +55,47 @@ describe('buildVentSession', () => {
     expect(s.stepsToday).toBe(5000);
     expect(s.sleepHoursLastNight).toBe(7);
     expect(s.source).toBe('vent');
+  });
+});
+
+describe('joinTranscript', () => {
+  it('joins two non-empty parts with a single space, trimming each', () => {
+    expect(joinTranscript('hello', 'there')).toBe('hello there');
+    expect(joinTranscript('  hello ', '  there  ')).toBe('hello there');
+  });
+  it('returns the other part when one is empty/whitespace', () => {
+    expect(joinTranscript('', 'there')).toBe('there');
+    expect(joinTranscript('hello', '')).toBe('hello');
+    expect(joinTranscript('   ', 'there')).toBe('there');
+    expect(joinTranscript('hello', '   ')).toBe('hello');
+    expect(joinTranscript('', '')).toBe('');
+  });
+});
+
+describe('accumulateTranscript', () => {
+  it('interim segment updates display but NOT committed', () => {
+    expect(accumulateTranscript('', 'hel', false)).toEqual({ committed: '', display: 'hel' });
+    expect(accumulateTranscript('', 'hello', false)).toEqual({ committed: '', display: 'hello' });
+  });
+  it('final segment folds into committed', () => {
+    expect(accumulateTranscript('', 'hello', true)).toEqual({ committed: 'hello', display: 'hello' });
+  });
+  it('accumulates across a pause: prior committed + new segment', () => {
+    const a = accumulateTranscript('', 'I had a rough day', true);
+    expect(a).toEqual({ committed: 'I had a rough day', display: 'I had a rough day' });
+    const b = accumulateTranscript(a.committed, 'and I am exhausted', false);
+    expect(b).toEqual({
+      committed: 'I had a rough day',
+      display: 'I had a rough day and I am exhausted',
+    });
+    const c = accumulateTranscript(a.committed, 'and I am exhausted', true);
+    expect(c).toEqual({
+      committed: 'I had a rough day and I am exhausted',
+      display: 'I had a rough day and I am exhausted',
+    });
+  });
+  it('empty segment leaves committed and shows committed as display', () => {
+    expect(accumulateTranscript('so far', '', false)).toEqual({ committed: 'so far', display: 'so far' });
+    expect(accumulateTranscript('so far', '', true)).toEqual({ committed: 'so far', display: 'so far' });
   });
 });

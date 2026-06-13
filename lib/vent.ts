@@ -28,6 +28,31 @@ export function parseVentResponse(raw: unknown): VentAssessment | null {
   return { mood: o.mood as MoodKey, intensity, reply, risk: o.risk as Risk };
 }
 
+/** Join two transcript fragments with exactly one space, trimming each. Either
+ *  side may be empty (returns the other). Used to stitch continuous-STT segments. */
+export function joinTranscript(a: string, b: string): string {
+  const left = a.trim();
+  const right = b.trim();
+  if (!left) return right;
+  if (!right) return left;
+  return `${left} ${right}`;
+}
+
+/** Accumulate a continuous-STT transcript across segments.
+ *  `committed` holds all finalized segments so far; `segment` is the latest
+ *  recognizer result (interim or final). The on-screen `display` is always
+ *  committed + current segment; a segment only folds into `committed` once it
+ *  is `isFinal`. This is what prevents a natural pause (which finalizes the
+ *  prior segment and resets results[0] for the next) from erasing earlier text. */
+export function accumulateTranscript(
+  committed: string,
+  segment: string,
+  isFinal: boolean,
+): { committed: string; display: string } {
+  const display = joinTranscript(committed, segment);
+  return { committed: isFinal ? display : committed, display };
+}
+
 export type VentAction = 'reply' | 'reply-with-resource' | 'crisis-redirect';
 
 /** Graded crisis routing: only 'acute' takes over to the crisis screen;

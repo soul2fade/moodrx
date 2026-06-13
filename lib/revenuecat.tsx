@@ -12,6 +12,11 @@ export const BASE_UNLOCK_PACKAGE_ID = '$rc_lifetime';
 /** Offering that holds purchasable content packs (empty at launch). */
 export const PACKS_OFFERING_ID = 'packs';
 
+/** Pack id for the one-time "unlock all voices" bundle (a package in the
+ *  `packs` offering). ownsPack(VOICE_PACK_ID) === owns all 4 paid coach voices.
+ *  Its entitlement is packEntitlementId('voice_pack') === 'pack_voice_pack'. */
+export const VOICE_PACK_ID = 'voice_pack';
+
 /** Entitlement granted by a future all-access subscription. Checked by
  *  ownsPack() so adding the sub later needs no consumer changes. */
 export const ALL_ACCESS_ENTITLEMENT_IDENTIFIER = 'all_access';

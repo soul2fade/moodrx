@@ -37,7 +37,7 @@
   <header>
     <p class="brand">MoodRx</p>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: June 11, 2026</p>
+    <p class="updated">Last updated: June 13, 2026</p>
   </header>
 
   <div class="highlight">
@@ -87,9 +87,9 @@
 
   <hr />
 
-  <h2>Voice Venting (Optional, On-Device Transcription)</h2>
+  <h2>Voice Venting (Optional, On-Device Transcription with Cloud Fallback)</h2>
   <p>MoodRx includes an optional <strong>Voice Venting</strong> feature that lets you talk for a short time instead of typing how you feel. The first time you use it, MoodRx shows a disclosure and asks you to confirm, and you can turn the feature off at any time in Settings.</p>
-  <p><strong>Your audio never leaves your device.</strong> Your speech is converted to text <strong>on your device</strong> using your operating system's built-in on-device speech recognition. MoodRx does not record, store, or transmit the audio itself.</p>
+  <p><strong>Your voice is transcribed on your device whenever possible.</strong> Your speech is converted to text using your operating system's built-in <strong>on-device</strong> speech recognition, and in that case the audio never leaves your phone. If your device cannot perform on-device recognition (for example, the offline speech model is not installed for your language), MoodRx falls back to your platform's speech service — <strong>Apple</strong> on iOS or <strong>Google</strong> on Android — which processes your audio to convert it to text under that provider's own privacy policy. In either case, <strong>MoodRx itself does not record, store, or retain the audio.</strong></p>
   <p><strong>When you finish venting</strong>, the resulting <strong>text transcript</strong> is sent to a MoodRx serverless function, which forwards it to <strong>Anthropic</strong> (provider of the Claude AI model) to interpret your mood and generate a supportive reply. The transcript is used <strong>only</strong> to generate that reply. <strong>MoodRx does not save your transcript</strong> — the session saved on your device keeps only the derived mood summary (your mood and intensity), never your words. We do not send your name or any account identifier, do not sell this data, and do not use it for advertising or to train AI models. See <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a> for how they handle API data.</p>
 
   <hr />
@@ -101,7 +101,7 @@
     <li>We do not use advertising SDKs or sell data to advertisers</li>
     <li>We do not track your location</li>
     <li>We do not access your camera or contacts</li>
-    <li>We do not access your microphone except during Voice Venting, and even then your audio is transcribed on your device and never recorded or transmitted (see above)</li>
+    <li>We do not access your microphone except during Voice Venting; your speech is transcribed on your device when possible, and otherwise by your platform's speech service (Apple or Google), and MoodRx itself never records or stores the audio (see above)</li>
   </ul>
 
   <hr />

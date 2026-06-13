@@ -22,7 +22,7 @@ import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { getVentConsent, setVentConsent, getVentEnabled } from '@/lib/storage';
 import { fetchVentReply } from '@/lib/vent-client';
-import { ventAction, buildVentSession, accumulateTranscript, type VentAssessment } from '@/lib/vent';
+import { ventAction, buildVentSession, accumulateTranscript, pickRecognitionMode, type VentAssessment } from '@/lib/vent';
 import { captureSessionHealth } from '@/lib/health';
 import { createSessionId } from '@/lib/session-utils';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -144,7 +144,7 @@ export default function VentScreen() {
     if (finalTranscript.trim().length > 0) {
       void handleSubmit(finalTranscript);
     } else {
-      fallbackToForm("Couldn't catch that — tap it in instead");
+      fallbackToForm("Didn't catch your voice that time — tap it in instead.");
     }
   });
 
@@ -247,11 +247,26 @@ export default function VentScreen() {
     persistedRef.current = false;
     isRecordingRef.current = true;
     setVentState('recording');
+    // Prefer on-device STT (audio never leaves the phone); fall back to cloud
+    // only if the device can't do on-device recognition for this locale.
+    let mode = { requiresOnDeviceRecognition: true, usingCloud: false };
+    try {
+      const supportsOnDevice = ExpoSpeechRecognitionModule.supportsOnDeviceRecognition();
+      const localesResult = await ExpoSpeechRecognitionModule
+        .getSupportedLocales({})
+        .catch(() => ({ installedLocales: [] as string[] }));
+      const onDeviceLocales = localesResult?.installedLocales ?? [];
+      mode = pickRecognitionMode({ supportsOnDevice, onDeviceLocales, locale: 'en-US' });
+      if (mode.usingCloud) {
+        // Kick off an offline model download so on-device works next time (Android 13+).
+        try { ExpoSpeechRecognitionModule.androidTriggerOfflineModelDownload?.({ locale: 'en-US' }); } catch { /* iOS / unsupported */ }
+      }
+    } catch { /* capability probe failed — default to on-device attempt */ }
     ExpoSpeechRecognitionModule.start({
       lang: 'en-US',
       interimResults: true,
       continuous: true,
-      requiresOnDeviceRecognition: true,
+      requiresOnDeviceRecognition: mode.requiresOnDeviceRecognition,
       addsPunctuation: true,
     });
     // Hard auto-stop at 60s (HARD_STOP_MS)
@@ -344,8 +359,8 @@ export default function VentScreen() {
             <Text style={styles.headline}>One quick thing.</Text>
             <View style={styles.consentCard}>
               <Text style={styles.consentText}>
-                This sends your words to our AI to write a response.{'\n'}
-                It&apos;s not stored or used to train AI.
+                Your voice is turned into text on your phone when it can. If it can&apos;t, it&apos;s sent to Apple/Google to transcribe.{'\n'}
+                That text goes to our AI for a reply — nothing is stored or used to train AI.
               </Text>
             </View>
             <TouchableOpacity

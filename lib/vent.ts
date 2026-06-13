@@ -53,6 +53,21 @@ export function accumulateTranscript(
   return { committed: isFinal ? display : committed, display };
 }
 
+/** Decide whether to run STT on-device or fall back to cloud. On-device is
+ *  preferred (privacy: audio never leaves the phone); we fall back to cloud only
+ *  when the platform can't do on-device for this locale. Pure — the caller
+ *  supplies the platform capability values it queried. */
+export function pickRecognitionMode(input: {
+  supportsOnDevice: boolean;
+  onDeviceLocales: string[];
+  locale: string;
+}): { requiresOnDeviceRecognition: boolean; usingCloud: boolean } {
+  const lang = input.locale.slice(0, 2).toLowerCase();
+  const hasLocale = input.onDeviceLocales.some((l) => l.slice(0, 2).toLowerCase() === lang);
+  const onDevice = input.supportsOnDevice && hasLocale;
+  return { requiresOnDeviceRecognition: onDevice, usingCloud: !onDevice };
+}
+
 export type VentAction = 'reply' | 'reply-with-resource' | 'crisis-redirect';
 
 /** Graded crisis routing: only 'acute' takes over to the crisis screen;

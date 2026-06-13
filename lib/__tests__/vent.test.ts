@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript } from '@/lib/vent';
+import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript, pickRecognitionMode } from '@/lib/vent';
 
 describe('parseVentResponse', () => {
   const ok = { mood: 'stressed', intensity: 7, reply: 'You showed up.', risk: 'none' };
@@ -114,5 +114,23 @@ describe('accumulateTranscript', () => {
       committed: 'I had a rough day and I am exhausted',
       display: 'I had a rough day and I am exhausted',
     });
+  });
+});
+
+describe('pickRecognitionMode', () => {
+  it('uses on-device when supported and the locale is on-device-available', () => {
+    expect(pickRecognitionMode({ supportsOnDevice: true, onDeviceLocales: ['en-US'], locale: 'en-US' }))
+      .toEqual({ requiresOnDeviceRecognition: true, usingCloud: false });
+  });
+  it('falls back to cloud when on-device is unsupported', () => {
+    expect(pickRecognitionMode({ supportsOnDevice: false, onDeviceLocales: [], locale: 'en-US' }))
+      .toEqual({ requiresOnDeviceRecognition: false, usingCloud: true });
+  });
+  it('falls back to cloud when the locale model is not available on-device', () => {
+    expect(pickRecognitionMode({ supportsOnDevice: true, onDeviceLocales: ['fr-FR'], locale: 'en-US' }))
+      .toEqual({ requiresOnDeviceRecognition: false, usingCloud: true });
+  });
+  it('treats locale case/region loosely (en matches en-US)', () => {
+    expect(pickRecognitionMode({ supportsOnDevice: true, onDeviceLocales: ['en'], locale: 'en-US' }).usingCloud).toBe(false);
   });
 });

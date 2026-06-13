@@ -14,6 +14,7 @@ export function CoachVoicePicker() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState('rachel');
   const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
+  const [previewAvailable, setPreviewAvailable] = useState(false);
   const manifestRef = useRef<Manifest | null>(null);
   const previewPlayer = useAudioPlayer(previewSrc);
 
@@ -37,6 +38,7 @@ export function CoachVoicePicker() {
   const handleOpen = useCallback(async () => {
     setOpen(true);
     if (!manifestRef.current) manifestRef.current = await fetchManifest().catch(() => null);
+    setPreviewAvailable(!!manifestRef.current);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -77,6 +79,7 @@ export function CoachVoicePicker() {
         selected={selected}
         ownsBundle={ownsBundle}
         priceLabel={priceLabel}
+        previewAvailable={previewAvailable}
         onSelect={handleSelect}
         onPreview={handlePreview}
         onBuy={handleBuy}

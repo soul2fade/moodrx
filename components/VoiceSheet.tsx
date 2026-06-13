@@ -7,6 +7,9 @@ interface Props {
   selected: string;
   ownsBundle: boolean;
   priceLabel: string | null;
+  /** False until the library manifest is loaded — disables the sample buttons
+   *  so they're not dead-looking before the library is hosted. */
+  previewAvailable: boolean;
   onSelect: (name: string) => void;
   onPreview: (name: string) => void;
   onBuy: () => void;
@@ -15,7 +18,7 @@ interface Props {
 
 const ACCENT = '#E11D48';
 
-export function VoiceSheet({ visible, selected, ownsBundle, priceLabel, onSelect, onPreview, onBuy, onClose }: Props) {
+export function VoiceSheet({ visible, selected, ownsBundle, priceLabel, previewAvailable, onSelect, onPreview, onBuy, onClose }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
@@ -38,9 +41,11 @@ export function VoiceSheet({ visible, selected, ownsBundle, priceLabel, onSelect
                   <Text style={styles.rowState}>{isSelected ? 'Selected' : owned ? 'Tap to use' : 'Locked'}</Text>
                 </Pressable>
                 <Pressable
-                  style={styles.sampleBtn}
+                  style={[styles.sampleBtn, !previewAvailable && styles.sampleBtnDisabled]}
                   onPress={() => onPreview(v.name)}
+                  disabled={!previewAvailable}
                   accessibilityRole="button"
+                  accessibilityState={{ disabled: !previewAvailable }}
                   accessibilityLabel={`Play ${v.label} sample`}
                 >
                   <Text style={styles.sampleText}>Sample</Text>
@@ -71,6 +76,7 @@ const styles = StyleSheet.create({
   rowLabelSelected: { color: '#ffffff' },
   rowState: { color: '#cfcfcf', fontSize: 12, lineHeight: 16, marginTop: 2 },
   sampleBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: '#3a3a3a' },
+  sampleBtnDisabled: { opacity: 0.4 },
   sampleText: { color: '#e8e8e8', fontSize: 13, fontWeight: '600' },
   cta: { marginTop: 18, backgroundColor: ACCENT, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   ctaText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },

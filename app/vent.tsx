@@ -117,6 +117,7 @@ export default function VentScreen() {
 
   // ─── STT event: result ───────────────────────────────────────────────────
   useSpeechRecognitionEvent('result', (event) => {
+    if (!isRecordingRef.current) return; // ignore stray results after recording ended
     const segment = event.results[0]?.transcript ?? '';
     const { committed, display } = accumulateTranscript(
       committedTranscriptRef.current,

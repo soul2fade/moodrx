@@ -234,6 +234,9 @@ export default function InsightsScreen() {
                 </View>
               )}
             </View>
+            {healthSnapshot.stepsToday !== null && healthSnapshot.sleepHoursLastNight === null && (
+              <Text style={styles.healthSleepMissing}>No sleep data — this source tracks steps only.</Text>
+            )}
             <Text style={styles.healthHint}>Cross-reference with your mood sessions below.</Text>
           </View>
         )}
@@ -1367,6 +1370,14 @@ const styles = StyleSheet.create({
     ...t.bodySm,
     color: '#cdcdcd',
     marginTop: 10,
+  },
+  healthSleepMissing: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 12,
+    color: colors.textSubtle,
+    letterSpacing: 0.5,
+    marginTop: 8,
+    lineHeight: 17,
   },
   supplementBtn: {
     borderWidth: 1,

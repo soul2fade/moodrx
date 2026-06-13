@@ -49,6 +49,7 @@ export default function BadDayScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
 
   const accentColor = MOODS[mood].color;
+  const accentColorDeep = MOODS[mood].colorDeep;
   const onLastStep = step >= MICRO_WORKOUT_STEPS.length - 1;
 
   const backHandler = useCallback(() => {
@@ -131,13 +132,13 @@ export default function BadDayScreen() {
             step={1}
             value={intensity}
             onValueChange={setIntensity}
-            minimumTrackTintColor={accentColor}
+            minimumTrackTintColor={accentColorDeep}
             maximumTrackTintColor="#1a1a1a"
-            thumbTintColor={accentColor}
+            thumbTintColor={accentColorDeep}
           />
         </View>
 
-        <View style={[styles.stepCard, { borderLeftColor: accentColor }]}>
+        <View style={[styles.stepCard, { borderLeftColor: accentColorDeep }]}>
           <Text style={styles.stepLabel}>STEP {step + 1} / {MICRO_WORKOUT_STEPS.length}</Text>
           <Text style={styles.stepText}>{MICRO_WORKOUT_STEPS[step]}</Text>
         </View>
@@ -154,7 +155,7 @@ export default function BadDayScreen() {
           <>
             <View style={styles.afterSection}>
               <Text style={styles.sectionLabel}>HOW DO YOU FEEL NOW?</Text>
-              <Text style={[styles.postScore, { color: accentColor }]}>{postScore}/10</Text>
+              <Text style={[styles.postScore, { color: accentColorDeep }]}>{postScore}/10</Text>
               <Text style={styles.deltaHint}>
                 Shift: {formatSessionDelta(intensity, postScore)}
               </Text>
@@ -165,9 +166,9 @@ export default function BadDayScreen() {
                 step={1}
                 value={postScore}
                 onValueChange={setPostScore}
-                minimumTrackTintColor={accentColor}
+                minimumTrackTintColor={accentColorDeep}
                 maximumTrackTintColor="#1a1a1a"
-                thumbTintColor={accentColor}
+                thumbTintColor={accentColorDeep}
               />
             </View>
             <TouchableOpacity

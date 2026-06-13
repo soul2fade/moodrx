@@ -172,6 +172,7 @@ export default function WorkoutScreen() {
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
+  const accentColorDeep = moodData.colorDeep;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
   const midInsult = useDrMoodRxLine(mood, 'mid');
   const midStep = Math.floor((totalSteps - 1) / 2);
@@ -562,7 +563,7 @@ export default function WorkoutScreen() {
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Progress bar */}
       <View style={styles.progressBarBg}>
-        <Animated.View style={{ height: 2, width: progressWidth, backgroundColor: accentColor }} />
+        <Animated.View style={{ height: 2, width: progressWidth, backgroundColor: accentColorDeep }} />
       </View>
 
       {/* Top row */}
@@ -640,13 +641,13 @@ export default function WorkoutScreen() {
         {stepTimerKind === 'rest' ? (
           <View style={styles.restBox}>
             <Text style={styles.restLabel}>REST</Text>
-            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColor }]} maxFontSizeMultiplier={1.3}>
+            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColorDeep }]} maxFontSizeMultiplier={1.3}>
               {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
             </Text>
             <View style={styles.restProgressBg}>
               <Animated.View style={[styles.restProgressFill, {
                 width: restProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColor,
+                backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColorDeep,
               }]} />
             </View>
             <Text style={styles.restSubtext}>
@@ -654,12 +655,12 @@ export default function WorkoutScreen() {
             </Text>
             <View style={styles.timerControlsRow}>
               {stepTimerRunning ? (
-                <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Stop timer">
-                  <Text style={[styles.timerControlBtnText, { color: accentColor }]}>STOP</Text>
+                <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColorDeep }]} accessibilityRole="button" accessibilityLabel="Stop timer">
+                  <Text style={[styles.timerControlBtnText, { color: accentColorDeep }]}>STOP</Text>
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Start timer">
-                  <Text style={[styles.timerControlBtnText, { color: accentColor }]}>START</Text>
+                <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColorDeep }]} accessibilityRole="button" accessibilityLabel="Start timer">
+                  <Text style={[styles.timerControlBtnText, { color: accentColorDeep }]}>START</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity onPress={handleTimerReset} activeOpacity={0.7} style={styles.timerControlBtn} accessibilityRole="button" accessibilityLabel="Reset timer">
@@ -674,13 +675,13 @@ export default function WorkoutScreen() {
             </Text>
             {stepTimerKind === 'active' && (
               <View style={styles.activeTimerBox}>
-                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColor }]} maxFontSizeMultiplier={1.3}>
+                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColorDeep }]} maxFontSizeMultiplier={1.3}>
                   {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
                 </Text>
                 <View style={styles.activeProgressBg}>
                   <Animated.View style={[styles.activeProgressFill, {
                     width: activeProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                    backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColor,
+                    backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColorDeep,
                   }]} />
                 </View>
                 {stepTimerRemaining === 0 && (
@@ -691,12 +692,12 @@ export default function WorkoutScreen() {
                 )}
                 <View style={styles.timerControlsRow}>
                   {stepTimerRunning ? (
-                    <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Stop timer">
-                      <Text style={[styles.timerControlBtnText, { color: accentColor }]}>STOP</Text>
+                    <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColorDeep }]} accessibilityRole="button" accessibilityLabel="Stop timer">
+                      <Text style={[styles.timerControlBtnText, { color: accentColorDeep }]}>STOP</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Start timer">
-                      <Text style={[styles.timerControlBtnText, { color: accentColor }]}>START</Text>
+                    <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColorDeep }]} accessibilityRole="button" accessibilityLabel="Start timer">
+                      <Text style={[styles.timerControlBtnText, { color: accentColorDeep }]}>START</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity onPress={handleTimerReset} activeOpacity={0.7} style={styles.timerControlBtn} accessibilityRole="button" accessibilityLabel="Reset timer">

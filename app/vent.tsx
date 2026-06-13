@@ -185,15 +185,15 @@ export default function VentScreen() {
   }, [clearSilenceTimers]);
 
   // Restart the silence countdown. Called on recording start, on every speech
-  // result, and on "Keep going". Hides the check-in and schedules: (a) show the
+  // result, and on "Keep going". Hides the check-in (unconditionally — cheap
+  // no-op if already hidden; kept dependency-free so the STT result handler
+  // always invokes a fresh, correct instance) and schedules: (a) show the
   // check-in after SILENCE_PROMPT_MS, then (b) graceful auto-finish after a
   // further SILENCE_AUTOFINISH_MS.
   const resetSilenceTimer = useCallback(() => {
     clearSilenceTimers();
-    if (showSilenceCheckin) {
-      setShowSilenceCheckin(false);
-      checkinAnim.setValue(0);
-    }
+    setShowSilenceCheckin(false);
+    checkinAnim.setValue(0);
     silencePromptTimerRef.current = setTimeout(() => {
       if (!isRecordingRef.current) return;
       setShowSilenceCheckin(true);
@@ -208,7 +208,7 @@ export default function VentScreen() {
         }
       }, SILENCE_AUTOFINISH_MS);
     }, SILENCE_PROMPT_MS);
-  }, [clearSilenceTimers, showSilenceCheckin, checkinAnim]);
+  }, [clearSilenceTimers, checkinAnim]);
 
   // ─── Persist (once) ──────────────────────────────────────────────────────
   const persist = useCallback(async (a: VentAssessment, corr: Correction | null) => {

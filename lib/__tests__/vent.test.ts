@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript, pickRecognitionMode } from '@/lib/vent';
+import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript, pickRecognitionMode, decideSttRetry } from '@/lib/vent';
 
 describe('parseVentResponse', () => {
   const ok = { mood: 'stressed', intensity: 7, reply: 'You showed up.', risk: 'none' };
@@ -132,5 +132,23 @@ describe('pickRecognitionMode', () => {
   });
   it('treats locale case/region loosely (en matches en-US)', () => {
     expect(pickRecognitionMode({ supportsOnDevice: true, onDeviceLocales: ['en'], locale: 'en-US' }).usingCloud).toBe(false);
+  });
+});
+
+describe('decideSttRetry', () => {
+  // Called when a recognition attempt ends without a usable transcript (the
+  // `end` event always fires last — even after an error/nomatch — so it is the
+  // single decision point). The observed device bug: on-device starts fine,
+  // yields zero results, ends empty; the network recognizer (which works) must
+  // still be attempted before giving up.
+  it('retries with cloud when on-device produced nothing and cloud not yet tried', () => {
+    expect(decideSttRetry({ usedOnDevice: true, triedCloud: false })).toBe('retry-cloud');
+  });
+  it('gives up to the form once cloud has already been tried', () => {
+    expect(decideSttRetry({ usedOnDevice: true, triedCloud: true })).toBe('fallback-form');
+  });
+  it('gives up to the form when cloud was the only mode (on-device never used)', () => {
+    expect(decideSttRetry({ usedOnDevice: false, triedCloud: false })).toBe('fallback-form');
+    expect(decideSttRetry({ usedOnDevice: false, triedCloud: true })).toBe('fallback-form');
   });
 });

@@ -68,6 +68,21 @@ export function pickRecognitionMode(input: {
   return { requiresOnDeviceRecognition: onDevice, usingCloud: !onDevice };
 }
 
+/** When a recognition attempt ends without a usable transcript (it errored, hit
+ *  `nomatch`, or simply produced nothing — all of which surface as an `end` with
+ *  an empty transcript, the silent on-device failure seen on some Android
+ *  devices), decide whether to retry. On-device is tried first for privacy; if it
+ *  produces nothing we retry ONCE with the cloud/network recognizer (which the
+ *  consent screen already discloses as the fallback) before giving up to the
+ *  manual form. Pure. */
+export function decideSttRetry(input: {
+  usedOnDevice: boolean;
+  triedCloud: boolean;
+}): 'retry-cloud' | 'fallback-form' {
+  if (input.usedOnDevice && !input.triedCloud) return 'retry-cloud';
+  return 'fallback-form';
+}
+
 export type VentAction = 'reply' | 'reply-with-resource' | 'crisis-redirect';
 
 /** Graded crisis routing: only 'acute' takes over to the crisis screen;

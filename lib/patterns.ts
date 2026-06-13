@@ -199,6 +199,29 @@ export function detectSleep(sessions: Session[]): PatternItem | null {
   return { id: 'sleep', text, kind: tier };
 }
 
+/** Below this many sessions the "noticed" empty-state shows a countdown;
+ *  at/above it (with the engine still finding nothing) it shows the honest
+ *  "still listening" line. 8 matches the pattern engine's finding-confidence
+ *  comparison pool, so the countdown ends right when a finding can first fire. */
+export const NOTICED_COUNTDOWN_THRESHOLD = 8;
+
+export type NoticedEmptyState =
+  | { stage: 'countdown'; remaining: number }
+  | { stage: 'listening' };
+
+/** What the insights "WHAT I'VE NOTICED" section should show when there are no
+ *  visible patterns. Returns null when patterns exist (render the cards). Pure. */
+export function noticedEmptyState(
+  sessionCount: number,
+  hasVisiblePatterns: boolean,
+): NoticedEmptyState | null {
+  if (hasVisiblePatterns) return null;
+  if (sessionCount < NOTICED_COUNTDOWN_THRESHOLD) {
+    return { stage: 'countdown', remaining: NOTICED_COUNTDOWN_THRESHOLD - sessionCount };
+  }
+  return { stage: 'listening' };
+}
+
 /** The public engine: run every signal, drop the silent ones, and order
  *  confident findings ahead of hedged questions (the insights UI renders them
  *  in this order; the free-teaser pick is the UI's concern, not the engine's).

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek, detectConsistency, buildPatterns, detectSleep } from '@/lib/patterns';
+import { sessionImprovement, classifyTier, detectTimeOfDay, detectDayOfWeek, detectConsistency, buildPatterns, detectSleep, noticedEmptyState, NOTICED_COUNTDOWN_THRESHOLD } from '@/lib/patterns';
 import type { MoodKey, Session } from '@/lib/storage';
 
 // ── Shared fixture helpers (used by all pattern tests) ───────────────────────
@@ -338,5 +338,24 @@ describe('detectDayOfWeek finding-floor calibration', () => {
       sess(1, 9, 5, 4), sess(2, 9, 5, 4), sess(4, 9, 5, 4), sess(5, 9, 5, 4),
     ];
     expect(detectDayOfWeek(sessions)?.kind).toBe('question');
+  });
+});
+
+describe('noticedEmptyState', () => {
+  it('returns null when there are visible patterns (cards render instead)', () => {
+    expect(noticedEmptyState(0, true)).toBeNull();
+    expect(noticedEmptyState(20, true)).toBeNull();
+  });
+  it('countdown below the threshold, with remaining = threshold - count', () => {
+    expect(noticedEmptyState(0, false)).toEqual({ stage: 'countdown', remaining: NOTICED_COUNTDOWN_THRESHOLD });
+    expect(noticedEmptyState(1, false)).toEqual({ stage: 'countdown', remaining: NOTICED_COUNTDOWN_THRESHOLD - 1 });
+    expect(noticedEmptyState(NOTICED_COUNTDOWN_THRESHOLD - 1, false)).toEqual({ stage: 'countdown', remaining: 1 });
+  });
+  it('listening at/above the threshold with no patterns', () => {
+    expect(noticedEmptyState(NOTICED_COUNTDOWN_THRESHOLD, false)).toEqual({ stage: 'listening' });
+    expect(noticedEmptyState(NOTICED_COUNTDOWN_THRESHOLD + 5, false)).toEqual({ stage: 'listening' });
+  });
+  it('threshold is 8', () => {
+    expect(NOTICED_COUNTDOWN_THRESHOLD).toBe(8);
   });
 });

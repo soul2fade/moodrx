@@ -15,7 +15,7 @@ import * as Sharing from 'expo-sharing';
 import {
   Session,
 } from '@/lib/storage';
-import { buildPatterns, sessionImprovement, type PatternItem } from '@/lib/patterns';
+import { buildPatterns, sessionImprovement, noticedEmptyState, NOTICED_COUNTDOWN_THRESHOLD, type PatternItem } from '@/lib/patterns';
 import { getTopEffectiveCombinations } from '@/lib/workout-insights';
 import { useSessions } from '@/contexts/SessionsContext';
 import { MOODS } from '@/lib/moods';
@@ -96,6 +96,10 @@ export default function InsightsScreen() {
   const visiblePatterns = useMemo(
     () => (isPremium ? patterns : patterns.slice(0, 1)),
     [patterns, isPremium],
+  );
+  const noticed = useMemo(
+    () => noticedEmptyState(sessionCount, visiblePatterns.length > 0),
+    [sessionCount, visiblePatterns.length],
   );
   const lockedPatternCount = isPremium ? 0 : Math.max(patterns.length - 1, 0);
 
@@ -411,6 +415,24 @@ export default function InsightsScreen() {
                 </Text>
               </TouchableOpacity>
             )}
+          </View>
+        )}
+
+        {visiblePatterns.length === 0 && noticed && (
+          <View style={styles.noticedSection}>
+            <Text style={styles.noticedLabel}>WHAT I&apos;VE NOTICED</Text>
+            <View style={styles.noticedEmptyCard}>
+              {noticed.stage === 'countdown' ? (
+                <Text style={styles.noticedEmptyText}>
+                  Patterns appear after {NOTICED_COUNTDOWN_THRESHOLD} sessions.{'\n'}
+                  {sessionCount > 0 ? `${noticed.remaining} more to go.` : 'Start logging below.'}
+                </Text>
+              ) : (
+                <Text style={styles.noticedEmptyText}>
+                  Still listening. Clear patterns appear once your sessions spread across enough days and times to mean something.
+                </Text>
+              )}
+            </View>
           </View>
         )}
 
@@ -900,6 +922,20 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     padding: 16,
     marginBottom: 10,
+  },
+  noticedEmptyCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 16,
+    marginTop: 4,
+  },
+  noticedEmptyText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    letterSpacing: 0.5,
   },
   noticedFinding: {
     borderLeftColor: '#059669',

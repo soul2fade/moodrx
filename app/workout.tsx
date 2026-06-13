@@ -17,7 +17,7 @@ import { useAudioPlayer } from 'expo-audio';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
-import { getInsultSeverity, getPersonalBest, getTrashTalkVolume, getWorkoutFocusMode, getWorkoutVoiceMode, setInsultSeverity, setWorkoutFocusMode, setWorkoutVoiceMode } from '@/lib/storage';
+import { getCoachVoice, getInsultSeverity, getPersonalBest, getTrashTalkVolume, getWorkoutFocusMode, getWorkoutVoiceMode, setInsultSeverity, setWorkoutFocusMode, setWorkoutVoiceMode } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -36,6 +36,9 @@ import {
   pickWorkoutGuideCue,
   pickWorkoutGuideTimerCue,
 } from '@/lib/workout-voice';
+import { effectiveVoice } from '@/lib/voices';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { VOICE_PACK_ID } from '@/lib/revenuecat';
 
 /** Extract a duration in seconds from a workout step description.
  *  Sums any number-of-minutes + number-of-seconds tokens present
@@ -94,10 +97,6 @@ const INSULT_AUDIO = [
   require('../assets/audio/insults/insult_08.mp3'),
 ];
 
-// Phase 1: trash talk plays the hosted library at a fixed default voice + tier.
-// Phase 2 (severity sheet + voice picker) replaces these with user state.
-const DEFAULT_INSULT_VOICE = 'rachel';
-
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
 type StepTimerKind = 'rest' | 'active';
 
@@ -143,6 +142,9 @@ export default function WorkoutScreen() {
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
   const [insultSeverity, setSeverity] = useState<InsultTier>('sticks');
+  const { ownsPack } = useSubscription();
+  const [selectedVoice, setSelectedVoice] = useState('rachel');
+  const voice = effectiveVoice(selectedVoice, ownsPack(VOICE_PACK_ID));
   const [severitySheetOpen, setSeveritySheetOpen] = useState(false);
   const [trashTalkVolume, setTrashTalkVolume] = useState(0.7);
   const [keepAwake, setKeepAwake] = useState(false);
@@ -192,6 +194,10 @@ export default function WorkoutScreen() {
 
   useEffect(() => {
     getInsultSeverity().then(setSeverity).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getCoachVoice().then(setSelectedVoice).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -391,7 +397,7 @@ export default function WorkoutScreen() {
       const m = await fetchManifest().catch(() => null);
       if (cancelled) return;
       manifestRef.current = m;
-      if (m) prefetchTier(m, DEFAULT_INSULT_VOICE, insultSeverity);
+      if (m) prefetchTier(m, voice, insultSeverity);
     })();
 
     // Bundled fallback rotation start (random so sessions differ).
@@ -401,7 +407,7 @@ export default function WorkoutScreen() {
       let src: any = null;
       const m = manifestRef.current;
       if (m) {
-        const entry = pickClip(m, DEFAULT_INSULT_VOICE, insultSeverity);
+        const entry = pickClip(m, voice, insultSeverity);
         if (entry) {
           const uri = await ensureClip(entry);
           if (uri) src = { uri };
@@ -423,7 +429,7 @@ export default function WorkoutScreen() {
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- insultPlayer is a stable expo-audio ref; trashTalkOn toggle is the meaningful trigger.
-  }, [trashTalkOn, insultSeverity]);
+  }, [trashTalkOn, insultSeverity, voice]);
 
   useEffect(() => {
     if (totalSteps === 0) return;

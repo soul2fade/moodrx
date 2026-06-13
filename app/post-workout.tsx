@@ -314,6 +314,9 @@ export default function PostWorkoutScreen() {
     }
     const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
     if (!perm.granted) return; // no mic — keyboard still works; stay silent
+    // Freeze the note text at dictation start; each interim result rebuilds from
+    // this fixed base (continuous:false → results[0] is the full running utterance,
+    // so rebuilding REPLACES rather than compounds). Do NOT read live `note` here.
     dictateBaseRef.current = note;
     dictatingRef.current = true;
     setIsDictating(true);

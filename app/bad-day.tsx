@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import {
   MICRO_WORKOUT_DURATION_MIN,
   MICRO_WORKOUT_ID,
   MICRO_WORKOUT_NAME,
-  MICRO_WORKOUT_STEPS,
+  microStepsForMood,
 } from '@/lib/micro-workout';
 import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -44,6 +44,7 @@ export default function BadDayScreen() {
 
   const { addSession } = useSessions();
   const [mood, setMood] = useState<MoodKey>(initialMood);
+  const microSteps = useMemo(() => microStepsForMood(mood), [mood]);
   const [intensity, setIntensity] = useState(initialIntensity);
   const [postScore, setPostScore] = useState(Math.max(1, initialIntensity - 1));
   const [step, setStep] = useState(0);
@@ -54,13 +55,15 @@ export default function BadDayScreen() {
 
   const accentColor = MOODS[mood].color;
   const accentColorDeep = MOODS[mood].colorDeep;
-  const onLastStep = step >= MICRO_WORKOUT_STEPS.length - 1;
+  const onLastStep = step >= microSteps.length - 1;
 
   const backHandler = useCallback(() => {
     router.back();
     return true;
   }, []);
   useHardwareBack(backHandler);
+
+  useEffect(() => { setStep(0); }, [mood]);
 
   const handleNext = () => {
     if (!onLastStep) {
@@ -150,7 +153,7 @@ export default function BadDayScreen() {
         </View>
 
         <View style={styles.dotsRow}>
-          {MICRO_WORKOUT_STEPS.map((_, i) => (
+          {microSteps.map((_, i) => (
             <View
               key={i}
               style={[styles.dot, i <= step ? { backgroundColor: accentColorDeep } : styles.dotEmpty]}
@@ -159,8 +162,8 @@ export default function BadDayScreen() {
         </View>
 
         <Animated.View style={[styles.stepCard, { borderLeftColor: accentColorDeep, backgroundColor: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: ['#111111', accentColorDeep + '26'] }) }]}>
-          <Text style={styles.stepLabel}>STEP {step + 1} / {MICRO_WORKOUT_STEPS.length}</Text>
-          <Text style={styles.stepText}>{MICRO_WORKOUT_STEPS[step]}</Text>
+          <Text style={styles.stepLabel}>STEP {step + 1} / {microSteps.length}</Text>
+          <Text style={styles.stepText}>{microSteps[step]}</Text>
         </Animated.View>
 
         <View style={{ flex: 1, minHeight: 16 }} />

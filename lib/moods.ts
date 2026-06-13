@@ -53,7 +53,7 @@ export const MOODS: Record<MoodKey, MoodData> = {
     name: 'Stressed',
     code: 'STR',
     description: "One more thing and I'm done",
-    color: '#F2547D',
+    color: '#E11D48',
     colorDeep: '#E11D48',
     drMoodRx: "Your shoulders are up by your ears like they're trying to escape. We'll fix that.",
   },

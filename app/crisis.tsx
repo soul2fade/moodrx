@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   },
   emergencyText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 22,
     marginBottom: 28,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   cardDetail: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 1,
     marginBottom: 18,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   actionBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     // eslint-disable-next-line local/no-dark-text-color
     color: '#000000',
     letterSpacing: 3,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   groundingLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -317,13 +317,13 @@ const styles = StyleSheet.create({
   },
   groundingTitle: {
     fontFamily: fonts.primary.bold,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     marginBottom: 12,
   },
   groundingBody: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 22,
   },

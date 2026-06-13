@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 5,
     lineHeight: 17,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 2,
     lineHeight: 17,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: 2,
     lineHeight: 17,
   },
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   },
   diagnosisLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 4,
     marginBottom: 6,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   moodDescription: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     marginTop: 6,
     letterSpacing: 0.5,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   },
   deltaHeroLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 4,
     marginTop: 8,
@@ -235,13 +235,13 @@ const styles = StyleSheet.create({
   },
   numSepText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 18,
   },
   numLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 2,
     marginBottom: 5,
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   },
   treatmentLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 2,
     width: 90,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   },
   treatmentValue: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 0.5,
     flex: 1,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   watermark: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 1,
     lineHeight: 17,

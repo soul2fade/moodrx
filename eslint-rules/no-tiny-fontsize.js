@@ -3,8 +3,8 @@
 /**
  * ESLint rule: no-tiny-fontsize
  *
- * Flags any `fontSize` Property whose value is a numeric literal < 14.
- * Text must be at least fontSize: 14 to meet the readability standard.
+ * Flags any `fontSize` Property whose value is a numeric literal < 16.
+ * Text must be at least fontSize: 16 to meet the readability standard.
  * For deliberate non-text exceptions (e.g. icon glyphs), use an
  * `// eslint-disable-next-line local/no-tiny-fontsize` with a short reason.
  */
@@ -13,7 +13,7 @@ module.exports = {
     type: 'problem',
     docs: {
       description:
-        'Text fontSize must be >= 14 (readability standard). eslint-disable for deliberate non-text exceptions like icon glyphs.',
+        'Text fontSize must be >= 16 (readability standard). eslint-disable for deliberate non-text exceptions like icon glyphs.',
     },
     schema: [],
   },
@@ -26,11 +26,11 @@ module.exports = {
             (node.key.type === 'Literal' && node.key.value === 'fontSize')) &&
           node.value.type === 'Literal' &&
           typeof node.value.value === 'number' &&
-          node.value.value < 14
+          node.value.value < 16
         ) {
           context.report({
             node,
-            message: `fontSize ${node.value.value} is below the 14px readability floor — bump to >= 14 or eslint-disable for a deliberate non-text size.`,
+            message: `fontSize ${node.value.value} is below the 16px readability floor — bump to >= 16 or eslint-disable for a deliberate non-text size.`,
           });
         }
       },

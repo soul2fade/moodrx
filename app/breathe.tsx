@@ -222,13 +222,13 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1,
   },
   screenTitle: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
     lineHeight: 18,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   cyclesText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
   },
@@ -269,13 +269,13 @@ const styles = StyleSheet.create({
   },
   readyLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
   },
   phaseLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: 4,
     marginBottom: 10,
     lineHeight: 18,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   phaseGuide: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
     marginTop: 10,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   patternNote: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
     marginBottom: 32,
@@ -314,13 +314,13 @@ const styles = StyleSheet.create({
   },
   startBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 4,
   },
   hint: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1,
     marginBottom: 110,

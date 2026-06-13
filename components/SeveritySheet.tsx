@@ -66,12 +66,12 @@ const styles = StyleSheet.create({
   },
   sub: {
     color: '#cfcfcf',
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
     marginTop: 6,
     marginBottom: 18,
   },
-  frequencyNote: { fontFamily: fonts.mono.regular, fontSize: 14, color: '#cfcfcf', textAlign: 'center', lineHeight: 18, letterSpacing: 0.5, marginTop: 6, marginBottom: 4 },
+  frequencyNote: { fontFamily: fonts.mono.regular, fontSize: 16, color: '#cfcfcf', textAlign: 'center', lineHeight: 18, letterSpacing: 0.5, marginTop: 6, marginBottom: 4 },
   row: {
     borderWidth: 1,
     borderColor: '#333333',
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   },
   rowBlurb: {
     color: '#cfcfcf',
-    fontSize: 15,
+    fontSize: 16,
     marginTop: 3,
   },
 });

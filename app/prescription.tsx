@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   },
   prescriptionSub: {
     ...t.bodyMuted,
-    fontSize: 14,
+    fontSize: 16,
     marginTop: 4,
   },
   drBox: {
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   },
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     marginTop: 12,
     textAlign: 'left',
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
   personalizationNote: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
     marginTop: 8,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   heroRxLabel: {
     ...t.label,
     letterSpacing: 4,
-    fontSize: 15,
+    fontSize: 16,
     marginBottom: 10,
     marginTop: 4,
     lineHeight: undefined,
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   startButtonText: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: undefined,
   },
   alternativesToggle: {
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: undefined,
   },
   alternativesArrow: {
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 15,
+    fontSize: 16,
     marginBottom: 8,
     marginTop: 4,
     lineHeight: undefined,
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
   workoutDuration: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     fontWeight: '600',
   },
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   intensityBadgeText: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
     fontWeight: '600',
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
   workoutVibe: {
     ...t.soft,
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: 0.5,
     marginTop: 6,
   },
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.accent,
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     marginTop: 6,
   },
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     marginTop: 4,
   },
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
   scienceInlineLabel: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     lineHeight: undefined,
   },
@@ -742,13 +742,13 @@ const styles = StyleSheet.create({
   },
   supplementName: {
     ...t.headlineSm,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: undefined,
   },
   supplementDose: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
   },
   supplementBenefitRow: {
     flexDirection: 'row',
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
   },
   supplementBenefit: {
     ...t.bodyMuted,
-    fontSize: 14,
+    fontSize: 16,
   },
   supplementTiming: {
     ...t.label,
@@ -841,7 +841,7 @@ const styles = StyleSheet.create({
   suppModalDose: {
     ...t.label,
     color: '#f0f0f0',
-    fontSize: 15,
+    fontSize: 16,
     marginTop: 4,
     lineHeight: undefined,
   },
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: undefined,
     marginBottom: 10,
   },
@@ -871,20 +871,20 @@ const styles = StyleSheet.create({
   },
   suppModalMoodTagText: {
     ...t.label,
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: 1,
     lineHeight: undefined,
   },
   suppModalScience: {
     ...t.body,
     color: '#dcdcdc',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 23,
   },
   suppModalSource: {
     ...t.body,
     color: '#c5c5c5',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 20,
     marginTop: 6,
   },
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
   },
   suppModalUnlockText: {
     ...t.label,
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: 2,
     lineHeight: undefined,
   },

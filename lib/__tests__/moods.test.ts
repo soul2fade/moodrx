@@ -8,7 +8,7 @@ describe('mood colorDeep', () => {
     }
   });
   it('stressed and low use richer deep variants than their light text color', () => {
-    expect(MOODS.stressed.color).toBe('#F2547D');
+    expect(MOODS.stressed.color).toBe('#E11D48');
     expect(MOODS.stressed.colorDeep).toBe('#E11D48');
     expect(MOODS.low.color).toBe('#7B7DF5');
     expect(MOODS.low.colorDeep).toBe('#6366F1');

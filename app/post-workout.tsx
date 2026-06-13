@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
   },
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     marginTop: 16,
     lineHeight: 18,
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
   },
   pbLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
     marginBottom: 8,
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
   },
   pbNewBest: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
     marginTop: 8,
@@ -735,7 +735,7 @@ const styles = StyleSheet.create({
   },
   pbPrev: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
     marginTop: 8,
@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
   },
   scoreContext: {
     ...t.bodyMuted,
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
     marginTop: 8,
   },
@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
   },
   changeHeroLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1.5,
     marginBottom: 8,
@@ -807,7 +807,7 @@ const styles = StyleSheet.create({
   },
   changeHeroSub: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 0.5,
     marginTop: 10,
@@ -830,7 +830,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     marginBottom: 3,
     lineHeight: 17,
   },
@@ -843,7 +843,7 @@ const styles = StyleSheet.create({
   deltaArrow: {
     ...t.label,
     color: '#f0f0f0',
-    fontSize: 14,
+    fontSize: 16,
     marginHorizontal: 4,
   },
   workoutInfo: {
@@ -883,7 +883,7 @@ const styles = StyleSheet.create({
   },
   dictateBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.textSecondary,
     letterSpacing: 1,
     lineHeight: 17,
@@ -893,14 +893,14 @@ const styles = StyleSheet.create({
   },
   noteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 17,
   },
   noteCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 1,
     lineHeight: 17,
@@ -911,7 +911,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 20,
     textAlignVertical: 'top',
@@ -945,7 +945,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 1,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 18,
   },
   contextQuestion: {
@@ -983,7 +983,7 @@ const styles = StyleSheet.create({
   },
   shareButtonEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 4,
     lineHeight: 17,
@@ -992,7 +992,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 14,
+    fontSize: 16,
   },
   modalBackdrop: {
     flex: 1,
@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
   },
   modalEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 4,
     lineHeight: 17,
@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
   },
   modalShareBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: 3,
     lineHeight: 18,
   },
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
   },
   modalCloseBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 17,

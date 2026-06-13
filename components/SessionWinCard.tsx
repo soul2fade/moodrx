@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     ...t.bodyMuted,
     textAlign: 'center',
     marginTop: 12,
-    fontSize: 14,
+    fontSize: 16,
   },
   workoutLine: {
     ...t.bodySm,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     ...t.softMuted,
     textAlign: 'center',
     marginTop: 12,
-    fontSize: 15,
+    fontSize: 16,
   },
   primaryBtn: {
     borderWidth: 1,

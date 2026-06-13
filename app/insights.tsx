@@ -850,7 +850,7 @@ const styles = StyleSheet.create({
   noSessionsSub: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 16,
     marginTop: 6,
     letterSpacing: 1,
     textAlign: 'center',
@@ -866,7 +866,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#059669',
     letterSpacing: 3,
-    fontSize: 15,
+    fontSize: 16,
   },
   chart: {
     flexDirection: 'row',
@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
   chartDay: {
     ...t.timestamp,
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
     marginTop: 4,
@@ -932,7 +932,7 @@ const styles = StyleSheet.create({
   },
   noticedEmptyText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.textSecondary,
     lineHeight: 20,
     letterSpacing: 0.5,
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#059669',
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     marginBottom: 6,
   },
@@ -955,7 +955,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#D97706',
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     marginBottom: 6,
   },
@@ -969,7 +969,7 @@ const styles = StyleSheet.create({
   },
   workoutHistLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -991,13 +991,13 @@ const styles = StyleSheet.create({
   },
   workoutHistName: {
     fontFamily: fonts.primary.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#e8e8e8',
     flex: 1,
   },
   workoutHistCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 1,
   },
@@ -1008,14 +1008,14 @@ const styles = StyleSheet.create({
   },
   workoutHistAvgLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     color: '#f0f0f0',
     letterSpacing: 1.5,
   },
   workoutHistAvgVal: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     letterSpacing: 1,
     minWidth: 40,
     textAlign: 'right',
@@ -1025,7 +1025,7 @@ const styles = StyleSheet.create({
   },
   notesLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -1044,26 +1044,26 @@ const styles = StyleSheet.create({
   },
   noteMood: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 2,
   },
   noteDate: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     color: '#f0f0f0',
     letterSpacing: 1,
   },
   noteWorkoutName: {
     fontFamily: fonts.primary.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#cdcdcd',
     marginBottom: 6,
   },
   noteText: {
     fontFamily: fonts.primary.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 22,
   },
@@ -1094,12 +1094,12 @@ const styles = StyleSheet.create({
   },
   recentStar: {
     color: '#059669',
-    fontSize: 14,
+    fontSize: 16,
   },
   recentLightBadge: {
     ...t.label,
     color: '#f0f0f0',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1.5,
   },
@@ -1131,7 +1131,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
   },
   recentWorkout: {
     ...t.body,
@@ -1256,7 +1256,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 15,
+    fontSize: 16,
     marginBottom: 14,
   },
   casePanelMoodRow: {
@@ -1273,7 +1273,7 @@ const styles = StyleSheet.create({
   casePanelMoodText: {
     ...t.label,
     letterSpacing: 2,
-    fontSize: 14,
+    fontSize: 16,
   },
   casePanelDate: {
     ...t.timestamp,
@@ -1295,7 +1295,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
   },
   casePanelScoreVal: {
     ...t.dataValue,
@@ -1313,7 +1313,7 @@ const styles = StyleSheet.create({
   casePanelRating: {
     ...t.label,
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
     marginBottom: 4,
   },
   caseNoteBox: {
@@ -1325,7 +1325,7 @@ const styles = StyleSheet.create({
   },
   caseNoteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -1333,7 +1333,7 @@ const styles = StyleSheet.create({
   },
   caseNoteText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#c5c5c5',
     lineHeight: 20,
   },
@@ -1397,7 +1397,7 @@ const styles = StyleSheet.create({
   healthStatLabel: {
     ...t.label,
     color: '#f0f0f0',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     marginTop: 4,
     letterSpacing: 1.5,
@@ -1409,7 +1409,7 @@ const styles = StyleSheet.create({
   },
   healthSleepMissing: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.textSubtle,
     letterSpacing: 0.5,
     marginTop: 8,

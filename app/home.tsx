@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   proMemberBadge: {
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.premium,
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   streakPill: {
@@ -663,19 +663,19 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.accent,
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   streakPillText: {
     ...t.bodySm,
     color: '#d8d8d8',
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
   },
   streakPillDismiss: {
     ...t.label,
     color: '#f0f0f0',
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   streakBadge: {
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
   streakBadgeText: {
     ...t.number,
     color: colors.accent,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
   },
@@ -717,7 +717,7 @@ const styles = StyleSheet.create({
   },
   breatheLinkText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 18,
     color: '#7EC8A0',
     letterSpacing: 1,
   },
@@ -731,9 +731,9 @@ const styles = StyleSheet.create({
   },
   safetyNetText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
-    opacity: 0.4,
+    opacity: 0.6,
     letterSpacing: 0.5,
   },
   carouselPlaceholder: {
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   sameDayCard: {
@@ -807,14 +807,14 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   sameDaySub: {
     ...t.bodySm,
     color: '#cdcdcd',
     marginTop: 6,
-    fontSize: 14,
+    fontSize: 16,
   },
   sameDayActions: {
     flexDirection: 'row',
@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   sameDayBtnOutline: {
@@ -850,7 +850,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   justLogButton: {
@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   navHintPill: {
@@ -886,14 +886,14 @@ const styles = StyleSheet.create({
     ...t.bodySm,
     color: '#d8d8d8',
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 18,
   },
   navHintDismiss: {
     ...t.label,
     color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   moodRow: {
@@ -972,7 +972,7 @@ const styles = StyleSheet.create({
   panelMoodName: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 14,
+    fontSize: 16,
   },
   drBox: {
     borderLeftWidth: 3,
@@ -1023,6 +1023,6 @@ const styles = StyleSheet.create({
   },
   prescribeButtonText: {
     ...t.timer,
-    fontSize: 15,
+    fontSize: 16,
   },
 });

@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   packPrice: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#f0f0f0',
     letterSpacing: 1,
     lineHeight: 18,
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.premium,
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   buyButton: {

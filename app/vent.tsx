@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.textSecondary,
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -711,7 +711,7 @@ const styles = StyleSheet.create({
   },
   transcriptText: {
     ...t.body,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 23,
     color: colors.text,
   },
@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
   },
   thinkingText: {
     ...t.bodyMuted,
-    fontSize: 15,
+    fontSize: 16,
     fontStyle: 'italic',
     color: colors.textMuted,
   },
@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
   },
   moodChipText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: 1,
     flex: 1,
     textTransform: 'uppercase',
@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
   },
   moodChipCaret: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
 
@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 2,
     marginBottom: 10,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 17,
   },
   moodRow: {
@@ -860,14 +860,14 @@ const styles = StyleSheet.create({
   },
   resourceLinkText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#7EC8A0',
     letterSpacing: 1,
     lineHeight: 18,
   },
   resourceLinkDismiss: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.textSubtle,
     letterSpacing: 1,
     lineHeight: 18,
@@ -897,7 +897,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.textSubtle,
     letterSpacing: 2,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 18,
   },
 });

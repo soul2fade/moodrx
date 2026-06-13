@@ -35,6 +35,7 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { BottomNav } from '@/components/BottomNav';
+import { CoachVoicePicker } from '@/components/CoachVoicePicker';
 import {
   getHealthPlatformLabel,
   getHealthSyncEnabled,
@@ -494,6 +495,8 @@ export default function SettingsScreen() {
             accessibilityRole="adjustable"
           />
         </View>
+
+        <CoachVoicePicker />
 
         <View style={styles.toggleRow}>
           <View style={styles.toggleLabelBlock}>

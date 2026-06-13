@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { toDateString, todayDateString, yesterdayDateString } from './dateUtils';
 import { clearUiState, invalidateUiStateCache, loadUiState, patchUiState } from './ui-state';
+import type { InsultTier } from '@/lib/insult-library';
+import { normalizeSeverity } from '@/lib/insult-severity';
 
 export type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
@@ -425,6 +427,7 @@ export async function clearAllData(): Promise<void> {
       PERSONAL_BESTS_KEY,
       SUPPLEMENT_REMINDER_PREFS_KEY,
       TRASH_TALK_VOLUME_KEY,
+      INSULT_SEVERITY_KEY,
       VOICE_ENABLED_KEY,
       WORKOUT_FOCUS_MODE_KEY,
       WORKOUT_VOICE_MODE_KEY,
@@ -667,6 +670,26 @@ export async function setTrashTalkVolume(volume: number): Promise<void> {
     await AsyncStorage.setItem(TRASH_TALK_VOLUME_KEY, String(clamped));
   } catch {
     // non-critical
+  }
+}
+
+const INSULT_SEVERITY_KEY = '@moodrx_insult_severity';
+
+/** The chosen trash-talk severity (drives the audio tier + coach tone). Defaults
+ *  to 'sticks'; an unknown stored value is coerced to 'sticks'. */
+export async function getInsultSeverity(): Promise<InsultTier> {
+  try {
+    return normalizeSeverity(await AsyncStorage.getItem(INSULT_SEVERITY_KEY));
+  } catch {
+    return 'sticks';
+  }
+}
+
+export async function setInsultSeverity(tier: InsultTier): Promise<void> {
+  try {
+    await AsyncStorage.setItem(INSULT_SEVERITY_KEY, tier);
+  } catch {
+    // best-effort persistence
   }
 }
 

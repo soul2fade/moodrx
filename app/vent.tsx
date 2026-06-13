@@ -197,7 +197,7 @@ export default function VentScreen() {
       requiresOnDeviceRecognition: true,
       addsPunctuation: true,
     });
-    // Hard auto-stop at 30s
+    // Hard auto-stop at 60s (HARD_STOP_MS)
     hardStopTimerRef.current = setTimeout(() => {
       if (isRecordingRef.current) {
         try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }

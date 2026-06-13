@@ -81,7 +81,13 @@ async function main() {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!dryRun && !apiKey) throw new Error('Set ELEVENLABS_API_KEY (or pass --dry-run).');
 
-  const voices = loadVoices();
+  const voiceArg = process.argv.find((a) => a.startsWith('--voice='));
+  const onlyVoice = voiceArg ? voiceArg.split('=')[1] : null;
+  const allVoices = loadVoices();
+  const voices = onlyVoice ? allVoices.filter((v) => v.name === onlyVoice) : allVoices;
+  if (onlyVoice && voices.length === 0) {
+    throw new Error(`No voice named "${onlyVoice}" in voices.config.json (have: ${allVoices.map((v) => v.name).join(', ')}).`);
+  }
   let manifest = loadManifest();
 
   let toVoice = 0;

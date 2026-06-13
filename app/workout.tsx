@@ -29,6 +29,8 @@ import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/lib/colors';
 import { stepHasReps } from '@/lib/workout-ui';
+import { pickClip, type Manifest } from '@/lib/insult-library';
+import { ensureClip, fetchManifest, prefetchTier } from '@/lib/insult-cache';
 import {
   pickWorkoutGuideCue,
   pickWorkoutGuideTimerCue,
@@ -91,6 +93,11 @@ const INSULT_AUDIO = [
   require('../assets/audio/insults/insult_08.mp3'),
 ];
 
+// Phase 1: trash talk plays the hosted library at a fixed default voice + tier.
+// Phase 2 (severity sheet + voice picker) replaces these with user state.
+const DEFAULT_INSULT_VOICE = 'rachel';
+const DEFAULT_INSULT_TIER = 'sticks' as const;
+
 type Soundscape = 'rain' | 'forest' | 'focus' | null;
 type StepTimerKind = 'rest' | 'active';
 
@@ -150,6 +157,7 @@ export default function WorkoutScreen() {
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepTimerRemainingRef = useRef(0);
   const insultIdxRef = useRef(0);
+  const manifestRef = useRef<Manifest | null>(null);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNavigating = useRef(false);
   const repScaleAnim = useRef(new Animated.Value(1)).current;
@@ -370,16 +378,42 @@ export default function WorkoutScreen() {
       try { insultPlayer.pause(); } catch {}
       return;
     }
-    // Start at a random position so every session sounds different
+    let cancelled = false;
+
+    // Load the hosted manifest once and warm the cache for the default tier.
+    void (async () => {
+      const m = await fetchManifest().catch(() => null);
+      if (cancelled) return;
+      manifestRef.current = m;
+      if (m) prefetchTier(m, DEFAULT_INSULT_VOICE, DEFAULT_INSULT_TIER);
+    })();
+
+    // Bundled fallback rotation start (random so sessions differ).
     insultIdxRef.current = Math.floor(Math.random() * INSULT_AUDIO.length);
-    const playNext = () => {
-      const idx = insultIdxRef.current % INSULT_AUDIO.length;
-      insultIdxRef.current += 1;
-      setInsultAudioSrc(INSULT_AUDIO[idx]);
+
+    const playNext = async () => {
+      let src: any = null;
+      const m = manifestRef.current;
+      if (m) {
+        const entry = pickClip(m, DEFAULT_INSULT_VOICE, DEFAULT_INSULT_TIER);
+        if (entry) {
+          const uri = await ensureClip(entry);
+          if (uri) src = { uri };
+        }
+      }
+      if (!src) {
+        const idx = insultIdxRef.current % INSULT_AUDIO.length;
+        insultIdxRef.current += 1;
+        src = INSULT_AUDIO[idx];
+      }
+      if (cancelled) return;
+      setInsultAudioSrc(src);
     };
-    playNext();
-    trashIntervalRef.current = setInterval(playNext, 55000);
+
+    void playNext();
+    trashIntervalRef.current = setInterval(() => { void playNext(); }, 55000);
     return () => {
+      cancelled = true;
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- insultPlayer is a stable expo-audio ref; trashTalkOn toggle is the meaningful trigger.

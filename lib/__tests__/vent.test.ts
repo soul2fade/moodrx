@@ -98,4 +98,21 @@ describe('accumulateTranscript', () => {
     expect(accumulateTranscript('so far', '', false)).toEqual({ committed: 'so far', display: 'so far' });
     expect(accumulateTranscript('so far', '', true)).toEqual({ committed: 'so far', display: 'so far' });
   });
+  it('repeated interim results for one segment do not compound onto committed', () => {
+    const committed = 'I had a rough day';
+    // Same second segment arrives interim multiple times, growing each time:
+    expect(accumulateTranscript(committed, 'and', false)).toEqual({
+      committed: 'I had a rough day',
+      display: 'I had a rough day and',
+    });
+    expect(accumulateTranscript(committed, 'and I am', false)).toEqual({
+      committed: 'I had a rough day',
+      display: 'I had a rough day and I am',
+    });
+    // Finalizes — folds in exactly once, no duplication:
+    expect(accumulateTranscript(committed, 'and I am exhausted', true)).toEqual({
+      committed: 'I had a rough day and I am exhausted',
+      display: 'I had a rough day and I am exhausted',
+    });
+  });
 });

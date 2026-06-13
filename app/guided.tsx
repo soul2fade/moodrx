@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   moodTextBlock: { flex: 1 },
   moodName: { ...t.headlineSm, fontSize: 16 },
   moodDesc: { ...t.bodySm, fontSize: 15, lineHeight: 17, marginTop: 2 },
-  moodCode: { ...t.label, fontSize: 15, lineHeight: 17, letterSpacing: 2 },
+  moodCode: { ...t.label, fontSize: 15, lineHeight: 17, letterSpacing: 1.5 },
   intensitySection: { marginTop: 24, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 20 },
   intensityRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   intensityLabel: { ...t.label, color: '#d8d8d8' },

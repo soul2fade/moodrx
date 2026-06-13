@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#1a1a1a',
   },
-  splitWeekendsLabel: { ...t.label, color: '#d8d8d8', letterSpacing: 2, fontSize: 15, lineHeight: 17 },
+  splitWeekendsLabel: { ...t.label, color: '#d8d8d8', letterSpacing: 1.5, fontSize: 15, lineHeight: 17 },
   splitWeekendsToggle: {
     borderWidth: 1,
     borderColor: '#333333',

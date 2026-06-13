@@ -174,7 +174,7 @@ export default function BadDayScreen() {
             onPress={handleNext}
             activeOpacity={0.8}
           >
-            <Text style={[styles.primaryBtnText, { color: accentColor }]}>NEXT →</Text>
+            <Text style={[styles.primaryBtnText, { color: accentColor }]} numberOfLines={1} maxFontSizeMultiplier={1.3}>NEXT →</Text>
           </TouchableOpacity>
         ) : (
           <>
@@ -214,12 +214,12 @@ export default function BadDayScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 48, flexGrow: 1 },
-  backButton: { ...t.label, color: '#d8d8d8', letterSpacing: 2 },
+  backButton: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5 },
   label: { ...t.label, color: colors.accent, letterSpacing: 3, marginTop: 24 },
   headline: { ...t.headline, fontSize: 26, marginTop: 8 },
   subtext: { ...t.bodyMuted, marginTop: 12, lineHeight: 22 },
   moodSection: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 20 },
-  sectionLabel: { ...t.label, color: '#d8d8d8', letterSpacing: 2, marginBottom: 12 },
+  sectionLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, marginBottom: 12 },
   moodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   moodChip: {
     borderWidth: 1,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   intensityRow: { marginTop: 16 },
-  intensityLabel: { ...t.label, color: '#d8d8d8' },
+  intensityLabel: { ...t.label, color: '#f0f0f0' },
   slider: { width: '100%', height: 36, marginTop: 4 },
   dotsRow: { flexDirection: 'row', gap: 8, marginBottom: 12, marginTop: 24 },
   dot: { width: 10, height: 10, borderRadius: 5 },
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
   },
-  stepLabel: { ...t.label, color: '#d8d8d8', letterSpacing: 2 },
+  stepLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5 },
   stepText: { ...t.body, marginTop: 10, lineHeight: 24 },
   primaryBtn: {
     marginTop: 24,

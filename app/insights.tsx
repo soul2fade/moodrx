@@ -1010,8 +1010,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 15,
     lineHeight: 17,
-    color: '#cdcdcd',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
   },
   workoutHistAvgVal: {
     fontFamily: fonts.mono.regular,
@@ -1052,7 +1052,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 15,
     lineHeight: 17,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1,
   },
   noteWorkoutName: {
@@ -1098,7 +1098,7 @@ const styles = StyleSheet.create({
   },
   recentLightBadge: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     fontSize: 15,
     lineHeight: 17,
     letterSpacing: 1.5,
@@ -1162,8 +1162,8 @@ const styles = StyleSheet.create({
   },
   burnButtonText: {
     ...t.label,
-    color: '#cdcdcd',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
   },
   burnConfirm: {
     borderWidth: 2,
@@ -1378,8 +1378,8 @@ const styles = StyleSheet.create({
   },
   healthCardLabel: {
     ...t.label,
-    color: '#d8d8d8',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginBottom: 10,
   },
   healthRow: {
@@ -1396,7 +1396,7 @@ const styles = StyleSheet.create({
   },
   healthStatLabel: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     fontSize: 15,
     lineHeight: 17,
     marginTop: 4,

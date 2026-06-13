@@ -782,8 +782,8 @@ const styles = StyleSheet.create({
   tabBtnText: {
     fontFamily: fonts.mono.regular,
     fontSize: 14,
-    color: '#cdcdcd',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     lineHeight: 20,
   },
   tabUnderline: {
@@ -803,7 +803,7 @@ const styles = StyleSheet.create({
   },
   sectionNote: {
     ...t.timestamp,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     marginBottom: 16,
   },
   moodFilterBadge: {
@@ -818,8 +818,8 @@ const styles = StyleSheet.create({
   },
   moodFilterLabel: {
     ...t.label,
-    color: '#cdcdcd',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 18,
   },
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 15,
     lineHeight: 16,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 0,
   },
   adherenceCountText: {
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   adherenceCountOf: {
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     fontFamily: fonts.mono.regular,
     fontSize: 14,
     lineHeight: 20,
@@ -913,8 +913,8 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     ...t.label,
-    color: '#cdcdcd',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginLeft: 8,
   },
   priorityCard: {
@@ -925,8 +925,8 @@ const styles = StyleSheet.create({
   },
   priorityCardLabel: {
     ...t.label,
-    color: '#cdcdcd',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 17,
   },
@@ -943,8 +943,8 @@ const styles = StyleSheet.create({
   },
   priorityCardDose: {
     ...t.timestamp,
-    color: '#cdcdcd',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginTop: 2,
   },
   priorityCardScience: {
@@ -1028,14 +1028,14 @@ const styles = StyleSheet.create({
   },
   supplementDose: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     fontSize: 15,
     lineHeight: 18,
   },
   supplementTiming: {
     ...t.label,
-    color: '#cdcdcd',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginTop: 2,
     fontSize: 15,
     lineHeight: 18,
@@ -1054,8 +1054,8 @@ const styles = StyleSheet.create({
   },
   sciencePanelLabel: {
     ...t.label,
-    color: '#cdcdcd',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginBottom: 8,
     fontSize: 15,
     lineHeight: 17,
@@ -1111,7 +1111,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 15,
     lineHeight: 18,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
   },
   weekBlock: {
@@ -1125,8 +1125,8 @@ const styles = StyleSheet.create({
   },
   weekLabel: {
     ...t.label,
-    color: '#cdcdcd',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 18,
   },
@@ -1153,7 +1153,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 15,
     lineHeight: 16,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 0,
   },
   historySupName: {
@@ -1185,7 +1185,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 15,
     lineHeight: 14,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
   },
   reminderCard: {
     borderWidth: 1,
@@ -1206,8 +1206,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 15,
     lineHeight: 17,
-    color: '#cdcdcd',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     textTransform: 'uppercase' as const,
   },
   reminderToggle: {
@@ -1235,7 +1235,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     fontSize: 15,
     lineHeight: 17,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     marginTop: 8,
   },
   reminderTimeRow: {

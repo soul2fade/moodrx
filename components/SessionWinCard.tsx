@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
   },
   deltaLabel: {
     ...t.label,
-    color: '#d8d8d8',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
   },
   deltaRow: {
     flexDirection: 'row',
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     ...t.label,
-    color: '#cdcdcd',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
   },
 });

@@ -695,8 +695,8 @@ const styles = StyleSheet.create({
   patternCalloutLabel: {
     fontFamily: fonts.mono.regular,
     fontSize: 15,
-    color: '#d8d8d8',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     lineHeight: 17,
   },
   patternCalloutText: {

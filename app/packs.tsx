@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   packPrice: {
     fontFamily: fonts.mono.regular,
     fontSize: 15,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1,
     lineHeight: 18,
     marginTop: 2,

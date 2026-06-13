@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   },
   tryProBadgeText: {
     ...t.label,
-    color: '#d8d8d8',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 17,
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   },
   streakPillDismiss: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     fontSize: 15,
     lineHeight: 17,
   },
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
   },
   badDayText: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 17,
@@ -805,8 +805,8 @@ const styles = StyleSheet.create({
   },
   sameDayLabel: {
     ...t.label,
-    color: '#d8d8d8',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 17,
   },
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
   },
   sameDayBtnOutlineText: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 17,
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   },
   justLogButtonText: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 17,
@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
   },
   navHintDismiss: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 17,

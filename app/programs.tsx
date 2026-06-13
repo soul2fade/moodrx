@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   sessionDay: {
     fontFamily: fonts.mono.regular,
     fontSize: 15,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
     lineHeight: 17,
     width: 44,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   sessionMetaText: {
     fontFamily: fonts.mono.regular,
     fontSize: 15,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
     lineHeight: 17,
     textTransform: 'uppercase',
@@ -251,13 +251,13 @@ const styles = StyleSheet.create({
   sessionMetaDot: {
     fontFamily: fonts.mono.regular,
     fontSize: 15,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     lineHeight: 17,
   },
   sessionArrow: {
     fontFamily: fonts.mono.regular,
     fontSize: 16,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     marginLeft: 8,
   },
 });

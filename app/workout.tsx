@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 48, paddingBottom: 12 },
   topRowRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   focusBtn: { borderWidth: 1, borderColor: '#333333', paddingHorizontal: 10, paddingVertical: 6 },
-  focusBtnText: { ...t.label, color: '#cdcdcd', letterSpacing: 1.5, fontSize: 15, lineHeight: 17 },
+  focusBtnText: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 15, lineHeight: 17 },
   quitButton: { paddingVertical: 4 },
   quitText: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
   stepCounter: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
@@ -911,18 +911,18 @@ const styles = StyleSheet.create({
   motivational: { ...t.soft, textAlign: 'center', marginTop: 24 },
 
   restBox: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#1a1a1a', paddingVertical: 32, paddingHorizontal: 16, marginTop: 16, alignItems: 'center' },
-  restLabel: { ...t.label, color: '#c5c5c5', letterSpacing: 1.5, fontSize: 15, marginBottom: 12 },
+  restLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 15, marginBottom: 12 },
   restCountdown: { fontSize: 68, fontFamily: fonts.mono.regular, lineHeight: 76 },
   restProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 20 },
   restProgressFill: { height: 2 },
-  restSubtext: { ...t.label, color: '#cdcdcd', letterSpacing: 1.5, fontSize: 15, lineHeight: 17, marginTop: 12 },
+  restSubtext: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 15, lineHeight: 17, marginTop: 12 },
 
   activeTimerBox: { marginTop: 20, alignItems: 'center', width: '100%' },
   activeTimerCountdown: { fontSize: 52, fontFamily: fonts.mono.regular, lineHeight: 58 },
   activeProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 12 },
   activeProgressFill: { height: 2 },
   activeTimerDone: { ...t.label, color: '#ffffff', letterSpacing: 1.5, fontSize: 15, lineHeight: 17, marginTop: 10 },
-  activeTimerHint: { ...t.label, color: '#cdcdcd', letterSpacing: 1.5, fontSize: 15, lineHeight: 17, marginTop: 10 },
+  activeTimerHint: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 15, lineHeight: 17, marginTop: 10 },
 
   timerControlsRow: { flexDirection: 'row', gap: 12, marginTop: 20 },
   timerControlBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 10, paddingHorizontal: 20 },
@@ -941,14 +941,14 @@ const styles = StyleSheet.create({
   miniMapText: { ...t.label, fontFamily: fonts.mono.bold, textTransform: 'none', color: '#e8e8e8', fontSize: 17, flex: 1, letterSpacing: 0.2, lineHeight: 26 },
 
   repSection: { marginTop: 28 },
-  sectionLabel: { ...t.label, color: '#c5c5c5', letterSpacing: 1.5, fontSize: 15, marginBottom: 14 },
+  sectionLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 15, marginBottom: 14 },
   repHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 15, color: '#cdcdcd', letterSpacing: 1.5 },
+  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 15, color: '#f0f0f0', letterSpacing: 1.5 },
   pbAlert: { fontFamily: fonts.mono.regular, fontSize: 15, letterSpacing: 1.5, textAlign: 'center', marginTop: 10 },
   repRow: { flexDirection: 'column', alignItems: 'center', gap: 12 },
   repCircle: { width: 88, height: 88, borderRadius: 44, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   repNum: { fontSize: 35, fontWeight: '600', lineHeight: 39 },
-  repLabel: { ...t.label, color: '#c5c5c5', fontSize: 15, lineHeight: 17, letterSpacing: 1.5, marginTop: 2 },
+  repLabel: { ...t.label, color: '#f0f0f0', fontSize: 15, lineHeight: 17, letterSpacing: 1.5, marginTop: 2 },
   repReset: { paddingVertical: 8, paddingHorizontal: 16 },
   repResetText: { ...t.label, color: '#ffffff', letterSpacing: 1.5, fontSize: 15 },
 
@@ -970,7 +970,7 @@ const styles = StyleSheet.create({
   trashKnobOn: { alignSelf: 'flex-end' },
 
   keepAwakeBtn: { marginTop: 16, borderWidth: 1, borderColor: '#333', paddingVertical: 10, alignItems: 'center' },
-  keepAwakeBtnText: { ...t.label, color: '#cdcdcd', fontSize: 15, letterSpacing: 1.5 },
+  keepAwakeBtnText: { ...t.label, color: '#f0f0f0', fontSize: 15, letterSpacing: 1.5 },
 
   bottomNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   backBtn: { borderWidth: 1, borderColor: '#1a1a1a', paddingVertical: 12, paddingHorizontal: 24 },

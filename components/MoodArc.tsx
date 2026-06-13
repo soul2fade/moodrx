@@ -153,8 +153,8 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: fonts.mono.regular,
     fontSize: 15,
-    color: '#c5c5c5',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     lineHeight: 17,
   },
   sub: {

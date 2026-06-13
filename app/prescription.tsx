@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   },
   workoutBadgeMuted: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
     fontSize: 15,
     lineHeight: 17,
@@ -840,7 +840,7 @@ const styles = StyleSheet.create({
   },
   suppModalDose: {
     ...t.label,
-    color: '#cdcdcd',
+    color: '#f0f0f0',
     fontSize: 15,
     marginTop: 4,
     lineHeight: undefined,

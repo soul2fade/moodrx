@@ -69,6 +69,9 @@ export default function VentScreen() {
   const isRecordingRef = useRef(false);
   // Double-persist guard: flipped to true the first time persist is called
   const persistedRef = useRef(false);
+  // Set on unmount; guards async continuations (e.g. handleSubmit after await)
+  // from setting state or persisting a session on a dead screen.
+  const unmountedRef = useRef(false);
 
   const backHandler = useCallback(() => {
     router.back();
@@ -102,6 +105,7 @@ export default function VentScreen() {
   // ─── Unmount cleanup ─────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
+      unmountedRef.current = true;
       if (hardStopTimerRef.current) clearTimeout(hardStopTimerRef.current);
       if (silencePromptTimerRef.current) clearTimeout(silencePromptTimerRef.current);
       if (silenceAutoFinishTimerRef.current) clearTimeout(silenceAutoFinishTimerRef.current);
@@ -230,6 +234,7 @@ export default function VentScreen() {
 
   // ─── Tap to start recording ───────────────────────────────────────────────
   const handleStartRecording = async () => {
+    if (isRecordingRef.current) return; // re-entry guard: ignore double-taps
     const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
     if (!perm.granted) {
       fallbackToForm("MoodRx needs the mic to hear you — tap it in instead");
@@ -268,6 +273,7 @@ export default function VentScreen() {
   const handleSubmit = async (text: string) => {
     setVentState('thinking');
     const a = await fetchVentReply(text);
+    if (unmountedRef.current) return; // screen gone — don't persist a phantom session or setState
     if (!a) {
       fallbackToForm("Couldn't reach Dr. MoodRx — tap it in instead");
       return;

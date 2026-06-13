@@ -16,19 +16,19 @@ export const TIERS: Tier[] = [
     key: 'glass-house',
     label: "I'm in a glass house",
     guidance:
-      'Gentle ribbing. Soft, affectionate teasing about their reluctance to work out — the kind you would aim at a friend you like. Never sharp, never about their body or worth.',
+      'Lightest burn. Keep the yo-mama exaggeration gentle and silly rather than savage — the absurd payoff should make them grin, not sting. For someone who might feel fragile today, so tease the effort softly.',
   },
   {
     key: 'sticks',
     label: 'Sticks and Stones',
     guidance:
-      'Standard Dr. MoodRx bite. Deadpan, film-noir, confidently sarcastic about their excuses and resistance. Funny first, mean never — still about the workout, not the person.',
+      'Standard setting. The everyday playful jab — clearly teasing, a little cheeky, confident. The default amount of poke.',
   },
   {
     key: 'roast',
     label: 'Roast me',
     guidance:
-      'Sharper and funnier, dialed up — but still LIGHTHEARTED and affectionate underneath. Rib their excuses hard; never cruel about their body, weight, intelligence, or worth.',
+      'Sharpest, HARD-R setting. Profanity (fuck, shit, ass, bitch, damn) is welcome. Be brutally savage about their effort, coordination, weakness, stamina, and form — the savagery comes from the absurd comparison, not from shock. Stay affectionate underneath; never cruel about their body, weight, looks, intelligence, or worth.',
   },
 ];
 

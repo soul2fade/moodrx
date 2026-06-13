@@ -212,6 +212,18 @@ export default function SettingsScreen() {
       duration: 200,
       useNativeDriver: true,
     }).start();
+    // The AI coach line builds on the "Dr. MoodRx copy" line (postInsult), which
+    // is empty when that toggle is off — so AI coach alone would silently do
+    // nothing. Auto-enable the copy when AI coach is switched on.
+    if (next && !voiceEnabled) {
+      setVoiceEnabledState(true);
+      await setVoiceEnabled(true);
+      Animated.timing(voiceToggleAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
   };
 
   const handleVentToggle = async () => {

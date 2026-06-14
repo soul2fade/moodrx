@@ -43,6 +43,8 @@ function isRCPurchaseError(err: unknown): err is RCPurchaseError {
 interface SubscriptionContextValue {
   /** True when the user holds the `premium` entitlement (owns the base unlock). */
   isPremium: boolean;
+  /** True when MoodRx+ (all_access) is active — gates the live AI coach. */
+  isPlus: boolean;
   /** True when the user owns the given pack (or has all-access). */
   ownsPack: (packId: string) => boolean;
   /** True when the user can use the given coach voice (owns it, the bundle, or all-access). */
@@ -60,6 +62,8 @@ interface SubscriptionContextValue {
   /** Resolves true when a previous purchase was found and restored. */
   restorePurchases: () => Promise<boolean>;
   devTogglePremium: () => void;
+  /** Dev-only: toggle the all_access (MoodRx+) entitlement. */
+  devTogglePlus: () => void;
 }
 
 // Default is `null` so any consumer rendered outside <SubscriptionProvider>
@@ -80,7 +84,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const pendingResolveRef = useRef<((granted: boolean) => void) | null>(null);
   const pendingGrantsRef = useRef<string | null>(null); // dev: entitlement to mock-grant
 
-  const isPremium = isPaidPremium;
+  const hasAllAccess = ownedEntitlements.has(ALL_ACCESS_ENTITLEMENT_IDENTIFIER);
+  // Full app access = owns the base unlock OR has MoodRx+ (all_access). So a
+  // MoodRx+ trial/subscriber unlocks everything the base does.
+  const isPremium = isPaidPremium || hasAllAccess;
+  // MoodRx+ specifically — gates the live coach.
+  const isPlus = hasAllAccess;
 
   const applyCustomerInfo = useCallback((customerInfo: CustomerInfo) => {
     const active = customerInfo.entitlements.active;
@@ -197,6 +206,16 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     setIsPaidPremium(prev => !prev);
   }, []);
 
+  const devTogglePlus = useCallback(() => {
+    if (!__DEV__) return;
+    setOwnedEntitlements((prev) => {
+      const next = new Set(prev);
+      if (next.has(ALL_ACCESS_ENTITLEMENT_IDENTIFIER)) next.delete(ALL_ACCESS_ENTITLEMENT_IDENTIFIER);
+      else next.add(ALL_ACCESS_ENTITLEMENT_IDENTIFIER);
+      return next;
+    });
+  }, []);
+
   const restorePurchases = useCallback(async (): Promise<boolean> => {
     try {
       const customerInfo = await Purchases.restorePurchases();
@@ -248,6 +267,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const value = useMemo<SubscriptionContextValue>(
     () => ({
       isPremium,
+      isPlus,
       ownsPack,
       ownsVoice,
       ownedEntitlements,
@@ -258,9 +278,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       purchaseVoice,
       restorePurchases,
       devTogglePremium,
+      devTogglePlus,
     }),
     [
       isPremium,
+      isPlus,
       ownsPack,
       ownsVoice,
       ownedEntitlements,
@@ -271,6 +293,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       purchaseVoice,
       restorePurchases,
       devTogglePremium,
+      devTogglePlus,
     ]
   );
 

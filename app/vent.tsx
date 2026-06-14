@@ -261,6 +261,14 @@ export default function VentScreen() {
       continuous: false,
       requiresOnDeviceRecognition: modeOnDeviceRef.current,
       addsPunctuation: true,
+      // Bridge natural speech pauses so the recognizer doesn't end (and beep on
+      // the next restart) every time the user pauses to think. Only a long (~4s)
+      // gap ends the utterance and triggers a restart — keeping one continuous,
+      // beep-free session through normal venting.
+      androidIntentOptions: {
+        EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 4000,
+        EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 4000,
+      },
     });
   }, []);
 

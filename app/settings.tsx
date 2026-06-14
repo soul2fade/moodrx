@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVentEnabled, getVoiceEnabled, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVentEnabled, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVentEnabled, getVoiceEnabled, resetLiveCoachTasteUsed, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVentEnabled, setVoiceEnabled, UserProfile } from '@/lib/storage';
 import { exportSessionsJson } from '@/lib/export-sessions';
 import { resetAllAppData } from '@/lib/reset-app';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -80,8 +80,9 @@ export default function SettingsScreen() {
   const [ventEnabled, setVentEnabledState] = useState(true);
   const ventToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
-  const { restorePurchases, isPremium, devTogglePremium, isLoading: subLoading } = useSubscription();
+  const { restorePurchases, isPremium, devTogglePremium, devTogglePlus, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
+  const [devPanel, setDevPanel] = useState(false);
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleAnim = useRef(new Animated.Value(0)).current;
@@ -422,6 +423,20 @@ export default function SettingsScreen() {
           </View>
         )}
 
+        {__DEV__ && devPanel && (
+          <View style={{ marginTop: 12, gap: 8 }}>
+            <TouchableOpacity onPress={devTogglePremium} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: toggle base unlock">
+              <Text style={styles.upgradeBtnText}>DEV: TOGGLE BASE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={devTogglePlus} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: toggle MoodRx Plus">
+              <Text style={styles.upgradeBtnText}>DEV: TOGGLE MOODRX+</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { void resetLiveCoachTasteUsed(); }} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: reset coach taste">
+              <Text style={styles.upgradeBtnText}>DEV: RESET COACH TASTE</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Training Preferences section */}
         <Text style={styles.sectionHeader}>TRAINING PREFERENCES</Text>
 
@@ -734,7 +749,7 @@ export default function SettingsScreen() {
             if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
             if (versionTapCount.current >= 5) {
               versionTapCount.current = 0;
-              devTogglePremium();
+              setDevPanel(true);
             } else {
               versionTapTimer.current = setTimeout(() => { versionTapCount.current = 0; }, 2000);
             }

@@ -13,12 +13,11 @@ import {
 } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { useSessions } from '@/contexts/SessionsContext';
 import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
-import { formatSessionDelta } from '@/lib/session-utils';
 import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { OfferProof } from '@/components/OfferProof';
 import { purchaseButtonLabel } from '@/lib/purchase-ui';
-import { type as t, fonts } from '@/lib/typography';
+import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -39,8 +38,6 @@ export default function PremiumScreen() {
     isPremium,
     offerings,
   } = useSubscription();
-  const { sessionCount, avgChange } = useSessions();
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
 
@@ -71,9 +68,6 @@ export default function PremiumScreen() {
     offeringsLoaded: true, // restore doesn't depend on offerings
     run: restorePurchases,
   });
-
-  const hasPersonalStats = sessionCount >= 3;
-  const personalDeltaLabel = formatSessionDelta(5, 5 + Math.round(avgChange * 10) / 10);
 
   const openURL = (url: string) => {
     void Linking.openURL(url).catch(() =>
@@ -125,19 +119,7 @@ export default function PremiumScreen() {
           </TouchableOpacity>
         )}
 
-        <View style={styles.socialProofBox}>
-          <Text style={styles.socialProofStat}>
-            {hasPersonalStats ? personalDeltaLabel : '−3'}
-          </Text>
-          <Text style={styles.socialProofLabel}>
-            {hasPersonalStats ? 'YOUR AVG SHIFT PER SESSION' : 'EXAMPLE SHIFT (ONE SESSION)'}
-          </Text>
-          <Text style={styles.socialProofSub}>
-            {hasPersonalStats
-              ? `Based on ${sessionCount} logged sessions in your evidence file.`
-              : 'Log a few sessions to see your own average here.'}
-          </Text>
-        </View>
+        <OfferProof />
 
         <View style={styles.featureList}>
           {FEATURES.map((f) => (
@@ -226,38 +208,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   statusBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
-  socialProofBox: {
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-    borderLeftWidth: 3,
-    borderLeftColor: '#059669',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: '#0d0d0d',
-  },
-  socialProofStat: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#059669',
-    fontFamily: fonts.mono.bold,
-  },
-  socialProofLabel: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    fontSize: 16,
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  socialProofSub: {
-    ...t.label,
-    color: '#ffffff',
-    fontSize: 16,
-    letterSpacing: 1,
-    marginTop: 6,
-    lineHeight: 16,
-  },
   featureList: { marginTop: 24 },
   featureRow: {
     flexDirection: 'row',

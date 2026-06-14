@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  ActivityIndicator,
   Linking,
   Alert,
 } from 'react-native';
@@ -13,6 +14,8 @@ import { router } from 'expo-router';
 import { getFirstLaunchDone, setFirstLaunchDone } from '@/lib/storage';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { colors } from '@/lib/colors';
 
@@ -43,7 +46,7 @@ const TRIAL_FEATURES = [
 export default function OnboardingScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const trialScale = useRef(new Animated.Value(1)).current;
-  const { purchaseBase } = useSubscription();
+  const { purchaseBase, offerings } = useSubscription();
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -56,15 +59,16 @@ export default function OnboardingScreen() {
   const onPressOut = (anim: Animated.Value) =>
     Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
-  const handleStartTrial = useCallback(async () => {
-    const granted = await purchaseBase();
-    // Only mark onboarding done if the user actually unlocked Pro.
-    // Otherwise (cancel, error, web), leave them on this screen so they can
-    // retry or pick "Continue with free version".
-    if (!granted) return;
-    await setFirstLaunchDone();
-    router.replace('/guided');
-  }, [purchaseBase]);
+  // Only advances on a real unlock. On cancel/error the hook returns to idle so
+  // the user can retry or pick "Continue with free version".
+  const unlockBtn = usePurchaseButton({
+    offeringsLoaded: !!offerings,
+    run: purchaseBase,
+    onSuccess: () => {
+      // After the "You're in ✓" flash, drop straight into the guided flow.
+      void setFirstLaunchDone().then(() => router.replace('/guided'));
+    },
+  });
 
   const handleFreeVersion = useCallback(async () => {
     await setFirstLaunchDone();
@@ -151,15 +155,23 @@ export default function OnboardingScreen() {
 
         <Animated.View style={{ transform: [{ scale: trialScale }] }}>
           <TouchableOpacity
-            style={styles.trialButton}
-            onPress={handleStartTrial}
+            style={[styles.trialButton, unlockBtn.disabled && styles.trialButtonDisabled]}
+            onPress={unlockBtn.onPress}
             onPressIn={() => onPressIn(trialScale)}
             onPressOut={() => onPressOut(trialScale)}
+            disabled={unlockBtn.disabled}
             activeOpacity={0.7}
             accessibilityRole="button"
+            accessibilityState={{ disabled: unlockBtn.disabled, busy: unlockBtn.busy }}
             accessibilityLabel="Unlock MoodRx Pro"
           >
-            <Text style={styles.trialButtonText}>UNLOCK MOODRX PRO →</Text>
+            {unlockBtn.busy ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.trialButtonText}>
+                {purchaseButtonLabel(unlockBtn.status, { idle: 'UNLOCK MOODRX PRO →' })}
+              </Text>
+            )}
           </TouchableOpacity>
         </Animated.View>
 
@@ -393,6 +405,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 0,
     marginBottom: 12,
+  },
+  trialButtonDisabled: {
+    borderColor: '#555555',
+    opacity: 0.6,
   },
   trialButtonText: {
     ...t.button,

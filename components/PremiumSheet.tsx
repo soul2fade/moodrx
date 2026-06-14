@@ -6,11 +6,13 @@ import {
   Modal,
   StyleSheet,
   Pressable,
+  ActivityIndicator,
   Linking,
   Alert,
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
+import { usePurchaseButton } from '@/hooks/usePurchaseButton';
 import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
 
@@ -32,6 +34,13 @@ export function PremiumSheet({
   const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === BASE_UNLOCK_PACKAGE_ID);
   const basePrice = basePkg?.product?.priceString ?? '$9.99';
 
+  const buyBtn = usePurchaseButton({
+    offeringsLoaded: !!offerings,
+    run: purchaseBase,
+    // Flash "You're in ✓", then close — revealing the now-unlocked content behind.
+    onSuccess: onClose,
+  });
+
   const openURL = (url: string) => {
     void Linking.openURL(url).catch(() =>
       Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')
@@ -52,14 +61,24 @@ export function PremiumSheet({
         <Text style={styles.description}>{description}</Text>
 
         <TouchableOpacity
-          style={styles.yearlyButton}
-          onPress={async () => { await purchaseBase(); onClose(); }}
+          style={[styles.yearlyButton, buyBtn.disabled && styles.yearlyButtonDisabled]}
+          onPress={buyBtn.onPress}
+          disabled={buyBtn.disabled}
           activeOpacity={0.8}
           accessibilityRole="button"
+          accessibilityState={{ disabled: buyBtn.disabled, busy: buyBtn.busy }}
           accessibilityLabel={`Unlock MoodRx Pro, ${basePrice} one time`}
         >
-          <Text style={styles.planPrice}>UNLOCK MOODRX PRO — {basePrice}</Text>
-          <Text style={styles.planSub}>One-time purchase. Yours forever.</Text>
+          {buyBtn.busy ? (
+            <ActivityIndicator size="small" color={colors.premium} />
+          ) : buyBtn.status === 'success' ? (
+            <Text style={styles.planPrice}>You&apos;re in ✓</Text>
+          ) : (
+            <>
+              <Text style={styles.planPrice}>UNLOCK MOODRX PRO — {basePrice}</Text>
+              <Text style={styles.planSub}>One-time purchase. Yours forever.</Text>
+            </>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.subDisclosure}>
@@ -131,6 +150,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: 'relative',
   },
+  yearlyButtonDisabled: { opacity: 0.6 },
   planPrice: {
     ...t.headlineSm,
     color: colors.premium,

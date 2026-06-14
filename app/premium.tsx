@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  ActivityIndicator,
   BackHandler,
   Linking,
   Alert,
@@ -15,6 +16,8 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useSessions } from '@/contexts/SessionsContext';
 import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
 import { formatSessionDelta } from '@/lib/session-utils';
+import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { type as t, fonts } from '@/lib/typography';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +62,16 @@ export default function PremiumScreen() {
   const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === BASE_UNLOCK_PACKAGE_ID);
   const basePrice = basePkg?.product?.priceString ?? '$9.99';
 
+  const baseBtn = usePurchaseButton({
+    offeringsLoaded: !!offerings,
+    owned: isPremium,
+    run: purchaseBase,
+  });
+  const restoreBtn = usePurchaseButton({
+    offeringsLoaded: true, // restore doesn't depend on offerings
+    run: restorePurchases,
+  });
+
   const hasPersonalStats = sessionCount >= 3;
   const personalDeltaLabel = formatSessionDelta(5, 5 + Math.round(avgChange * 10) / 10);
 
@@ -88,19 +101,27 @@ export default function PremiumScreen() {
 
         <Text style={styles.subtext}>Your brain deserves the upgrade.</Text>
 
-        {isPremium ? (
+        {isPremium && baseBtn.phase === 'idle' ? (
           <View style={styles.statusBadge}>
             <Text style={styles.statusBadgeText}>YOU HAVE PRO</Text>
           </View>
         ) : (
           <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={purchaseBase}
+            style={[styles.ctaButton, baseBtn.disabled && styles.ctaButtonDisabled]}
+            onPress={baseBtn.onPress}
+            disabled={baseBtn.disabled}
             activeOpacity={0.8}
             accessibilityRole="button"
+            accessibilityState={{ disabled: baseBtn.disabled, busy: baseBtn.busy }}
             accessibilityLabel={`Unlock MoodRx Pro, ${basePrice} one time`}
           >
-            <Text style={styles.ctaText}>UNLOCK MOODRX PRO — {basePrice} →</Text>
+            {baseBtn.busy ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.ctaText}>
+                {purchaseButtonLabel(baseBtn.status, { idle: `UNLOCK MOODRX PRO — ${basePrice} →` })}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
 
@@ -155,13 +176,21 @@ export default function PremiumScreen() {
         </View>
 
         <TouchableOpacity
-          onPress={restorePurchases}
+          onPress={restoreBtn.onPress}
+          disabled={restoreBtn.disabled}
           activeOpacity={0.7}
           style={styles.restoreButton}
           accessibilityRole="button"
+          accessibilityState={{ disabled: restoreBtn.disabled, busy: restoreBtn.busy }}
           accessibilityLabel="Restore purchases"
         >
-          <Text style={styles.restoreText}>RESTORE PURCHASES</Text>
+          {restoreBtn.busy ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.restoreText}>
+              {purchaseButtonLabel(restoreBtn.status, { idle: 'RESTORE PURCHASES', success: 'RESTORED ✓' })}
+            </Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -248,6 +277,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 16,
   },
+  ctaButtonDisabled: { borderColor: '#555555', opacity: 0.6 },
   ctaText: { ...t.button, letterSpacing: 3 },
   legalBlock: { marginTop: 8, marginBottom: 8 },
   legalDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 17 },

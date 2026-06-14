@@ -1,15 +1,20 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { VOICES } from '@/lib/voices';
 
 interface Props {
   visible: boolean;
   selected: string;
   ownsBundle: boolean;
-  priceLabel: string | null;
   /** False until the library manifest is loaded — disables the sample buttons
    *  so they're not dead-looking before the library is hosted. */
   previewAvailable: boolean;
+  /** Buy-CTA display, derived from usePurchaseButton in the parent. */
+  buyLabel: string;
+  buyBusy: boolean;
+  buyDisabled: boolean;
+  /** Whether to render the buy CTA at all (hidden once the bundle is owned). */
+  showBuy: boolean;
   onSelect: (name: string) => void;
   onPreview: (name: string) => void;
   onBuy: () => void;
@@ -18,7 +23,7 @@ interface Props {
 
 const ACCENT = '#E11D48';
 
-export function VoiceSheet({ visible, selected, ownsBundle, priceLabel, previewAvailable, onSelect, onPreview, onBuy, onClose }: Props) {
+export function VoiceSheet({ visible, selected, ownsBundle, previewAvailable, buyLabel, buyBusy, buyDisabled, showBuy, onSelect, onPreview, onBuy, onClose }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
@@ -53,9 +58,19 @@ export function VoiceSheet({ visible, selected, ownsBundle, priceLabel, previewA
               </View>
             );
           })}
-          {!ownsBundle && (
-            <Pressable style={styles.cta} onPress={onBuy} accessibilityRole="button">
-              <Text style={styles.ctaText}>Unlock all voices{priceLabel ? ` — ${priceLabel}` : ''}</Text>
+          {showBuy && (
+            <Pressable
+              style={[styles.cta, buyDisabled && styles.ctaDisabled]}
+              onPress={onBuy}
+              disabled={buyDisabled}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: buyDisabled, busy: buyBusy }}
+            >
+              {buyBusy ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.ctaText}>{buyLabel}</Text>
+              )}
             </Pressable>
           )}
         </Pressable>
@@ -79,5 +94,6 @@ const styles = StyleSheet.create({
   sampleBtnDisabled: { opacity: 0.4 },
   sampleText: { color: '#e8e8e8', fontSize: 16, fontWeight: '600' },
   cta: { marginTop: 18, backgroundColor: ACCENT, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  ctaDisabled: { opacity: 0.5 },
   ctaText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
 });

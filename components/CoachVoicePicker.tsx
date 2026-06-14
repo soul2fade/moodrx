@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PACKS_OFFERING_ID, VOICE_PACK_ID } from '@/lib/revenuecat';
+import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { VOICES } from '@/lib/voices';
 import { getCoachVoice, setCoachVoice, getInsultSeverity } from '@/lib/storage';
 import { fetchManifest, ensureClip } from '@/lib/insult-cache';
@@ -61,9 +63,14 @@ export function CoachVoicePicker() {
     if (uri) setPreviewSrc({ uri });
   }, []);
 
-  const handleBuy = useCallback(() => {
-    void purchasePack(VOICE_PACK_ID);
-  }, [purchasePack]);
+  const buyBtn = usePurchaseButton({
+    offeringsLoaded: !!offerings,
+    owned: ownsBundle,
+    run: () => purchasePack(VOICE_PACK_ID),
+  });
+  const buyLabel = purchaseButtonLabel(buyBtn.status, {
+    idle: `Unlock all voices${priceLabel ? ` — ${priceLabel}` : ''}`,
+  });
 
   return (
     <>
@@ -81,11 +88,14 @@ export function CoachVoicePicker() {
         visible={open}
         selected={selected}
         ownsBundle={ownsBundle}
-        priceLabel={priceLabel}
         previewAvailable={previewAvailable}
+        buyLabel={buyLabel}
+        buyBusy={buyBtn.busy}
+        buyDisabled={buyBtn.disabled}
+        showBuy={buyBtn.status !== 'owned'}
         onSelect={handleSelect}
         onPreview={handlePreview}
-        onBuy={handleBuy}
+        onBuy={buyBtn.onPress}
         onClose={handleClose}
       />
     </>

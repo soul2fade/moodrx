@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript, pickRecognitionMode, decideSttRetry } from '@/lib/vent';
+import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript, pickRecognitionMode, nextRecognitionStep } from '@/lib/vent';
 
 describe('parseVentResponse', () => {
   const ok = { mood: 'stressed', intensity: 7, reply: 'You showed up.', risk: 'none' };
@@ -135,20 +135,21 @@ describe('pickRecognitionMode', () => {
   });
 });
 
-describe('decideSttRetry', () => {
-  // Called when a recognition attempt ends without a usable transcript (the
-  // `end` event always fires last — even after an error/nomatch — so it is the
-  // single decision point). The observed device bug: on-device starts fine,
-  // yields zero results, ends empty; the network recognizer (which works) must
-  // still be attempted before giving up.
-  it('retries with cloud when on-device produced nothing and cloud not yet tried', () => {
-    expect(decideSttRetry({ usedOnDevice: true, triedCloud: false })).toBe('retry-cloud');
+describe('nextRecognitionStep', () => {
+  // Called on every `end` event. Venting emulates continuous listening with
+  // single-utterance (continuous:false) recognition — the mode that works on
+  // Android SODA without the mid-stream-close race. While the user hasn't ended,
+  // a natural end (end of an utterance / pause) means "keep listening" → restart.
+  // Once the user ends (DONE / silence auto-finish / hard-stop), finalize:
+  // submit if we captured anything, else fall back to the manual form.
+  it('restarts (keeps listening) when the user has not ended, regardless of transcript', () => {
+    expect(nextRecognitionStep({ userEnded: false, hasTranscript: false })).toBe('restart');
+    expect(nextRecognitionStep({ userEnded: false, hasTranscript: true })).toBe('restart');
   });
-  it('gives up to the form once cloud has already been tried', () => {
-    expect(decideSttRetry({ usedOnDevice: true, triedCloud: true })).toBe('fallback-form');
+  it('submits when the user ended and we captured a transcript', () => {
+    expect(nextRecognitionStep({ userEnded: true, hasTranscript: true })).toBe('submit');
   });
-  it('gives up to the form when cloud was the only mode (on-device never used)', () => {
-    expect(decideSttRetry({ usedOnDevice: false, triedCloud: false })).toBe('fallback-form');
-    expect(decideSttRetry({ usedOnDevice: false, triedCloud: true })).toBe('fallback-form');
+  it('falls back to the form when the user ended with nothing captured', () => {
+    expect(nextRecognitionStep({ userEnded: true, hasTranscript: false })).toBe('fallback');
   });
 });

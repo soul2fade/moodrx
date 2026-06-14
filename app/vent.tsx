@@ -22,7 +22,7 @@ import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { getVentConsent, setVentConsent, getVentEnabled } from '@/lib/storage';
 import { fetchVentReply } from '@/lib/vent-client';
-import { ventAction, buildVentSession, accumulateTranscript, pickRecognitionMode, decideSttRetry, type VentAssessment } from '@/lib/vent';
+import { ventAction, buildVentSession, accumulateTranscript, pickRecognitionMode, nextRecognitionStep, type VentAssessment } from '@/lib/vent';
 import { captureSessionHealth } from '@/lib/health';
 import { createSessionId } from '@/lib/session-utils';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -55,8 +55,6 @@ export default function VentScreen() {
   const [showResource, setShowResource] = useState(false);
   const [isConsentLoading, setIsConsentLoading] = useState(true);
   const [showSilenceCheckin, setShowSilenceCheckin] = useState(false);
-  // True while a cloud retry is awaiting fresh speech (on-device yielded nothing).
-  const [isRetryingCloud, setIsRetryingCloud] = useState(false);
 
   // Refs for timer IDs so we can clean them up reliably
   const hardStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -70,10 +68,13 @@ export default function VentScreen() {
   const committedTranscriptRef = useRef('');
   // Ref to track whether we're actively recording (guards cleanup stop call)
   const isRecordingRef = useRef(false);
-  // STT fallback bookkeeping: did the current attempt use on-device recognition,
-  // and have we already retried with the cloud/network recognizer this session?
-  const usedOnDeviceRef = useRef(false);
-  const triedCloudRef = useRef(false);
+  // True once the USER (or an auto-finish/hard-stop timer) ends the session, so the
+  // next `end` finalizes instead of restarting. A natural `end` (utterance/pause)
+  // with this still false means "keep listening" → restart (emulated continuous).
+  const userEndedRef = useRef(false);
+  // The recognizer mode chosen for this session (on-device vs cloud), reused on
+  // every restart so the whole session stays in one mode.
+  const modeOnDeviceRef = useRef(true);
   // Double-persist guard: flipped to true the first time persist is called
   const persistedRef = useRef(false);
   // Set on unmount; guards async continuations (e.g. handleSubmit after await)
@@ -134,13 +135,25 @@ export default function VentScreen() {
     committedTranscriptRef.current = committed;
     setTranscript(display);
     transcriptRef.current = display;
-    if (display.trim().length > 0) setIsRetryingCloud(false);
     resetSilenceTimer();
   });
 
   // ─── STT event: end ──────────────────────────────────────────────────────
+  // Every utterance ends here (continuous:false). While the user hasn't ended the
+  // session, a natural end (end of an utterance / a pause) means "keep listening"
+  // → restart recognition, accumulating across utterances. Once they end it, this
+  // finalizes. `end` always fires last, even after an error/nomatch (per expo-
+  // speech-recognition), so it's the single decision point.
   useSpeechRecognitionEvent('end', () => {
     if (!isRecordingRef.current) return; // already handled (e.g. fallback called)
+    const step = nextRecognitionStep({
+      userEnded: userEndedRef.current,
+      hasTranscript: transcriptRef.current.trim().length > 0,
+    });
+    if (step === 'restart') {
+      beginRecognition(); // keep the hard-stop + silence timers running across restarts
+      return;
+    }
     isRecordingRef.current = false;
     if (hardStopTimerRef.current) {
       clearTimeout(hardStopTimerRef.current);
@@ -148,29 +161,13 @@ export default function VentScreen() {
     }
     clearSilenceTimers();
     setShowSilenceCheckin(false);
-    const finalTranscript = transcriptRef.current;
-    if (finalTranscript.trim().length > 0) {
-      void handleSubmit(finalTranscript);
-    } else if (
-      decideSttRetry({
-        usedOnDevice: usedOnDeviceRef.current,
-        triedCloud: triedCloudRef.current,
-      }) === 'retry-cloud'
-    ) {
-      // On-device produced nothing — retry once with the cloud recognizer the
-      // consent screen discloses. Inviting fresh speech, since prior audio is gone.
-      setIsRetryingCloud(true);
-      beginRecognition(false);
-    } else {
-      fallbackToForm(NO_VOICE_MESSAGE);
-    }
+    if (step === 'submit') void handleSubmit(transcriptRef.current);
+    else fallbackToForm(NO_VOICE_MESSAGE);
   });
 
   // ─── STT event: error ────────────────────────────────────────────────────
-  // `end` always fires last — including after an error (per expo-speech-
-  // recognition). So we let `end` own the retry/fallback decision and here only
-  // tidy the silence check-in, avoiding a race where a trailing `end` from the
-  // dead session would abort a freshly-started cloud retry.
+  // `end` always fires last — including after an error — so it owns the
+  // restart/finalize decision. Here we only tidy the silence check-in.
   useSpeechRecognitionEvent('error', () => {
     if (!isRecordingRef.current) return;
     clearSilenceTimers();
@@ -225,6 +222,7 @@ export default function VentScreen() {
       }).start();
       silenceAutoFinishTimerRef.current = setTimeout(() => {
         if (isRecordingRef.current) {
+          userEndedRef.current = true; // graceful finish — next `end` finalizes, not restarts
           try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
         }
       }, SILENCE_AUTOFINISH_MS);
@@ -249,35 +247,22 @@ export default function VentScreen() {
     }
   }, [addSession]);
 
-  // ─── Begin (or restart) a recognition attempt ─────────────────────────────
-  // Shared by the initial tap and the cloud retry. `requiresOnDevice` picks the
-  // recognizer: on-device keeps audio on the phone; cloud is the network
-  // recognizer we retry with when on-device yields nothing. Clears any partial
-  // transcript so a retry starts fresh, then arms the hard-stop + silence timers.
-  const beginRecognition = useCallback((requiresOnDevice: boolean) => {
-    usedOnDeviceRef.current = requiresOnDevice;
-    if (!requiresOnDevice) triedCloudRef.current = true;
+  // ─── Begin (or restart) a recognition utterance ───────────────────────────
+  // One short `continuous:false` utterance — the mode that works on Android's
+  // on-device SODA recognizer without the mid-stream-close race. The session's
+  // hard-stop + silence timers and the accumulated transcript are owned by
+  // handleStartRecording and the result handler, NOT reset here, so restarting
+  // after a pause keeps listening and keeps accumulating.
+  const beginRecognition = useCallback(() => {
     isRecordingRef.current = true;
-    setTranscript('');
-    transcriptRef.current = '';
-    committedTranscriptRef.current = '';
     ExpoSpeechRecognitionModule.start({
       lang: 'en-US',
       interimResults: true,
-      continuous: true,
-      requiresOnDeviceRecognition: requiresOnDevice,
+      continuous: false,
+      requiresOnDeviceRecognition: modeOnDeviceRef.current,
       addsPunctuation: true,
     });
-    // Hard auto-stop at 60s (HARD_STOP_MS)
-    hardStopTimerRef.current = setTimeout(() => {
-      if (isRecordingRef.current) {
-        try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
-      }
-    }, HARD_STOP_MS);
-    setShowSilenceCheckin(false);
-    checkinAnim.setValue(0);
-    resetSilenceTimer();
-  }, [resetSilenceTimer, checkinAnim]);
+  }, []);
 
   // ─── Tap to start recording ───────────────────────────────────────────────
   const handleStartRecording = async () => {
@@ -288,8 +273,10 @@ export default function VentScreen() {
       return;
     }
     persistedRef.current = false;
-    triedCloudRef.current = false;
-    setIsRetryingCloud(false);
+    userEndedRef.current = false;
+    setTranscript('');
+    transcriptRef.current = '';
+    committedTranscriptRef.current = '';
     isRecordingRef.current = true;
     setVentState('recording');
     // Prefer on-device STT (audio never leaves the phone); fall back to cloud
@@ -307,11 +294,21 @@ export default function VentScreen() {
         try { ExpoSpeechRecognitionModule.androidTriggerOfflineModelDownload?.({ locale: 'en-US' }); } catch { /* iOS / unsupported */ }
       }
     } catch { /* capability probe failed — default to on-device attempt */ }
-    beginRecognition(mode.requiresOnDeviceRecognition);
+    modeOnDeviceRef.current = mode.requiresOnDeviceRecognition;
+    // Hard auto-stop ceiling for the whole session (survives utterance restarts).
+    hardStopTimerRef.current = setTimeout(() => {
+      if (isRecordingRef.current) {
+        userEndedRef.current = true;
+        try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+      }
+    }, HARD_STOP_MS);
+    resetSilenceTimer();
+    beginRecognition();
   };
 
-  // ─── Manual stop ─────────────────────────────────────────────────────────
+  // ─── Manual stop (DONE TALKING) ───────────────────────────────────────────
   const handleManualStop = () => {
+    userEndedRef.current = true; // user ended → next `end` finalizes, not restarts
     try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
   };
 
@@ -439,11 +436,7 @@ export default function VentScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionEyebrow}>LISTENING</Text>
             <Text style={styles.headline}>I&apos;m all ears.</Text>
-            <Text style={styles.recordingHint}>
-              {isRetryingCloud
-                ? "Didn't quite catch that — go ahead, say it again."
-                : 'Take your time — tap done when you’re ready'}
-            </Text>
+            <Text style={styles.recordingHint}>Take your time — tap done when you&apos;re ready</Text>
             {/* Live transcript */}
             <View style={styles.transcriptBox}>
               <Text style={styles.transcriptText} numberOfLines={6}>

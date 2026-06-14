@@ -68,19 +68,23 @@ export function pickRecognitionMode(input: {
   return { requiresOnDeviceRecognition: onDevice, usingCloud: !onDevice };
 }
 
-/** When a recognition attempt ends without a usable transcript (it errored, hit
- *  `nomatch`, or simply produced nothing — all of which surface as an `end` with
- *  an empty transcript, the silent on-device failure seen on some Android
- *  devices), decide whether to retry. On-device is tried first for privacy; if it
- *  produces nothing we retry ONCE with the cloud/network recognizer (which the
- *  consent screen already discloses as the fallback) before giving up to the
- *  manual form. Pure. */
-export function decideSttRetry(input: {
-  usedOnDevice: boolean;
-  triedCloud: boolean;
-}): 'retry-cloud' | 'fallback-form' {
-  if (input.usedOnDevice && !input.triedCloud) return 'retry-cloud';
-  return 'fallback-form';
+/** Decide what to do on each speech-recognition `end` event. Venting emulates
+ *  continuous listening with single-utterance (`continuous:false`) recognition —
+ *  the mode that works on Android's on-device SODA recognizer without the
+ *  mid-stream-close race that `continuous:true` triggers (the recognizer's read
+ *  is interrupted by a stop()/close() from another thread, dropping the result).
+ *
+ *  While the user hasn't ended the session, a natural end (end of an utterance or
+ *  a pause) means "keep listening" → restart recognition, accumulating across
+ *  utterances. Once the user ends it (taps DONE, or silence auto-finish / hard-
+ *  stop fires), finalize: submit if anything was captured, else fall back to the
+ *  manual mood form. Pure. */
+export function nextRecognitionStep(input: {
+  userEnded: boolean;
+  hasTranscript: boolean;
+}): 'restart' | 'submit' | 'fallback' {
+  if (!input.userEnded) return 'restart';
+  return input.hasTranscript ? 'submit' : 'fallback';
 }
 
 export type VentAction = 'reply' | 'reply-with-resource' | 'crisis-redirect';

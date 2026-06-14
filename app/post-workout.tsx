@@ -715,6 +715,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginTop: 16,
     lineHeight: 18,
+    textAlign: 'center',
   },
   pbRow: {
     alignItems: 'center',

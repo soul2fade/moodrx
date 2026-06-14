@@ -41,6 +41,10 @@ import { colors } from '@/lib/colors';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react-native';
 
+// Max length for a field note. 280 (was 140) — long enough to get a whole
+// thought out. Keep the counter, maxLength, slice, and dictation cap in sync.
+const FIELD_NOTE_MAX = 280;
+
 function getScoreContext(score: number, lowerIsBetter: boolean): string {
   if (lowerIsBetter) {
     if (score <= 3) return 'Nearly clear.';
@@ -282,7 +286,7 @@ export default function PostWorkoutScreen() {
   useSpeechRecognitionEvent('result', (event) => {
     if (!dictatingRef.current) return;
     const transcript = event.results[0]?.transcript ?? '';
-    setNote(appendDictation(dictateBaseRef.current, transcript, 140));
+    setNote(appendDictation(dictateBaseRef.current, transcript, FIELD_NOTE_MAX));
   });
 
   useSpeechRecognitionEvent('end', () => {
@@ -548,18 +552,18 @@ export default function PostWorkoutScreen() {
                   {isDictating ? '■ STOP' : '● DICTATE'}
                 </Text>
               </TouchableOpacity>
-              <Text style={styles.noteCount}>{note.length}/140</Text>
+              <Text style={styles.noteCount}>{note.length}/{FIELD_NOTE_MAX}</Text>
             </View>
           </View>
           <TextInput
             style={[styles.noteInput, note.length > 0 && { borderColor: '#2a2a2a' }]}
             value={note}
-            onChangeText={(t) => setNote(t.slice(0, 140))}
+            onChangeText={(t) => setNote(t.slice(0, FIELD_NOTE_MAX))}
             placeholder={notePlaceholder}
             placeholderTextColor="#999999"
             multiline
             numberOfLines={3}
-            maxLength={140}
+            maxLength={FIELD_NOTE_MAX}
             returnKeyType="done"
             blurOnSubmit
             accessibilityLabel="Session field notes"

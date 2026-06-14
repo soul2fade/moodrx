@@ -29,6 +29,7 @@ import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
 import { NotificationPrompt } from '@/components/NotificationPrompt';
+import { PlusSheet } from '@/components/PlusSheet';
 import { createSessionId } from '@/lib/session-utils';
 import { maybeRequestReview } from '@/lib/review';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
@@ -89,6 +90,8 @@ export default function PostWorkoutScreen() {
   // The note text as it was when dictation started; new speech appends onto this.
   const dictateBaseRef = useRef('');
   const [dynamicLine, setDynamicLine] = useState<string | null>(null);
+  const [liveCoachLocked, setLiveCoachLocked] = useState(false);
+  const [plusVisible, setPlusVisible] = useState(false);
   const workout = getWorkoutById(workoutId) ?? getWorkoutsForMood(mood)[0];
 
   useEffect(() => {
@@ -116,7 +119,10 @@ export default function PostWorkoutScreen() {
       const enabled = await getAiCoachEnabled();
       if (!enabled || postInsult === '') return;
       const tasteUsed = await getLiveCoachTasteUsed();
-      if (!canUseLiveCoach({ isPlus, tasteUsed })) return; // out of taste → keep stock line
+      if (!canUseLiveCoach({ isPlus, tasteUsed })) {
+        if (!isPlus && !cancelled) setLiveCoachLocked(true); // show the gentle MoodRx+ prompt
+        return; // out of taste → keep stock line
+      }
       const sessions = await getSessions();
       const context = buildCoachContext({ mood, intensity, workout }, sessions);
       const line = await fetchDynamicLine(context);
@@ -357,6 +363,17 @@ export default function PostWorkoutScreen() {
         </Text>
         {(dynamicLine ?? postInsult) !== '' && (
           <Text style={styles.insultLine}>{dynamicLine ?? postInsult}</Text>
+        )}
+        {liveCoachLocked && (
+          <TouchableOpacity
+            onPress={() => setPlusVisible(true)}
+            activeOpacity={0.7}
+            style={styles.plusPrompt}
+            accessibilityRole="button"
+            accessibilityLabel="Keep the live coach with MoodRx Plus"
+          >
+            <Text style={styles.plusPromptText}>Dr. MoodRx wrote your first few live. Keep the live coach →</Text>
+          </TouchableOpacity>
         )}
 
         {sessionReps > 0 && (
@@ -679,6 +696,7 @@ export default function PostWorkoutScreen() {
           </View>
         </Modal>
       )}
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
     </Animated.View>
     </KeyboardAvoidingView>
   );
@@ -1065,4 +1083,6 @@ const styles = StyleSheet.create({
     fontSize: 64,
     fontWeight: '700' as const,
   },
+  plusPrompt: { marginTop: 14, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 12 },
+  plusPromptText: { ...t.bodySm, color: colors.premium, textAlign: 'center' },
 });

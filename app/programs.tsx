@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PROGRAMS, getProgramWorkouts, type Program } from '@/lib/programs';
 import { type Workout } from '@/lib/workouts';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { PremiumSheet } from '@/components/PremiumSheet';
-import { PriceChip } from '@/components/PriceChip';
 import { type as t, fonts } from '../lib/typography';
 
 export default function ProgramsScreen() {
   const insets = useSafeAreaInsets();
-  const { isPremium } = useSubscription();
-  const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const { isPremium, isLoading: subLoading } = useSubscription();
+
+  // /programs is reached only via the premium-gated Insights entry — the free
+  // entry opens the offer sheet instead, so there's no locked panel here. Guard
+  // the direct-link edge case so the paid content can't leak.
+  useEffect(() => {
+    if (!subLoading && !isPremium) router.replace('/insights');
+  }, [subLoading, isPremium]);
 
   return (
     <View style={styles.container}>
@@ -43,27 +47,11 @@ export default function ProgramsScreen() {
         <Text style={styles.headline}>Curated sequences.</Text>
         <Text style={styles.subtext}>Multi-day prescriptions built from existing workouts. Follow one start to finish.</Text>
 
-        {!isPremium ? (
-          /* Safety-net locked state */
-          <View style={styles.lockedState}>
-            <Text style={styles.lockedText}>Curated multi-day sequences, included with the base unlock.</Text>
-            <PriceChip
-              onPress={() => setShowPremiumSheet(true)}
-              accessibilityLabel="Unlock programs"
-            />
-          </View>
-        ) : (
+        {isPremium &&
           PROGRAMS.map((program) => (
             <ProgramCard key={program.id} program={program} />
-          ))
-        )}
+          ))}
       </ScrollView>
-
-      <PremiumSheet
-        visible={showPremiumSheet}
-        onClose={() => setShowPremiumSheet(false)}
-        context="programs"
-      />
     </View>
   );
 }
@@ -154,21 +142,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: 4,
     marginBottom: 8,
-  },
-  lockedState: {
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-    padding: 24,
-    marginTop: 32,
-    alignItems: 'center',
-    gap: 16,
-  },
-  lockedText: {
-    fontFamily: fonts.primary.regular,
-    fontSize: 16,
-    color: '#d8d8d8',
-    textAlign: 'center',
-    lineHeight: 24,
   },
   programCard: {
     marginTop: 32,

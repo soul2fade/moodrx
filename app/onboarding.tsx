@@ -46,7 +46,7 @@ const TRIAL_FEATURES = [
 export default function OnboardingScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const trialScale = useRef(new Animated.Value(1)).current;
-  const { purchaseBase, offerings } = useSubscription();
+  const { purchaseBase, isLoading: subLoading } = useSubscription();
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -62,7 +62,7 @@ export default function OnboardingScreen() {
   // Only advances on a real unlock. On cancel/error the hook returns to idle so
   // the user can retry or pick "Continue with free version".
   const unlockBtn = usePurchaseButton({
-    offeringsLoaded: !!offerings,
+    offeringsLoaded: !subLoading,
     run: purchaseBase,
     onSuccess: () => {
       // After the "You're in ✓" flash, drop straight into the guided flow.

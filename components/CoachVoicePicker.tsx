@@ -12,7 +12,7 @@ import { pickClip, type Manifest } from '@/lib/insult-library';
 import { VoiceSheet } from '@/components/VoiceSheet';
 
 export function CoachVoicePicker() {
-  const { ownsPack, purchasePack, offerings } = useSubscription();
+  const { ownsPack, purchasePack, offerings, isLoading: subLoading } = useSubscription();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState('rachel');
   const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
@@ -64,7 +64,7 @@ export function CoachVoicePicker() {
   }, []);
 
   const buyBtn = usePurchaseButton({
-    offeringsLoaded: !!offerings,
+    offeringsLoaded: !subLoading,
     owned: ownsBundle,
     run: () => purchasePack(VOICE_PACK_ID),
   });

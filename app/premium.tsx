@@ -37,6 +37,7 @@ export default function PremiumScreen() {
     restorePurchases,
     isPremium,
     offerings,
+    isLoading: subLoading,
   } = useSubscription();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
@@ -59,7 +60,10 @@ export default function PremiumScreen() {
   const basePrice = selectBasePrice(offerings);
 
   const baseBtn = usePurchaseButton({
-    offeringsLoaded: !!offerings,
+    // Enabled once RevenueCat init has settled (success OR failure) — not gated on
+    // offerings being non-null, so a failed/empty offerings load can't trap the
+    // button in an infinite spinner (and the __DEV__ mock-purchase path stays reachable).
+    offeringsLoaded: !subLoading,
     owned: isPremium,
     run: purchaseBase,
   });

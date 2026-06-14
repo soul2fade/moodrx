@@ -26,12 +26,14 @@ interface PremiumSheetProps {
 }
 
 export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumSheetProps) {
-  const { purchaseBase, restorePurchases, offerings } = useSubscription();
+  const { purchaseBase, restorePurchases, offerings, isLoading: subLoading } = useSubscription();
 
   const basePrice = selectBasePrice(offerings);
 
   const buyBtn = usePurchaseButton({
-    offeringsLoaded: !!offerings,
+    // Gate on init settled, not offerings-present, so a failed offerings load
+    // can't trap the button spinning forever (and __DEV__ mock-purchase works).
+    offeringsLoaded: !subLoading,
     run: purchaseBase,
     // Flash "You're in ✓", then close — revealing the now-unlocked content behind.
     onSuccess: onClose,

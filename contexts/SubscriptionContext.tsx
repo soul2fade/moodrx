@@ -26,6 +26,7 @@ import {
   ALL_ACCESS_ENTITLEMENT_IDENTIFIER,
   BASE_UNLOCK_PACKAGE_ID,
   PACKS_OFFERING_ID,
+  PLUS_OFFERING_ID,
   packEntitlementId,
 } from '@/lib/revenuecat';
 import { ownsVoice as resolveOwnsVoice, voiceEntitlementId } from '@/lib/voices';
@@ -59,6 +60,8 @@ interface SubscriptionContextValue {
   purchasePack: (packId: string) => Promise<boolean>;
   /** Resolves true when the given voice was actually granted. */
   purchaseVoice: (name: string) => Promise<boolean>;
+  /** Resolves true when MoodRx+ (all_access) was actually granted. */
+  purchasePlus: (period: 'monthly' | 'annual') => Promise<boolean>;
   /** Resolves true when a previous purchase was found and restored. */
   restorePurchases: () => Promise<boolean>;
   devTogglePremium: () => void;
@@ -201,6 +204,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     return triggerPurchase(pkg, productId);
   }, [offerings, triggerPurchase]);
 
+  const purchasePlus = useCallback((period: 'monthly' | 'annual'): Promise<boolean> => {
+    const pkgId = period === 'annual' ? '$rc_annual' : '$rc_monthly';
+    const pkg = offerings?.all?.[PLUS_OFFERING_ID]?.availablePackages?.find(
+      (p) => p.identifier === pkgId,
+    );
+    return triggerPurchase(pkg, ALL_ACCESS_ENTITLEMENT_IDENTIFIER);
+  }, [offerings, triggerPurchase]);
+
   const devTogglePremium = useCallback(() => {
     if (!__DEV__) return;
     setIsPaidPremium(prev => !prev);
@@ -276,6 +287,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       purchaseBase,
       purchasePack,
       purchaseVoice,
+      purchasePlus,
       restorePurchases,
       devTogglePremium,
       devTogglePlus,
@@ -291,6 +303,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       purchaseBase,
       purchasePack,
       purchaseVoice,
+      purchasePlus,
       restorePurchases,
       devTogglePremium,
       devTogglePlus,

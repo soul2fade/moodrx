@@ -22,6 +22,7 @@ import { useSessions } from '@/contexts/SessionsContext';
 import { getPrescriptionWorkouts, getWorkoutBadge } from '@/lib/workout-insights';
 import { getFreeTierSummary, isSupplementUnlocked, isWorkoutUnlocked } from '@/lib/free-tier';
 import { PremiumSheet } from '@/components/PremiumSheet';
+import { PriceChip } from '@/components/PriceChip';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
@@ -247,7 +248,7 @@ export default function PrescriptionScreen() {
                         </View>
                         <View style={styles.workoutNameRow}>
                           <Text style={flattenStyle([styles.workoutName, { flex: 1 }])} numberOfLines={2}>{workout.name}</Text>
-                          <Text style={styles.unlockProText}>UNLOCK PRO →</Text>
+                          <PriceChip onPress={() => setShowPremiumSheet(true)} accessibilityLabel={`Unlock ${workout.name}`} />
                         </View>
                         <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                       </TouchableOpacity>
@@ -322,7 +323,7 @@ export default function PrescriptionScreen() {
                         <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
                       </View>
                       {isLocked && (
-                        <Text style={styles.unlockProTextStack}>UNLOCK PRO →</Text>
+                        <PriceChip onPress={() => setShowPremiumSheet(true)} accessibilityLabel={`Unlock ${supp.name}`} />
                       )}
                     </View>
                     <Text style={[styles.suppDetailChevron, { color: accentColor }]}>›</Text>
@@ -349,6 +350,7 @@ export default function PrescriptionScreen() {
       <PremiumSheet
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
+        context="workouts"
       />
 
       {/* Supplement detail bottom sheet */}
@@ -422,7 +424,7 @@ export default function PrescriptionScreen() {
                   accessibilityLabel="Unlock Pro to access full stack"
                 >
                   <Text style={[styles.suppModalUnlockText, { color: accentColor }]}>
-                    UNLOCK FULL STACK WITH PRO →
+                    UNLOCK FULL STACK — $9.99 →
                   </Text>
                 </TouchableOpacity>
               )}
@@ -774,19 +776,6 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    lineHeight: undefined,
-  },
-  unlockProText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    lineHeight: undefined,
-  },
-  unlockProTextStack: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    marginTop: 10,
     lineHeight: undefined,
   },
   trackStackBtn: {

@@ -30,6 +30,7 @@ import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
 import { PriceChip } from '@/components/PriceChip';
+import { type OfferContext } from '@/lib/offer-copy';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
@@ -54,6 +55,7 @@ export default function InsightsScreen() {
   } = useSessions();
   const [showBurnConfirm, setShowBurnConfirm] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const [sheetContext, setSheetContext] = useState<OfferContext>('default');
   const [caseSession, setCaseSession] = useState<Session | null>(null);
   const [healthSnapshot, setHealthSnapshot] = useState<HealthSnapshot | null>(null);
   const shareCardRef = useRef<ViewShot>(null);
@@ -126,6 +128,8 @@ export default function InsightsScreen() {
       .filter(s => s.note && s.note.trim().length > 0);
     return { visible: isPremium ? withNotes : withNotes.slice(0, 3), total: withNotes.length };
   }, [sessions, isPremium]);
+
+  const openSheet = (ctx: OfferContext) => { setSheetContext(ctx); setShowPremiumSheet(true); };
 
   const handleBurn = async () => {
     await clearSessions();
@@ -283,7 +287,7 @@ export default function InsightsScreen() {
         {/* Programs button */}
         <TouchableOpacity
           style={styles.supplementBtn}
-          onPress={() => (isPremium ? router.push('/programs') : setShowPremiumSheet(true))}
+          onPress={() => (isPremium ? router.push('/programs') : openSheet('programs'))}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={isPremium ? 'Open programs' : 'Unlock programs with Pro'}
@@ -303,7 +307,7 @@ export default function InsightsScreen() {
             <View style={styles.lockedOverlay}>
               <Text style={styles.lockedCalendarTitle}>Track your progress over time</Text>
               <PriceChip
-                onPress={() => setShowPremiumSheet(true)}
+                onPress={() => openSheet('calendar')}
                 accessibilityLabel="Unlock your progress calendar"
               />
             </View>
@@ -400,7 +404,7 @@ export default function InsightsScreen() {
             ))}
             {!subLoading && !isPremium && lockedPatternCount > 0 && (
               <PriceChip
-                onPress={() => setShowPremiumSheet(true)}
+                onPress={() => openSheet('patterns')}
                 label={`$9.99 unlocks +${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'}`}
                 accessibilityLabel={`See ${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'}`}
               />
@@ -461,7 +465,7 @@ export default function InsightsScreen() {
             })}
             {!subLoading && !isPremium && workoutStats.total > 3 && (
               <PriceChip
-                onPress={() => setShowPremiumSheet(true)}
+                onPress={() => openSheet('history')}
                 label={`$9.99 unlocks +${workoutStats.total - 3} more`}
                 accessibilityLabel={`See all ${workoutStats.total - 3} more workouts`}
               />
@@ -509,7 +513,7 @@ export default function InsightsScreen() {
             })}
             {!subLoading && !isPremium && sessionCount > 3 && (
               <PriceChip
-                onPress={() => setShowPremiumSheet(true)}
+                onPress={() => openSheet('history')}
                 label={`$9.99 unlocks +${sessionCount - 3} more session${sessionCount - 3 === 1 ? '' : 's'}`}
                 accessibilityLabel={`See all ${sessionCount - 3} more sessions`}
               />
@@ -540,7 +544,7 @@ export default function InsightsScreen() {
             })}
             {!subLoading && !isPremium && sessionNotes.total > 3 && (
               <PriceChip
-                onPress={() => setShowPremiumSheet(true)}
+                onPress={() => openSheet('history')}
                 label={`$9.99 unlocks +${sessionNotes.total - 3} more notes`}
                 accessibilityLabel={`See all ${sessionNotes.total - 3} more notes`}
               />
@@ -622,7 +626,7 @@ export default function InsightsScreen() {
       <PremiumSheet
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
-        context="patterns"
+        context={sheetContext}
       />
 
       {/* Case History backdrop */}

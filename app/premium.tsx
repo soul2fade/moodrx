@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
+import { selectBasePrice } from '@/lib/offer-copy';
 import { usePurchaseButton } from '@/hooks/usePurchaseButton';
 import { OfferProof } from '@/components/OfferProof';
 import { purchaseButtonLabel } from '@/lib/purchase-ui';
@@ -56,8 +56,7 @@ export default function PremiumScreen() {
     return () => backHandler.remove();
   }, []);
 
-  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === BASE_UNLOCK_PACKAGE_ID);
-  const basePrice = basePkg?.product?.priceString ?? '$9.99';
+  const basePrice = selectBasePrice(offerings);
 
   const baseBtn = usePurchaseButton({
     offeringsLoaded: !!offerings,

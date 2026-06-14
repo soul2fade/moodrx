@@ -99,5 +99,5 @@ const styles = StyleSheet.create({
   hint: { color: '#cfcfcf', fontSize: 16, lineHeight: 16, marginTop: 3 },
   valueBlock: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   value: { color: '#e8e8e8', fontSize: 16, fontWeight: '700', lineHeight: 20 },
-  caret: { color: '#9a9a9a', fontSize: 22, lineHeight: 22, marginTop: -2 },
+  caret: { color: '#c5c5c5', fontSize: 22, lineHeight: 22, marginTop: -2 },
 });

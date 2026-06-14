@@ -11,33 +11,35 @@ import {
   Alert,
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
 import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { offerHeadline, selectBasePrice, CANONICAL_REASSURANCE, type OfferContext } from '@/lib/offer-copy';
+import { OfferProof } from '@/components/OfferProof';
+import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
 
 interface PremiumSheetProps {
   visible: boolean;
   onClose: () => void;
-  headline?: string;
-  description?: string;
+  /** Entry point — drives the contextual headline. */
+  context?: OfferContext;
 }
 
-export function PremiumSheet({
-  visible,
-  onClose,
-  headline = 'Unlock all 18 workouts.',
-  description = '3 science-backed options for every mood state. Plus supplement tracking, full insights, and the neuroscience behind every rep.',
-}: PremiumSheetProps) {
-  const { purchaseBase, offerings } = useSubscription();
+export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumSheetProps) {
+  const { purchaseBase, restorePurchases, offerings } = useSubscription();
 
-  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === BASE_UNLOCK_PACKAGE_ID);
-  const basePrice = basePkg?.product?.priceString ?? '$9.99';
+  const basePrice = selectBasePrice(offerings);
 
   const buyBtn = usePurchaseButton({
     offeringsLoaded: !!offerings,
     run: purchaseBase,
     // Flash "You're in ✓", then close — revealing the now-unlocked content behind.
+    onSuccess: onClose,
+  });
+
+  const restoreBtn = usePurchaseButton({
+    offeringsLoaded: true,
+    run: restorePurchases,
     onSuccess: onClose,
   });
 
@@ -57,8 +59,10 @@ export function PremiumSheet({
       />
       <View style={styles.sheet}>
         <View style={styles.handle} />
-        <Text style={styles.headline}>{headline}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <Text style={styles.headline}>{offerHeadline(context)}</Text>
+        <Text style={styles.description}>{CANONICAL_REASSURANCE}</Text>
+        <OfferProof />
+        <View style={{ height: 20 }} />
 
         <TouchableOpacity
           style={[styles.yearlyButton, buyBtn.disabled && styles.yearlyButtonDisabled]}
@@ -104,9 +108,34 @@ export function PremiumSheet({
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Dismiss">
-          <Text style={styles.closeText}>NOT NOW</Text>
-        </TouchableOpacity>
+        <View style={styles.footerRow}>
+          <TouchableOpacity
+            onPress={restoreBtn.onPress}
+            disabled={restoreBtn.disabled}
+            activeOpacity={0.7}
+            style={styles.footerBtn}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: restoreBtn.disabled, busy: restoreBtn.busy }}
+            accessibilityLabel="Restore purchase"
+          >
+            {restoreBtn.busy ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.closeText}>
+                {purchaseButtonLabel(restoreBtn.status, { idle: 'RESTORE PURCHASE', success: 'RESTORED ✓' })}
+              </Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onClose}
+            activeOpacity={0.7}
+            style={styles.footerBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Maybe later"
+          >
+            <Text style={styles.closeText}>MAYBE LATER</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Modal>
   );
@@ -160,10 +189,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginTop: 2,
   },
-  closeButton: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
   closeText: {
     ...t.label,
     color: '#ffffff',
@@ -179,4 +204,6 @@ const styles = StyleSheet.create({
   },
   legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
   legalDot: { ...t.softMuted },
+  footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  footerBtn: { flex: 1, alignItems: 'center', paddingVertical: 8 },
 });

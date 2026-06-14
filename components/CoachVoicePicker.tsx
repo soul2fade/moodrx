@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSubscription } from '@/contexts/SubscriptionContext';
@@ -31,7 +31,10 @@ export function CoachVoicePicker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- previewPlayer is a stable expo-audio ref; src change drives playback.
   }, [previewSrc]);
 
-  const packages = offerings?.all?.[PACKS_OFFERING_ID]?.availablePackages ?? [];
+  const packages = useMemo(
+    () => offerings?.all?.[PACKS_OFFERING_ID]?.availablePackages ?? [],
+    [offerings],
+  );
   const priceOf = useCallback(
     (id: string, fallback: string) =>
       packages.find((p) => p.identifier === id)?.product?.priceString ?? fallback,

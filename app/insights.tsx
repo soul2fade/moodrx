@@ -424,7 +424,7 @@ export default function InsightsScreen() {
             <View style={styles.noticedEmptyCard}>
               {noticed.stage === 'countdown' ? (
                 <Text style={styles.noticedEmptyText}>
-                  Patterns appear after {NOTICED_COUNTDOWN_THRESHOLD} sessions.{'\n'}
+                  Patterns build over your first {NOTICED_COUNTDOWN_THRESHOLD} sessions — the more days and times you log across, the clearer they get.{'\n'}
                   {sessionCount > 0 ? `${noticed.remaining} more to go.` : 'Start logging below.'}
                 </Text>
               ) : (

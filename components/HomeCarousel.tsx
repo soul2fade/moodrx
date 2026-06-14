@@ -339,7 +339,7 @@ function HomeCarouselInner({
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateLabel}>YOUR PATTERN</Text>
               <Text style={styles.emptyStateText}>
-                Appears after 5 sessions.{'\n'}
+                Your mood identity appears after 5 sessions.{'\n'}
                 {sessions.length > 0 ? `${5 - Math.min(sessions.length, 5)} more to go.` : 'Start tracking below.'}
               </Text>
             </View>

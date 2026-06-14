@@ -50,7 +50,8 @@ interface SubscriptionContextValue {
   purchaseBase: () => Promise<boolean>;
   /** Resolves true when the given pack was actually granted. */
   purchasePack: (packId: string) => Promise<boolean>;
-  restorePurchases: () => Promise<void>;
+  /** Resolves true when a previous purchase was found and restored. */
+  restorePurchases: () => Promise<boolean>;
   devTogglePremium: () => void;
 }
 
@@ -176,7 +177,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     setIsPaidPremium(prev => !prev);
   }, []);
 
-  const restorePurchases = useCallback(async () => {
+  const restorePurchases = useCallback(async (): Promise<boolean> => {
     try {
       const customerInfo = await Purchases.restorePurchases();
       applyCustomerInfo(customerInfo);
@@ -187,9 +188,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       } else {
         Alert.alert('No purchases found', 'No previous MoodRx Pro purchase was found.');
       }
+      return hasEntitlement;
     } catch (err: unknown) {
       const msg = isRCPurchaseError(err) ? (err.message ?? 'Could not connect to the store. Please try again.') : 'Could not connect to the store. Please try again.';
       Alert.alert('Restore failed', msg);
+      return false;
     }
   }, [applyCustomerInfo]);
 

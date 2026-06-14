@@ -127,6 +127,14 @@ Per-voice buy state is component-local; map each row to its own
 - **Store config (separate, manual):** create the four `voice_*` $0.99
   non-consumables in **App Store Connect + Google Play + RevenueCat** and add them
   to the `packs` offering. **No app rebuild required** — offerings load at runtime.
+  - **Critical naming:** in the `packs` offering, each voice's **package identifier
+    must be exactly `voice_<name>`** (`voice_deadpan`, `voice_grampa`,
+    `voice_ruthie`, `voice_ed`) — the app looks up packages by
+    `package.identifier === voice_<name>` for both price display and purchase, the
+    same convention `voice_pack` uses. If the package slot is named anything else,
+    the price falls back to `$0.99`/`$2.99` and a real purchase shows "Unavailable"
+    (the `__DEV__` mock-grant path does not exercise this lookup, so it can only
+    surface on a store build).
 - `npm test`, `npm run typecheck`, `npx expo lint` green before each commit.
 
 ---

@@ -417,7 +417,7 @@ export default function SettingsScreen() {
               accessibilityRole="button"
               accessibilityLabel="Unlock MoodRx Pro"
             >
-              <Text style={styles.upgradeBtnText}>UNLOCK PRO →</Text>
+              <Text style={styles.upgradeBtnText}>UNLOCK — $9.99 →</Text>
             </TouchableOpacity>
           </View>
         )}

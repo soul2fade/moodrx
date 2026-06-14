@@ -299,7 +299,7 @@ export default function HomeScreen() {
               accessibilityRole="button"
               accessibilityLabel="Try Pro"
             >
-              <Text style={styles.tryProBadgeText}>TRY PRO →</Text>
+              <Text style={styles.tryProBadgeText}>UNLOCK — $9.99 →</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.proMemberBadge}>

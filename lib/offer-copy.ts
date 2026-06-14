@@ -31,8 +31,8 @@ const HEADLINES: Record<OfferContext, string> = {
   reminders: 'Unlock daily reminders',
 };
 
-export function offerHeadline(context: OfferContext = 'default'): string {
-  return HEADLINES[context] ?? HEADLINES.default;
+export function offerHeadline(context: OfferContext | string = 'default'): string {
+  return HEADLINES[context as OfferContext] ?? HEADLINES.default;
 }
 
 /** The price-on-the-lock chip label, e.g. "$9.99 unlocks this". */

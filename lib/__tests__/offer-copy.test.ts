@@ -30,12 +30,18 @@ describe('offerHeadline', () => {
     expect(offerHeadline()).toBe('Unlock everything');
     expect(offerHeadline('default')).toBe('Unlock everything');
   });
+  it('falls back to the generic headline for an unknown context', () => {
+    expect(offerHeadline('something-new')).toBe('Unlock everything');
+  });
 });
 
 describe('chipLabel', () => {
   it('puts the price on the lock', () => {
     expect(chipLabel('$9.99')).toBe('$9.99 unlocks this');
     expect(chipLabel('£8.99')).toBe('£8.99 unlocks this');
+  });
+  it('handles an empty price string', () => {
+    expect(chipLabel('')).toBe(' unlocks this');
   });
 });
 

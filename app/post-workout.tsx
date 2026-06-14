@@ -17,7 +17,8 @@ import Slider from '@react-native-community/slider';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { getAiCoachEnabled, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { getAiCoachEnabled, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, getLiveCoachTasteUsed, incrementLiveCoachTasteUsed, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { canUseLiveCoach } from '@/lib/live-coach';
 import { todayDateString } from '@/lib/dateUtils';
 import { useSessions } from '@/contexts/SessionsContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
@@ -60,7 +61,7 @@ function getScoreContext(score: number, lowerIsBetter: boolean): string {
 
 export default function PostWorkoutScreen() {
   const { addSession: addSessionToContext, sessionCount: cachedSessionCount } = useSessions();
-  const { isPremium } = useSubscription();
+  const { isPlus } = useSubscription();
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -113,19 +114,21 @@ export default function PostWorkoutScreen() {
     let cancelled = false;
     (async () => {
       const enabled = await getAiCoachEnabled();
-      // Gate on entitlement client-side too: avoids a pointless function +
-      // RevenueCat round-trip every workout for an opted-in but non-Pro user.
-      if (!enabled || !isPremium || postInsult === '') return;
+      if (!enabled || postInsult === '') return;
+      const tasteUsed = await getLiveCoachTasteUsed();
+      if (!canUseLiveCoach({ isPlus, tasteUsed })) return; // out of taste → keep stock line
       const sessions = await getSessions();
       const context = buildCoachContext({ mood, intensity, workout }, sessions);
       const line = await fetchDynamicLine(context);
-      if (!cancelled && line) setDynamicLine(line);
+      if (cancelled || !line) return;
+      setDynamicLine(line);
+      if (!isPlus) await incrementLiveCoachTasteUsed(); // consumed a free taste
     })().catch(() => {});
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mood/intensity/workout are mount-fixed route params; postInsult gates on trash-talk/voice
-  }, [postInsult, isPremium]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mood/intensity/workout are mount-fixed route params; postInsult/isPlus gate the live fetch
+  }, [postInsult, isPlus]);
 
   const notePlaceholder = getFieldNotePlaceholder(cachedSessionCount);
   const breakthroughRef = useRef<ViewShot>(null);

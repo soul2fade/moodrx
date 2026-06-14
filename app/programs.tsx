@@ -12,8 +12,8 @@ import { PROGRAMS, getProgramWorkouts, type Program } from '@/lib/programs';
 import { type Workout } from '@/lib/workouts';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
+import { PriceChip } from '@/components/PriceChip';
 import { type as t, fonts } from '../lib/typography';
-import { colors } from '@/lib/colors';
 
 export default function ProgramsScreen() {
   const insets = useSafeAreaInsets();
@@ -46,16 +46,11 @@ export default function ProgramsScreen() {
         {!isPremium ? (
           /* Safety-net locked state */
           <View style={styles.lockedState}>
-            <Text style={styles.lockedText}>Programs are included with your base unlock.</Text>
-            <TouchableOpacity
-              style={styles.unlockBtn}
+            <Text style={styles.lockedText}>Curated multi-day sequences, included with the base unlock.</Text>
+            <PriceChip
               onPress={() => setShowPremiumSheet(true)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
               accessibilityLabel="Unlock programs"
-            >
-              <Text style={styles.unlockBtnText}>UNLOCK →</Text>
-            </TouchableOpacity>
+            />
           </View>
         ) : (
           PROGRAMS.map((program) => (
@@ -67,6 +62,7 @@ export default function ProgramsScreen() {
       <PremiumSheet
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
+        context="programs"
       />
     </View>
   );
@@ -173,17 +169,6 @@ const styles = StyleSheet.create({
     color: '#d8d8d8',
     textAlign: 'center',
     lineHeight: 24,
-  },
-  unlockBtn: {
-    borderWidth: 1,
-    borderColor: colors.textDim,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-  },
-  unlockBtnText: {
-    ...t.label,
-    color: colors.textSecondary,
-    letterSpacing: 2,
   },
   programCard: {
     marginTop: 32,

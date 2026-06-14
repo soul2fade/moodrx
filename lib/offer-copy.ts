@@ -35,11 +35,6 @@ export function offerHeadline(context: OfferContext | string = 'default'): strin
   return HEADLINES[context as OfferContext] ?? HEADLINES.default;
 }
 
-/** The price-on-the-lock chip label, e.g. "$9.99 unlocks this". */
-export function chipLabel(price: string): string {
-  return `${price} unlocks this`;
-}
-
 // Mirror of BASE_UNLOCK_PACKAGE_ID in lib/revenuecat.tsx. Inlined here so this
 // module imports no react-native (revenuecat.tsx pulls in react-native-purchases,
 // which would break the vitest node environment).

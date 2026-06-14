@@ -279,9 +279,11 @@ export default function InsightsScreen() {
           accessibilityRole="button"
           accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker with Pro'}
         >
-          <Text style={styles.supplementBtnText}>
-            {isPremium ? 'SUPPLEMENT TRACKER →' : 'SUPPLEMENT TRACKER — $9.99 →'}
-          </Text>
+          {isPremium ? (
+            <Text style={styles.supplementBtnText}>SUPPLEMENT TRACKER →</Text>
+          ) : (
+            <Text style={styles.supplementBtnText}>SUPPLEMENT TRACKER <Text style={styles.proTag}>[PRO]</Text> →</Text>
+          )}
         </TouchableOpacity>
 
         {/* Programs button */}
@@ -292,9 +294,11 @@ export default function InsightsScreen() {
           accessibilityRole="button"
           accessibilityLabel={isPremium ? 'Open programs' : 'Unlock programs with Pro'}
         >
-          <Text style={styles.supplementBtnText}>
-            {isPremium ? 'PROGRAMS →' : 'PROGRAMS — $9.99 →'}
-          </Text>
+          {isPremium ? (
+            <Text style={styles.supplementBtnText}>PROGRAMS →</Text>
+          ) : (
+            <Text style={styles.supplementBtnText}>PROGRAMS <Text style={styles.proTag}>[PRO]</Text> →</Text>
+          )}
         </TouchableOpacity>
 
         {/* Calendar */}
@@ -307,6 +311,7 @@ export default function InsightsScreen() {
             <View style={styles.lockedOverlay}>
               <Text style={styles.lockedCalendarTitle}>Track your progress over time</Text>
               <PriceChip
+                center
                 onPress={() => openSheet('calendar')}
                 accessibilityLabel="Unlock your progress calendar"
               />
@@ -405,7 +410,7 @@ export default function InsightsScreen() {
             {!subLoading && !isPremium && lockedPatternCount > 0 && (
               <PriceChip
                 onPress={() => openSheet('patterns')}
-                label={`$9.99 unlocks +${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'}`}
+                label={`+${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'} — Pro`}
                 accessibilityLabel={`See ${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'}`}
               />
             )}
@@ -466,7 +471,7 @@ export default function InsightsScreen() {
             {!subLoading && !isPremium && workoutStats.total > 3 && (
               <PriceChip
                 onPress={() => openSheet('history')}
-                label={`$9.99 unlocks +${workoutStats.total - 3} more`}
+                label={`+${workoutStats.total - 3} more — Pro`}
                 accessibilityLabel={`See all ${workoutStats.total - 3} more workouts`}
               />
             )}
@@ -514,7 +519,7 @@ export default function InsightsScreen() {
             {!subLoading && !isPremium && sessionCount > 3 && (
               <PriceChip
                 onPress={() => openSheet('history')}
-                label={`$9.99 unlocks +${sessionCount - 3} more session${sessionCount - 3 === 1 ? '' : 's'}`}
+                label={`+${sessionCount - 3} more session${sessionCount - 3 === 1 ? '' : 's'} — Pro`}
                 accessibilityLabel={`See all ${sessionCount - 3} more sessions`}
               />
             )}
@@ -545,7 +550,7 @@ export default function InsightsScreen() {
             {!subLoading && !isPremium && sessionNotes.total > 3 && (
               <PriceChip
                 onPress={() => openSheet('history')}
-                label={`$9.99 unlocks +${sessionNotes.total - 3} more notes`}
+                label={`+${sessionNotes.total - 3} more notes — Pro`}
                 accessibilityLabel={`See all ${sessionNotes.total - 3} more notes`}
               />
             )}
@@ -1381,6 +1386,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 2,
   },
+  proTag: { color: colors.premium },
   calendarWrap: {
     marginTop: 32,
   },

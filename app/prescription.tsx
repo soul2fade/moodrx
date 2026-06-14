@@ -252,7 +252,7 @@ export default function PrescriptionScreen() {
                         </View>
                         <View style={styles.workoutNameRow}>
                           <Text style={flattenStyle([styles.workoutName, { flex: 1 }])} numberOfLines={2}>{workout.name}</Text>
-                          <PriceChip onPress={() => openSheet('workouts')} accessibilityLabel={`Unlock ${workout.name}`} />
+                          <PriceChip tint={accentColor} onPress={() => openSheet('workouts')} accessibilityLabel={`Unlock ${workout.name}`} />
                         </View>
                         <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                       </TouchableOpacity>
@@ -327,7 +327,7 @@ export default function PrescriptionScreen() {
                         <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
                       </View>
                       {isLocked && (
-                        <PriceChip onPress={() => openSheet('supplements')} accessibilityLabel={`Unlock ${supp.name}`} />
+                        <PriceChip tint={accentColor} onPress={() => openSheet('supplements')} accessibilityLabel={`Unlock ${supp.name}`} />
                       )}
                     </View>
                     <Text style={[styles.suppDetailChevron, { color: accentColor }]}>›</Text>
@@ -428,7 +428,7 @@ export default function PrescriptionScreen() {
                   accessibilityLabel="Unlock Pro to access full stack"
                 >
                   <Text style={[styles.suppModalUnlockText, { color: accentColor }]}>
-                    UNLOCK FULL STACK — $9.99 →
+                    UNLOCK FULL STACK WITH PRO →
                   </Text>
                 </TouchableOpacity>
               )}

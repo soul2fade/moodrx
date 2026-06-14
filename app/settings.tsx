@@ -417,7 +417,7 @@ export default function SettingsScreen() {
               accessibilityRole="button"
               accessibilityLabel="Unlock MoodRx Pro"
             >
-              <Text style={styles.upgradeBtnText}>UNLOCK — $9.99 →</Text>
+              <Text style={styles.upgradeBtnText}>UNLOCK PRO — $9.99 →</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -874,11 +874,11 @@ const styles = StyleSheet.create({
   proBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   upgradeBtn: {
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: colors.premium,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  upgradeBtnText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
+  upgradeBtnText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',

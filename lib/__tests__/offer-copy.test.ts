@@ -3,7 +3,6 @@ import {
   CANONICAL_OFFER_LINE,
   CANONICAL_REASSURANCE,
   offerHeadline,
-  chipLabel,
   selectBasePrice,
 } from '@/lib/offer-copy';
 
@@ -32,16 +31,6 @@ describe('offerHeadline', () => {
   });
   it('falls back to the generic headline for an unknown context', () => {
     expect(offerHeadline('something-new')).toBe('Unlock everything');
-  });
-});
-
-describe('chipLabel', () => {
-  it('puts the price on the lock', () => {
-    expect(chipLabel('$9.99')).toBe('$9.99 unlocks this');
-    expect(chipLabel('£8.99')).toBe('£8.99 unlocks this');
-  });
-  it('handles an empty price string', () => {
-    expect(chipLabel('')).toBe(' unlocks this');
   });
 });
 

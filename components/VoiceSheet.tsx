@@ -23,6 +23,7 @@ interface Props {
   onSelect: (name: string) => void;
   onPreview: (name: string) => void;
   onClose: () => void;
+  onPlus?: () => void;
 }
 
 const ACCENT = '#E11D48';
@@ -114,6 +115,7 @@ export function VoiceSheet({
   onSelect,
   onPreview,
   onClose,
+  onPlus,
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -150,6 +152,11 @@ export function VoiceSheet({
               )}
             </Pressable>
           )}
+          {onPlus && (
+            <Pressable onPress={onPlus} accessibilityRole="button" accessibilityLabel="Included with MoodRx Plus" style={styles.plusLink}>
+              <Text style={styles.plusLinkText}>Included with MoodRx+ →</Text>
+            </Pressable>
+          )}
         </Pressable>
       </Pressable>
     </Modal>
@@ -176,4 +183,6 @@ const styles = StyleSheet.create({
   cta: { marginTop: 18, backgroundColor: ACCENT, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   ctaDisabled: { opacity: 0.5 },
   ctaText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
+  plusLink: { marginTop: 12, alignItems: 'center' },
+  plusLinkText: { color: '#E8B84B', fontSize: 16, fontWeight: '600' },
 });

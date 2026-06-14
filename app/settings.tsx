@@ -46,6 +46,7 @@ import {
 } from '@/lib/health';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PlusSheet } from '@/components/PlusSheet';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
@@ -83,6 +84,7 @@ export default function SettingsScreen() {
   const { restorePurchases, isPremium, devTogglePremium, devTogglePlus, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
   const [devPanel, setDevPanel] = useState(false);
+  const [plusVisible, setPlusVisible] = useState(false);
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleAnim = useRef(new Animated.Value(0)).current;
@@ -422,6 +424,11 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        <TouchableOpacity onPress={() => setPlusVisible(true)} activeOpacity={0.7} style={styles.subStatusRow} accessibilityRole="button" accessibilityLabel="MoodRx Plus — live coach">
+          <Text style={styles.subStatusLabel}>MOODRX+</Text>
+          <Text style={styles.upgradeBtnText}>LIVE COACH →</Text>
+        </TouchableOpacity>
 
         {__DEV__ && devPanel && (
           <View style={{ marginTop: 12, gap: 8 }}>
@@ -850,6 +857,7 @@ export default function SettingsScreen() {
         <View style={{ height: 12 }} />
       </ScrollView>
       <BottomNav />
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
     </Animated.View>
   );
 }

@@ -10,10 +10,12 @@ import { getCoachVoice, setCoachVoice, getInsultSeverity } from '@/lib/storage';
 import { fetchManifest, ensureClip } from '@/lib/insult-cache';
 import { pickClip, type Manifest } from '@/lib/insult-library';
 import { VoiceSheet } from '@/components/VoiceSheet';
+import { PlusSheet } from '@/components/PlusSheet';
 
 export function CoachVoicePicker() {
   const { ownsVoice, purchaseVoice, purchasePack, offerings, isLoading: subLoading } = useSubscription();
   const [open, setOpen] = useState(false);
+  const [plusVisible, setPlusVisible] = useState(false);
   const [selected, setSelected] = useState('rachel');
   const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
   const [previewAvailable, setPreviewAvailable] = useState(false);
@@ -112,7 +114,9 @@ export function CoachVoicePicker() {
         onSelect={handleSelect}
         onPreview={handlePreview}
         onClose={handleClose}
+        onPlus={() => setPlusVisible(true)}
       />
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
     </>
   );
 }

@@ -272,21 +272,22 @@ export default function VentScreen() {
       prevInterimRef.current = '';
     }
     isRecordingRef.current = true;
-    // NOTE: do NOT raise the endpointer silence (EXTRA_SPEECH_INPUT_*SILENCE*)
-    // to bridge pauses. On Android SODA, keeping one session alive across a
-    // mid-sentence pause makes the recognizer discard the PRE-pause words from
-    // the final transcript (verified: "I want to order pizza, I can't take it
-    // anymore" came back as only "I can't take it anymore"). That silently drops
-    // content — unacceptable for crisis detection. Instead we let each utterance
-    // endpoint into its own session (its own final result) and accumulate across
-    // restarts. The trade-off is Android's start/stop beep on each restart (see
-    // the reopened beep UX issue) — correctness wins over the beep.
+    // Bridge natural pauses (~4s) so the recognizer doesn't end + restart-beep on
+    // every short pause. This is only safe because foldInterim locks in each
+    // phrase when the recognizer resets its interim mid-session — so even though
+    // SODA's single final result for a bridged session only carries the LAST
+    // phrase, no pre-pause words are dropped. (Without foldInterim this silently
+    // dropped content — a crisis-safety hazard.)
     ExpoSpeechRecognitionModule.start({
       lang: 'en-US',
       interimResults: true,
       continuous: false,
       requiresOnDeviceRecognition: modeOnDeviceRef.current,
       addsPunctuation: true,
+      androidIntentOptions: {
+        EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 4000,
+        EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 4000,
+      },
     });
   }, []);
 

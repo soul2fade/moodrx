@@ -26,12 +26,12 @@ export function normalizeVoice(raw: unknown, fallback = 'rachel'): string {
   return isVoiceName(raw) ? raw : fallback;
 }
 
-/** Which voice actually plays: a free voice as-is; a paid voice only when the
- *  bundle is owned; otherwise fall back to 'rachel' (refund / unknown / unbought). */
-export function effectiveVoice(selected: string, ownsBundle: boolean): string {
+/** Which voice actually plays: a free voice as-is; a paid voice only when owned
+ *  (per-voice, bundle, or all-access); otherwise fall back to 'rachel'. Pure. */
+export function effectiveVoice(selected: string, owned: ReadonlySet<string>): string {
   const v = VOICES.find((x) => x.name === selected);
   if (!v) return 'rachel';
-  return v.free || ownsBundle ? selected : 'rachel';
+  return v.free || ownsVoice(selected, owned) ? selected : 'rachel';
 }
 
 // Mirror of entitlement ids in lib/revenuecat.tsx — inlined so this module

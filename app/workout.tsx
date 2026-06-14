@@ -38,7 +38,6 @@ import {
 } from '@/lib/workout-voice';
 import { effectiveVoice } from '@/lib/voices';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { VOICE_PACK_ID } from '@/lib/revenuecat';
 
 /** Extract a duration in seconds from a workout step description.
  *  Sums any number-of-minutes + number-of-seconds tokens present
@@ -142,9 +141,9 @@ export default function WorkoutScreen() {
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
   const [insultSeverity, setSeverity] = useState<InsultTier>('sticks');
-  const { ownsPack } = useSubscription();
+  const { ownedEntitlements } = useSubscription();
   const [selectedVoice, setSelectedVoice] = useState('rachel');
-  const voice = effectiveVoice(selectedVoice, ownsPack(VOICE_PACK_ID));
+  const voice = effectiveVoice(selectedVoice, ownedEntitlements);
   const [severitySheetOpen, setSeveritySheetOpen] = useState(false);
   const [trashTalkVolume, setTrashTalkVolume] = useState(0.7);
   const [keepAwake, setKeepAwake] = useState(false);

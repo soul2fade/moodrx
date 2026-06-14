@@ -29,14 +29,19 @@ describe('normalizeVoice', () => {
 
 describe('effectiveVoice', () => {
   it('a free voice always plays', () => {
-    expect(effectiveVoice('rachel', false)).toBe('rachel');
+    expect(effectiveVoice('rachel', new Set())).toBe('rachel');
   });
-  it('a paid voice plays only when the bundle is owned', () => {
-    expect(effectiveVoice('grampa', true)).toBe('grampa');
-    expect(effectiveVoice('grampa', false)).toBe('rachel');
+  it('a paid voice plays when its own entitlement is owned', () => {
+    expect(effectiveVoice('grampa', new Set(['voice_grampa']))).toBe('grampa');
+  });
+  it('a paid voice plays when the bundle is owned', () => {
+    expect(effectiveVoice('grampa', new Set(['pack_voice_pack']))).toBe('grampa');
+  });
+  it('a paid voice falls back to rachel when unowned', () => {
+    expect(effectiveVoice('grampa', new Set())).toBe('rachel');
   });
   it('an unknown voice falls back to rachel', () => {
-    expect(effectiveVoice('mystery', true)).toBe('rachel');
+    expect(effectiveVoice('mystery', new Set(['voice_mystery']))).toBe('rachel');
   });
 });
 

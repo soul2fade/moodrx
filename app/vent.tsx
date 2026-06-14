@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -30,7 +29,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type VentState = 'consent' | 'invite' | 'recording' | 'thinking' | 'reply';
+type VentState = 'consent' | 'invite' | 'recording' | 'thinking' | 'reply' | 'fallback';
 
 interface Correction {
   mood: MoodKey;
@@ -55,6 +54,9 @@ export default function VentScreen() {
   const [showResource, setShowResource] = useState(false);
   const [isConsentLoading, setIsConsentLoading] = useState(true);
   const [showSilenceCheckin, setShowSilenceCheckin] = useState(false);
+  // Gentle inline fallback message (shown instead of a system Alert when voice
+  // can't be used and we route the user to tapping their mood in).
+  const [fallbackNote, setFallbackNote] = useState('');
 
   // Refs for timer IDs so we can clean them up reliably
   const hardStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -187,6 +189,9 @@ export default function VentScreen() {
   }, []);
 
   // ─── Fallback to form ────────────────────────────────────────────────────
+  // Show a calm inline screen (not a system Alert) explaining why voice didn't
+  // work, with a way to tap the mood in or retry the mic. Far gentler on a
+  // venting screen than an OK popup.
   const fallbackToForm = useCallback((note: string) => {
     if (isRecordingRef.current) {
       isRecordingRef.current = false;
@@ -198,8 +203,8 @@ export default function VentScreen() {
     }
     clearSilenceTimers();
     setShowSilenceCheckin(false);
-    Alert.alert('', note);
-    router.replace('/home');
+    setFallbackNote(note);
+    setVentState('fallback');
   }, [clearSilenceTimers]);
 
   // Restart the silence countdown. Called on recording start, on every speech
@@ -501,6 +506,36 @@ export default function VentScreen() {
                 Sitting with what you said.
               </Text>
             </View>
+          </View>
+        )}
+
+        {/* ── FALLBACK (voice unavailable — gentle inline, no system Alert) ── */}
+        {ventState === 'fallback' && (
+          <View style={[styles.section, styles.sectionFill]}>
+            <Text style={styles.sectionEyebrow}>NO WORRIES</Text>
+            <Text style={styles.headline}>Let&apos;s tap it in.</Text>
+            <View style={styles.consentCard}>
+              <Text style={styles.consentText}>{fallbackNote}</Text>
+            </View>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity
+              style={styles.primaryBtn}
+              onPress={() => router.replace('/home')}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Tap your mood in instead"
+            >
+              <Text style={styles.primaryBtnText}>TAP IT IN →</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={handleStartRecording}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Try the mic again"
+            >
+              <Text style={styles.secondaryBtnText}>TRY THE MIC AGAIN</Text>
+            </TouchableOpacity>
           </View>
         )}
 

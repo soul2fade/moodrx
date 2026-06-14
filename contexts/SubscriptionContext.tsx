@@ -269,14 +269,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
                 onPress={handleCancelPurchase}
                 activeOpacity={0.8}
               >
-                <Text style={styles.cancelBtnText}>CANCEL</Text>
+                <Text style={styles.cancelBtnText} numberOfLines={1}>CANCEL</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.confirmBtn}
                 onPress={handleConfirmPurchase}
                 activeOpacity={0.8}
               >
-                <Text style={styles.confirmBtnText}>CONFIRM</Text>
+                <Text style={styles.confirmBtnText} numberOfLines={1}>CONFIRM</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -675,6 +675,38 @@ export async function setTrashTalkVolume(volume: number): Promise<void> {
   }
 }
 
+const LIVE_COACH_TASTE_KEY = '@moodrx_live_coach_taste_used';
+
+/** How many free live-coach replies a non-MoodRx+ owner has consumed (lifetime). */
+export async function getLiveCoachTasteUsed(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(LIVE_COACH_TASTE_KEY);
+    if (!raw) return 0;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function incrementLiveCoachTasteUsed(): Promise<void> {
+  try {
+    const current = await getLiveCoachTasteUsed();
+    await AsyncStorage.setItem(LIVE_COACH_TASTE_KEY, String(current + 1));
+  } catch {
+    // non-critical
+  }
+}
+
+/** Dev/testing: reset the consumed-taste counter to 0. */
+export async function resetLiveCoachTasteUsed(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(LIVE_COACH_TASTE_KEY, '0');
+  } catch {
+    // non-critical
+  }
+}
+
 const INSULT_SEVERITY_KEY = '@moodrx_insult_severity';
 
 /** The chosen trash-talk severity (drives the audio tier + coach tone). Defaults

@@ -331,13 +331,18 @@ export default function PostWorkoutScreen() {
 
   const isFirstSession = isGuided || cachedSessionCount === 0;
 
+  // KeyboardAvoidingView uses behavior="padding" on BOTH platforms: Android
+  // edge-to-edge overrides the manifest adjustResize, so the keyboard would
+  // otherwise cover the Field Notes input at the bottom. Padding shrinks the
+  // ScrollView so the focused input scrolls into view above the keyboard.
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.headline}>You absolute legend.</Text>
         <Text style={styles.subtext}>

@@ -21,7 +21,7 @@ import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { getVentConsent, setVentConsent, getVentEnabled } from '@/lib/storage';
 import { fetchVentReply } from '@/lib/vent-client';
-import { ventAction, buildVentSession, accumulateTranscript, pickRecognitionMode, nextRecognitionStep, type VentAssessment } from '@/lib/vent';
+import { ventAction, buildVentSession, foldInterim, joinTranscript, pickRecognitionMode, nextRecognitionStep, type VentAssessment } from '@/lib/vent';
 import { captureSessionHealth } from '@/lib/health';
 import { createSessionId } from '@/lib/session-utils';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -65,9 +65,13 @@ export default function VentScreen() {
   const checkinAnim = useRef(new Animated.Value(0)).current;
   // Ref for latest transcript so the 'end' event handler reads the final value
   const transcriptRef = useRef('');
-  // Ref for the accumulated, finalized portion of a continuous-STT transcript.
-  // Interim segments are appended to this for display but only folded in on isFinal.
+  // Ref for the accumulated, locked-in portion of the transcript (completed
+  // phrases). Interim text is folded in as soon as the recognizer resets to a
+  // new phrase (see foldInterim) — NOT only on isFinal — so a mid-sentence pause
+  // can't drop earlier words.
   const committedTranscriptRef = useRef('');
+  // Latest interim of the phrase still in progress (the part not yet locked in).
+  const prevInterimRef = useRef('');
   // Ref to track whether we're actively recording (guards cleanup stop call)
   const isRecordingRef = useRef(false);
   // True once the USER (or an auto-finish/hard-stop timer) ends the session, so the
@@ -129,12 +133,14 @@ export default function VentScreen() {
   useSpeechRecognitionEvent('result', (event) => {
     if (!isRecordingRef.current) return; // ignore stray results after recording ended
     const segment = event.results[0]?.transcript ?? '';
-    const { committed, display } = accumulateTranscript(
+    const { committed, prevInterim, display } = foldInterim(
       committedTranscriptRef.current,
+      prevInterimRef.current,
       segment,
       event.isFinal,
     );
     committedTranscriptRef.current = committed;
+    prevInterimRef.current = prevInterim;
     setTranscript(display);
     transcriptRef.current = display;
     resetSilenceTimer();
@@ -259,21 +265,28 @@ export default function VentScreen() {
   // handleStartRecording and the result handler, NOT reset here, so restarting
   // after a pause keeps listening and keeps accumulating.
   const beginRecognition = useCallback(() => {
+    // Preserve any in-progress interim across a restart (so a phrase that didn't
+    // get a final result before the session ended isn't lost), then start fresh.
+    if (prevInterimRef.current) {
+      committedTranscriptRef.current = joinTranscript(committedTranscriptRef.current, prevInterimRef.current);
+      prevInterimRef.current = '';
+    }
     isRecordingRef.current = true;
+    // NOTE: do NOT raise the endpointer silence (EXTRA_SPEECH_INPUT_*SILENCE*)
+    // to bridge pauses. On Android SODA, keeping one session alive across a
+    // mid-sentence pause makes the recognizer discard the PRE-pause words from
+    // the final transcript (verified: "I want to order pizza, I can't take it
+    // anymore" came back as only "I can't take it anymore"). That silently drops
+    // content — unacceptable for crisis detection. Instead we let each utterance
+    // endpoint into its own session (its own final result) and accumulate across
+    // restarts. The trade-off is Android's start/stop beep on each restart (see
+    // the reopened beep UX issue) — correctness wins over the beep.
     ExpoSpeechRecognitionModule.start({
       lang: 'en-US',
       interimResults: true,
       continuous: false,
       requiresOnDeviceRecognition: modeOnDeviceRef.current,
       addsPunctuation: true,
-      // Bridge natural speech pauses so the recognizer doesn't end (and beep on
-      // the next restart) every time the user pauses to think. Only a long (~4s)
-      // gap ends the utterance and triggers a restart — keeping one continuous,
-      // beep-free session through normal venting.
-      androidIntentOptions: {
-        EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 4000,
-        EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 4000,
-      },
     });
   }, []);
 
@@ -290,6 +303,7 @@ export default function VentScreen() {
     setTranscript('');
     transcriptRef.current = '';
     committedTranscriptRef.current = '';
+    prevInterimRef.current = '';
     isRecordingRef.current = true;
     setVentState('recording');
     // Prefer on-device STT (audio never leaves the phone); fall back to cloud
@@ -653,11 +667,40 @@ export default function VentScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Always-available crisis path — independent of what the model detects, so
+          a missed/garbled transcript can never mean a missed crisis. */}
+      {ventState !== 'consent' && (
+        <TouchableOpacity
+          style={[styles.crisisFooter, { paddingBottom: Math.max(insets.bottom, 12) }]}
+          onPress={() => router.push('/crisis')}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="In crisis? Get help now"
+        >
+          <Text style={styles.crisisFooterText}>In crisis? Get help now →</Text>
+        </TouchableOpacity>
+      )}
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  crisisFooter: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+  },
+  crisisFooterText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 16,
+    color: '#7EC8A0',
+    letterSpacing: 1,
+    lineHeight: 18,
+  },
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',

@@ -53,6 +53,63 @@ export function accumulateTranscript(
   return { committed: isFinal ? display : committed, display };
 }
 
+/** Length of the shared case-insensitive leading prefix of `a` and `b`. */
+function commonPrefixLen(a: string, b: string): number {
+  const n = Math.min(a.length, b.length);
+  let i = 0;
+  while (i < n && a.charAt(i).toLowerCase() === b.charAt(i).toLowerCase()) i++;
+  return i;
+}
+
+/** Whether `cur` looks like a NEW utterance rather than a continuation of
+ *  `prev`. Streaming interims for one phrase grow while sharing a long common
+ *  prefix; when the on-device recognizer resets its interim at a pause, the next
+ *  interim is a different phrase that diverges early. We treat <60% shared prefix
+ *  (of the shorter string) as a reset. Pure. */
+export function isInterimReset(prev: string, cur: string): boolean {
+  const p = prev.trim();
+  const c = cur.trim();
+  if (!p || !c) return false;
+  const shared = commonPrefixLen(p, c);
+  return shared < 0.6 * Math.min(p.length, c.length);
+}
+
+/** Reset-aware transcript accumulator for continuous:false STT.
+ *
+ *  The on-device (Android SODA) recognizer overwrites its interim result at a
+ *  mid-sentence pause, and its single FINAL result only carries the LAST phrase
+ *  — so an accumulator that only commits on `isFinal` silently drops everything
+ *  said before the pause (a crisis-safety hazard: "I want to kill myself, I
+ *  can't take it anymore" arrived as just "I can't take it anymore").
+ *
+ *  This locks each phrase into `committed` the moment a reset is detected, so no
+ *  spoken phrase is lost. `prevInterim` is the latest interim of the phrase still
+ *  in progress. Returns the next {committed, prevInterim, display}. Pure. */
+export function foldInterim(
+  committed: string,
+  prevInterim: string,
+  segment: string,
+  isFinal: boolean,
+): { committed: string; prevInterim: string; display: string } {
+  const seg = segment.trim();
+  if (isFinal) {
+    // Final for the current phrase. If it diverges from the tracked interim (a
+    // reset that went straight to final), lock the prior phrase in first.
+    const base = prevInterim && isInterimReset(prevInterim, seg)
+      ? joinTranscript(committed, prevInterim)
+      : committed;
+    const next = joinTranscript(base, seg);
+    return { committed: next, prevInterim: '', display: next };
+  }
+  if (prevInterim && isInterimReset(prevInterim, seg)) {
+    // New phrase started — the previous interim is a completed phrase; commit it.
+    const next = joinTranscript(committed, prevInterim);
+    return { committed: next, prevInterim: seg, display: joinTranscript(next, seg) };
+  }
+  // First interim, or the same phrase still growing/being revised.
+  return { committed, prevInterim: seg, display: joinTranscript(committed, seg) };
+}
+
 /** Decide whether to run STT on-device or fall back to cloud. On-device is
  *  preferred (privacy: audio never leaves the phone); we fall back to cloud only
  *  when the platform can't do on-device for this locale. Pure — the caller

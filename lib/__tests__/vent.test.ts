@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript, pickRecognitionMode, nextRecognitionStep } from '@/lib/vent';
+import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript, foldInterim, isInterimReset, pickRecognitionMode, nextRecognitionStep } from '@/lib/vent';
 
 describe('parseVentResponse', () => {
   const ok = { mood: 'stressed', intensity: 7, reply: 'You showed up.', risk: 'none' };
@@ -114,6 +114,63 @@ describe('accumulateTranscript', () => {
       committed: 'I had a rough day and I am exhausted',
       display: 'I had a rough day and I am exhausted',
     });
+  });
+});
+
+describe('isInterimReset', () => {
+  it('treats a growing same-phrase interim as a continuation (not a reset)', () => {
+    expect(isInterimReset('I want', 'I want to order pizza')).toBe(false);
+    expect(isInterimReset('I want to order', 'I want to order pizza')).toBe(false);
+  });
+  it('treats a diverging new phrase as a reset (recognizer restarted at a pause)', () => {
+    expect(isInterimReset('I want to order pizza', "I can't take it anymore")).toBe(true);
+  });
+  it('does NOT flag a minor mid-phrase revision as a reset', () => {
+    // shares a long common prefix → still the same phrase being revised
+    expect(isInterimReset('I want to', 'I wanted to')).toBe(false);
+  });
+  it('is not a reset when there is no prior interim or the new one is empty', () => {
+    expect(isInterimReset('', 'anything')).toBe(false);
+    expect(isInterimReset('something', '')).toBe(false);
+  });
+});
+
+describe('foldInterim', () => {
+  // The on-device recognizer (continuous:false) overwrites its interim at a
+  // mid-sentence pause and its FINAL only carries the last phrase, so the old
+  // "commit on isFinal" accumulator silently dropped pre-pause words — a crisis-
+  // safety hazard. foldInterim locks in each phrase the moment a reset is seen.
+  it('tracks the first interim without committing it yet', () => {
+    expect(foldInterim('', '', 'I want to order pizza', false)).toEqual({
+      committed: '', prevInterim: 'I want to order pizza', display: 'I want to order pizza',
+    });
+  });
+  it('keeps growing the same interim without duplicating', () => {
+    expect(foldInterim('', 'I want', 'I want to order pizza', false)).toEqual({
+      committed: '', prevInterim: 'I want to order pizza', display: 'I want to order pizza',
+    });
+  });
+  it('locks in the prior phrase when a new phrase resets the interim', () => {
+    expect(foldInterim('', 'I want to order pizza', "I can't take it anymore", false)).toEqual({
+      committed: 'I want to order pizza',
+      prevInterim: "I can't take it anymore",
+      display: "I want to order pizza I can't take it anymore",
+    });
+  });
+  it('final result supersedes the current interim (same phrase) and commits it', () => {
+    expect(foldInterim('I want to order pizza', "I can't take it anymore", "I can't take it anymore.", true)).toEqual({
+      committed: "I want to order pizza I can't take it anymore.",
+      prevInterim: '',
+      display: "I want to order pizza I can't take it anymore.",
+    });
+  });
+  it('end-to-end: a two-phrase utterance keeps BOTH halves', () => {
+    let s = { committed: '', prevInterim: '', display: '' };
+    s = foldInterim(s.committed, s.prevInterim, 'I want', false);
+    s = foldInterim(s.committed, s.prevInterim, 'I want to order pizza', false);
+    s = foldInterim(s.committed, s.prevInterim, "I can't take", false);          // reset
+    s = foldInterim(s.committed, s.prevInterim, "I can't take it anymore", true); // final
+    expect(s.committed).toBe("I want to order pizza I can't take it anymore");
   });
 });
 

@@ -29,6 +29,7 @@ import { colors } from '@/lib/colors';
 import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
+import { PriceChip } from '@/components/PriceChip';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
@@ -275,7 +276,7 @@ export default function InsightsScreen() {
           accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker with Pro'}
         >
           <Text style={styles.supplementBtnText}>
-            {isPremium ? 'SUPPLEMENT TRACKER →' : 'SUPPLEMENT TRACKER [PRO] →'}
+            {isPremium ? 'SUPPLEMENT TRACKER →' : 'SUPPLEMENT TRACKER — $9.99 →'}
           </Text>
         </TouchableOpacity>
 
@@ -288,7 +289,7 @@ export default function InsightsScreen() {
           accessibilityLabel={isPremium ? 'Open programs' : 'Unlock programs with Pro'}
         >
           <Text style={styles.supplementBtnText}>
-            {isPremium ? 'PROGRAMS →' : 'PROGRAMS [PRO] →'}
+            {isPremium ? 'PROGRAMS →' : 'PROGRAMS — $9.99 →'}
           </Text>
         </TouchableOpacity>
 
@@ -301,15 +302,10 @@ export default function InsightsScreen() {
           <View style={styles.lockedCalendar}>
             <View style={styles.lockedOverlay}>
               <Text style={styles.lockedCalendarTitle}>Track your progress over time</Text>
-              <TouchableOpacity
-                style={styles.lockedCalendarButton}
+              <PriceChip
                 onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel="Unlock Pro to see your calendar"
-              >
-                <Text style={styles.lockedCalendarButtonText}>UNLOCK PRO</Text>
-              </TouchableOpacity>
+                accessibilityLabel="Unlock your progress calendar"
+              />
             </View>
           </View>
         )}
@@ -403,17 +399,11 @@ export default function InsightsScreen() {
               </View>
             ))}
             {!subLoading && !isPremium && lockedPatternCount > 0 && (
-              <TouchableOpacity
-                style={styles.historyUpsellRow}
+              <PriceChip
                 onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`See ${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'} with Pro`}
-              >
-                <Text style={styles.historyUpsellText}>
-                  +{lockedPatternCount} MORE {lockedPatternCount === 1 ? 'PATTERN' : 'PATTERNS'} — UNLOCK PRO →
-                </Text>
-              </TouchableOpacity>
+                label={`$9.99 unlocks +${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'}`}
+                accessibilityLabel={`See ${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'}`}
+              />
             )}
           </View>
         )}
@@ -470,17 +460,11 @@ export default function InsightsScreen() {
               );
             })}
             {!subLoading && !isPremium && workoutStats.total > 3 && (
-              <TouchableOpacity
-                style={styles.historyUpsellRow}
+              <PriceChip
                 onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`See all ${workoutStats.total - 3} more workouts with Pro`}
-              >
-                <Text style={styles.historyUpsellText}>
-                  +{workoutStats.total - 3} MORE — UNLOCK PRO →
-                </Text>
-              </TouchableOpacity>
+                label={`$9.99 unlocks +${workoutStats.total - 3} more`}
+                accessibilityLabel={`See all ${workoutStats.total - 3} more workouts`}
+              />
             )}
           </View>
         )}
@@ -524,17 +508,11 @@ export default function InsightsScreen() {
               );
             })}
             {!subLoading && !isPremium && sessionCount > 3 && (
-              <TouchableOpacity
-                style={styles.historyUpsellRow}
+              <PriceChip
                 onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`See all ${sessionCount - 3} more sessions with Pro`}
-              >
-                <Text style={styles.historyUpsellText}>
-                  +{sessionCount - 3} MORE SESSION{sessionCount - 3 === 1 ? '' : 'S'} — UNLOCK PRO →
-                </Text>
-              </TouchableOpacity>
+                label={`$9.99 unlocks +${sessionCount - 3} more session${sessionCount - 3 === 1 ? '' : 's'}`}
+                accessibilityLabel={`See all ${sessionCount - 3} more sessions`}
+              />
             )}
           </View>
         )}
@@ -561,17 +539,11 @@ export default function InsightsScreen() {
               );
             })}
             {!subLoading && !isPremium && sessionNotes.total > 3 && (
-              <TouchableOpacity
-                style={styles.historyUpsellRow}
+              <PriceChip
                 onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`See all ${sessionNotes.total - 3} more notes with Pro`}
-              >
-                <Text style={styles.historyUpsellText}>
-                  +{sessionNotes.total - 3} MORE NOTES — UNLOCK PRO →
-                </Text>
-              </TouchableOpacity>
+                label={`$9.99 unlocks +${sessionNotes.total - 3} more notes`}
+                accessibilityLabel={`See all ${sessionNotes.total - 3} more notes`}
+              />
             )}
           </View>
         )}
@@ -650,6 +622,7 @@ export default function InsightsScreen() {
       <PremiumSheet
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
+        context="patterns"
       />
 
       {/* Case History backdrop */}
@@ -1121,18 +1094,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 20,
   },
-  historyUpsellRow: {
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
-  },
-  historyUpsellText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    fontSize: 16,
-  },
   recentWorkout: {
     ...t.body,
     fontSize: 16,
@@ -1212,17 +1173,6 @@ const styles = StyleSheet.create({
     ...t.bodyMuted,
     color: '#ffffff',
     textAlign: 'center',
-  },
-  lockedCalendarButton: {
-    borderWidth: 1,
-    borderColor: '#525252',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
-  lockedCalendarButtonText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
   },
   caseBackdrop: {
     ...StyleSheet.absoluteFillObject,

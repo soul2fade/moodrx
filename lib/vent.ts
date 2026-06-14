@@ -38,21 +38,6 @@ export function joinTranscript(a: string, b: string): string {
   return `${left} ${right}`;
 }
 
-/** Accumulate a continuous-STT transcript across segments.
- *  `committed` holds all finalized segments so far; `segment` is the latest
- *  recognizer result (interim or final). The on-screen `display` is always
- *  committed + current segment; a segment only folds into `committed` once it
- *  is `isFinal`. This is what prevents a natural pause (which finalizes the
- *  prior segment and resets results[0] for the next) from erasing earlier text. */
-export function accumulateTranscript(
-  committed: string,
-  segment: string,
-  isFinal: boolean,
-): { committed: string; display: string } {
-  const display = joinTranscript(committed, segment);
-  return { committed: isFinal ? display : committed, display };
-}
-
 /** Length of the shared case-insensitive leading prefix of `a` and `b`. */
 function commonPrefixLen(a: string, b: string): number {
   const n = Math.min(a.length, b.length);

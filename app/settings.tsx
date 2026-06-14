@@ -81,7 +81,7 @@ export default function SettingsScreen() {
   const [ventEnabled, setVentEnabledState] = useState(true);
   const ventToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
-  const { restorePurchases, isPremium, devTogglePremium, devTogglePlus, isLoading: subLoading } = useSubscription();
+  const { restorePurchases, isPremium, isPlus, devTogglePremium, devTogglePlus, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
   const [devPanel, setDevPanel] = useState(false);
   const [plusVisible, setPlusVisible] = useState(false);
@@ -425,10 +425,12 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        <TouchableOpacity onPress={() => setPlusVisible(true)} activeOpacity={0.7} style={styles.subStatusRow} accessibilityRole="button" accessibilityLabel="MoodRx Plus — live coach">
-          <Text style={styles.subStatusLabel}>MOODRX+</Text>
-          <Text style={styles.upgradeBtnText}>LIVE COACH →</Text>
-        </TouchableOpacity>
+        {!subLoading && !isPlus && (
+          <TouchableOpacity onPress={() => setPlusVisible(true)} activeOpacity={0.7} style={styles.subStatusRow} accessibilityRole="button" accessibilityLabel="MoodRx Plus — live coach">
+            <Text style={styles.subStatusLabel}>MOODRX+</Text>
+            <Text style={styles.upgradeBtnText}>LIVE COACH →</Text>
+          </TouchableOpacity>
+        )}
 
         {__DEV__ && devPanel && (
           <View style={{ marginTop: 12, gap: 8 }}>

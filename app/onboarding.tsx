@@ -143,14 +143,15 @@ export default function OnboardingScreen() {
           MoodRx is a wellness tool, not a substitute for professional mental health care.
         </Text>
 
-        <View style={styles.trialBanner}>
-          <Text style={styles.trialBannerLabel}>MOODRX PRO</Text>
-          <Text style={styles.trialBannerSub}>One-time unlock. Full access forever.</Text>
+        <View style={styles.ownBlock}>
+          <Text style={styles.ownHeadline}>Own MoodRx.</Text>
+          <Text style={styles.ownValue}>Every workout, every pattern, your whole evidence file — yours forever.</Text>
           <View style={styles.trialFeatures}>
             {TRIAL_FEATURES.map((f) => (
               <Text key={f} style={styles.trialFeatureItem}>+ {f}</Text>
             ))}
           </View>
+          <Text style={styles.ownReassurance}>$9.99 once. No subscription. No auto-renew.</Text>
         </View>
 
         <Animated.View style={{ transform: [{ scale: trialScale }] }}>
@@ -163,13 +164,13 @@ export default function OnboardingScreen() {
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityState={{ disabled: unlockBtn.disabled, busy: unlockBtn.busy }}
-            accessibilityLabel="Unlock MoodRx Pro"
+            accessibilityLabel="Own MoodRx for $9.99"
           >
             {unlockBtn.busy ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ActivityIndicator size="small" color={colors.premium} />
             ) : (
               <Text style={styles.trialButtonText}>
-                {purchaseButtonLabel(unlockBtn.status, { idle: 'UNLOCK MOODRX PRO →' })}
+                {purchaseButtonLabel(unlockBtn.status, { idle: 'OWN IT — $9.99 →' })}
               </Text>
             )}
           </TouchableOpacity>
@@ -180,9 +181,9 @@ export default function OnboardingScreen() {
           onPress={handleFreeVersion}
           activeOpacity={0.6}
           accessibilityRole="button"
-          accessibilityLabel="Continue with free version"
+          accessibilityLabel="Start free"
         >
-          <Text style={styles.freeButtonText}>CONTINUE WITH FREE VERSION</Text>
+          <Text style={styles.freeButtonText}>Start free →</Text>
         </TouchableOpacity>
 
         <View style={styles.legalLinksRow}>
@@ -373,23 +374,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textTransform: 'none' as const,
   },
-  trialBanner: {
+  ownBlock: {
     marginTop: 24,
     marginBottom: 20,
     borderLeftWidth: 2,
     borderLeftColor: colors.premium,
     paddingLeft: 16,
   },
-  trialBannerLabel: {
-    ...t.label,
-    color: colors.premium,
-    letterSpacing: 3,
+  ownHeadline: {
+    ...t.headlineSm,
+    fontSize: 22,
   },
-  trialBannerSub: {
+  ownValue: {
     ...t.bodyMuted,
     fontSize: 16,
-    marginTop: 4,
+    color: '#ffffff',
+    marginTop: 6,
     marginBottom: 12,
+  },
+  ownReassurance: {
+    ...t.body,
+    color: colors.premium,
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 12,
   },
   trialFeatures: {
     gap: 4,
@@ -400,7 +408,7 @@ const styles = StyleSheet.create({
   },
   trialButton: {
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: colors.premium,
     paddingVertical: 16,
     alignItems: 'center',
     borderRadius: 0,
@@ -412,6 +420,7 @@ const styles = StyleSheet.create({
   },
   trialButtonText: {
     ...t.button,
+    color: colors.premium,
     letterSpacing: 4,
   },
   freeButton: {
@@ -420,9 +429,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   freeButtonText: {
-    ...t.label,
+    ...t.body,
     color: '#ffffff',
-    letterSpacing: 2,
+    fontSize: 16,
   },
   legalLinksRow: {
     flexDirection: 'row',

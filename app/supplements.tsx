@@ -34,6 +34,8 @@ import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { BottomNav } from '@/components/BottomNav';
+import { PriceChip } from '@/components/PriceChip';
+import { PremiumSheet } from '@/components/PremiumSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type TabKey = 'TODAY' | 'HISTORY' | 'ALL';
@@ -137,6 +139,7 @@ function SupplementsScreen() {
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState(DEFAULT_SUPPLEMENT_TIME);
   const [reminderPermDenied, setReminderPermDenied] = useState(false);
+  const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const reminderToggleAnim = useRef(new Animated.Value(0)).current;
 
   const today = todayDateString();
@@ -418,7 +421,9 @@ function SupplementsScreen() {
           ) : (
             <View style={[styles.reminderCard, styles.reminderCardLocked]}>
               <Text style={styles.reminderLabel}>DAILY REMINDER</Text>
-              <Text style={styles.reminderLockedText}>Upgrade to Pro to set daily supplement reminders.</Text>
+              <Text style={styles.reminderLockedText}>Daily supplement reminders are part of the base unlock.</Text>
+              <View style={styles.reminderLockedSpacer} />
+              <PriceChip onPress={() => setShowPremiumSheet(true)} accessibilityLabel="Unlock daily reminders" />
             </View>
           )}
 
@@ -737,6 +742,11 @@ function SupplementsScreen() {
       )}
 
       <BottomNav />
+      <PremiumSheet
+        visible={showPremiumSheet}
+        onClose={() => setShowPremiumSheet(false)}
+        context="reminders"
+      />
     </Animated.View>
   );
 }
@@ -1257,6 +1267,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     letterSpacing: 1,
   },
+  reminderLockedSpacer: { height: 12 },
 });
 
 export default SupplementsScreen;

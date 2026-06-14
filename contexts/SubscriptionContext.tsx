@@ -26,8 +26,10 @@ import {
   ALL_ACCESS_ENTITLEMENT_IDENTIFIER,
   BASE_UNLOCK_PACKAGE_ID,
   PACKS_OFFERING_ID,
+  PLUS_OFFERING_ID,
   packEntitlementId,
 } from '@/lib/revenuecat';
+import { ownsVoice as resolveOwnsVoice, voiceEntitlementId } from '@/lib/voices';
 import { colors } from '@/lib/colors';
 
 interface RCPurchaseError {
@@ -42,16 +44,29 @@ function isRCPurchaseError(err: unknown): err is RCPurchaseError {
 interface SubscriptionContextValue {
   /** True when the user holds the `premium` entitlement (owns the base unlock). */
   isPremium: boolean;
+  /** True when MoodRx+ (all_access) is active — gates the live AI coach. */
+  isPlus: boolean;
   /** True when the user owns the given pack (or has all-access). */
   ownsPack: (packId: string) => boolean;
+  /** True when the user can use the given coach voice (owns it, the bundle, or all-access). */
+  ownsVoice: (name: string) => boolean;
+  /** All currently-held entitlement identifiers (consumed by effectiveVoice). */
+  ownedEntitlements: ReadonlySet<string>;
   isLoading: boolean;
   offerings: PurchasesOfferings | null;
   /** Resolves true when the base unlock was actually granted. */
   purchaseBase: () => Promise<boolean>;
   /** Resolves true when the given pack was actually granted. */
   purchasePack: (packId: string) => Promise<boolean>;
-  restorePurchases: () => Promise<void>;
+  /** Resolves true when the given voice was actually granted. */
+  purchaseVoice: (name: string) => Promise<boolean>;
+  /** Resolves true when MoodRx+ (all_access) was actually granted. */
+  purchasePlus: (period: 'monthly' | 'annual') => Promise<boolean>;
+  /** Resolves true when a previous purchase was found and restored. */
+  restorePurchases: () => Promise<boolean>;
   devTogglePremium: () => void;
+  /** Dev-only: toggle the all_access (MoodRx+) entitlement. */
+  devTogglePlus: () => void;
 }
 
 // Default is `null` so any consumer rendered outside <SubscriptionProvider>
@@ -72,7 +87,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const pendingResolveRef = useRef<((granted: boolean) => void) | null>(null);
   const pendingGrantsRef = useRef<string | null>(null); // dev: entitlement to mock-grant
 
-  const isPremium = isPaidPremium;
+  const hasAllAccess = ownedEntitlements.has(ALL_ACCESS_ENTITLEMENT_IDENTIFIER);
+  // Full app access = owns the base unlock OR has MoodRx+ (all_access). So a
+  // MoodRx+ trial/subscriber unlocks everything the base does.
+  const isPremium = isPaidPremium || hasAllAccess;
+  // MoodRx+ specifically — gates the live coach.
+  const isPlus = hasAllAccess;
 
   const applyCustomerInfo = useCallback((customerInfo: CustomerInfo) => {
     const active = customerInfo.entitlements.active;
@@ -84,6 +104,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     (packId: string): boolean =>
       ownedEntitlements.has(packEntitlementId(packId)) ||
       ownedEntitlements.has(ALL_ACCESS_ENTITLEMENT_IDENTIFIER),
+    [ownedEntitlements],
+  );
+
+  const ownsVoice = useCallback(
+    (name: string): boolean => resolveOwnsVoice(name, ownedEntitlements),
     [ownedEntitlements],
   );
 
@@ -171,12 +196,38 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     return triggerPurchase(pkg, packEntitlementId(packId));
   }, [offerings, triggerPurchase]);
 
+  const purchaseVoice = useCallback((name: string): Promise<boolean> => {
+    const productId = voiceEntitlementId(name); // 'voice_<name>' — product id === entitlement id
+    const pkg = offerings?.all?.[PACKS_OFFERING_ID]?.availablePackages?.find(
+      (p) => p.identifier === productId,
+    );
+    return triggerPurchase(pkg, productId);
+  }, [offerings, triggerPurchase]);
+
+  const purchasePlus = useCallback((period: 'monthly' | 'annual'): Promise<boolean> => {
+    const pkgId = period === 'annual' ? '$rc_annual' : '$rc_monthly';
+    const pkg = offerings?.all?.[PLUS_OFFERING_ID]?.availablePackages?.find(
+      (p) => p.identifier === pkgId,
+    );
+    return triggerPurchase(pkg, ALL_ACCESS_ENTITLEMENT_IDENTIFIER);
+  }, [offerings, triggerPurchase]);
+
   const devTogglePremium = useCallback(() => {
     if (!__DEV__) return;
     setIsPaidPremium(prev => !prev);
   }, []);
 
-  const restorePurchases = useCallback(async () => {
+  const devTogglePlus = useCallback(() => {
+    if (!__DEV__) return;
+    setOwnedEntitlements((prev) => {
+      const next = new Set(prev);
+      if (next.has(ALL_ACCESS_ENTITLEMENT_IDENTIFIER)) next.delete(ALL_ACCESS_ENTITLEMENT_IDENTIFIER);
+      else next.add(ALL_ACCESS_ENTITLEMENT_IDENTIFIER);
+      return next;
+    });
+  }, []);
+
+  const restorePurchases = useCallback(async (): Promise<boolean> => {
     try {
       const customerInfo = await Purchases.restorePurchases();
       applyCustomerInfo(customerInfo);
@@ -187,9 +238,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       } else {
         Alert.alert('No purchases found', 'No previous MoodRx Pro purchase was found.');
       }
+      return hasEntitlement;
     } catch (err: unknown) {
       const msg = isRCPurchaseError(err) ? (err.message ?? 'Could not connect to the store. Please try again.') : 'Could not connect to the store. Please try again.';
       Alert.alert('Restore failed', msg);
+      return false;
     }
   }, [applyCustomerInfo]);
 
@@ -225,23 +278,35 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const value = useMemo<SubscriptionContextValue>(
     () => ({
       isPremium,
+      isPlus,
       ownsPack,
+      ownsVoice,
+      ownedEntitlements,
       isLoading,
       offerings,
       purchaseBase,
       purchasePack,
+      purchaseVoice,
+      purchasePlus,
       restorePurchases,
       devTogglePremium,
+      devTogglePlus,
     }),
     [
       isPremium,
+      isPlus,
       ownsPack,
+      ownsVoice,
+      ownedEntitlements,
       isLoading,
       offerings,
       purchaseBase,
       purchasePack,
+      purchaseVoice,
+      purchasePlus,
       restorePurchases,
       devTogglePremium,
+      devTogglePlus,
     ]
   );
 
@@ -266,14 +331,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
                 onPress={handleCancelPurchase}
                 activeOpacity={0.8}
               >
-                <Text style={styles.cancelBtnText}>CANCEL</Text>
+                <Text style={styles.cancelBtnText} numberOfLines={1}>CANCEL</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.confirmBtn}
                 onPress={handleConfirmPurchase}
                 activeOpacity={0.8}
               >
-                <Text style={styles.confirmBtnText}>CONFIRM</Text>
+                <Text style={styles.confirmBtnText} numberOfLines={1}>CONFIRM</Text>
               </TouchableOpacity>
             </View>
           </View>

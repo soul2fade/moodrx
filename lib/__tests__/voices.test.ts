@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { VOICES, isVoiceName, normalizeVoice, effectiveVoice } from '../voices';
+import { VOICES, isVoiceName, normalizeVoice, effectiveVoice, ownsVoice, voiceEntitlementId } from '../voices';
 
 describe('VOICES', () => {
   it('has rachel free + four paid voices in order', () => {
@@ -29,13 +29,47 @@ describe('normalizeVoice', () => {
 
 describe('effectiveVoice', () => {
   it('a free voice always plays', () => {
-    expect(effectiveVoice('rachel', false)).toBe('rachel');
+    expect(effectiveVoice('rachel', new Set())).toBe('rachel');
   });
-  it('a paid voice plays only when the bundle is owned', () => {
-    expect(effectiveVoice('grampa', true)).toBe('grampa');
-    expect(effectiveVoice('grampa', false)).toBe('rachel');
+  it('a paid voice plays when its own entitlement is owned', () => {
+    expect(effectiveVoice('grampa', new Set(['voice_grampa']))).toBe('grampa');
+  });
+  it('a paid voice plays when the bundle is owned', () => {
+    expect(effectiveVoice('grampa', new Set(['pack_voice_pack']))).toBe('grampa');
+  });
+  it('a paid voice falls back to rachel when unowned', () => {
+    expect(effectiveVoice('grampa', new Set())).toBe('rachel');
   });
   it('an unknown voice falls back to rachel', () => {
-    expect(effectiveVoice('mystery', true)).toBe('rachel');
+    expect(effectiveVoice('mystery', new Set(['voice_mystery']))).toBe('rachel');
+  });
+});
+
+describe('voiceEntitlementId', () => {
+  it('namespaces the voice id', () => {
+    expect(voiceEntitlementId('ed')).toBe('voice_ed');
+  });
+});
+
+describe('ownsVoice', () => {
+  it('free voices are always owned', () => {
+    expect(ownsVoice('rachel', new Set())).toBe(true);
+  });
+  it('owns a paid voice via its own entitlement', () => {
+    expect(ownsVoice('ed', new Set(['voice_ed']))).toBe(true);
+  });
+  it('owns any paid voice via the bundle', () => {
+    expect(ownsVoice('ed', new Set(['pack_voice_pack']))).toBe(true);
+    expect(ownsVoice('ruthie', new Set(['pack_voice_pack']))).toBe(true);
+  });
+  it('owns any paid voice via all_access', () => {
+    expect(ownsVoice('ed', new Set(['all_access']))).toBe(true);
+  });
+  it('does not own an unpurchased paid voice', () => {
+    expect(ownsVoice('ed', new Set(['voice_deadpan']))).toBe(false);
+    expect(ownsVoice('ed', new Set())).toBe(false);
+  });
+  it('an unknown voice is not owned', () => {
+    expect(ownsVoice('mystery', new Set(['voice_mystery']))).toBe(false);
   });
 });

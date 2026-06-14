@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  ActivityIndicator,
   Linking,
   Alert,
 } from 'react-native';
@@ -13,6 +14,8 @@ import { router } from 'expo-router';
 import { getFirstLaunchDone, setFirstLaunchDone } from '@/lib/storage';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { colors } from '@/lib/colors';
 
@@ -43,7 +46,7 @@ const TRIAL_FEATURES = [
 export default function OnboardingScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const trialScale = useRef(new Animated.Value(1)).current;
-  const { purchaseBase } = useSubscription();
+  const { purchaseBase, isLoading: subLoading } = useSubscription();
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -56,15 +59,16 @@ export default function OnboardingScreen() {
   const onPressOut = (anim: Animated.Value) =>
     Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
-  const handleStartTrial = useCallback(async () => {
-    const granted = await purchaseBase();
-    // Only mark onboarding done if the user actually unlocked Pro.
-    // Otherwise (cancel, error, web), leave them on this screen so they can
-    // retry or pick "Continue with free version".
-    if (!granted) return;
-    await setFirstLaunchDone();
-    router.replace('/guided');
-  }, [purchaseBase]);
+  // Only advances on a real unlock. On cancel/error the hook returns to idle so
+  // the user can retry or pick "Continue with free version".
+  const unlockBtn = usePurchaseButton({
+    offeringsLoaded: !subLoading,
+    run: purchaseBase,
+    onSuccess: () => {
+      // After the "You're in ✓" flash, drop straight into the guided flow.
+      void setFirstLaunchDone().then(() => router.replace('/guided'));
+    },
+  });
 
   const handleFreeVersion = useCallback(async () => {
     await setFirstLaunchDone();
@@ -139,27 +143,36 @@ export default function OnboardingScreen() {
           MoodRx is a wellness tool, not a substitute for professional mental health care.
         </Text>
 
-        <View style={styles.trialBanner}>
-          <Text style={styles.trialBannerLabel}>MOODRX PRO</Text>
-          <Text style={styles.trialBannerSub}>One-time unlock. Full access forever.</Text>
+        <View style={styles.ownBlock}>
+          <Text style={styles.ownHeadline}>Own MoodRx.</Text>
+          <Text style={styles.ownValue}>Every workout, every pattern, your whole evidence file — yours forever.</Text>
           <View style={styles.trialFeatures}>
             {TRIAL_FEATURES.map((f) => (
               <Text key={f} style={styles.trialFeatureItem}>+ {f}</Text>
             ))}
           </View>
+          <Text style={styles.ownReassurance}>$9.99 once. No subscription. No auto-renew.</Text>
         </View>
 
         <Animated.View style={{ transform: [{ scale: trialScale }] }}>
           <TouchableOpacity
-            style={styles.trialButton}
-            onPress={handleStartTrial}
+            style={[styles.trialButton, unlockBtn.disabled && styles.trialButtonDisabled]}
+            onPress={unlockBtn.onPress}
             onPressIn={() => onPressIn(trialScale)}
             onPressOut={() => onPressOut(trialScale)}
+            disabled={unlockBtn.disabled}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel="Unlock MoodRx Pro"
+            accessibilityState={{ disabled: unlockBtn.disabled, busy: unlockBtn.busy }}
+            accessibilityLabel="Own MoodRx for $9.99"
           >
-            <Text style={styles.trialButtonText}>UNLOCK MOODRX PRO →</Text>
+            {unlockBtn.busy ? (
+              <ActivityIndicator size="small" color={colors.premium} />
+            ) : (
+              <Text style={styles.trialButtonText}>
+                {purchaseButtonLabel(unlockBtn.status, { idle: 'OWN IT — $9.99 →' })}
+              </Text>
+            )}
           </TouchableOpacity>
         </Animated.View>
 
@@ -168,9 +181,9 @@ export default function OnboardingScreen() {
           onPress={handleFreeVersion}
           activeOpacity={0.6}
           accessibilityRole="button"
-          accessibilityLabel="Continue with free version"
+          accessibilityLabel="Start free"
         >
-          <Text style={styles.freeButtonText}>CONTINUE WITH FREE VERSION</Text>
+          <Text style={styles.freeButtonText}>Start free →</Text>
         </TouchableOpacity>
 
         <View style={styles.legalLinksRow}>
@@ -361,23 +374,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textTransform: 'none' as const,
   },
-  trialBanner: {
+  ownBlock: {
     marginTop: 24,
     marginBottom: 20,
     borderLeftWidth: 2,
     borderLeftColor: colors.premium,
     paddingLeft: 16,
   },
-  trialBannerLabel: {
-    ...t.label,
-    color: colors.premium,
-    letterSpacing: 3,
+  ownHeadline: {
+    ...t.headlineSm,
+    fontSize: 22,
   },
-  trialBannerSub: {
+  ownValue: {
     ...t.bodyMuted,
     fontSize: 16,
-    marginTop: 4,
+    color: '#ffffff',
+    marginTop: 6,
     marginBottom: 12,
+  },
+  ownReassurance: {
+    ...t.body,
+    color: colors.premium,
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 12,
   },
   trialFeatures: {
     gap: 4,
@@ -388,14 +408,19 @@ const styles = StyleSheet.create({
   },
   trialButton: {
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: colors.premium,
     paddingVertical: 16,
     alignItems: 'center',
     borderRadius: 0,
     marginBottom: 12,
   },
+  trialButtonDisabled: {
+    borderColor: '#555555',
+    opacity: 0.6,
+  },
   trialButtonText: {
     ...t.button,
+    color: colors.premium,
     letterSpacing: 4,
   },
   freeButton: {
@@ -404,9 +429,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   freeButtonText: {
-    ...t.label,
+    ...t.body,
     color: '#ffffff',
-    letterSpacing: 2,
+    fontSize: 16,
   },
   legalLinksRow: {
     flexDirection: 'row',

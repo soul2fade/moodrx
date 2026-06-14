@@ -14,7 +14,7 @@ export function getFieldNotePlaceholder(sessionIndex: number): string {
  *  single space and hard-capped at `cap` characters. Trims both sides; an empty
  *  transcript just returns the trimmed/capped base. Pure — used by the
  *  tap-to-dictate field-notes mic. */
-export function appendDictation(base: string, transcript: string, cap = 140): string {
+export function appendDictation(base: string, transcript: string, cap = 280): string {
   const t = transcript.trim();
   const b = base.trim();
   if (!t) return b.slice(0, cap);

@@ -26,10 +26,34 @@ export function normalizeVoice(raw: unknown, fallback = 'rachel'): string {
   return isVoiceName(raw) ? raw : fallback;
 }
 
-/** Which voice actually plays: a free voice as-is; a paid voice only when the
- *  bundle is owned; otherwise fall back to 'rachel' (refund / unknown / unbought). */
-export function effectiveVoice(selected: string, ownsBundle: boolean): string {
+/** Which voice actually plays: a free voice as-is; a paid voice only when owned
+ *  (per-voice, bundle, or all-access); otherwise fall back to 'rachel'. Pure. */
+export function effectiveVoice(selected: string, owned: ReadonlySet<string>): string {
   const v = VOICES.find((x) => x.name === selected);
   if (!v) return 'rachel';
-  return v.free || ownsBundle ? selected : 'rachel';
+  return v.free || ownsVoice(selected, owned) ? selected : 'rachel';
+}
+
+// Mirror of entitlement ids in lib/revenuecat.tsx — inlined so this module
+// imports no react-native (revenuecat.tsx pulls in react-native-purchases,
+// which would break the vitest node env). Source of truth: lib/revenuecat.tsx.
+const VOICE_PACK_ENTITLEMENT = 'pack_voice_pack'; // packEntitlementId('voice_pack')
+const ALL_ACCESS_ENTITLEMENT = 'all_access';
+
+/** Per-voice non-consumable entitlement/product id, e.g. 'voice_ed'. */
+export function voiceEntitlementId(name: string): string {
+  return `voice_${name}`;
+}
+
+/** Whether the user can use a voice: free voices always; otherwise owns the
+ *  per-voice entitlement, the bundle, or all-access (future MoodRx+). */
+export function ownsVoice(name: string, owned: ReadonlySet<string>): boolean {
+  const v = VOICES.find((x) => x.name === name);
+  if (!v) return false;
+  if (v.free) return true;
+  return (
+    owned.has(voiceEntitlementId(name)) ||
+    owned.has(VOICE_PACK_ENTITLEMENT) ||
+    owned.has(ALL_ACCESS_ENTITLEMENT)
+  );
 }

@@ -17,7 +17,8 @@ import Slider from '@react-native-community/slider';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { getAiCoachEnabled, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { getAiCoachEnabled, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, getLiveCoachTasteUsed, incrementLiveCoachTasteUsed, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { canUseLiveCoach } from '@/lib/live-coach';
 import { todayDateString } from '@/lib/dateUtils';
 import { useSessions } from '@/contexts/SessionsContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
@@ -28,6 +29,7 @@ import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
 import { NotificationPrompt } from '@/components/NotificationPrompt';
+import { PlusSheet } from '@/components/PlusSheet';
 import { createSessionId } from '@/lib/session-utils';
 import { maybeRequestReview } from '@/lib/review';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
@@ -40,6 +42,10 @@ import { appendDictation, getFieldNotePlaceholder } from '@/lib/workout-ui';
 import { colors } from '@/lib/colors';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react-native';
+
+// Max length for a field note. 280 (was 140) — long enough to get a whole
+// thought out. Keep the counter, maxLength, slice, and dictation cap in sync.
+const FIELD_NOTE_MAX = 280;
 
 function getScoreContext(score: number, lowerIsBetter: boolean): string {
   if (lowerIsBetter) {
@@ -56,7 +62,7 @@ function getScoreContext(score: number, lowerIsBetter: boolean): string {
 
 export default function PostWorkoutScreen() {
   const { addSession: addSessionToContext, sessionCount: cachedSessionCount } = useSessions();
-  const { isPremium } = useSubscription();
+  const { isPlus } = useSubscription();
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -84,6 +90,8 @@ export default function PostWorkoutScreen() {
   // The note text as it was when dictation started; new speech appends onto this.
   const dictateBaseRef = useRef('');
   const [dynamicLine, setDynamicLine] = useState<string | null>(null);
+  const [liveCoachLocked, setLiveCoachLocked] = useState(false);
+  const [plusVisible, setPlusVisible] = useState(false);
   const workout = getWorkoutById(workoutId) ?? getWorkoutsForMood(mood)[0];
 
   useEffect(() => {
@@ -109,19 +117,24 @@ export default function PostWorkoutScreen() {
     let cancelled = false;
     (async () => {
       const enabled = await getAiCoachEnabled();
-      // Gate on entitlement client-side too: avoids a pointless function +
-      // RevenueCat round-trip every workout for an opted-in but non-Pro user.
-      if (!enabled || !isPremium || postInsult === '') return;
+      if (!enabled || postInsult === '') return;
+      const tasteUsed = await getLiveCoachTasteUsed();
+      if (!canUseLiveCoach({ isPlus, tasteUsed })) {
+        if (!isPlus && !cancelled) setLiveCoachLocked(true); // show the gentle MoodRx+ prompt
+        return; // out of taste → keep stock line
+      }
       const sessions = await getSessions();
       const context = buildCoachContext({ mood, intensity, workout }, sessions);
       const line = await fetchDynamicLine(context);
-      if (!cancelled && line) setDynamicLine(line);
+      if (cancelled || !line) return;
+      setDynamicLine(line);
+      if (!isPlus) await incrementLiveCoachTasteUsed(); // consumed a free taste
     })().catch(() => {});
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mood/intensity/workout are mount-fixed route params; postInsult gates on trash-talk/voice
-  }, [postInsult, isPremium]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mood/intensity/workout are mount-fixed route params; postInsult/isPlus gate the live fetch
+  }, [postInsult, isPlus]);
 
   const notePlaceholder = getFieldNotePlaceholder(cachedSessionCount);
   const breakthroughRef = useRef<ViewShot>(null);
@@ -282,7 +295,7 @@ export default function PostWorkoutScreen() {
   useSpeechRecognitionEvent('result', (event) => {
     if (!dictatingRef.current) return;
     const transcript = event.results[0]?.transcript ?? '';
-    setNote(appendDictation(dictateBaseRef.current, transcript, 140));
+    setNote(appendDictation(dictateBaseRef.current, transcript, FIELD_NOTE_MAX));
   });
 
   useSpeechRecognitionEvent('end', () => {
@@ -331,13 +344,18 @@ export default function PostWorkoutScreen() {
 
   const isFirstSession = isGuided || cachedSessionCount === 0;
 
+  // KeyboardAvoidingView uses behavior="padding" on BOTH platforms: Android
+  // edge-to-edge overrides the manifest adjustResize, so the keyboard would
+  // otherwise cover the Field Notes input at the bottom. Padding shrinks the
+  // ScrollView so the focused input scrolls into view above the keyboard.
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.headline}>You absolute legend.</Text>
         <Text style={styles.subtext}>
@@ -345,6 +363,17 @@ export default function PostWorkoutScreen() {
         </Text>
         {(dynamicLine ?? postInsult) !== '' && (
           <Text style={styles.insultLine}>{dynamicLine ?? postInsult}</Text>
+        )}
+        {liveCoachLocked && (
+          <TouchableOpacity
+            onPress={() => setPlusVisible(true)}
+            activeOpacity={0.7}
+            style={styles.plusPrompt}
+            accessibilityRole="button"
+            accessibilityLabel="Keep the live coach with MoodRx Plus"
+          >
+            <Text style={styles.plusPromptText}>Dr. MoodRx wrote your first few live. Keep the live coach →</Text>
+          </TouchableOpacity>
         )}
 
         {sessionReps > 0 && (
@@ -543,18 +572,18 @@ export default function PostWorkoutScreen() {
                   {isDictating ? '■ STOP' : '● DICTATE'}
                 </Text>
               </TouchableOpacity>
-              <Text style={styles.noteCount}>{note.length}/140</Text>
+              <Text style={styles.noteCount}>{note.length}/{FIELD_NOTE_MAX}</Text>
             </View>
           </View>
           <TextInput
             style={[styles.noteInput, note.length > 0 && { borderColor: '#2a2a2a' }]}
             value={note}
-            onChangeText={(t) => setNote(t.slice(0, 140))}
+            onChangeText={(t) => setNote(t.slice(0, FIELD_NOTE_MAX))}
             placeholder={notePlaceholder}
             placeholderTextColor="#999999"
             multiline
             numberOfLines={3}
-            maxLength={140}
+            maxLength={FIELD_NOTE_MAX}
             returnKeyType="done"
             blurOnSubmit
             accessibilityLabel="Session field notes"
@@ -667,6 +696,7 @@ export default function PostWorkoutScreen() {
           </View>
         </Modal>
       )}
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
     </Animated.View>
     </KeyboardAvoidingView>
   );
@@ -703,6 +733,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginTop: 16,
     lineHeight: 18,
+    textAlign: 'center',
   },
   pbRow: {
     alignItems: 'center',
@@ -1052,4 +1083,6 @@ const styles = StyleSheet.create({
     fontSize: 64,
     fontWeight: '700' as const,
   },
+  plusPrompt: { marginTop: 14, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 12 },
+  plusPromptText: { ...t.bodySm, color: colors.premium, textAlign: 'center' },
 });

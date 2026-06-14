@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -22,7 +21,7 @@ import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import type { MoodKey } from '@/lib/storage';
 import { getVentConsent, setVentConsent, getVentEnabled } from '@/lib/storage';
 import { fetchVentReply } from '@/lib/vent-client';
-import { ventAction, buildVentSession, accumulateTranscript, pickRecognitionMode, type VentAssessment } from '@/lib/vent';
+import { ventAction, buildVentSession, foldInterim, joinTranscript, pickRecognitionMode, nextRecognitionStep, type VentAssessment } from '@/lib/vent';
 import { captureSessionHealth } from '@/lib/health';
 import { createSessionId } from '@/lib/session-utils';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -30,7 +29,7 @@ import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type VentState = 'consent' | 'invite' | 'recording' | 'thinking' | 'reply';
+type VentState = 'consent' | 'invite' | 'recording' | 'thinking' | 'reply' | 'fallback';
 
 interface Correction {
   mood: MoodKey;
@@ -55,6 +54,9 @@ export default function VentScreen() {
   const [showResource, setShowResource] = useState(false);
   const [isConsentLoading, setIsConsentLoading] = useState(true);
   const [showSilenceCheckin, setShowSilenceCheckin] = useState(false);
+  // Gentle inline fallback message (shown instead of a system Alert when voice
+  // can't be used and we route the user to tapping their mood in).
+  const [fallbackNote, setFallbackNote] = useState('');
 
   // Refs for timer IDs so we can clean them up reliably
   const hardStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,11 +65,22 @@ export default function VentScreen() {
   const checkinAnim = useRef(new Animated.Value(0)).current;
   // Ref for latest transcript so the 'end' event handler reads the final value
   const transcriptRef = useRef('');
-  // Ref for the accumulated, finalized portion of a continuous-STT transcript.
-  // Interim segments are appended to this for display but only folded in on isFinal.
+  // Ref for the accumulated, locked-in portion of the transcript (completed
+  // phrases). Interim text is folded in as soon as the recognizer resets to a
+  // new phrase (see foldInterim) — NOT only on isFinal — so a mid-sentence pause
+  // can't drop earlier words.
   const committedTranscriptRef = useRef('');
+  // Latest interim of the phrase still in progress (the part not yet locked in).
+  const prevInterimRef = useRef('');
   // Ref to track whether we're actively recording (guards cleanup stop call)
   const isRecordingRef = useRef(false);
+  // True once the USER (or an auto-finish/hard-stop timer) ends the session, so the
+  // next `end` finalizes instead of restarting. A natural `end` (utterance/pause)
+  // with this still false means "keep listening" → restart (emulated continuous).
+  const userEndedRef = useRef(false);
+  // The recognizer mode chosen for this session (on-device vs cloud), reused on
+  // every restart so the whole session stays in one mode.
+  const modeOnDeviceRef = useRef(true);
   // Double-persist guard: flipped to true the first time persist is called
   const persistedRef = useRef(false);
   // Set on unmount; guards async continuations (e.g. handleSubmit after await)
@@ -120,20 +133,35 @@ export default function VentScreen() {
   useSpeechRecognitionEvent('result', (event) => {
     if (!isRecordingRef.current) return; // ignore stray results after recording ended
     const segment = event.results[0]?.transcript ?? '';
-    const { committed, display } = accumulateTranscript(
+    const { committed, prevInterim, display } = foldInterim(
       committedTranscriptRef.current,
+      prevInterimRef.current,
       segment,
       event.isFinal,
     );
     committedTranscriptRef.current = committed;
+    prevInterimRef.current = prevInterim;
     setTranscript(display);
     transcriptRef.current = display;
     resetSilenceTimer();
   });
 
   // ─── STT event: end ──────────────────────────────────────────────────────
+  // Every utterance ends here (continuous:false). While the user hasn't ended the
+  // session, a natural end (end of an utterance / a pause) means "keep listening"
+  // → restart recognition, accumulating across utterances. Once they end it, this
+  // finalizes. `end` always fires last, even after an error/nomatch (per expo-
+  // speech-recognition), so it's the single decision point.
   useSpeechRecognitionEvent('end', () => {
     if (!isRecordingRef.current) return; // already handled (e.g. fallback called)
+    const step = nextRecognitionStep({
+      userEnded: userEndedRef.current,
+      hasTranscript: transcriptRef.current.trim().length > 0,
+    });
+    if (step === 'restart') {
+      beginRecognition(); // keep the hard-stop + silence timers running across restarts
+      return;
+    }
     isRecordingRef.current = false;
     if (hardStopTimerRef.current) {
       clearTimeout(hardStopTimerRef.current);
@@ -141,25 +169,17 @@ export default function VentScreen() {
     }
     clearSilenceTimers();
     setShowSilenceCheckin(false);
-    const finalTranscript = transcriptRef.current;
-    if (finalTranscript.trim().length > 0) {
-      void handleSubmit(finalTranscript);
-    } else {
-      fallbackToForm(NO_VOICE_MESSAGE);
-    }
+    if (step === 'submit') void handleSubmit(transcriptRef.current);
+    else fallbackToForm(NO_VOICE_MESSAGE);
   });
 
   // ─── STT event: error ────────────────────────────────────────────────────
+  // `end` always fires last — including after an error — so it owns the
+  // restart/finalize decision. Here we only tidy the silence check-in.
   useSpeechRecognitionEvent('error', () => {
     if (!isRecordingRef.current) return;
-    isRecordingRef.current = false;
-    if (hardStopTimerRef.current) {
-      clearTimeout(hardStopTimerRef.current);
-      hardStopTimerRef.current = null;
-    }
     clearSilenceTimers();
     setShowSilenceCheckin(false);
-    fallbackToForm(NO_VOICE_MESSAGE);
   });
 
   // ─── Silence timer management ────────────────────────────────────────────
@@ -175,6 +195,9 @@ export default function VentScreen() {
   }, []);
 
   // ─── Fallback to form ────────────────────────────────────────────────────
+  // Show a calm inline screen (not a system Alert) explaining why voice didn't
+  // work, with a way to tap the mood in or retry the mic. Far gentler on a
+  // venting screen than an OK popup.
   const fallbackToForm = useCallback((note: string) => {
     if (isRecordingRef.current) {
       isRecordingRef.current = false;
@@ -186,8 +209,8 @@ export default function VentScreen() {
     }
     clearSilenceTimers();
     setShowSilenceCheckin(false);
-    Alert.alert('', note);
-    router.replace('/home');
+    setFallbackNote(note);
+    setVentState('fallback');
   }, [clearSilenceTimers]);
 
   // Restart the silence countdown. Called on recording start, on every speech
@@ -210,6 +233,7 @@ export default function VentScreen() {
       }).start();
       silenceAutoFinishTimerRef.current = setTimeout(() => {
         if (isRecordingRef.current) {
+          userEndedRef.current = true; // graceful finish — next `end` finalizes, not restarts
           try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
         }
       }, SILENCE_AUTOFINISH_MS);
@@ -234,6 +258,39 @@ export default function VentScreen() {
     }
   }, [addSession]);
 
+  // ─── Begin (or restart) a recognition utterance ───────────────────────────
+  // One short `continuous:false` utterance — the mode that works on Android's
+  // on-device SODA recognizer without the mid-stream-close race. The session's
+  // hard-stop + silence timers and the accumulated transcript are owned by
+  // handleStartRecording and the result handler, NOT reset here, so restarting
+  // after a pause keeps listening and keeps accumulating.
+  const beginRecognition = useCallback(() => {
+    // Preserve any in-progress interim across a restart (so a phrase that didn't
+    // get a final result before the session ended isn't lost), then start fresh.
+    if (prevInterimRef.current) {
+      committedTranscriptRef.current = joinTranscript(committedTranscriptRef.current, prevInterimRef.current);
+      prevInterimRef.current = '';
+    }
+    isRecordingRef.current = true;
+    // Bridge natural pauses (~4s) so the recognizer doesn't end + restart-beep on
+    // every short pause. This is only safe because foldInterim locks in each
+    // phrase when the recognizer resets its interim mid-session — so even though
+    // SODA's single final result for a bridged session only carries the LAST
+    // phrase, no pre-pause words are dropped. (Without foldInterim this silently
+    // dropped content — a crisis-safety hazard.)
+    ExpoSpeechRecognitionModule.start({
+      lang: 'en-US',
+      interimResults: true,
+      continuous: false,
+      requiresOnDeviceRecognition: modeOnDeviceRef.current,
+      addsPunctuation: true,
+      androidIntentOptions: {
+        EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 4000,
+        EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 4000,
+      },
+    });
+  }, []);
+
   // ─── Tap to start recording ───────────────────────────────────────────────
   const handleStartRecording = async () => {
     if (isRecordingRef.current) return; // re-entry guard: ignore double-taps
@@ -242,10 +299,12 @@ export default function VentScreen() {
       fallbackToForm("MoodRx needs the mic to hear you — tap it in instead");
       return;
     }
+    persistedRef.current = false;
+    userEndedRef.current = false;
     setTranscript('');
     transcriptRef.current = '';
     committedTranscriptRef.current = '';
-    persistedRef.current = false;
+    prevInterimRef.current = '';
     isRecordingRef.current = true;
     setVentState('recording');
     // Prefer on-device STT (audio never leaves the phone); fall back to cloud
@@ -263,26 +322,21 @@ export default function VentScreen() {
         try { ExpoSpeechRecognitionModule.androidTriggerOfflineModelDownload?.({ locale: 'en-US' }); } catch { /* iOS / unsupported */ }
       }
     } catch { /* capability probe failed — default to on-device attempt */ }
-    ExpoSpeechRecognitionModule.start({
-      lang: 'en-US',
-      interimResults: true,
-      continuous: true,
-      requiresOnDeviceRecognition: mode.requiresOnDeviceRecognition,
-      addsPunctuation: true,
-    });
-    // Hard auto-stop at 60s (HARD_STOP_MS)
+    modeOnDeviceRef.current = mode.requiresOnDeviceRecognition;
+    // Hard auto-stop ceiling for the whole session (survives utterance restarts).
     hardStopTimerRef.current = setTimeout(() => {
       if (isRecordingRef.current) {
+        userEndedRef.current = true;
         try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
       }
     }, HARD_STOP_MS);
-    setShowSilenceCheckin(false);
-    checkinAnim.setValue(0);
     resetSilenceTimer();
+    beginRecognition();
   };
 
-  // ─── Manual stop ─────────────────────────────────────────────────────────
+  // ─── Manual stop (DONE TALKING) ───────────────────────────────────────────
   const handleManualStop = () => {
+    userEndedRef.current = true; // user ended → next `end` finalizes, not restarts
     try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
   };
 
@@ -470,6 +524,36 @@ export default function VentScreen() {
           </View>
         )}
 
+        {/* ── FALLBACK (voice unavailable — gentle inline, no system Alert) ── */}
+        {ventState === 'fallback' && (
+          <View style={[styles.section, styles.sectionFill]}>
+            <Text style={styles.sectionEyebrow}>NO WORRIES</Text>
+            <Text style={styles.headline}>Let&apos;s tap it in.</Text>
+            <View style={styles.consentCard}>
+              <Text style={styles.consentText}>{fallbackNote}</Text>
+            </View>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity
+              style={styles.primaryBtn}
+              onPress={() => router.replace('/home')}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Tap your mood in instead"
+            >
+              <Text style={styles.primaryBtnText}>TAP IT IN →</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={handleStartRecording}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Try the mic again"
+            >
+              <Text style={styles.secondaryBtnText}>TRY THE MIC AGAIN</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ── REPLY ───────────────────────────────────────────── */}
         {ventState === 'reply' && assessment && (
           <View style={[styles.section, styles.sectionFill]}>
@@ -584,11 +668,40 @@ export default function VentScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Always-available crisis path — independent of what the model detects, so
+          a missed/garbled transcript can never mean a missed crisis. */}
+      {ventState !== 'consent' && (
+        <TouchableOpacity
+          style={[styles.crisisFooter, { paddingBottom: Math.max(insets.bottom, 12) }]}
+          onPress={() => router.push('/crisis')}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="In crisis? Get help now"
+        >
+          <Text style={styles.crisisFooterText}>In crisis? Get help now →</Text>
+        </TouchableOpacity>
+      )}
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  crisisFooter: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+  },
+  crisisFooterText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 16,
+    color: '#7EC8A0',
+    letterSpacing: 1,
+    lineHeight: 18,
+  },
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',

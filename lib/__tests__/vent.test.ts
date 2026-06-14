@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseVentResponse, ventAction, buildVentSession, joinTranscript, accumulateTranscript, pickRecognitionMode } from '@/lib/vent';
+import { parseVentResponse, ventAction, buildVentSession, joinTranscript, foldInterim, isInterimReset, pickRecognitionMode, nextRecognitionStep } from '@/lib/vent';
 
 describe('parseVentResponse', () => {
   const ok = { mood: 'stressed', intensity: 7, reply: 'You showed up.', risk: 'none' };
@@ -72,48 +72,60 @@ describe('joinTranscript', () => {
   });
 });
 
-describe('accumulateTranscript', () => {
-  it('interim segment updates display but NOT committed', () => {
-    expect(accumulateTranscript('', 'hel', false)).toEqual({ committed: '', display: 'hel' });
-    expect(accumulateTranscript('', 'hello', false)).toEqual({ committed: '', display: 'hello' });
+describe('isInterimReset', () => {
+  it('treats a growing same-phrase interim as a continuation (not a reset)', () => {
+    expect(isInterimReset('I want', 'I want to order pizza')).toBe(false);
+    expect(isInterimReset('I want to order', 'I want to order pizza')).toBe(false);
   });
-  it('final segment folds into committed', () => {
-    expect(accumulateTranscript('', 'hello', true)).toEqual({ committed: 'hello', display: 'hello' });
+  it('treats a diverging new phrase as a reset (recognizer restarted at a pause)', () => {
+    expect(isInterimReset('I want to order pizza', "I can't take it anymore")).toBe(true);
   });
-  it('accumulates across a pause: prior committed + new segment', () => {
-    const a = accumulateTranscript('', 'I had a rough day', true);
-    expect(a).toEqual({ committed: 'I had a rough day', display: 'I had a rough day' });
-    const b = accumulateTranscript(a.committed, 'and I am exhausted', false);
-    expect(b).toEqual({
-      committed: 'I had a rough day',
-      display: 'I had a rough day and I am exhausted',
-    });
-    const c = accumulateTranscript(a.committed, 'and I am exhausted', true);
-    expect(c).toEqual({
-      committed: 'I had a rough day and I am exhausted',
-      display: 'I had a rough day and I am exhausted',
+  it('does NOT flag a minor mid-phrase revision as a reset', () => {
+    // shares a long common prefix → still the same phrase being revised
+    expect(isInterimReset('I want to', 'I wanted to')).toBe(false);
+  });
+  it('is not a reset when there is no prior interim or the new one is empty', () => {
+    expect(isInterimReset('', 'anything')).toBe(false);
+    expect(isInterimReset('something', '')).toBe(false);
+  });
+});
+
+describe('foldInterim', () => {
+  // The on-device recognizer (continuous:false) overwrites its interim at a
+  // mid-sentence pause and its FINAL only carries the last phrase, so the old
+  // "commit on isFinal" accumulator silently dropped pre-pause words — a crisis-
+  // safety hazard. foldInterim locks in each phrase the moment a reset is seen.
+  it('tracks the first interim without committing it yet', () => {
+    expect(foldInterim('', '', 'I want to order pizza', false)).toEqual({
+      committed: '', prevInterim: 'I want to order pizza', display: 'I want to order pizza',
     });
   });
-  it('empty segment leaves committed and shows committed as display', () => {
-    expect(accumulateTranscript('so far', '', false)).toEqual({ committed: 'so far', display: 'so far' });
-    expect(accumulateTranscript('so far', '', true)).toEqual({ committed: 'so far', display: 'so far' });
+  it('keeps growing the same interim without duplicating', () => {
+    expect(foldInterim('', 'I want', 'I want to order pizza', false)).toEqual({
+      committed: '', prevInterim: 'I want to order pizza', display: 'I want to order pizza',
+    });
   });
-  it('repeated interim results for one segment do not compound onto committed', () => {
-    const committed = 'I had a rough day';
-    // Same second segment arrives interim multiple times, growing each time:
-    expect(accumulateTranscript(committed, 'and', false)).toEqual({
-      committed: 'I had a rough day',
-      display: 'I had a rough day and',
+  it('locks in the prior phrase when a new phrase resets the interim', () => {
+    expect(foldInterim('', 'I want to order pizza', "I can't take it anymore", false)).toEqual({
+      committed: 'I want to order pizza',
+      prevInterim: "I can't take it anymore",
+      display: "I want to order pizza I can't take it anymore",
     });
-    expect(accumulateTranscript(committed, 'and I am', false)).toEqual({
-      committed: 'I had a rough day',
-      display: 'I had a rough day and I am',
+  });
+  it('final result supersedes the current interim (same phrase) and commits it', () => {
+    expect(foldInterim('I want to order pizza', "I can't take it anymore", "I can't take it anymore.", true)).toEqual({
+      committed: "I want to order pizza I can't take it anymore.",
+      prevInterim: '',
+      display: "I want to order pizza I can't take it anymore.",
     });
-    // Finalizes — folds in exactly once, no duplication:
-    expect(accumulateTranscript(committed, 'and I am exhausted', true)).toEqual({
-      committed: 'I had a rough day and I am exhausted',
-      display: 'I had a rough day and I am exhausted',
-    });
+  });
+  it('end-to-end: a two-phrase utterance keeps BOTH halves', () => {
+    let s = { committed: '', prevInterim: '', display: '' };
+    s = foldInterim(s.committed, s.prevInterim, 'I want', false);
+    s = foldInterim(s.committed, s.prevInterim, 'I want to order pizza', false);
+    s = foldInterim(s.committed, s.prevInterim, "I can't take", false);          // reset
+    s = foldInterim(s.committed, s.prevInterim, "I can't take it anymore", true); // final
+    expect(s.committed).toBe("I want to order pizza I can't take it anymore");
   });
 });
 
@@ -132,5 +144,24 @@ describe('pickRecognitionMode', () => {
   });
   it('treats locale case/region loosely (en matches en-US)', () => {
     expect(pickRecognitionMode({ supportsOnDevice: true, onDeviceLocales: ['en'], locale: 'en-US' }).usingCloud).toBe(false);
+  });
+});
+
+describe('nextRecognitionStep', () => {
+  // Called on every `end` event. Venting emulates continuous listening with
+  // single-utterance (continuous:false) recognition — the mode that works on
+  // Android SODA without the mid-stream-close race. While the user hasn't ended,
+  // a natural end (end of an utterance / pause) means "keep listening" → restart.
+  // Once the user ends (DONE / silence auto-finish / hard-stop), finalize:
+  // submit if we captured anything, else fall back to the manual form.
+  it('restarts (keeps listening) when the user has not ended, regardless of transcript', () => {
+    expect(nextRecognitionStep({ userEnded: false, hasTranscript: false })).toBe('restart');
+    expect(nextRecognitionStep({ userEnded: false, hasTranscript: true })).toBe('restart');
+  });
+  it('submits when the user ended and we captured a transcript', () => {
+    expect(nextRecognitionStep({ userEnded: true, hasTranscript: true })).toBe('submit');
+  });
+  it('falls back to the form when the user ended with nothing captured', () => {
+    expect(nextRecognitionStep({ userEnded: true, hasTranscript: false })).toBe('fallback');
   });
 });

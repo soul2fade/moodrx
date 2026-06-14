@@ -1,17 +1,21 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PACKS_OFFERING_ID, VOICE_PACK_ID } from '@/lib/revenuecat';
-import { VOICES } from '@/lib/voices';
+import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { purchaseButtonLabel } from '@/lib/purchase-ui';
+import { VOICES, voiceEntitlementId } from '@/lib/voices';
 import { getCoachVoice, setCoachVoice, getInsultSeverity } from '@/lib/storage';
 import { fetchManifest, ensureClip } from '@/lib/insult-cache';
 import { pickClip, type Manifest } from '@/lib/insult-library';
 import { VoiceSheet } from '@/components/VoiceSheet';
+import { PlusSheet } from '@/components/PlusSheet';
 
 export function CoachVoicePicker() {
-  const { ownsPack, purchasePack, offerings } = useSubscription();
+  const { ownsVoice, purchaseVoice, purchasePack, offerings, isLoading: subLoading } = useSubscription();
   const [open, setOpen] = useState(false);
+  const [plusVisible, setPlusVisible] = useState(false);
   const [selected, setSelected] = useState('rachel');
   const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
   const [previewAvailable, setPreviewAvailable] = useState(false);
@@ -29,10 +33,24 @@ export function CoachVoicePicker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- previewPlayer is a stable expo-audio ref; src change drives playback.
   }, [previewSrc]);
 
-  const ownsBundle = ownsPack(VOICE_PACK_ID);
-  const priceLabel =
-    offerings?.all?.[PACKS_OFFERING_ID]?.availablePackages?.find((p) => p.identifier === VOICE_PACK_ID)
-      ?.product?.priceString ?? null;
+  const packages = useMemo(
+    () => offerings?.all?.[PACKS_OFFERING_ID]?.availablePackages ?? [],
+    [offerings],
+  );
+  const priceOf = useCallback(
+    (id: string, fallback: string) =>
+      packages.find((p) => p.identifier === id)?.product?.priceString ?? fallback,
+    [packages],
+  );
+  const voicePrice = useCallback(
+    (name: string) => priceOf(voiceEntitlementId(name), '$0.99'),
+    [priceOf],
+  );
+  const bundlePrice = priceOf(VOICE_PACK_ID, '$2.99');
+
+  // The bundle CTA disappears once every paid voice is owned (bundle or individually).
+  const allPaidOwned = VOICES.filter((v) => !v.free).every((v) => ownsVoice(v.name));
+
   const currentLabel = VOICES.find((v) => v.name === selected)?.label ?? 'Rachel';
 
   const handleOpen = useCallback(async () => {
@@ -61,9 +79,12 @@ export function CoachVoicePicker() {
     if (uri) setPreviewSrc({ uri });
   }, []);
 
-  const handleBuy = useCallback(() => {
-    void purchasePack(VOICE_PACK_ID);
-  }, [purchasePack]);
+  const bundleBtn = usePurchaseButton({
+    offeringsLoaded: !subLoading,
+    owned: allPaidOwned,
+    run: () => purchasePack(VOICE_PACK_ID),
+  });
+  const bundleLabel = purchaseButtonLabel(bundleBtn.status, { idle: `All voices — ${bundlePrice}` });
 
   return (
     <>
@@ -72,19 +93,30 @@ export function CoachVoicePicker() {
           <Text style={styles.label}>Coach voice</Text>
           <Text style={styles.hint}>The voice that trash-talks you during a workout.</Text>
         </View>
-        <Text style={styles.value}>{currentLabel}</Text>
+        <View style={styles.valueBlock}>
+          <Text style={styles.value}>{currentLabel}</Text>
+          <Text style={styles.caret}>›</Text>
+        </View>
       </Pressable>
       <VoiceSheet
         visible={open}
         selected={selected}
-        ownsBundle={ownsBundle}
-        priceLabel={priceLabel}
         previewAvailable={previewAvailable}
+        offeringsReady={!subLoading}
+        isOwned={ownsVoice}
+        voicePrice={voicePrice}
+        onBuyVoice={purchaseVoice}
+        bundleLabel={bundleLabel}
+        bundleBusy={bundleBtn.busy}
+        bundleDisabled={bundleBtn.disabled}
+        showBundle={bundleBtn.status !== 'owned'}
+        onBuyBundle={bundleBtn.onPress}
         onSelect={handleSelect}
         onPreview={handlePreview}
-        onBuy={handleBuy}
         onClose={handleClose}
+        onPlus={() => setPlusVisible(true)}
       />
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
     </>
   );
 }
@@ -94,5 +126,7 @@ const styles = StyleSheet.create({
   labelBlock: { flex: 1, paddingRight: 12 },
   label: { color: '#f0f0f0', fontSize: 16, fontWeight: '600', lineHeight: 20 },
   hint: { color: '#cfcfcf', fontSize: 16, lineHeight: 16, marginTop: 3 },
+  valueBlock: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   value: { color: '#e8e8e8', fontSize: 16, fontWeight: '700', lineHeight: 20 },
+  caret: { color: '#c5c5c5', fontSize: 22, lineHeight: 22, marginTop: -2 },
 });

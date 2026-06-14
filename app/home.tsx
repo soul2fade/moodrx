@@ -624,13 +624,13 @@ const styles = StyleSheet.create({
   },
   tryProBadge: {
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: colors.premium,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   tryProBadgeText: {
     ...t.label,
-    color: '#f0f0f0',
+    color: colors.premium,
     letterSpacing: 1.5,
     fontSize: 16,
     lineHeight: 17,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PROGRAMS, getProgramWorkouts, type Program } from '@/lib/programs';
 import { type Workout } from '@/lib/workouts';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { PremiumSheet } from '@/components/PremiumSheet';
 import { type as t, fonts } from '../lib/typography';
-import { colors } from '@/lib/colors';
 
 export default function ProgramsScreen() {
   const insets = useSafeAreaInsets();
-  const { isPremium } = useSubscription();
-  const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const { isPremium, isLoading: subLoading } = useSubscription();
+
+  // /programs is reached only via the premium-gated Insights entry — the free
+  // entry opens the offer sheet instead, so there's no locked panel here. Guard
+  // the direct-link edge case so the paid content can't leak.
+  useEffect(() => {
+    if (!subLoading && !isPremium) router.replace('/insights');
+  }, [subLoading, isPremium]);
 
   return (
     <View style={styles.container}>
@@ -43,31 +47,11 @@ export default function ProgramsScreen() {
         <Text style={styles.headline}>Curated sequences.</Text>
         <Text style={styles.subtext}>Multi-day prescriptions built from existing workouts. Follow one start to finish.</Text>
 
-        {!isPremium ? (
-          /* Safety-net locked state */
-          <View style={styles.lockedState}>
-            <Text style={styles.lockedText}>Programs are included with your base unlock.</Text>
-            <TouchableOpacity
-              style={styles.unlockBtn}
-              onPress={() => setShowPremiumSheet(true)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Unlock programs"
-            >
-              <Text style={styles.unlockBtnText}>UNLOCK →</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
+        {isPremium &&
           PROGRAMS.map((program) => (
             <ProgramCard key={program.id} program={program} />
-          ))
-        )}
+          ))}
       </ScrollView>
-
-      <PremiumSheet
-        visible={showPremiumSheet}
-        onClose={() => setShowPremiumSheet(false)}
-      />
     </View>
   );
 }
@@ -158,32 +142,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: 4,
     marginBottom: 8,
-  },
-  lockedState: {
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-    padding: 24,
-    marginTop: 32,
-    alignItems: 'center',
-    gap: 16,
-  },
-  lockedText: {
-    fontFamily: fonts.primary.regular,
-    fontSize: 16,
-    color: '#d8d8d8',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  unlockBtn: {
-    borderWidth: 1,
-    borderColor: colors.textDim,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-  },
-  unlockBtnText: {
-    ...t.label,
-    color: colors.textSecondary,
-    letterSpacing: 2,
   },
   programCard: {
     marginTop: 32,

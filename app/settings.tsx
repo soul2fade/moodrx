@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVentEnabled, getVoiceEnabled, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVentEnabled, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVentEnabled, getVoiceEnabled, resetLiveCoachTasteUsed, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVentEnabled, setVoiceEnabled, UserProfile } from '@/lib/storage';
 import { exportSessionsJson } from '@/lib/export-sessions';
 import { resetAllAppData } from '@/lib/reset-app';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -46,6 +46,7 @@ import {
 } from '@/lib/health';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PlusSheet } from '@/components/PlusSheet';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
@@ -80,8 +81,10 @@ export default function SettingsScreen() {
   const [ventEnabled, setVentEnabledState] = useState(true);
   const ventToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
-  const { restorePurchases, isPremium, devTogglePremium, isLoading: subLoading } = useSubscription();
+  const { restorePurchases, isPremium, isPlus, devTogglePremium, devTogglePlus, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
+  const [devPanel, setDevPanel] = useState(false);
+  const [plusVisible, setPlusVisible] = useState(false);
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleAnim = useRef(new Animated.Value(0)).current;
@@ -417,7 +420,28 @@ export default function SettingsScreen() {
               accessibilityRole="button"
               accessibilityLabel="Unlock MoodRx Pro"
             >
-              <Text style={styles.upgradeBtnText}>UNLOCK PRO →</Text>
+              <Text style={styles.upgradeBtnText}>UNLOCK PRO — $9.99 →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!subLoading && !isPlus && (
+          <TouchableOpacity onPress={() => setPlusVisible(true)} activeOpacity={0.7} style={styles.subStatusRow} accessibilityRole="button" accessibilityLabel="MoodRx Plus — live coach">
+            <Text style={styles.subStatusLabel}>MOODRX+</Text>
+            <Text style={styles.upgradeBtnText}>LIVE COACH →</Text>
+          </TouchableOpacity>
+        )}
+
+        {__DEV__ && devPanel && (
+          <View style={{ marginTop: 12, gap: 8 }}>
+            <TouchableOpacity onPress={devTogglePremium} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: toggle base unlock">
+              <Text style={styles.upgradeBtnText}>DEV: TOGGLE BASE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={devTogglePlus} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: toggle MoodRx Plus">
+              <Text style={styles.upgradeBtnText}>DEV: TOGGLE MOODRX+</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { void resetLiveCoachTasteUsed(); }} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: reset coach taste">
+              <Text style={styles.upgradeBtnText}>DEV: RESET COACH TASTE</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -734,7 +758,7 @@ export default function SettingsScreen() {
             if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
             if (versionTapCount.current >= 5) {
               versionTapCount.current = 0;
-              devTogglePremium();
+              setDevPanel(true);
             } else {
               versionTapTimer.current = setTimeout(() => { versionTapCount.current = 0; }, 2000);
             }
@@ -835,6 +859,7 @@ export default function SettingsScreen() {
         <View style={{ height: 12 }} />
       </ScrollView>
       <BottomNav />
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
     </Animated.View>
   );
 }
@@ -874,11 +899,11 @@ const styles = StyleSheet.create({
   proBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   upgradeBtn: {
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: colors.premium,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  upgradeBtnText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
+  upgradeBtnText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',

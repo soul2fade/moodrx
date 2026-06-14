@@ -22,6 +22,8 @@ import { useSessions } from '@/contexts/SessionsContext';
 import { getPrescriptionWorkouts, getWorkoutBadge } from '@/lib/workout-insights';
 import { getFreeTierSummary, isSupplementUnlocked, isWorkoutUnlocked } from '@/lib/free-tier';
 import { PremiumSheet } from '@/components/PremiumSheet';
+import { PriceChip } from '@/components/PriceChip';
+import { type OfferContext } from '@/lib/offer-copy';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
@@ -43,6 +45,7 @@ export default function PrescriptionScreen() {
     : 5;
   const [activeTab, setActiveTab] = useState<Tab>('workouts');
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const [sheetContext, setSheetContext] = useState<OfferContext>('workouts');
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [selectedSupp, setSelectedSupp] = useState<Supplement | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
@@ -76,6 +79,8 @@ export default function PrescriptionScreen() {
     () => getFreeTierSummary(workouts, isPremium),
     [workouts, isPremium],
   );
+
+  const openSheet = (ctx: OfferContext) => { setSheetContext(ctx); setShowPremiumSheet(true); };
 
   const handleWorkoutTap = (workout: Workout) => {
     router.push({
@@ -231,7 +236,7 @@ export default function PrescriptionScreen() {
                       <TouchableOpacity
                         key={workout.id}
                         style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: '#333333', opacity: 0.7 }])}
-                        onPress={() => setShowPremiumSheet(true)}
+                        onPress={() => openSheet('workouts')}
                         activeOpacity={0.7}
                         accessibilityRole="button"
                         accessibilityLabel={`Unlock ${workout.name} with Pro`}
@@ -247,7 +252,7 @@ export default function PrescriptionScreen() {
                         </View>
                         <View style={styles.workoutNameRow}>
                           <Text style={flattenStyle([styles.workoutName, { flex: 1 }])} numberOfLines={2}>{workout.name}</Text>
-                          <Text style={styles.unlockProText}>UNLOCK PRO →</Text>
+                          <PriceChip tint={accentColor} onPress={() => openSheet('workouts')} accessibilityLabel={`Unlock ${workout.name}`} />
                         </View>
                         <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                       </TouchableOpacity>
@@ -322,7 +327,7 @@ export default function PrescriptionScreen() {
                         <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
                       </View>
                       {isLocked && (
-                        <Text style={styles.unlockProTextStack}>UNLOCK PRO →</Text>
+                        <PriceChip tint={accentColor} onPress={() => openSheet('supplements')} accessibilityLabel={`Unlock ${supp.name}`} />
                       )}
                     </View>
                     <Text style={[styles.suppDetailChevron, { color: accentColor }]}>›</Text>
@@ -349,6 +354,7 @@ export default function PrescriptionScreen() {
       <PremiumSheet
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
+        context={sheetContext}
       />
 
       {/* Supplement detail bottom sheet */}
@@ -416,7 +422,7 @@ export default function PrescriptionScreen() {
                   activeOpacity={0.8}
                   onPress={() => {
                     setSelectedSupp(null);
-                    setShowPremiumSheet(true);
+                    openSheet('supplements');
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Unlock Pro to access full stack"
@@ -774,19 +780,6 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    lineHeight: undefined,
-  },
-  unlockProText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    lineHeight: undefined,
-  },
-  unlockProTextStack: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    marginTop: 10,
     lineHeight: undefined,
   },
   trackStackBtn: {

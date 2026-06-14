@@ -12,6 +12,9 @@ export const BASE_UNLOCK_PACKAGE_ID = '$rc_lifetime';
 /** Offering that holds purchasable content packs (empty at launch). */
 export const PACKS_OFFERING_ID = 'packs';
 
+/** Offering holding the MoodRx+ subscription products (monthly + annual). */
+export const PLUS_OFFERING_ID = 'plus';
+
 /** Pack id for the one-time "unlock all voices" bundle (a package in the
  *  `packs` offering). ownsPack(VOICE_PACK_ID) === owns all 4 paid coach voices.
  *  Its entitlement is packEntitlementId('voice_pack') === 'pack_voice_pack'. */

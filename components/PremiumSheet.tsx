@@ -62,10 +62,10 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
         <Text style={styles.headline}>{offerHeadline(context)}</Text>
         <Text style={styles.description}>{CANONICAL_REASSURANCE}</Text>
         <OfferProof />
-        <View style={{ height: 20 }} />
+        <View style={styles.proofSpacer} />
 
         <TouchableOpacity
-          style={[styles.yearlyButton, buyBtn.disabled && styles.yearlyButtonDisabled]}
+          style={[styles.buyButton, buyBtn.disabled && styles.buyButtonDisabled]}
           onPress={buyBtn.onPress}
           disabled={buyBtn.disabled}
           activeOpacity={0.8}
@@ -85,9 +85,6 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
           )}
         </TouchableOpacity>
 
-        <Text style={styles.subDisclosure}>
-          One-time purchase — no subscription, no auto-renew.
-        </Text>
         <View style={styles.legalLinksRow}>
           <TouchableOpacity
             onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
@@ -119,7 +116,7 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
             accessibilityLabel="Restore purchase"
           >
             {restoreBtn.busy ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ActivityIndicator size="small" color={colors.text} />
             ) : (
               <Text style={styles.closeText}>
                 {purchaseButtonLabel(restoreBtn.status, { idle: 'RESTORE PURCHASE', success: 'RESTORED ✓' })}
@@ -171,7 +168,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
   },
-  yearlyButton: {
+  buyButton: {
     borderWidth: 1,
     borderColor: colors.premium,
     paddingVertical: 16,
@@ -179,7 +176,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: 'relative',
   },
-  yearlyButtonDisabled: { opacity: 0.6 },
+  buyButtonDisabled: { opacity: 0.6 },
+  proofSpacer: { height: 20 },
   planPrice: {
     ...t.headlineSm,
     color: colors.premium,
@@ -194,7 +192,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 3,
   },
-  subDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 16, marginBottom: 14 },
   legalLinksRow: {
     flexDirection: 'row',
     justifyContent: 'center',

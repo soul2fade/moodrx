@@ -87,7 +87,7 @@ export function PlusSheet({ visible, onClose, onPurchased }: { visible: boolean;
       <View style={styles.sheet}>
         <View style={styles.handle} />
         <Text style={styles.headline}>Keep the live coach.</Text>
-        <Text style={styles.description}>Live Dr. MoodRx + every voice + new content packs.</Text>
+        <Text style={styles.description}>Live Dr. MoodRx + every coach personality + new content packs.</Text>
         <Text style={styles.trialLine}>7 days free, then your plan.</Text>
 
         <PlanRow id="annual" label="Annual" price={annualPrice} suffix="/yr" tag={annualSavingsTag} />

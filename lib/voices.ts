@@ -5,9 +5,10 @@ export interface VoiceOption {
   free: boolean;
 }
 
-/** The 5 coach voices, in picker order. Rachel is free; the other four unlock
- *  together via the VOICE_PACK_ID bundle. Static so the picker renders even
- *  before the library is hosted (the manifest is only needed for playback). */
+/** The 5 coach voices, in picker order. Rachel is free; the other four are
+ *  included with MoodRx+ (the `all_access` entitlement). Static so the picker
+ *  renders even before the library is hosted (the manifest is only needed for
+ *  playback). */
 export const VOICES: VoiceOption[] = [
   { name: 'rachel', label: 'Rachel', free: true },
   { name: 'deadpan', label: 'Deadpan Cynic', free: false },
@@ -34,10 +35,12 @@ export function effectiveVoice(selected: string, owned: ReadonlySet<string>): st
   return v.free || ownsVoice(selected, owned) ? selected : 'rachel';
 }
 
-// Mirror of entitlement ids in lib/revenuecat.tsx — inlined so this module
-// imports no react-native (revenuecat.tsx pulls in react-native-purchases,
-// which would break the vitest node env). Source of truth: lib/revenuecat.tsx.
-const VOICE_PACK_ENTITLEMENT = 'pack_voice_pack'; // packEntitlementId('voice_pack')
+// Entitlement ids inlined so this module imports no react-native
+// (revenuecat.tsx pulls in react-native-purchases, which would break the vitest
+// node env). `pack_voice_pack` is the legacy à la carte bundle entitlement —
+// honored for anyone who bought it before voices moved into MoodRx+; new users
+// unlock every coach via `all_access` (MoodRx+).
+const VOICE_PACK_ENTITLEMENT = 'pack_voice_pack';
 const ALL_ACCESS_ENTITLEMENT = 'all_access';
 
 /** Per-voice non-consumable entitlement/product id, e.g. 'voice_ed'. */

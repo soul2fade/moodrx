@@ -41,16 +41,6 @@ export function PricingComparison({ prices }: Props) {
           })}
         </View>
       ))}
-
-      {/* Terms footer */}
-      <View style={[styles.featureRow, styles.termsRow]}>
-        <View style={styles.featureCol} />
-        {PRICING_TIERS.map((t) => (
-          <View key={t.key} style={styles.tierCol}>
-            <Text style={[styles.terms, { color: t.color }]} numberOfLines={2}>{t.terms}</Text>
-          </View>
-        ))}
-      </View>
     </View>
   );
 }
@@ -90,7 +80,4 @@ const styles = StyleSheet.create({
   featureLabel: { flex: 1, fontFamily: fonts.primary.regular, fontSize: 13, color: '#d8d8d2', lineHeight: 17, paddingRight: 6 },
   // eslint-disable-next-line local/no-tiny-fontsize -- ✓/– glyph cell in comparison table, intentionally compact
   cell: { fontSize: 15, lineHeight: 18, textAlign: 'center' },
-  termsRow: { borderBottomWidth: 0, paddingTop: 11, paddingBottom: 0 },
-  // eslint-disable-next-line local/no-tiny-fontsize, local/no-fontSize-below-12 -- footer terms micro-label, not body text
-  terms: { fontFamily: fonts.mono.regular, fontSize: 9.5, lineHeight: 12, textAlign: 'center' },
 });

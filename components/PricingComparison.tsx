@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '@/lib/colors';
 import { PRICING_TIERS, PRICING_FEATURES, tierValue, type TierKey } from '@/lib/pricing-tiers';
 import { fonts } from '@/lib/typography';
 
@@ -9,32 +8,50 @@ interface Props {
   prices?: Partial<Record<TierKey, string>>;
 }
 
+/**
+ * Stacked tier cards (the spec-approved fallback to the 3-column matrix, which
+ * read cramped at phone width and forced sub-12px fonts). One full-width card
+ * per tier means every label clears the 16px readability floor with no lint
+ * suppressions. Each card lists all features: included rows get a tier-colored
+ * ✓, excluded rows get a – and a strikethrough. Excluded text stays LIGHT (the
+ * readability guard forbids dim grey TEXT) — the strikethrough carries the
+ * "not included" signal instead of dimming.
+ */
 export function PricingComparison({ prices }: Props) {
   return (
-    <View style={styles.card} accessibilityRole="summary" accessibilityLabel="Pricing comparison">
-      {/* Header row */}
-      <View style={styles.headerRow}>
-        <View style={styles.featureCol} />
-        {PRICING_TIERS.map((t) => (
-          <View key={t.key} style={styles.tierCol}>
+    <View accessibilityRole="summary" accessibilityLabel="Pricing comparison">
+      {PRICING_TIERS.map((t) => (
+        <View
+          key={t.key}
+          style={[styles.card, { borderLeftColor: t.color }]}
+          accessibilityLabel={`${t.name}, ${prices?.[t.key] ?? t.price}, ${t.terms}`}
+        >
+          <View style={styles.header}>
             <Text style={[styles.tierName, { color: t.color }]} numberOfLines={1}>{t.name}</Text>
-            <Text style={styles.tierPrice} numberOfLines={1}>{prices?.[t.key] ?? t.price}</Text>
+            <View style={styles.priceBlock}>
+              <Text style={styles.price} numberOfLines={1}>{prices?.[t.key] ?? t.price}</Text>
+              <Text style={styles.terms} numberOfLines={1}>{t.terms}</Text>
+            </View>
           </View>
-        ))}
-      </View>
 
-      {PRICING_FEATURES.map((f) => (
-        <View key={f.label} style={styles.featureRow}>
-          <Text style={styles.featureLabel}>{f.label}</Text>
-          {PRICING_TIERS.map((t) => {
+          <View style={styles.divider} />
+
+          {PRICING_FEATURES.map((f) => {
             const included = tierValue(f, t.key);
             return (
-              <View key={t.key} style={styles.tierCol}>
+              <View key={f.label} style={styles.featureRow}>
                 <Text
-                  style={[styles.cell, { color: included ? t.color : '#55554f' }]}
-                  accessibilityLabel={`${f.label}: ${included ? 'included' : 'not included'} in ${t.name}`}
+                  style={[styles.glyph, { color: included ? t.color : '#cfcfcf' }]}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
                 >
                   {included ? '✓' : '–'}
+                </Text>
+                <Text
+                  style={[styles.featureLabel, included ? styles.featureOn : styles.featureOff]}
+                  accessibilityLabel={`${f.label}: ${included ? 'included' : 'not included'}`}
+                >
+                  {f.label}
                 </Text>
               </View>
             );
@@ -45,39 +62,38 @@ export function PricingComparison({ prices }: Props) {
   );
 }
 
-const COL_W = 52;
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#0c0c0b',
     borderWidth: 1,
     borderColor: '#2a2a26',
+    borderLeftWidth: 3,
     borderRadius: 14,
     paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
-  headerRow: {
+  header: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2a2a26',
+    justifyContent: 'space-between',
   },
-  featureCol: { flex: 1 },
-  tierCol: { width: COL_W, alignItems: 'center' },
-  // eslint-disable-next-line local/no-tiny-fontsize -- compact table header glyph column, not body text
-  tierName: { fontFamily: fonts.primary.bold, fontSize: 13, lineHeight: 16 },
-  // eslint-disable-next-line local/no-tiny-fontsize, local/no-fontSize-below-12 -- sub-label price tag in table header, intentionally small
-  tierPrice: { fontFamily: fonts.mono.regular, fontSize: 11, color: colors.textSubtle, lineHeight: 14, marginTop: 2 },
+  tierName: { fontFamily: fonts.primary.bold, fontSize: 20, lineHeight: 26 },
+  priceBlock: { alignItems: 'flex-end' },
+  price: { fontFamily: fonts.mono.bold, fontSize: 24, color: '#ffffff', lineHeight: 28 },
+  terms: { fontFamily: fonts.primary.regular, fontSize: 16, color: '#cfcfcf', lineHeight: 20, marginTop: 1 },
+  divider: {
+    height: 1,
+    backgroundColor: '#2a2a26',
+    marginVertical: 12,
+  },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 9,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1c1c19',
+    paddingVertical: 6,
   },
-  // eslint-disable-next-line local/no-tiny-fontsize -- compact table row label, not standalone body text
-  featureLabel: { flex: 1, fontFamily: fonts.primary.regular, fontSize: 13, color: '#d8d8d2', lineHeight: 17, paddingRight: 6 },
-  // eslint-disable-next-line local/no-tiny-fontsize -- ✓/– glyph cell in comparison table, intentionally compact
-  cell: { fontSize: 15, lineHeight: 18, textAlign: 'center' },
+  glyph: { fontSize: 16, lineHeight: 22, width: 22, textAlign: 'center' },
+  featureLabel: { flex: 1, fontFamily: fonts.primary.regular, fontSize: 16, lineHeight: 22, marginLeft: 8 },
+  featureOn: { color: '#e8e8e8' },
+  featureOff: { color: '#cfcfcf', textDecorationLine: 'line-through' },
 });

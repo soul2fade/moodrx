@@ -20,7 +20,7 @@ import { colors } from '@/lib/colors';
 const MONTHLY_PKG = '$rc_monthly';
 const ANNUAL_PKG = '$rc_annual';
 
-export function PlusSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export function PlusSheet({ visible, onClose, onPurchased }: { visible: boolean; onClose: () => void; onPurchased?: () => void }) {
   const { purchasePlus, purchaseBase, restorePurchases, offerings, isLoading: subLoading } = useSubscription();
   const [period, setPeriod] = useState<'monthly' | 'annual'>('annual');
 
@@ -43,12 +43,12 @@ export function PlusSheet({ visible, onClose }: { visible: boolean; onClose: () 
   const trialBtn = usePurchaseButton({
     offeringsLoaded: !subLoading,
     run: () => purchasePlus(period),
-    onSuccess: onClose,
+    onSuccess: () => { onPurchased?.(); onClose(); },
   });
   const baseBtn = usePurchaseButton({
     offeringsLoaded: !subLoading,
     run: purchaseBase,
-    onSuccess: onClose,
+    onSuccess: () => { onPurchased?.(); onClose(); },
   });
   const restoreBtn = usePurchaseButton({
     offeringsLoaded: true,

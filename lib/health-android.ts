@@ -37,7 +37,9 @@ export async function requestHealthConnectPermissions(): Promise<boolean> {
   if (!(await isHealthConnectReady())) return false;
   try {
     const granted = await requestPermission([...READ_PERMISSIONS, ...WRITE_PERMISSIONS]);
-    if (granted.length === 0) return false;
+    // Require at least one READ grant: a write-only grant would leave the app
+    // looking "connected" while every Insights read (steps/sleep) silently fails.
+    if (!granted.some((p) => p.accessType === 'read')) return false;
 
     const now = new Date();
     const startOfDay = new Date(now);

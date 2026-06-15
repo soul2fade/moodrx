@@ -1,10 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { toDateString, todayDateString, yesterdayDateString } from './dateUtils';
 import { clearUiState, invalidateUiStateCache, loadUiState, patchUiState } from './ui-state';
+import type { InsultTier } from '@/lib/insult-library';
+import { normalizeSeverity } from '@/lib/insult-severity';
+import { normalizeVoice } from '@/lib/voices';
 
 export type MoodKey = 'anxious' | 'low' | 'foggy' | 'restless' | 'stressed' | 'good';
 
-export interface Session {
+/** Optional on-device health readings captured at session-log time
+ *  (HealthKit / Health Connect). Absent on sessions logged without health
+ *  sync — purely additive, so old records remain valid (no schema bump). */
+export interface SessionHealthFields {
+  /** Steps recorded for the day at log time, if health was available. */
+  stepsToday?: number;
+  /** Hours of sleep the night before the session, if available. */
+  sleepHoursLastNight?: number;
+}
+
+export interface Session extends SessionHealthFields {
   id: string;
   mood: MoodKey;
   intensity: number;
@@ -16,6 +29,10 @@ export interface Session {
   rating?: 'yes' | 'somewhat' | 'no';
   note?: string;
   lightDay?: boolean;
+  /** Origin of the check-in. 'vent' = logged from the voice-vent flow. Absent
+   *  for the normal prescription/form/quick-log paths. Additive + optional, so
+   *  old records remain valid. */
+  source?: 'vent';
   /** YYYY-MM-DD in the local timezone at write time. Persisted so streak
    *  and "today" checks survive timezone changes (travel, DST) without
    *  recomputing from the unix timestamp. Optional for sessions logged
@@ -300,11 +317,6 @@ export async function saveSupplementLog(log: SupplementLog): Promise<void> {
   return supplementWriteChain;
 }
 
-export async function getSupplementLogsForDate(date: string): Promise<SupplementLog[]> {
-  const all = await getSupplementLogs();
-  return all.filter((l) => l.date === date);
-}
-
 export async function toggleSupplementLog(supplementName: string, date: string): Promise<void> {
   supplementWriteChain = supplementWriteChain.then(async () => {
     try {
@@ -416,6 +428,8 @@ export async function clearAllData(): Promise<void> {
       PERSONAL_BESTS_KEY,
       SUPPLEMENT_REMINDER_PREFS_KEY,
       TRASH_TALK_VOLUME_KEY,
+      INSULT_SEVERITY_KEY,
+      COACH_VOICE_KEY,
       VOICE_ENABLED_KEY,
       WORKOUT_FOCUS_MODE_KEY,
       WORKOUT_VOICE_MODE_KEY,
@@ -423,6 +437,8 @@ export async function clearAllData(): Promise<void> {
       // the next launch silently re-syncs to HealthKit/Health Connect even
       // though the rest of the app behaves like a clean install.
       '@moodrx_health_enabled',
+      '@moodrx_vent_consent',
+      '@moodrx_vent_enabled',
       'notifications_enabled',
       'reminder_time',
       '@moodrx_reminder_schedule',
@@ -659,6 +675,78 @@ export async function setTrashTalkVolume(volume: number): Promise<void> {
   }
 }
 
+const LIVE_COACH_TASTE_KEY = '@moodrx_live_coach_taste_used';
+
+/** How many free live-coach replies a non-MoodRx+ owner has consumed (lifetime). */
+export async function getLiveCoachTasteUsed(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(LIVE_COACH_TASTE_KEY);
+    if (!raw) return 0;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function incrementLiveCoachTasteUsed(): Promise<void> {
+  try {
+    const current = await getLiveCoachTasteUsed();
+    await AsyncStorage.setItem(LIVE_COACH_TASTE_KEY, String(current + 1));
+  } catch {
+    // non-critical
+  }
+}
+
+/** Dev/testing: reset the consumed-taste counter to 0. */
+export async function resetLiveCoachTasteUsed(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(LIVE_COACH_TASTE_KEY, '0');
+  } catch {
+    // non-critical
+  }
+}
+
+const INSULT_SEVERITY_KEY = '@moodrx_insult_severity';
+
+/** The chosen trash-talk severity (drives the audio tier + coach tone). Defaults
+ *  to 'sticks'; an unknown stored value is coerced to 'sticks'. */
+export async function getInsultSeverity(): Promise<InsultTier> {
+  try {
+    return normalizeSeverity(await AsyncStorage.getItem(INSULT_SEVERITY_KEY));
+  } catch {
+    return 'sticks';
+  }
+}
+
+export async function setInsultSeverity(tier: InsultTier): Promise<void> {
+  try {
+    await AsyncStorage.setItem(INSULT_SEVERITY_KEY, tier);
+  } catch {
+    // best-effort persistence
+  }
+}
+
+const COACH_VOICE_KEY = '@moodrx_coach_voice';
+
+/** The chosen coach voice name (drives workout playback). Defaults to 'rachel';
+ *  an unknown stored value is coerced to 'rachel'. */
+export async function getCoachVoice(): Promise<string> {
+  try {
+    return normalizeVoice(await AsyncStorage.getItem(COACH_VOICE_KEY));
+  } catch {
+    return 'rachel';
+  }
+}
+
+export async function setCoachVoice(name: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(COACH_VOICE_KEY, name);
+  } catch {
+    // best-effort persistence
+  }
+}
+
 const AI_COACH_KEY = '@moodrx_ai_coach_enabled';
 
 /** Opt-in for the dynamic AI coach. Default false — sending mood facts
@@ -672,7 +760,51 @@ export async function getAiCoachEnabled(): Promise<boolean> {
 }
 
 export async function setAiCoachEnabled(value: boolean): Promise<void> {
-  await AsyncStorage.setItem(AI_COACH_KEY, value ? 'true' : 'false');
+  try {
+    await AsyncStorage.setItem(AI_COACH_KEY, value ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
+}
+
+const VENT_CONSENT_KEY = '@moodrx_vent_consent';
+const VENT_ENABLED_KEY = '@moodrx_vent_enabled';
+
+/** One-time first-run consent for voice venting (sending the transcript to the
+ *  AI). Gates the first tap on "Need to vent?". */
+export async function getVentConsent(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(VENT_CONSENT_KEY)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setVentConsent(value: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(VENT_CONSENT_KEY, value ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
+}
+
+/** Settings toggle to disable voice venting after consent (defaults ON once
+ *  consent is given — absence of the key is treated as enabled). */
+export async function getVentEnabled(): Promise<boolean> {
+  try {
+    const raw = await AsyncStorage.getItem(VENT_ENABLED_KEY);
+    return raw === null ? true : raw === 'true';
+  } catch {
+    return true;
+  }
+}
+
+export async function setVentEnabled(value: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(VENT_ENABLED_KEY, value ? 'true' : 'false');
+  } catch {
+    // non-critical
+  }
 }
 
 const VOICE_ENABLED_KEY = '@moodrx_voice_enabled';

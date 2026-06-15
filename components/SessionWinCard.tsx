@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
   },
   deltaLabel: {
     ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
   },
   deltaRow: {
     flexDirection: 'row',
@@ -166,11 +166,11 @@ const styles = StyleSheet.create({
     ...t.bodyMuted,
     textAlign: 'center',
     marginTop: 12,
-    fontSize: 14,
+    fontSize: 16,
   },
   workoutLine: {
     ...t.bodySm,
-    color: '#a3a3a3',
+    color: '#cdcdcd',
     textAlign: 'center',
     marginTop: 16,
   },
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     ...t.softMuted,
     textAlign: 'center',
     marginTop: 12,
-    fontSize: 13,
+    fontSize: 16,
   },
   primaryBtn: {
     borderWidth: 1,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     ...t.label,
-    color: '#a3a3a3',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
   },
 });

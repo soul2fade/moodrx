@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,26 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  ActivityIndicator,
   Linking,
   Alert,
+  Dimensions,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
 import { router } from 'expo-router';
 import { getFirstLaunchDone, setFirstLaunchDone } from '@/lib/storage';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
+import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { colors } from '@/lib/colors';
+import { PricingComparison } from '@/components/PricingComparison';
+import { PlusSheet } from '@/components/PlusSheet';
+import { TasteTheRoast } from '@/components/onboarding/TasteTheRoast';
+
+const SCREEN_W = Dimensions.get('window').width;
 
 const STEPS = [
   {
@@ -34,16 +45,17 @@ const STEPS = [
   },
 ];
 
-const TRIAL_FEATURES = [
-  'All 18 science-backed workouts',
-  'Supplement tracker with research',
-  'Full progress history',
-];
-
 export default function OnboardingScreen() {
   const { fadeAnim, slideAnim } = useScreenAnimation();
   const trialScale = useRef(new Animated.Value(1)).current;
-  const { purchaseBase } = useSubscription();
+  const { purchaseBase, offerings, isLoading: subLoading } = useSubscription();
+  const [page, setPage] = useState(0);
+  const [plusVisible, setPlusVisible] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const plusPkgs = offerings?.all?.['plus']?.availablePackages ?? [];
+  const monthlyPrice = plusPkgs.find((p) => p.identifier === '$rc_monthly')?.product?.priceString ?? '$3.99/mo';
+  const basePrice = offerings?.current?.availablePackages?.find((p) => p.identifier === '$rc_lifetime')?.product?.priceString ?? '$9.99';
 
   useEffect(() => {
     getFirstLaunchDone().then((done) => {
@@ -56,17 +68,28 @@ export default function OnboardingScreen() {
   const onPressOut = (anim: Animated.Value) =>
     Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
-  const handleStartTrial = useCallback(async () => {
-    const granted = await purchaseBase();
-    // Only mark onboarding done if the user actually unlocked Pro.
-    // Otherwise (cancel, error, web), leave them on this screen so they can
-    // retry or pick "Continue with free version".
-    if (!granted) return;
-    await setFirstLaunchDone();
-    router.replace('/guided');
-  }, [purchaseBase]);
+  // Only advances on a real unlock. On cancel/error the hook returns to idle so
+  // the user can retry or pick "Continue with free version".
+  const unlockBtn = usePurchaseButton({
+    offeringsLoaded: !subLoading,
+    run: purchaseBase,
+    onSuccess: () => {
+      // After the "You're in ✓" flash, drop straight into the guided flow.
+      void setFirstLaunchDone().then(() => router.replace('/guided'));
+    },
+  });
 
   const handleFreeVersion = useCallback(async () => {
+    await setFirstLaunchDone();
+    router.replace('/guided');
+  }, []);
+
+  const onPageScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const p = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
+    if (p !== page) setPage(p);
+  };
+  const goToPage = (i: number) => scrollRef.current?.scrollTo({ x: i * SCREEN_W, animated: true });
+  const finishToGuided = useCallback(async () => {
     await setFirstLaunchDone();
     router.replace('/guided');
   }, []);
@@ -79,124 +102,155 @@ export default function OnboardingScreen() {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+      <Animated.ScrollView
+        ref={scrollRef as any}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={onPageScroll}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
       >
-        <Text style={styles.headline}>Your brain is lying to you.</Text>
+        {/* PAGE 1 — how it works */}
+        <ScrollView style={[styles.scroll, { width: SCREEN_W }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Text style={styles.headline}>Your brain is lying to you.</Text>
 
-        <View style={styles.divider} />
+          <View style={styles.divider} />
 
-        <Text style={styles.subtext}>
-          It says you can&apos;t move. Science says movement is the fix.
-        </Text>
-
-        <Text style={styles.body}>
-          MoodRx matches workouts to how you actually feel — backed by
-          neuroscience, delivered with zero fluff.
-        </Text>
-
-        <View style={styles.stepsContainer}>
-          {STEPS.map((step) => (
-            <View key={step.num} style={styles.stepRow}>
-              <Text style={styles.stepNum}>{step.num}</Text>
-              <View style={styles.stepText}>
-                <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepSub}>{step.sub}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Outcome proof — illustrative example, not aggregate stats */}
-        <View style={styles.outcomeProof}>
-          <Text style={styles.outcomeProofLabel}>EXAMPLE SESSION</Text>
-          <View style={styles.outcomeProofRow}>
-            <View style={styles.outcomeBlock}>
-              <Text style={styles.outcomeBlockCap}>BEFORE</Text>
-              <Text style={styles.outcomeBlockVal}>7</Text>
-              <Text style={styles.outcomeBlockMood}>ANXIOUS</Text>
-            </View>
-            <View style={styles.outcomeArrowBlock}>
-              <Text style={styles.outcomeArrow}>→</Text>
-              <Text style={styles.outcomeDelta}>−3 pts</Text>
-            </View>
-            <View style={styles.outcomeBlock}>
-              <Text style={styles.outcomeBlockCap}>AFTER</Text>
-              <Text style={[styles.outcomeBlockVal, { color: '#059669' }]}>4</Text>
-              <Text style={styles.outcomeBlockMood}>ONE WORKOUT</Text>
-            </View>
-          </View>
-          <Text style={styles.outcomeProofSub}>
-            Your before/after scores build your personal evidence file.
+          <Text style={styles.subtext}>
+            It says you can&apos;t move. Science says movement is the fix.
           </Text>
-        </View>
 
-        <View style={styles.preCTALine} />
+          <Text style={styles.body}>
+            MoodRx matches workouts to how you actually feel — backed by
+            neuroscience, delivered with zero fluff.
+          </Text>
 
-        <Text style={styles.wellnessDisclaimer}>
-          MoodRx is a wellness tool, not a substitute for professional mental health care.
-        </Text>
-
-        <View style={styles.trialBanner}>
-          <Text style={styles.trialBannerLabel}>MOODRX PRO</Text>
-          <Text style={styles.trialBannerSub}>One-time unlock. Full access forever.</Text>
-          <View style={styles.trialFeatures}>
-            {TRIAL_FEATURES.map((f) => (
-              <Text key={f} style={styles.trialFeatureItem}>+ {f}</Text>
+          <View style={styles.stepsContainer}>
+            {STEPS.map((step) => (
+              <View key={step.num} style={styles.stepRow}>
+                <Text style={styles.stepNum}>{step.num}</Text>
+                <View style={styles.stepText}>
+                  <Text style={styles.stepTitle}>{step.title}</Text>
+                  <Text style={styles.stepSub}>{step.sub}</Text>
+                </View>
+              </View>
             ))}
           </View>
-        </View>
 
-        <Animated.View style={{ transform: [{ scale: trialScale }] }}>
-          <TouchableOpacity
-            style={styles.trialButton}
-            onPress={handleStartTrial}
-            onPressIn={() => onPressIn(trialScale)}
-            onPressOut={() => onPressOut(trialScale)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Unlock MoodRx Pro"
-          >
-            <Text style={styles.trialButtonText}>UNLOCK MOODRX PRO →</Text>
+          {/* Outcome proof — illustrative example, not aggregate stats */}
+          <View style={styles.outcomeProof}>
+            <Text style={styles.outcomeProofLabel}>EXAMPLE SESSION</Text>
+            <View style={styles.outcomeProofRow}>
+              <View style={styles.outcomeBlock}>
+                <Text style={styles.outcomeBlockCap}>BEFORE</Text>
+                <Text style={styles.outcomeBlockVal}>7</Text>
+                <Text style={styles.outcomeBlockMood}>ANXIOUS</Text>
+              </View>
+              <View style={styles.outcomeArrowBlock}>
+                <Text style={styles.outcomeArrow}>→</Text>
+                <Text style={styles.outcomeDelta}>−3 pts</Text>
+              </View>
+              <View style={styles.outcomeBlock}>
+                <Text style={styles.outcomeBlockCap}>AFTER</Text>
+                <Text style={[styles.outcomeBlockVal, { color: '#059669' }]}>4</Text>
+                <Text style={styles.outcomeBlockMood}>ONE WORKOUT</Text>
+              </View>
+            </View>
+            <Text style={styles.outcomeProofSub}>
+              Your before/after scores build your personal evidence file.
+            </Text>
+          </View>
+
+          <View style={styles.preCTALine} />
+
+          <Text style={styles.wellnessDisclaimer}>
+            MoodRx is a wellness tool, not a substitute for professional mental health care.
+          </Text>
+
+          <TouchableOpacity style={styles.swipeCta} onPress={() => goToPage(1)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Meet your coach">
+            <Text style={styles.swipeCtaText}>Meet your coach →</Text>
           </TouchableOpacity>
-        </Animated.View>
+        </ScrollView>
 
-        <TouchableOpacity
-          style={styles.freeButton}
-          onPress={handleFreeVersion}
-          activeOpacity={0.6}
-          accessibilityRole="button"
-          accessibilityLabel="Continue with free version"
-        >
-          <Text style={styles.freeButtonText}>CONTINUE WITH FREE VERSION</Text>
-        </TouchableOpacity>
+        {/* PAGE 2 — taste the roast */}
+        <ScrollView style={[styles.scroll, { width: SCREEN_W }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <TasteTheRoast onContinue={() => goToPage(2)} />
+        </ScrollView>
 
-        <View style={styles.legalLinksRow}>
-          <TouchableOpacity
-            onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
-            activeOpacity={0.7}
-            accessibilityRole="link"
-            accessibilityLabel="Terms of Use"
-          >
-            <Text style={styles.legalLinkText}>TERMS OF USE</Text>
+        {/* PAGE 3 — pricing */}
+        <ScrollView style={[styles.scroll, { width: SCREEN_W }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Text style={styles.headline}>What it costs.</Text>
+          <View style={styles.divider} />
+          <Text style={styles.subtext}>Simple. No surprises. Only MoodRx+ ever renews.</Text>
+          <Text style={styles.bridgeLine}>That one was from a script. MoodRx+ writes fresh ones off your actual patterns — the live coach.</Text>
+
+          <View style={{ marginTop: 18 }}>
+            <PricingComparison prices={{ own: basePrice, plus: monthlyPrice }} />
+          </View>
+
+          <Animated.View style={{ transform: [{ scale: trialScale }] }}>
+            <TouchableOpacity
+              style={[styles.trialButton, unlockBtn.disabled && styles.trialButtonDisabled]}
+              onPress={unlockBtn.onPress}
+              onPressIn={() => onPressIn(trialScale)}
+              onPressOut={() => onPressOut(trialScale)}
+              disabled={unlockBtn.disabled}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: unlockBtn.disabled, busy: unlockBtn.busy }}
+              accessibilityLabel="Own MoodRx for 9 dollars 99"
+            >
+              {unlockBtn.busy ? (
+                <ActivityIndicator size="small" color={colors.premium} />
+              ) : (
+                <Text style={styles.trialButtonText}>{purchaseButtonLabel(unlockBtn.status, { idle: 'OWN IT — $9.99' })}</Text>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+
+          <TouchableOpacity style={styles.plusButton} onPress={() => setPlusVisible(true)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Start 7 day free trial of MoodRx Plus">
+            <Text style={styles.plusButtonText}>Start 7-day free trial →</Text>
           </TouchableOpacity>
-          <Text style={styles.legalDot}>·</Text>
-          <TouchableOpacity
-            onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
-            activeOpacity={0.7}
-            accessibilityRole="link"
-            accessibilityLabel="Privacy Policy"
-          >
-            <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
-          </TouchableOpacity>
-        </View>
 
-        <Text style={styles.disclaimer}>
-          MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
-        </Text>
-      </ScrollView>
+          <TouchableOpacity style={styles.freeButton} onPress={handleFreeVersion} activeOpacity={0.6} accessibilityRole="button" accessibilityLabel="Start free, no charge">
+            <Text style={styles.freeButtonText}>Start free →</Text>
+          </TouchableOpacity>
+
+          <View style={styles.legalLinksRow}>
+            <TouchableOpacity
+              onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
+              activeOpacity={0.7}
+              accessibilityRole="link"
+              accessibilityLabel="Terms of Use"
+            >
+              <Text style={styles.legalLinkText}>TERMS OF USE</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalDot}>·</Text>
+            <TouchableOpacity
+              onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
+              activeOpacity={0.7}
+              accessibilityRole="link"
+              accessibilityLabel="Privacy Policy"
+            >
+              <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.disclaimer}>
+            MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
+          </Text>
+        </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Pager dots */}
+      <View style={styles.dotsRow} importantForAccessibility="no">
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={[styles.dot, page === i && styles.dotActive]} />
+        ))}
+      </View>
+
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} onPurchased={finishToGuided} />
     </Animated.View>
   );
 }
@@ -281,7 +335,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     textAlign: 'center',
     marginBottom: 16,
@@ -299,7 +353,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     marginBottom: 4,
   },
@@ -313,7 +367,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 1,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     marginTop: 4,
   },
@@ -329,7 +383,7 @@ const styles = StyleSheet.create({
   outcomeDelta: {
     ...t.label,
     color: '#059669',
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
     marginTop: 4,
@@ -337,7 +391,7 @@ const styles = StyleSheet.create({
   outcomeProofSub: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
     textAlign: 'center',
@@ -353,7 +407,7 @@ const styles = StyleSheet.create({
   wellnessDisclaimer: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     letterSpacing: 0.5,
     lineHeight: 17,
     textAlign: 'center',
@@ -361,41 +415,21 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textTransform: 'none' as const,
   },
-  trialBanner: {
-    marginTop: 24,
-    marginBottom: 20,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.premium,
-    paddingLeft: 16,
-  },
-  trialBannerLabel: {
-    ...t.label,
-    color: colors.premium,
-    letterSpacing: 3,
-  },
-  trialBannerSub: {
-    ...t.bodyMuted,
-    fontSize: 14,
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  trialFeatures: {
-    gap: 4,
-  },
-  trialFeatureItem: {
-    ...t.bodySm,
-    color: '#ffffff',
-  },
   trialButton: {
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: colors.premium,
     paddingVertical: 16,
     alignItems: 'center',
     borderRadius: 0,
     marginBottom: 12,
   },
+  trialButtonDisabled: {
+    borderColor: '#555555',
+    opacity: 0.6,
+  },
   trialButtonText: {
     ...t.button,
+    color: colors.premium,
     letterSpacing: 4,
   },
   freeButton: {
@@ -404,9 +438,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   freeButtonText: {
-    ...t.label,
+    ...t.body,
     color: '#ffffff',
-    letterSpacing: 2,
+    fontSize: 16,
   },
   legalLinksRow: {
     flexDirection: 'row',
@@ -417,11 +451,19 @@ const styles = StyleSheet.create({
   },
   legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
   legalDot: { ...t.softMuted },
+  plusButton: { marginTop: 12, borderWidth: 1, borderColor: colors.premium, borderRadius: 4, paddingVertical: 14, alignItems: 'center' },
+  plusButtonText: { fontFamily: fonts.primary.bold, fontSize: 16, color: colors.premium, letterSpacing: 1 },
+  swipeCta: { marginTop: 20, alignItems: 'center', paddingVertical: 8 },
+  swipeCtaText: { fontFamily: fonts.mono.regular, fontSize: 16, color: colors.textSubtle, letterSpacing: 1 },
+  dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, paddingVertical: 14 },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#3a3a34' },
+  dotActive: { backgroundColor: colors.premium, width: 18 },
+  bridgeLine: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, lineHeight: 22, marginTop: 10 },
   disclaimer: {
     ...t.label,
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     letterSpacing: 0.5,
     lineHeight: 17,
     textAlign: 'center',

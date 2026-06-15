@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVoiceEnabled, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { getAiCoachEnabled, getInsultSeverity, getTrashTalkVolume, getUserProfile, getVentEnabled, getVoiceEnabled, resetLiveCoachTasteUsed, setAiCoachEnabled, setInsultSeverity, setTrashTalkVolume, setUserProfile, setVentEnabled, setVoiceEnabled, UserProfile } from '@/lib/storage';
 import { exportSessionsJson } from '@/lib/export-sessions';
 import { resetAllAppData } from '@/lib/reset-app';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -35,6 +35,7 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { BottomNav } from '@/components/BottomNav';
+import { CoachVoicePicker } from '@/components/CoachVoicePicker';
 import {
   getHealthPlatformLabel,
   getHealthSyncEnabled,
@@ -45,6 +46,10 @@ import {
 } from '@/lib/health';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PlusSheet } from '@/components/PlusSheet';
+import { SeveritySheet } from '@/components/SeveritySheet';
+import { SEVERITIES } from '@/lib/insult-severity';
+import type { InsultTier } from '@/lib/insult-library';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
@@ -63,6 +68,8 @@ export default function SettingsScreen() {
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
   const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
+  const [severity, setSeverity] = useState<InsultTier>('sticks');
+  const [severitySheetOpen, setSeveritySheetOpen] = useState(false);
   const [voiceEnabled, setVoiceEnabledState] = useState(true);
   // Voice toggle state can't be read synchronously from AsyncStorage —
   // if we render the toggle from useState(true) and storage actually
@@ -76,9 +83,13 @@ export default function SettingsScreen() {
   const voiceToggleAnim = useRef(new Animated.Value(1)).current;
   const [aiCoachEnabled, setAiCoachEnabledState] = useState(false);
   const aiCoachToggleAnim = useRef(new Animated.Value(0)).current;
+  const [ventEnabled, setVentEnabledState] = useState(true);
+  const ventToggleAnim = useRef(new Animated.Value(1)).current;
   const healthToggleAnim = useRef(new Animated.Value(0)).current;
-  const { restorePurchases, isPremium, devTogglePremium, isLoading: subLoading } = useSubscription();
+  const { restorePurchases, isPremium, isPlus, devTogglePremium, devTogglePlus, isLoading: subLoading } = useSubscription();
   const { clearSessions, sessions } = useSessions();
+  const [devPanel, setDevPanel] = useState(false);
+  const [plusVisible, setPlusVisible] = useState(false);
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleAnim = useRef(new Animated.Value(0)).current;
@@ -97,7 +108,8 @@ export default function SettingsScreen() {
       getUserProfile(),
       getTrashTalkVolume(),
       getVoiceEnabled(),
-    ]).then(([notifVal, schedule, profile, volume, voiceOn]) => {
+      getInsultSeverity(),
+    ]).then(([notifVal, schedule, profile, volume, voiceOn, savedSeverity]) => {
       const enabled = notifVal === 'true';
       setNotificationsEnabled(enabled);
       toggleAnim.setValue(enabled ? 1 : 0);
@@ -105,6 +117,7 @@ export default function SettingsScreen() {
       if (profile.preferredTime) setPreferredTimeState(profile.preferredTime);
       if (profile.primaryGoal) setPrimaryGoalState(profile.primaryGoal);
       setTrashTalkVolumeState(volume);
+      setSeverity(savedSeverity);
       setVoiceEnabledState(voiceOn);
       voiceToggleAnim.setValue(voiceOn ? 1 : 0);
       setVoiceLoaded(true);
@@ -128,10 +141,25 @@ export default function SettingsScreen() {
     }).catch(() => {});
   }, [aiCoachToggleAnim]);
 
+  useEffect(() => {
+    getVentEnabled().then((on) => {
+      setVentEnabledState(on);
+      ventToggleAnim.setValue(on ? 1 : 0);
+    }).catch(() => {});
+  }, [ventToggleAnim]);
+
   const handleTrashTalkVolumeChange = async (value: number) => {
     setTrashTalkVolumeState(value);
     await setTrashTalkVolume(value);
   };
+
+  const handleSeverityConfirm = (tier: InsultTier) => {
+    setSeverity(tier);
+    void setInsultSeverity(tier);
+    setSeveritySheetOpen(false);
+  };
+
+  const severityOption = SEVERITIES.find((s) => s.key === severity) ?? SEVERITIES[1];
 
   const handleVoiceToggle = async () => {
     const next = !voiceEnabled;
@@ -188,11 +216,39 @@ export default function SettingsScreen() {
     outputRange: [2, 22],
   });
 
+  const ventTranslateX = ventToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
+
   const handleAiCoachToggle = async () => {
     const next = !aiCoachEnabled;
     setAiCoachEnabledState(next);
     await setAiCoachEnabled(next);
     Animated.timing(aiCoachToggleAnim, {
+      toValue: next ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+    // The AI coach line builds on the "Dr. MoodRx copy" line (postInsult), which
+    // is empty when that toggle is off — so AI coach alone would silently do
+    // nothing. Auto-enable the copy when AI coach is switched on.
+    if (next && !voiceEnabled) {
+      setVoiceEnabledState(true);
+      await setVoiceEnabled(true);
+      Animated.timing(voiceToggleAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  const handleVentToggle = async () => {
+    const next = !ventEnabled;
+    setVentEnabledState(next);
+    await setVentEnabled(next);
+    Animated.timing(ventToggleAnim, {
       toValue: next ? 1 : 0,
       duration: 200,
       useNativeDriver: true,
@@ -357,14 +413,14 @@ export default function SettingsScreen() {
         <Text style={styles.settingsLabel}>SETTINGS</Text>
         <Text style={styles.headline}>Preferences.</Text>
 
-        {/* Pro section */}
-        <Text style={styles.sectionHeader}>MOODRX PRO</Text>
+        {/* Plan / access section */}
+        <Text style={styles.sectionHeader}>YOUR PLAN</Text>
 
         {isPremium && (
           <View style={styles.subStatusRow}>
             <Text style={styles.subStatusLabel}>STATUS</Text>
             <View style={[styles.subStatusBadge, styles.proBadge]}>
-              <Text style={styles.proBadgeText}>PRO</Text>
+              <Text style={styles.proBadgeText}>{isPlus ? 'MOODRX+' : 'OWNED'}</Text>
             </View>
           </View>
         )}
@@ -377,9 +433,30 @@ export default function SettingsScreen() {
               activeOpacity={0.7}
               style={styles.upgradeBtn}
               accessibilityRole="button"
-              accessibilityLabel="Unlock MoodRx Pro"
+              accessibilityLabel="Own MoodRx"
             >
-              <Text style={styles.upgradeBtnText}>UNLOCK PRO →</Text>
+              <Text style={styles.upgradeBtnText}>OWN IT — $9.99 →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!subLoading && !isPlus && (
+          <TouchableOpacity onPress={() => setPlusVisible(true)} activeOpacity={0.7} style={styles.subStatusRow} accessibilityRole="button" accessibilityLabel="MoodRx Plus — live coach">
+            <Text style={styles.subStatusLabel}>MOODRX+</Text>
+            <Text style={styles.upgradeBtnText}>LIVE COACH →</Text>
+          </TouchableOpacity>
+        )}
+
+        {__DEV__ && devPanel && (
+          <View style={{ marginTop: 12, gap: 8 }}>
+            <TouchableOpacity onPress={devTogglePremium} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: toggle base unlock">
+              <Text style={styles.upgradeBtnText}>DEV: TOGGLE BASE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={devTogglePlus} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: toggle MoodRx Plus">
+              <Text style={styles.upgradeBtnText}>DEV: TOGGLE MOODRX+</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { void resetLiveCoachTasteUsed(); }} activeOpacity={0.7} style={styles.upgradeBtn} accessibilityRole="button" accessibilityLabel="Dev: reset coach taste">
+              <Text style={styles.upgradeBtnText}>DEV: RESET COACH TASTE</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -470,10 +547,28 @@ export default function SettingsScreen() {
           />
         </View>
 
+        <Text style={styles.prefLabel}>ROAST LEVEL</Text>
+        <Text style={styles.prefHint}>How hard Dr. MoodRx goes when you turn on trash talk during a workout.</Text>
+        <TouchableOpacity
+          style={styles.roastRow}
+          onPress={() => setSeveritySheetOpen(true)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Roast level: ${severityOption.label}. Tap to change.`}
+        >
+          <View style={styles.roastTextBlock}>
+            <Text style={styles.roastValue}>{severityOption.label}</Text>
+            {severityOption.warning ? <Text style={styles.roastWarning}>{severityOption.warning}</Text> : null}
+          </View>
+          <Text style={styles.roastChange}>CHANGE</Text>
+        </TouchableOpacity>
+
+        <CoachVoicePicker />
+
         <View style={styles.toggleRow}>
           <View style={styles.toggleLabelBlock}>
             <Text style={styles.toggleLabel}>AI coach (live)</Text>
-            <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default; Pro feature.</Text>
+            <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default; MoodRx+ feature.</Text>
           </View>
           <TouchableOpacity
             onPress={handleAiCoachToggle}
@@ -484,6 +579,23 @@ export default function SettingsScreen() {
             accessibilityLabel="AI coach"
           >
             <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: aiCoachTranslateX }] }]} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLabelBlock}>
+            <Text style={styles.toggleLabel}>Voice venting</Text>
+            <Text style={styles.prefHint}>Talk it out; we transcribe on your device and never save audio.</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleVentToggle}
+            activeOpacity={0.8}
+            style={[styles.toggle, ventEnabled ? styles.toggleOn : styles.toggleOff]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: ventEnabled }}
+            accessibilityLabel="Voice venting"
+          >
+            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: ventTranslateX }] }]} />
           </TouchableOpacity>
         </View>
 
@@ -677,7 +789,7 @@ export default function SettingsScreen() {
             if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
             if (versionTapCount.current >= 5) {
               versionTapCount.current = 0;
-              devTogglePremium();
+              setDevPanel(true);
             } else {
               versionTapTimer.current = setTimeout(() => { versionTapCount.current = 0; }, 2000);
             }
@@ -688,7 +800,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
         {isPremium && (
           <View style={[styles.subStatusBadge, styles.proBadge, styles.versionProBadge]}>
-            <Text style={styles.proBadgeText}>PRO MEMBER</Text>
+            <Text style={styles.proBadgeText}>{isPlus ? 'MOODRX+' : 'OWNED'}</Text>
           </View>
         )}
 
@@ -778,6 +890,14 @@ export default function SettingsScreen() {
         <View style={{ height: 12 }} />
       </ScrollView>
       <BottomNav />
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
+
+      <SeveritySheet
+        visible={severitySheetOpen}
+        current={severity}
+        onConfirm={handleSeverityConfirm}
+        onCancel={() => setSeveritySheetOpen(false)}
+      />
     </Animated.View>
   );
 }
@@ -817,11 +937,11 @@ const styles = StyleSheet.create({
   proBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   upgradeBtn: {
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: colors.premium,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  upgradeBtnText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
+  upgradeBtnText: { ...t.label, color: colors.premium, letterSpacing: 2 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -831,7 +951,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1a1a1a',
   },
   toggleLabelBlock: { flex: 1, marginRight: 12 },
-  toggleLabel: { ...t.body, fontSize: 15 },
+  toggleLabel: { ...t.body, fontSize: 16 },
   toggle: { width: 50, height: 28, borderRadius: 0, justifyContent: 'center' },
   toggleOff: { backgroundColor: '#1a1a1a' },
   toggleOn: { backgroundColor: '#059669' },
@@ -850,7 +970,7 @@ const styles = StyleSheet.create({
   timeChipUnselected: { borderColor: '#1a1a1a' },
   timeChipText: { ...t.label, letterSpacing: 1 },
   timeChipTextSelected: { color: '#ffffff' },
-  timeChipTextUnselected: { color: '#a3a3a3' },
+  timeChipTextUnselected: { color: '#cdcdcd' },
   splitWeekendsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -860,7 +980,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#1a1a1a',
   },
-  splitWeekendsLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2, fontSize: 12, lineHeight: 17 },
+  splitWeekendsLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 16, lineHeight: 17 },
   splitWeekendsToggle: {
     borderWidth: 1,
     borderColor: '#333333',
@@ -868,22 +988,36 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   splitWeekendsToggleOn: { borderColor: '#059669', backgroundColor: '#05966918' },
-  splitWeekendsToggleText: { ...t.label, color: '#999999', fontSize: 12, letterSpacing: 1.5, lineHeight: 17 },
+  splitWeekendsToggleText: { ...t.label, color: '#f0f0f0', fontSize: 16, letterSpacing: 1.5, lineHeight: 17 },
   prefLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
-    color: '#888',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     textTransform: 'uppercase' as const,
     marginTop: 12,
     marginBottom: 10,
   },
   prefHint: {
     ...t.bodySm,
-    color: '#a3a3a3',
+    color: '#cdcdcd',
     marginBottom: 8,
   },
+  roastRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 4,
+  },
+  roastTextBlock: { flex: 1, paddingRight: 12 },
+  roastValue: { fontFamily: fonts.mono.regular, fontSize: 16, lineHeight: 20, letterSpacing: 1, textTransform: 'uppercase' as const, color: '#ffffff' },
+  roastWarning: { fontFamily: fonts.mono.regular, fontSize: 16, lineHeight: 20, letterSpacing: 0.5, color: colors.premium, marginTop: 4 },
+  roastChange: { fontFamily: fonts.mono.regular, fontSize: 16, lineHeight: 20, letterSpacing: 1, textTransform: 'uppercase' as const, color: colors.accent },
   volumeRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -908,12 +1042,12 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   chipSelected: { borderColor: '#059669' },
   chipUnselected: { borderColor: '#2a2a2a' },
-  chipText: { fontFamily: fonts.mono.regular, fontSize: 12, lineHeight: 17, letterSpacing: 1, textTransform: 'uppercase' as const },
+  chipText: { fontFamily: fonts.mono.regular, fontSize: 16, lineHeight: 17, letterSpacing: 1, textTransform: 'uppercase' as const },
   chipTextSelected: { color: '#ffffff' },
-  chipTextUnselected: { color: '#999' },
+  chipTextUnselected: { color: '#cdcdcd' },
   appName: { ...t.headlineSm, marginTop: 12 },
-  appTagline: { ...t.bodyMuted, fontSize: 14, marginTop: 4 },
-  appVersion: { ...t.label, color: '#c8c8c8', letterSpacing: 2, marginTop: 8 },
+  appTagline: { ...t.bodyMuted, fontSize: 16, marginTop: 4 },
+  appVersion: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, marginTop: 8 },
   dataRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1a1a1a' },
   dataRowText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
   deleteRowText: { ...t.label, color: '#E11D48', letterSpacing: 2 },
@@ -924,7 +1058,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
   },
-  deleteConfirmTitle: { ...t.body, fontSize: 14 },
+  deleteConfirmTitle: { ...t.body, fontSize: 16 },
   deleteConfirmSub: { ...t.bodySm, color: '#ffffff', marginTop: 4 },
   deleteConfirmButtons: {
     flexDirection: 'row',
@@ -944,7 +1078,7 @@ const styles = StyleSheet.create({
     ...t.label,
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     letterSpacing: 0.5,
     lineHeight: 17,
     textAlign: 'center',

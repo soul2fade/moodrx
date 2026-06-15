@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'rea
 import { Session } from '@/lib/storage';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
+import { sessionImprovement } from '@/lib/patterns';
 import { type as t } from '../lib/typography';
 
 interface WorkoutCalendarProps {
@@ -171,7 +172,8 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
                 {selectedSessions.map((s, i) => {
                   const color = MOODS[s.mood as MoodKey].color;
                   const change = formatChange(s.intensity, s.postScore);
-                  const improved = s.postScore > s.intensity;
+                  // Mood-aware: for every mood except 'good', a lower post-score is the win.
+                  const improved = sessionImprovement(s) > 0;
                   return (
                     <View key={s.id ?? i} style={[styles.sessionRow, i < selectedSessions.length - 1 && styles.sessionBorder]}>
                       <View style={[styles.moodBar, { backgroundColor: color }]} />
@@ -229,7 +231,7 @@ const styles = StyleSheet.create({
   headerText: {
     ...t.timestamp,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     letterSpacing: 1,
     lineHeight: 17,
   },
@@ -251,7 +253,7 @@ const styles = StyleSheet.create({
   },
   dayText: {
     ...t.number,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   dayTextActive: {
@@ -293,8 +295,8 @@ const styles = StyleSheet.create({
   },
   sheetDate: {
     ...t.label,
-    color: '#999999',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginBottom: 2,
   },
   sheetCount: {
@@ -330,25 +332,25 @@ const styles = StyleSheet.create({
   sessionMood: {
     ...t.label,
     letterSpacing: 1,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   sessionTime: {
     ...t.timestamp,
-    color: '#999999',
-    fontSize: 12,
+    color: '#f0f0f0',
+    fontSize: 16,
     lineHeight: 17,
   },
   sessionWorkout: {
     ...t.body,
     color: '#ffffff',
     marginBottom: 4,
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
   },
   sessionChange: {
     ...t.label,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 0.5,
   },

@@ -1,15 +1,15 @@
 import Purchases from 'react-native-purchases';
-import { getTrashTalkVolume } from '@/lib/storage';
+import { getInsultSeverity } from '@/lib/storage';
 import type { CoachContext, CoachTone } from '@/lib/coach-insight';
 
 /** Deployed Netlify function that holds the API keys server-side. */
 const COACH_ENDPOINT = 'https://moodrx-api.netlify.app/.netlify/functions/coach-line';
 const TIMEOUT_MS = 4000;
 
-/** Tone rides on the existing trash-talk volume (0–1): upper half roasts. */
+/** The coach's tone IS the chosen trash-talk severity (Glass House / Sticks and
+ *  Stones / Roasted). Defaults to 'sticks' on any storage error. */
 export async function resolveTone(): Promise<CoachTone> {
-  const volume = await getTrashTalkVolume().catch(() => 0.5);
-  return volume >= 0.5 ? 'roasting' : 'teasing';
+  return getInsultSeverity().catch(() => 'sticks');
 }
 
 /** Returns a dynamic coach line, or null on offline/timeout/any error.

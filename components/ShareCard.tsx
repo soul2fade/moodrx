@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   tagline: {
     ...t.bodyMuted,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     marginTop: 4,
     lineHeight: 18,
   },

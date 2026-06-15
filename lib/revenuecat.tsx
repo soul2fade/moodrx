@@ -9,17 +9,12 @@ export const REVENUECAT_ENTITLEMENT_IDENTIFIER = 'premium'; // base unlock (non-
  *  slot for a non-consumable/lifetime product.) */
 export const BASE_UNLOCK_PACKAGE_ID = '$rc_lifetime';
 
-/** Offering that holds purchasable content packs (empty at launch). */
-export const PACKS_OFFERING_ID = 'packs';
+/** Offering holding the MoodRx+ subscription products (monthly + annual). */
+export const PLUS_OFFERING_ID = 'plus';
 
 /** Entitlement granted by a future all-access subscription. Checked by
- *  ownsPack() so adding the sub later needs no consumer changes. */
+ *  ownsVoice() so adding the sub later needs no consumer changes. */
 export const ALL_ACCESS_ENTITLEMENT_IDENTIFIER = 'all_access';
-
-/** Per-pack entitlements are namespaced `pack_<id>`. */
-export function packEntitlementId(packId: string): string {
-  return `pack_${packId}`;
-}
 
 function getRevenueCatApiKey(): string | null {
   const testKey    = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY    ?? '';

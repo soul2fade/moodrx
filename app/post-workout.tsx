@@ -17,17 +17,19 @@ import Slider from '@react-native-community/slider';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import type { MoodKey } from '@/lib/storage';
-import { getAiCoachEnabled, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { getAiCoachEnabled, getNotifPromptShown, getPersonalBest, getSessions, getStreak, getUserProfile, getLiveCoachTasteUsed, incrementLiveCoachTasteUsed, savePersonalBest, setGuidedSessionDone, setUserProfile, UserProfile, PersonalBest } from '@/lib/storage';
+import { canUseLiveCoach } from '@/lib/live-coach';
 import { todayDateString } from '@/lib/dateUtils';
 import { useSessions } from '@/contexts/SessionsContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { SessionWinCard } from '@/components/SessionWinCard';
 import { rescheduleAfterSession } from '@/lib/notifications';
-import { saveWorkoutToHealth } from '@/lib/health';
+import { saveWorkoutToHealth, captureSessionHealth } from '@/lib/health';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
 import { type as t, fonts } from '../lib/typography';
 import { NotificationPrompt } from '@/components/NotificationPrompt';
+import { PlusSheet } from '@/components/PlusSheet';
 import { createSessionId } from '@/lib/session-utils';
 import { maybeRequestReview } from '@/lib/review';
 import { BreakthroughCard } from '@/components/BreakthroughCard';
@@ -36,8 +38,14 @@ import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { buildCoachContext } from '@/lib/coach-insight';
 import { fetchDynamicLine } from '@/lib/coach-client';
-import { getFieldNotePlaceholder } from '@/lib/workout-ui';
+import { appendDictation, getFieldNotePlaceholder } from '@/lib/workout-ui';
+import { colors } from '@/lib/colors';
+import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react-native';
+
+// Max length for a field note. 280 (was 140) — long enough to get a whole
+// thought out. Keep the counter, maxLength, slice, and dictation cap in sync.
+const FIELD_NOTE_MAX = 280;
 
 function getScoreContext(score: number, lowerIsBetter: boolean): string {
   if (lowerIsBetter) {
@@ -54,7 +62,7 @@ function getScoreContext(score: number, lowerIsBetter: boolean): string {
 
 export default function PostWorkoutScreen() {
   const { addSession: addSessionToContext, sessionCount: cachedSessionCount } = useSessions();
-  const { isPremium } = useSubscription();
+  const { isPlus } = useSubscription();
   const params = useLocalSearchParams<{ mood: string; workoutId: string; intensity: string; reps: string; guided?: string }>();
   const mood = (params.mood as MoodKey) in MOODS
     ? (params.mood as MoodKey)
@@ -77,7 +85,13 @@ export default function PostWorkoutScreen() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [previousBest, setPreviousBest] = useState<PersonalBest | null>(null);
   const [note, setNote] = useState('');
+  const [isDictating, setIsDictating] = useState(false);
+  const dictatingRef = useRef(false);
+  // The note text as it was when dictation started; new speech appends onto this.
+  const dictateBaseRef = useRef('');
   const [dynamicLine, setDynamicLine] = useState<string | null>(null);
+  const [liveCoachLocked, setLiveCoachLocked] = useState(false);
+  const [plusVisible, setPlusVisible] = useState(false);
   const workout = getWorkoutById(workoutId) ?? getWorkoutsForMood(mood)[0];
 
   useEffect(() => {
@@ -103,19 +117,24 @@ export default function PostWorkoutScreen() {
     let cancelled = false;
     (async () => {
       const enabled = await getAiCoachEnabled();
-      // Gate on entitlement client-side too: avoids a pointless function +
-      // RevenueCat round-trip every workout for an opted-in but non-Pro user.
-      if (!enabled || !isPremium || postInsult === '') return;
+      if (!enabled || postInsult === '') return;
+      const tasteUsed = await getLiveCoachTasteUsed();
+      if (!canUseLiveCoach({ isPlus, tasteUsed })) {
+        if (!isPlus && !cancelled) setLiveCoachLocked(true); // show the gentle MoodRx+ prompt
+        return; // out of taste → keep stock line
+      }
       const sessions = await getSessions();
       const context = buildCoachContext({ mood, intensity, workout }, sessions);
       const line = await fetchDynamicLine(context);
-      if (!cancelled && line) setDynamicLine(line);
+      if (cancelled || !line) return;
+      setDynamicLine(line);
+      if (!isPlus) await incrementLiveCoachTasteUsed(); // consumed a free taste
     })().catch(() => {});
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mood/intensity/workout are mount-fixed route params; postInsult gates on trash-talk/voice
-  }, [postInsult, isPremium]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mood/intensity/workout are mount-fixed route params; postInsult/isPlus gate the live fetch
+  }, [postInsult, isPlus]);
 
   const notePlaceholder = getFieldNotePlaceholder(cachedSessionCount);
   const breakthroughRef = useRef<ViewShot>(null);
@@ -185,6 +204,7 @@ export default function PostWorkoutScreen() {
     if (isSubmitting) return; // prevent double-tap
     setIsSubmitting(true);
     try {
+      const health = await captureSessionHealth();
       await addSessionToContext({
         id: createSessionId(),
         mood,
@@ -196,6 +216,7 @@ export default function PostWorkoutScreen() {
         timestamp: Date.now(),
         note: note.trim() || undefined,
         rating: rating ?? undefined,
+        ...health,
       });
       if (sessionReps > 0) {
         const isNewBest = previousBest === null || sessionReps > previousBest.reps;
@@ -271,15 +292,70 @@ export default function PostWorkoutScreen() {
     await finishFlow();
   };
 
+  useSpeechRecognitionEvent('result', (event) => {
+    if (!dictatingRef.current) return;
+    const transcript = event.results[0]?.transcript ?? '';
+    setNote(appendDictation(dictateBaseRef.current, transcript, FIELD_NOTE_MAX));
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    if (!dictatingRef.current) return;
+    dictatingRef.current = false;
+    setIsDictating(false);
+  });
+
+  useSpeechRecognitionEvent('error', () => {
+    if (!dictatingRef.current) return;
+    dictatingRef.current = false;
+    setIsDictating(false);
+  });
+
+  // Stop dictation on unmount.
+  useEffect(() => {
+    return () => {
+      if (dictatingRef.current) {
+        dictatingRef.current = false;
+        try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+      }
+    };
+  }, []);
+
+  const handleDictateToggle = async () => {
+    if (dictatingRef.current) {
+      try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
+      return;
+    }
+    const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!perm.granted) return; // no mic — keyboard still works; stay silent
+    // Freeze the note text at dictation start; each interim result rebuilds from
+    // this fixed base (continuous:false → results[0] is the full running utterance,
+    // so rebuilding REPLACES rather than compounds). Do NOT read live `note` here.
+    dictateBaseRef.current = note;
+    dictatingRef.current = true;
+    setIsDictating(true);
+    ExpoSpeechRecognitionModule.start({
+      lang: 'en-US',
+      interimResults: true,
+      continuous: false,
+      requiresOnDeviceRecognition: true,
+      addsPunctuation: true,
+    });
+  };
+
   const isFirstSession = isGuided || cachedSessionCount === 0;
 
+  // KeyboardAvoidingView uses behavior="padding" on BOTH platforms: Android
+  // edge-to-edge overrides the manifest adjustResize, so the keyboard would
+  // otherwise cover the Field Notes input at the bottom. Padding shrinks the
+  // ScrollView so the focused input scrolls into view above the keyboard.
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.headline}>You absolute legend.</Text>
         <Text style={styles.subtext}>
@@ -287,6 +363,17 @@ export default function PostWorkoutScreen() {
         </Text>
         {(dynamicLine ?? postInsult) !== '' && (
           <Text style={styles.insultLine}>{dynamicLine ?? postInsult}</Text>
+        )}
+        {liveCoachLocked && (
+          <TouchableOpacity
+            onPress={() => setPlusVisible(true)}
+            activeOpacity={0.7}
+            style={styles.plusPrompt}
+            accessibilityRole="button"
+            accessibilityLabel="Keep the live coach with MoodRx Plus"
+          >
+            <Text style={styles.plusPromptText}>Dr. MoodRx wrote your first few live. Keep the live coach →</Text>
+          </TouchableOpacity>
         )}
 
         {sessionReps > 0 && (
@@ -473,17 +560,30 @@ export default function PostWorkoutScreen() {
         <View style={styles.noteSection}>
           <View style={styles.noteHeader}>
             <Text style={styles.noteLabel}>FIELD NOTES</Text>
-            <Text style={styles.noteCount}>{note.length}/140</Text>
+            <View style={styles.noteHeaderRight}>
+              <TouchableOpacity
+                onPress={handleDictateToggle}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={isDictating ? 'Stop dictation' : 'Dictate field notes'}
+              >
+                <Text style={[styles.dictateBtnText, isDictating && styles.dictateBtnTextActive]}>
+                  {isDictating ? '■ STOP' : '● DICTATE'}
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.noteCount}>{note.length}/{FIELD_NOTE_MAX}</Text>
+            </View>
           </View>
           <TextInput
             style={[styles.noteInput, note.length > 0 && { borderColor: '#2a2a2a' }]}
             value={note}
-            onChangeText={(t) => setNote(t.slice(0, 140))}
+            onChangeText={(t) => setNote(t.slice(0, FIELD_NOTE_MAX))}
             placeholder={notePlaceholder}
             placeholderTextColor="#999999"
             multiline
             numberOfLines={3}
-            maxLength={140}
+            maxLength={FIELD_NOTE_MAX}
             returnKeyType="done"
             blurOnSubmit
             accessibilityLabel="Session field notes"
@@ -596,6 +696,7 @@ export default function PostWorkoutScreen() {
           </View>
         </Modal>
       )}
+      <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
     </Animated.View>
     </KeyboardAvoidingView>
   );
@@ -628,10 +729,11 @@ const styles = StyleSheet.create({
   },
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     marginTop: 16,
     lineHeight: 18,
+    textAlign: 'center',
   },
   pbRow: {
     alignItems: 'center',
@@ -643,9 +745,9 @@ const styles = StyleSheet.create({
   },
   pbLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
-    color: '#999',
-    letterSpacing: 3,
+    fontSize: 16,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginBottom: 8,
     lineHeight: 17,
   },
@@ -656,17 +758,17 @@ const styles = StyleSheet.create({
   },
   pbNewBest: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
-    color: '#888',
-    letterSpacing: 3,
+    fontSize: 16,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginTop: 8,
     lineHeight: 17,
   },
   pbPrev: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
-    color: '#999',
-    letterSpacing: 2,
+    fontSize: 16,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginTop: 8,
     lineHeight: 17,
   },
@@ -700,7 +802,7 @@ const styles = StyleSheet.create({
   },
   scoreContext: {
     ...t.bodyMuted,
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
     marginTop: 8,
   },
@@ -718,9 +820,9 @@ const styles = StyleSheet.create({
   },
   changeHeroLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
-    color: '#888',
-    letterSpacing: 4,
+    fontSize: 16,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginBottom: 8,
     lineHeight: 17,
   },
@@ -736,8 +838,8 @@ const styles = StyleSheet.create({
   },
   changeHeroSub: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
-    color: '#999',
+    fontSize: 16,
+    color: '#f0f0f0',
     letterSpacing: 0.5,
     marginTop: 10,
   },
@@ -757,9 +859,9 @@ const styles = StyleSheet.create({
   },
   deltaBlockLabel: {
     ...t.label,
-    color: '#999',
-    letterSpacing: 2,
-    fontSize: 12,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
+    fontSize: 16,
     marginBottom: 3,
     lineHeight: 17,
   },
@@ -767,12 +869,12 @@ const styles = StyleSheet.create({
     ...t.dataValue,
     fontSize: 22,
     lineHeight: undefined,
-    color: '#888',
+    color: '#c5c5c5',
   },
   deltaArrow: {
     ...t.label,
-    color: '#999',
-    fontSize: 14,
+    color: '#f0f0f0',
+    fontSize: 16,
     marginHorizontal: 4,
   },
   workoutInfo: {
@@ -805,16 +907,31 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginBottom: 10,
   },
+  noteHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dictateBtnText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 16,
+    color: colors.textSecondary,
+    letterSpacing: 1,
+    lineHeight: 17,
+  },
+  dictateBtnTextActive: {
+    color: colors.accent,
+  },
   noteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 17,
   },
   noteCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 1,
     lineHeight: 17,
@@ -825,7 +942,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 20,
     textAlignVertical: 'top',
@@ -859,7 +976,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 1,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 18,
   },
   contextQuestion: {
@@ -897,7 +1014,7 @@ const styles = StyleSheet.create({
   },
   shareButtonEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 4,
     lineHeight: 17,
@@ -906,7 +1023,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 14,
+    fontSize: 16,
   },
   modalBackdrop: {
     flex: 1,
@@ -923,7 +1040,7 @@ const styles = StyleSheet.create({
   },
   modalEyebrow: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 4,
     lineHeight: 17,
@@ -937,7 +1054,7 @@ const styles = StyleSheet.create({
   },
   modalShareBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     letterSpacing: 3,
     lineHeight: 18,
   },
@@ -946,7 +1063,7 @@ const styles = StyleSheet.create({
   },
   modalCloseBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 17,
@@ -966,4 +1083,6 @@ const styles = StyleSheet.create({
     fontSize: 64,
     fontWeight: '700' as const,
   },
+  plusPrompt: { marginTop: 14, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 12 },
+  plusPromptText: { ...t.bodySm, color: colors.premium, textAlign: 'center' },
 });

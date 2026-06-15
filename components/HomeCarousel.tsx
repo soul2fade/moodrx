@@ -339,7 +339,7 @@ function HomeCarouselInner({
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateLabel}>YOUR PATTERN</Text>
               <Text style={styles.emptyStateText}>
-                Appears after 5 sessions.{'\n'}
+                Your mood identity appears after 5 sessions.{'\n'}
                 {sessions.length > 0 ? `${5 - Math.min(sessions.length, 5)} more to go.` : 'Start tracking below.'}
               </Text>
             </View>
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   },
   pageLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 2,
     lineHeight: 17,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   },
   emptyStateLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontFamily: fonts.primary.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 22,
   },
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 16,
     marginBottom: 4,
     lineHeight: 17,
   },
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono.regular,
     color: '#ffffff',
     letterSpacing: 1,
-    fontSize: 12,
+    fontSize: 16,
     marginTop: 4,
     lineHeight: 17,
   },
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   },
   sparklineHeader: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 3,
     marginBottom: 6,
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   },
   sparklineTrend: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     letterSpacing: 2,
     marginTop: 6,
     lineHeight: 17,
@@ -674,14 +674,14 @@ const styles = StyleSheet.create({
   },
   weeklyRxTeaserLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#059669',
     letterSpacing: 3,
     lineHeight: 17,
   },
   weeklyRxTeaserText: {
     fontFamily: fonts.primary.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     marginTop: 4,
   },
@@ -694,21 +694,21 @@ const styles = StyleSheet.create({
   },
   patternCalloutLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
-    color: '#c8c8c8',
-    letterSpacing: 2,
+    fontSize: 16,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     lineHeight: 17,
   },
   patternCalloutText: {
     fontFamily: fonts.primary.regular,
-    fontSize: 14,
-    color: '#999999',
+    fontSize: 16,
+    color: '#cdcdcd',
     marginTop: 6,
     lineHeight: 20,
   },
   patternCalloutAction: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 1.5,
     marginTop: 10,
@@ -734,14 +734,14 @@ const styles = StyleSheet.create({
   },
   quickRowLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 17,
   },
   quickRowSub: {
     fontFamily: fonts.primary.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
   },
   quickRowIcon: {
@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
   },
   swipeHintText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     color: 'rgba(255,255,255,0.45)',
     letterSpacing: 2,
     lineHeight: 17,
@@ -783,7 +783,7 @@ const sheet = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.mono.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 3,
     lineHeight: 20,
@@ -814,7 +814,7 @@ const sheet = StyleSheet.create({
   },
   rowDate: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 0.5,
     lineHeight: 19,
@@ -848,7 +848,7 @@ const sheet = StyleSheet.create({
     lineHeight: 23,
   },
   intensityMax: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 19,
   },
@@ -864,7 +864,7 @@ const sheet = StyleSheet.create({
   },
   trendSummary: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     letterSpacing: 2,
     marginTop: 20,
     lineHeight: 19,

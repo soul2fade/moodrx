@@ -12,11 +12,13 @@ export const colors = {
   borderMedium: '#333333',
   borderLight: '#222222',
 
-  // Text
+  // Text — keep LIGHT for legibility on the near-black bg (see readability-standard).
+  // The dim trio below (textDim/textGhost/textDark) is for BORDERS/dividers ONLY,
+  // never text.
   text: '#ffffff',
-  textSecondary: '#c8c8c8',
-  textMuted: '#d4d4d4',
-  textSubtle: '#a3a3a3',
+  textSecondary: '#d8d8d8',
+  textMuted: '#e2e2e2',
+  textSubtle: '#cfcfcf',
   textDim: '#525252',
   textGhost: '#262626',
   textDimmer: '#999999',
@@ -29,6 +31,12 @@ export const colors = {
   danger: '#E11D48',
   info: '#5EAAB5',
   premium: '#E8B84B',
+
+  // Pricing-tier accents (used only by the pricing comparison). Mirror the mood
+  // palette: Own it = foggy blue, MoodRx+ = good green, Free = plain white.
+  tierFree: '#ffffff',
+  tierOwn: '#5EAAB5',   // === colors.info / mood 'foggy'
+  tierPlus: '#059669',  // === colors.success / mood 'good'
 
   // Overlay
   backdrop: 'rgba(0,0,0,0.6)',

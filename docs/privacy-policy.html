@@ -37,7 +37,7 @@
   <header>
     <p class="brand">MoodRx</p>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: June 2026</p>
+    <p class="updated">Last updated: June 13, 2026</p>
   </header>
 
   <div class="highlight">
@@ -82,8 +82,15 @@
 
   <h2>AI Coach (Optional, Off by Default)</h2>
   <p>MoodRx includes an optional <strong>AI Coach</strong> that writes a personalized post-workout message in the Dr. MoodRx voice. It is <strong>off by default</strong> and only runs if you turn it on in Settings.</p>
-  <p><strong>When you enable it</strong>, after a workout MoodRx sends a small set of facts — your current mood, your pre-workout intensity rating, the workout name, and short summaries derived from your own history (such as how often a workout has helped you and your recent trend) — to a MoodRx serverless function, which forwards them to <strong>Anthropic</strong> (provider of the Claude AI model) to generate the message. We do <strong>not</strong> send your name, your written field notes, or any account identifier other than an anonymous RevenueCat ID used to confirm your purchase.</p>
+  <p><strong>When you enable it</strong>, after a workout MoodRx sends a small set of facts — your current mood, your pre-workout intensity rating, the workout name, and short summaries derived from your own history (such as how often a workout has helped you, your recent trend, and an occasional reference to one specific past session &mdash; e.g. a workout you did on a given day and whether it helped) — to a MoodRx serverless function, which forwards them to <strong>Anthropic</strong> (provider of the Claude AI model) to generate the message. We do <strong>not</strong> send your name, your written field notes, or any account identifier other than an anonymous RevenueCat ID used to confirm your purchase.</p>
   <p>These facts are used <strong>only</strong> to generate your coaching message. They are not used for advertising, are not sold, and are not used to train AI models. Turn the AI Coach off at any time in Settings and nothing is sent. See <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a> for how they handle API data.</p>
+
+  <hr />
+
+  <h2>Voice Venting (Optional, On-Device Transcription with Cloud Fallback)</h2>
+  <p>MoodRx includes an optional <strong>Voice Venting</strong> feature that lets you talk for a short time instead of typing how you feel. The first time you use it, MoodRx shows a disclosure and asks you to confirm, and you can turn the feature off at any time in Settings.</p>
+  <p><strong>Your voice is transcribed on your device whenever possible.</strong> Your speech is converted to text using your operating system's built-in <strong>on-device</strong> speech recognition, and in that case the audio never leaves your phone. If your device cannot perform on-device recognition (for example, the offline speech model is not installed for your language), MoodRx falls back to your platform's speech service — <strong>Apple</strong> on iOS or <strong>Google</strong> on Android — which processes your audio to convert it to text under that provider's own privacy policy. In either case, <strong>MoodRx itself does not record, store, or retain the audio.</strong></p>
+  <p><strong>When you finish venting</strong>, the resulting <strong>text transcript</strong> is sent to a MoodRx serverless function, which forwards it to <strong>Anthropic</strong> (provider of the Claude AI model) to interpret your mood and generate a supportive reply. The transcript is used <strong>only</strong> to generate that reply. <strong>MoodRx does not save your transcript</strong> — the session saved on your device keeps only the derived mood summary (your mood and intensity), never your words. We do not send your name or any account identifier, do not sell this data, and do not use it for advertising or to train AI models. See <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a> for how they handle API data.</p>
 
   <hr />
 
@@ -93,7 +100,8 @@
     <li>We do not use analytics or crash reporting SDKs that transmit personal data</li>
     <li>We do not use advertising SDKs or sell data to advertisers</li>
     <li>We do not track your location</li>
-    <li>We do not access your camera, microphone, or contacts</li>
+    <li>We do not access your camera or contacts</li>
+    <li>We do not access your microphone except during Voice Venting; your speech is transcribed on your device when possible, and otherwise by your platform's speech service (Apple or Google), and MoodRx itself never records or stores the audio (see above)</li>
   </ul>
 
   <hr />

@@ -22,6 +22,8 @@ import { useSessions } from '@/contexts/SessionsContext';
 import { getPrescriptionWorkouts, getWorkoutBadge } from '@/lib/workout-insights';
 import { getFreeTierSummary, isSupplementUnlocked, isWorkoutUnlocked } from '@/lib/free-tier';
 import { PremiumSheet } from '@/components/PremiumSheet';
+import { PriceChip } from '@/components/PriceChip';
+import { type OfferContext } from '@/lib/offer-copy';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
@@ -43,6 +45,7 @@ export default function PrescriptionScreen() {
     : 5;
   const [activeTab, setActiveTab] = useState<Tab>('workouts');
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const [sheetContext, setSheetContext] = useState<OfferContext>('workouts');
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [selectedSupp, setSelectedSupp] = useState<Supplement | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({});
@@ -76,6 +79,8 @@ export default function PrescriptionScreen() {
     () => getFreeTierSummary(workouts, isPremium),
     [workouts, isPremium],
   );
+
+  const openSheet = (ctx: OfferContext) => { setSheetContext(ctx); setShowPremiumSheet(true); };
 
   const handleWorkoutTap = (workout: Workout) => {
     router.push({
@@ -156,7 +161,7 @@ export default function PrescriptionScreen() {
       {/* Tab content */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 16, 24) }]}
         showsVerticalScrollIndicator={false}
       >
         {activeTab === 'workouts' && workouts.length > 0 && (
@@ -231,10 +236,10 @@ export default function PrescriptionScreen() {
                       <TouchableOpacity
                         key={workout.id}
                         style={flattenStyle([styles.workoutCard, { borderLeftWidth: 3, borderLeftColor: '#333333', opacity: 0.7 }])}
-                        onPress={() => setShowPremiumSheet(true)}
+                        onPress={() => openSheet('workouts')}
                         activeOpacity={0.7}
                         accessibilityRole="button"
-                        accessibilityLabel={`Unlock ${workout.name} with Pro`}
+                        accessibilityLabel={`Own MoodRx to unlock ${workout.name}`}
                       >
                         <View style={styles.workoutCardTop}>
                           <Text style={styles.workoutNumber}>{String(index + 1).padStart(2, '0')}</Text>
@@ -247,7 +252,7 @@ export default function PrescriptionScreen() {
                         </View>
                         <View style={styles.workoutNameRow}>
                           <Text style={flattenStyle([styles.workoutName, { flex: 1 }])} numberOfLines={2}>{workout.name}</Text>
-                          <Text style={styles.unlockProText}>UNLOCK PRO →</Text>
+                          <PriceChip tint={accentColor} onPress={() => openSheet('workouts')} accessibilityLabel={`Unlock ${workout.name}`} />
                         </View>
                         <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                       </TouchableOpacity>
@@ -294,7 +299,7 @@ export default function PrescriptionScreen() {
         )}
 
         {activeTab === 'stack' && (
-          <View>
+          <View style={styles.tabFill}>
             <Text style={styles.stackTitle}>Supplements that actually do something.</Text>
             <Text style={styles.stackSub}>According to science, not Instagram.</Text>
 
@@ -322,7 +327,7 @@ export default function PrescriptionScreen() {
                         <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
                       </View>
                       {isLocked && (
-                        <Text style={styles.unlockProTextStack}>UNLOCK PRO →</Text>
+                        <PriceChip tint={accentColor} onPress={() => openSheet('supplements')} accessibilityLabel={`Unlock ${supp.name}`} />
                       )}
                     </View>
                     <Text style={[styles.suppDetailChevron, { color: accentColor }]}>›</Text>
@@ -330,6 +335,8 @@ export default function PrescriptionScreen() {
                 );
               })}
             </View>
+
+            <View style={{ flex: 1 }} />
 
             <TouchableOpacity
               style={styles.trackStackBtn}
@@ -347,6 +354,7 @@ export default function PrescriptionScreen() {
       <PremiumSheet
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
+        context={sheetContext}
       />
 
       {/* Supplement detail bottom sheet */}
@@ -414,13 +422,13 @@ export default function PrescriptionScreen() {
                   activeOpacity={0.8}
                   onPress={() => {
                     setSelectedSupp(null);
-                    setShowPremiumSheet(true);
+                    openSheet('supplements');
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel="Unlock Pro to access full stack"
+                  accessibilityLabel="Own MoodRx to access full stack"
                 >
                   <Text style={[styles.suppModalUnlockText, { color: accentColor }]}>
-                    UNLOCK FULL STACK WITH PRO →
+                    UNLOCK FULL STACK — OWN IT →
                   </Text>
                 </TouchableOpacity>
               )}
@@ -475,7 +483,7 @@ const styles = StyleSheet.create({
   },
   prescriptionSub: {
     ...t.bodyMuted,
-    fontSize: 14,
+    fontSize: 16,
     marginTop: 4,
   },
   drBox: {
@@ -488,7 +496,7 @@ const styles = StyleSheet.create({
   },
   drLabel: {
     ...t.label,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     letterSpacing: 2,
   },
   drText: {
@@ -498,7 +506,7 @@ const styles = StyleSheet.create({
   },
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 16,
     color: '#ffffff',
     marginTop: 12,
     textAlign: 'left',
@@ -507,7 +515,7 @@ const styles = StyleSheet.create({
   personalizationNote: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
     marginTop: 8,
@@ -526,22 +534,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-  },
   scroll: {
     flex: 1,
+  },
+  tabFill: {
+    flexGrow: 1,
   },
   scrollContent: {
     padding: 24,
     paddingBottom: 48,
+    flexGrow: 1,
   },
   heroRxLabel: {
     ...t.label,
     letterSpacing: 4,
-    fontSize: 12,
+    fontSize: 16,
     marginBottom: 10,
     marginTop: 4,
     lineHeight: undefined,
@@ -558,7 +565,7 @@ const styles = StyleSheet.create({
   startButtonText: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: undefined,
   },
   alternativesToggle: {
@@ -577,7 +584,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 16,
     lineHeight: undefined,
   },
   alternativesArrow: {
@@ -590,7 +597,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 16,
     marginBottom: 8,
     marginTop: 4,
     lineHeight: undefined,
@@ -620,7 +627,7 @@ const styles = StyleSheet.create({
   workoutDuration: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     fontWeight: '600',
   },
@@ -633,7 +640,7 @@ const styles = StyleSheet.create({
   intensityBadgeText: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
     fontWeight: '600',
@@ -655,7 +662,7 @@ const styles = StyleSheet.create({
   workoutVibe: {
     ...t.soft,
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: 0.5,
     marginTop: 6,
   },
@@ -663,15 +670,15 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.accent,
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     marginTop: 6,
   },
   workoutBadgeMuted: {
     ...t.label,
-    color: '#999999',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     marginTop: 4,
   },
@@ -685,12 +692,12 @@ const styles = StyleSheet.create({
   },
   alternateBannerText: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     lineHeight: 20,
   },
   freeTierSummary: {
     ...t.bodySm,
-    color: '#a3a3a3',
+    color: '#cdcdcd',
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -703,7 +710,7 @@ const styles = StyleSheet.create({
   scienceInlineLabel: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     lineHeight: undefined,
   },
@@ -741,13 +748,13 @@ const styles = StyleSheet.create({
   },
   supplementName: {
     ...t.headlineSm,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: undefined,
   },
   supplementDose: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 16,
   },
   supplementBenefitRow: {
     flexDirection: 'row',
@@ -757,7 +764,7 @@ const styles = StyleSheet.create({
   },
   supplementBenefit: {
     ...t.bodyMuted,
-    fontSize: 14,
+    fontSize: 16,
   },
   supplementTiming: {
     ...t.label,
@@ -773,19 +780,6 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    lineHeight: undefined,
-  },
-  unlockProText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    lineHeight: undefined,
-  },
-  unlockProTextStack: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    marginTop: 10,
     lineHeight: undefined,
   },
   trackStackBtn: {
@@ -839,14 +833,14 @@ const styles = StyleSheet.create({
   },
   suppModalDose: {
     ...t.label,
-    color: '#999999',
-    fontSize: 13,
+    color: '#f0f0f0',
+    fontSize: 16,
     marginTop: 4,
     lineHeight: undefined,
   },
   suppModalClose: {
     fontSize: 18,
-    color: '#999999',
+    color: '#cdcdcd',
     paddingLeft: 16,
     paddingTop: 2,
   },
@@ -854,7 +848,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: undefined,
     marginBottom: 10,
   },
@@ -870,20 +864,20 @@ const styles = StyleSheet.create({
   },
   suppModalMoodTagText: {
     ...t.label,
-    fontSize: 12,
+    fontSize: 16,
     letterSpacing: 1,
     lineHeight: undefined,
   },
   suppModalScience: {
     ...t.body,
-    color: '#cccccc',
-    fontSize: 15,
+    color: '#dcdcdc',
+    fontSize: 16,
     lineHeight: 23,
   },
   suppModalSource: {
     ...t.body,
-    color: '#888888',
-    fontSize: 13,
+    color: '#c5c5c5',
+    fontSize: 16,
     lineHeight: 20,
     marginTop: 6,
   },
@@ -895,7 +889,7 @@ const styles = StyleSheet.create({
   },
   suppModalUnlockText: {
     ...t.label,
-    fontSize: 13,
+    fontSize: 16,
     letterSpacing: 2,
     lineHeight: undefined,
   },

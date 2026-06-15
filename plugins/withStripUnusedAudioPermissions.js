@@ -1,8 +1,10 @@
 // Strips Android permissions that `expo-audio` declares in its library manifest
-// but MoodRx never uses. The app only PLAYS audio (soundscapes, coach voice) —
-// it never records, and it does not play in the background.
+// but MoodRx never uses. The app plays audio (soundscapes, coach voice) and now
+// records the microphone for on-device voice venting — but it never plays in the
+// background, so the foreground-service permissions stay unused. (RECORD_AUDIO is
+// kept; see the array below.)
 //
-//   RECORD_AUDIO                       → no recording feature (microphone)
+//   (RECORD_AUDIO is KEPT — voice venting uses on-device STT; see array below)
 //   FOREGROUND_SERVICE                 → no background/foreground audio service
 //   FOREGROUND_SERVICE_MEDIA_PLAYBACK  → no background media playback
 //
@@ -26,8 +28,12 @@
 
 const { withAndroidManifest } = require('@expo/config-plugins');
 
+// RECORD_AUDIO is intentionally NOT stripped: voice venting (on-device STT via
+// expo-speech-recognition) genuinely uses the microphone. Audio is never stored
+// or transmitted — only an on-device transcript leaves the recorder. The other
+// permissions remain unused and are still removed. (Play Data Safety must now
+// reflect microphone use — handled in the privacy/store-declaration plan.)
 const PERMISSIONS_TO_REMOVE = [
-  'android.permission.RECORD_AUDIO',
   'android.permission.FOREGROUND_SERVICE',
   'android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK',
   'com.google.android.gms.permission.AD_ID',

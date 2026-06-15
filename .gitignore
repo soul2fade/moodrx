@@ -1,6 +1,9 @@
 node_modules/
 .expo/
 
+# Expo web export output (build artifact)
+dist/
+
 # Replit-specific — never commit
 artifacts/
 .local/
@@ -49,3 +52,7 @@ expo-env.d.ts
 # @end expo-cli
 # Local Netlify folder
 .netlify
+
+# Insult-library pipeline: build artifacts (large audio + regenerable manifest) and real voice IDs
+scripts/insult-library/output/
+scripts/insult-library/voices.config.json

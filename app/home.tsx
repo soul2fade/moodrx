@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { router, useFocusEffect, type Href } from 'expo-router';
-import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, UserProfile } from '@/lib/storage';
+import { getStreak, getMoodIdentity, getUserProfile, getStreakState, saveStreakState, setLastCarouselPage, getLastCarouselPage, getGuidedSessionDone, hasSessionToday, consumeNavHintPending, setNavHintSeen, getVentEnabled, UserProfile } from '@/lib/storage';
 import { rescheduleAfterSession } from '@/lib/notifications';
 import { useSessions } from '@/contexts/SessionsContext';
 import { getWorkoutsForMood } from '@/lib/workouts';
@@ -30,6 +30,7 @@ import { useBottomPanel } from '@/hooks/useBottomPanel';
 import { useButtonAnimation } from '@/hooks/useButtonAnimation';
 import { createSessionId } from '@/lib/session-utils';
 import { maybeRequestReview } from '@/lib/review';
+import { captureSessionHealth } from '@/lib/health';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -45,6 +46,7 @@ export default function HomeScreen() {
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const [carouselPage, setCarouselPage] = useState<number | null>(null);
   const [showNavHint, setShowNavHint] = useState(false);
+  const [ventEnabled, setVentLinkEnabled] = useState(true);
   const carouselFadeAnim = useRef(new Animated.Value(0)).current;
   const carouselVisible = carouselPage !== null;
 
@@ -150,6 +152,12 @@ export default function HomeScreen() {
     }, [dismissPanel, sessions, greetingAnim, moodAnims])
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      getVentEnabled().then(setVentLinkEnabled).catch(() => {});
+    }, []),
+  );
+
   useEffect(() => {
     if (isLoading) return;
     void getGuidedSessionDone().then((done) => {
@@ -178,7 +186,7 @@ export default function HomeScreen() {
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
   const showSameAsYesterday = !isLoading && !checkedInToday && !selectedMood && lastSession != null && isYesterdayTimestamp(lastSession.timestamp);
-  const { isPremium, isLoading: subLoading } = useSubscription();
+  const { isPremium, isPlus, isLoading: subLoading } = useSubscription();
 
   const handleDismissNavHint = useCallback(async () => {
     setShowNavHint(false);
@@ -226,6 +234,7 @@ export default function HomeScreen() {
 
   const handleJustLogIt = useCallback(async () => {
     if (!selectedMood) return;
+    const health = await captureSessionHealth();
     const session = {
       id: createSessionId(),
       mood: selectedMood,
@@ -235,6 +244,7 @@ export default function HomeScreen() {
       duration: 0,
       timestamp: Date.now(),
       lightDay: true as const,
+      ...health,
     };
     await addSession(session);
     await rescheduleAfterSession([...sessions, session]);
@@ -243,6 +253,7 @@ export default function HomeScreen() {
 
   const handleSameAsYesterdayLog = useCallback(async () => {
     if (!lastSession) return;
+    const health = await captureSessionHealth();
     const session = {
       id: createSessionId(),
       mood: lastSession.mood,
@@ -252,6 +263,7 @@ export default function HomeScreen() {
       duration: 0,
       timestamp: Date.now(),
       lightDay: true as const,
+      ...health,
     };
     await addSession(session);
     await rescheduleAfterSession([...sessions, session]);
@@ -276,7 +288,7 @@ export default function HomeScreen() {
         {/* Top row */}
         <View style={styles.topRow}>
           {/* Render neither badge while subscription state is still loading,
-              to avoid flashing "TRY PRO" at users who actually have Pro. */}
+              to avoid flashing "OWN IT" at users who already have access. */}
           {subLoading ? (
             <View style={styles.tryProBadge} />
           ) : !isPremium ? (
@@ -285,13 +297,13 @@ export default function HomeScreen() {
               activeOpacity={0.7}
               style={styles.tryProBadge}
               accessibilityRole="button"
-              accessibilityLabel="Try Pro"
+              accessibilityLabel="Own MoodRx"
             >
-              <Text style={styles.tryProBadgeText}>TRY PRO →</Text>
+              <Text style={styles.tryProBadgeText}>OWN IT →</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.proMemberBadge}>
-              <Text style={styles.proMemberBadgeText}>PRO</Text>
+              <Text style={styles.proMemberBadgeText}>{isPlus ? 'MOODRX+' : 'OWNED'}</Text>
             </View>
           )}
           {streak > 0 && (
@@ -458,6 +470,19 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {/* Vent tool link */}
+        {ventEnabled && (
+          <TouchableOpacity
+            onPress={() => router.push('/vent' as Href)}
+            activeOpacity={0.6}
+            style={styles.breatheLink}
+            accessibilityRole="button"
+            accessibilityLabel="Open voice venting"
+          >
+            <Text style={styles.breatheLinkText}>Need to vent? →</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Breathe tool link */}
         <TouchableOpacity
           onPress={() => router.push('/breathe' as Href)}
@@ -599,15 +624,15 @@ const styles = StyleSheet.create({
   },
   tryProBadge: {
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: colors.premium,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   tryProBadgeText: {
     ...t.label,
-    color: '#c8c8c8',
+    color: colors.premium,
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   proMemberBadge: {
@@ -620,7 +645,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.premium,
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   streakPill: {
@@ -638,43 +663,20 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.accent,
     letterSpacing: 2,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   streakPillText: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     flex: 1,
-    fontSize: 13,
+    fontSize: 16,
   },
   streakPillDismiss: {
     ...t.label,
-    color: '#999999',
-    fontSize: 12,
+    color: '#f0f0f0',
+    fontSize: 16,
     lineHeight: 17,
-  },
-  checkInLabel: {
-    ...t.label,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
-  },
-  topRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 18,
-  },
-  sessionCount: {
-    ...t.timestamp,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
-  },
-  settingsText: {
-    ...t.timestamp,
-    color: '#ffffff',
-    fontSize: 15,
-    letterSpacing: 1,
   },
   streakBadge: {
     backgroundColor: 'transparent',
@@ -686,7 +688,7 @@ const styles = StyleSheet.create({
   streakBadgeText: {
     ...t.number,
     color: colors.accent,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
   },
@@ -703,7 +705,7 @@ const styles = StyleSheet.create({
   subtext: {
     ...t.bodyMuted,
     fontSize: 18,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     marginTop: 12,
   },
   breatheLink: {
@@ -715,7 +717,7 @@ const styles = StyleSheet.create({
   },
   breatheLinkText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 18,
     color: '#7EC8A0',
     letterSpacing: 1,
   },
@@ -729,9 +731,9 @@ const styles = StyleSheet.create({
   },
   safetyNetText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
-    opacity: 0.4,
+    opacity: 0.6,
     letterSpacing: 0.5,
   },
   carouselPlaceholder: {
@@ -789,9 +791,9 @@ const styles = StyleSheet.create({
   },
   badDayText: {
     ...t.label,
-    color: '#a3a3a3',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   sameDayCard: {
@@ -803,16 +805,16 @@ const styles = StyleSheet.create({
   },
   sameDayLabel: {
     ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 2,
-    fontSize: 12,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
+    fontSize: 16,
     lineHeight: 17,
   },
   sameDaySub: {
     ...t.bodySm,
-    color: '#999999',
+    color: '#cdcdcd',
     marginTop: 6,
-    fontSize: 14,
+    fontSize: 16,
   },
   sameDayActions: {
     flexDirection: 'row',
@@ -832,7 +834,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   sameDayBtnOutline: {
@@ -846,9 +848,9 @@ const styles = StyleSheet.create({
   },
   sameDayBtnOutlineText: {
     ...t.label,
-    color: '#999999',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   justLogButton: {
@@ -860,9 +862,9 @@ const styles = StyleSheet.create({
   },
   justLogButtonText: {
     ...t.label,
-    color: '#999999',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   navHintPill: {
@@ -882,16 +884,16 @@ const styles = StyleSheet.create({
   },
   navHintText: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     flex: 1,
-    fontSize: 13,
+    fontSize: 16,
     lineHeight: 18,
   },
   navHintDismiss: {
     ...t.label,
-    color: '#999999',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   moodRow: {
@@ -918,7 +920,7 @@ const styles = StyleSheet.create({
   },
   moodDesc: {
     ...t.label,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     marginTop: 2,
   },
   moodRight: {
@@ -970,7 +972,7 @@ const styles = StyleSheet.create({
   panelMoodName: {
     ...t.label,
     letterSpacing: 3,
-    fontSize: 14,
+    fontSize: 16,
   },
   drBox: {
     borderLeftWidth: 3,
@@ -980,7 +982,7 @@ const styles = StyleSheet.create({
   },
   drLabel: {
     ...t.label,
-    color: '#d4d4d4',
+    color: '#e2e2e2',
     letterSpacing: 2,
   },
   drText: {
@@ -1021,6 +1023,6 @@ const styles = StyleSheet.create({
   },
   prescribeButtonText: {
     ...t.timer,
-    fontSize: 15,
+    fontSize: 16,
   },
 });

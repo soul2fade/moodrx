@@ -1,6 +1,7 @@
 import type { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import Anthropic from '@anthropic-ai/sdk';
+import { coachSystemPrompt } from './lib/coach-prompt';
 
 // Env var names map to the user's existing Netlify secrets:
 //   MOODRX_COACH_KEY      → Anthropic API key
@@ -16,41 +17,42 @@ const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY });
 /** Verify the caller holds the base-unlock `premium` entitlement via the
  *  RevenueCat v1 REST API. 🔎 Re-verify response shape against current docs. */
 async function isEntitled(appUserId: string): Promise<boolean> {
-  const res = await fetch(
-    `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
-    { headers: { Authorization: `Bearer ${REVENUECAT_SECRET}` } },
-  );
-  if (!res.ok) return false;
-  const data: any = await res.json();
-  const ent = data?.subscriber?.entitlements?.premium;
-  if (!ent) return false;
-  // Non-consumable base unlock: present + no expiry (or a future expiry).
-  return ent.expires_date == null || new Date(ent.expires_date).getTime() > Date.now();
-}
-
-function systemPrompt(tone: 'teasing' | 'roasting', crisis: boolean): string {
-  if (crisis) {
-    return `You are Dr. MoodRx, a darkly funny but ultimately caring fitness-for-mental-health coach. The user is showing signs of genuine distress right now. Drop the roasting entirely. In 1-2 sentences, acknowledge they showed up and gently encourage them — warm, not clinical, no diagnoses, no jokes at their expense. Use ONLY the facts provided. Never invent numbers.`;
+  // Time-box the RevenueCat call so a slow/hung response can't eat the whole
+  // Netlify function budget (leaving no headroom for the Anthropic call). Any
+  // network error or timeout resolves to "not entitled" — the client then
+  // falls back to a static line, so the degradation is graceful.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3500);
+  try {
+    const res = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
+      { headers: { Authorization: `Bearer ${REVENUECAT_SECRET}` }, signal: controller.signal },
+    );
+    if (!res.ok) return false;
+    const data: any = await res.json();
+    const ent = data?.subscriber?.entitlements?.premium;
+    if (!ent) return false;
+    // Non-consumable base unlock: present + no expiry (or a future expiry).
+    return ent.expires_date == null || new Date(ent.expires_date).getTime() > Date.now();
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
   }
-  const intensity =
-    tone === 'roasting'
-      ? 'Sharper, funnier, more intense — but LIGHTHEARTED. Rib their resistance/excuses to work out, never their worth, body, or anything self-harm-adjacent.'
-      : 'Playful, teasing, light jabs.';
-  return `You are Dr. MoodRx, a darkly funny fitness-for-mental-health coach with a film-noir, deadpan voice. Tone: ${intensity} Speak directly to the user about the workout they just did. Use ONLY the facts provided — never invent statistics, numbers, or history. Never give clinical labels, diagnoses, or medical advice. 1-2 sentences. No preamble.`;
 }
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST' || !event.body) return { statusCode: 400, body: '' };
   if (!ANTHROPIC_KEY || !REVENUECAT_SECRET) return { statusCode: 500, body: '' };
 
-  let payload: { context?: any; tone?: 'teasing' | 'roasting'; appUserId?: string };
+  let payload: { context?: any; tone?: string; appUserId?: string };
   try {
     payload = JSON.parse(event.body);
   } catch {
     return { statusCode: 400, body: '' };
   }
   const { context, tone, appUserId } = payload;
-  if (!context || !appUserId || (tone !== 'teasing' && tone !== 'roasting')) {
+  if (!context || !appUserId || typeof tone !== 'string' || !tone.trim()) {
     return { statusCode: 400, body: '' };
   }
 
@@ -62,14 +64,24 @@ export const handler: Handler = async (event) => {
   //    is an approximate ceiling, not an exact quota. Acceptable: worst-case
   //    overshoot is small at ~$0.001/call, and the cap exists to stop runaway
   //    abuse, not to bill-to-the-cent.
-  const store = getStore('coach-usage');
+  //    Best-effort: the counter store is defensive infrastructure, so if Netlify
+  //    Blobs is unavailable we degrade to "skip the cap" rather than failing the
+  //    whole request. Caps resume automatically once Blobs is reachable.
   const today = new Date().toISOString().slice(0, 10);
   const month = today.slice(0, 7);
   const userKey = `user:${appUserId}:${today}`;
   const globalKey = `global:${month}`;
-  const userCount = Number((await store.get(userKey)) ?? 0);
-  const globalCount = Number((await store.get(globalKey)) ?? 0);
-  if (userCount >= PER_USER_DAILY_CAP || globalCount >= GLOBAL_MONTHLY_CAP) {
+  let store: ReturnType<typeof getStore> | undefined;
+  let userCount = 0;
+  let globalCount = 0;
+  try {
+    store = getStore('coach-usage');
+    userCount = Number((await store.get(userKey)) ?? 0);
+    globalCount = Number((await store.get(globalKey)) ?? 0);
+  } catch {
+    store = undefined; // Blobs unavailable → skip caps for this request
+  }
+  if (store && (userCount >= PER_USER_DAILY_CAP || globalCount >= GLOBAL_MONTHLY_CAP)) {
     return { statusCode: 429, body: '' };
   }
 
@@ -79,16 +91,23 @@ export const handler: Handler = async (event) => {
       model: 'claude-haiku-4-5',
       max_tokens: 150,
       temperature: 0.9,
-      system: systemPrompt(tone, Boolean(context.crisis)),
+      system: coachSystemPrompt(tone, Boolean(context.crisis), Boolean(context.episode)),
       messages: [{ role: 'user', content: JSON.stringify(context) }],
     });
     const block = msg.content.find((b) => b.type === 'text');
     const line = block && block.type === 'text' ? block.text.trim() : '';
     if (!line) return { statusCode: 502, body: '' };
 
-    // 4. Count only successful, billed calls.
-    await store.set(userKey, String(userCount + 1));
-    await store.set(globalKey, String(globalCount + 1));
+    // 4. Count only successful, billed calls (best-effort; a counter write
+    //    failure must not 502 a line we already generated).
+    if (store) {
+      try {
+        await store.set(userKey, String(userCount + 1));
+        await store.set(globalKey, String(globalCount + 1));
+      } catch {
+        /* counter write failed — ignore, the line still stands */
+      }
+    }
 
     return {
       statusCode: 200,

@@ -15,6 +15,7 @@ import * as Sharing from 'expo-sharing';
 import {
   Session,
 } from '@/lib/storage';
+import { buildPatterns, sessionImprovement, noticedEmptyState, NOTICED_COUNTDOWN_THRESHOLD, type PatternItem } from '@/lib/patterns';
 import { getTopEffectiveCombinations } from '@/lib/workout-insights';
 import { useSessions } from '@/contexts/SessionsContext';
 import { MOODS } from '@/lib/moods';
@@ -22,12 +23,14 @@ import { MoodIcon } from '@/components/MoodIcon';
 import { WorkoutCalendar } from '@/components/WorkoutCalendar';
 import { MoodArc } from '@/components/MoodArc';
 import { ShareCard } from '@/components/ShareCard';
-import { getMostCommonMood, formatChange, getLastNDays } from '@/lib/analytics';
+import { formatChange, getLastNDays } from '@/lib/analytics';
 import { DAY_ABBREVS } from '@/lib/dateUtils';
 import { colors } from '@/lib/colors';
 import { type as t, fonts } from '../lib/typography';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumSheet } from '@/components/PremiumSheet';
+import { PriceChip } from '@/components/PriceChip';
+import { type OfferContext } from '@/lib/offer-copy';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { useBottomPanel } from '@/hooks/useBottomPanel';
@@ -52,6 +55,7 @@ export default function InsightsScreen() {
   } = useSessions();
   const [showBurnConfirm, setShowBurnConfirm] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
+  const [sheetContext, setSheetContext] = useState<OfferContext>('default');
   const [caseSession, setCaseSession] = useState<Session | null>(null);
   const [healthSnapshot, setHealthSnapshot] = useState<HealthSnapshot | null>(null);
   const shareCardRef = useRef<ViewShot>(null);
@@ -87,18 +91,34 @@ export default function InsightsScreen() {
     return isPremium ? reversed : reversed.slice(0, 3);
   }, [sessions, isPremium]);
 
+  /** On-device pattern engine (templated, no LLM, no network). `buildPatterns`
+   *  already orders confident findings ahead of hedged questions, so items[0]
+   *  is the single strongest signal the user has earned. Free users see exactly
+   *  that one teaser ("it notices me"); Pro unlocks the full set. */
+  const patterns = useMemo<PatternItem[]>(() => buildPatterns(sessions), [sessions]);
+  const visiblePatterns = useMemo(
+    () => (isPremium ? patterns : patterns.slice(0, 1)),
+    [patterns, isPremium],
+  );
+  const noticed = useMemo(
+    () => noticedEmptyState(sessionCount, visiblePatterns.length > 0),
+    [sessionCount, visiblePatterns.length],
+  );
+  const lockedPatternCount = isPremium ? 0 : Math.max(patterns.length - 1, 0);
+
   const workoutStats = useMemo(() => {
-    const map: Record<string, { name: string; count: number; totalChange: number }> = {};
+    const map: Record<string, { name: string; count: number; totalChange: number; totalImprovement: number }> = {};
     for (const s of sessions) {
       if (!s.workoutName) continue;
       const key = s.workoutId ?? s.workoutName;
-      if (!map[key]) map[key] = { name: s.workoutName, count: 0, totalChange: 0 };
+      if (!map[key]) map[key] = { name: s.workoutName, count: 0, totalChange: 0, totalImprovement: 0 };
       map[key].count += 1;
-      map[key].totalChange += (s.postScore - s.intensity);
+      map[key].totalChange += (s.postScore - s.intensity); // raw delta (factual, displayed)
+      map[key].totalImprovement += sessionImprovement(s);  // mood-aware (drives color)
     }
     const all = Object.values(map)
       .sort((a, b) => b.count - a.count)
-      .map(w => ({ ...w, avgChange: w.totalChange / w.count }));
+      .map(w => ({ ...w, avgChange: w.totalChange / w.count, avgImprovement: w.totalImprovement / w.count }));
     return { visible: isPremium ? all : all.slice(0, 3), total: all.length };
   }, [sessions, isPremium]);
 
@@ -109,7 +129,7 @@ export default function InsightsScreen() {
     return { visible: isPremium ? withNotes : withNotes.slice(0, 3), total: withNotes.length };
   }, [sessions, isPremium]);
 
-  const mostCommonMood = useMemo(() => sessionCount >= 3 ? getMostCommonMood(sessions) : null, [sessions, sessionCount]);
+  const openSheet = (ctx: OfferContext) => { setSheetContext(ctx); setShowPremiumSheet(true); };
 
   const handleBurn = async () => {
     await clearSessions();
@@ -223,6 +243,9 @@ export default function InsightsScreen() {
                 </View>
               )}
             </View>
+            {healthSnapshot.stepsToday !== null && healthSnapshot.sleepHoursLastNight === null && (
+              <Text style={styles.healthSleepMissing}>No sleep data — this source tracks steps only.</Text>
+            )}
             <Text style={styles.healthHint}>Cross-reference with your mood sessions below.</Text>
           </View>
         )}
@@ -254,24 +277,28 @@ export default function InsightsScreen() {
           onPress={() => router.push('/supplements')}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker with Pro'}
+          accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker — own MoodRx'}
         >
-          <Text style={styles.supplementBtnText}>
-            {isPremium ? 'SUPPLEMENT TRACKER →' : 'SUPPLEMENT TRACKER [PRO] →'}
-          </Text>
+          {isPremium ? (
+            <Text style={styles.supplementBtnText}>SUPPLEMENT TRACKER →</Text>
+          ) : (
+            <Text style={styles.supplementBtnText}>SUPPLEMENT TRACKER <Text style={styles.proTag}>[OWN IT]</Text> →</Text>
+          )}
         </TouchableOpacity>
 
         {/* Programs button */}
         <TouchableOpacity
           style={styles.supplementBtn}
-          onPress={() => (isPremium ? router.push('/programs') : setShowPremiumSheet(true))}
+          onPress={() => (isPremium ? router.push('/programs') : openSheet('programs'))}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={isPremium ? 'Open programs' : 'Unlock programs with Pro'}
+          accessibilityLabel={isPremium ? 'Open programs' : 'Unlock programs — own MoodRx'}
         >
-          <Text style={styles.supplementBtnText}>
-            {isPremium ? 'PROGRAMS →' : 'PROGRAMS [PRO] →'}
-          </Text>
+          {isPremium ? (
+            <Text style={styles.supplementBtnText}>PROGRAMS →</Text>
+          ) : (
+            <Text style={styles.supplementBtnText}>PROGRAMS <Text style={styles.proTag}>[OWN IT]</Text> →</Text>
+          )}
         </TouchableOpacity>
 
         {/* Calendar */}
@@ -283,15 +310,11 @@ export default function InsightsScreen() {
           <View style={styles.lockedCalendar}>
             <View style={styles.lockedOverlay}>
               <Text style={styles.lockedCalendarTitle}>Track your progress over time</Text>
-              <TouchableOpacity
-                style={styles.lockedCalendarButton}
-                onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel="Unlock Pro to see your calendar"
-              >
-                <Text style={styles.lockedCalendarButtonText}>UNLOCK PRO</Text>
-              </TouchableOpacity>
+              <PriceChip
+                center
+                onPress={() => openSheet('calendar')}
+                accessibilityLabel="Unlock your progress calendar"
+              />
             </View>
           </View>
         )}
@@ -367,14 +390,48 @@ export default function InsightsScreen() {
         {/* Mood Arc */}
         {sessions.length >= 2 && <MoodArc sessions={sessions} />}
 
-        {/* Pattern section */}
-        {sessionCount >= 3 && mostCommonMood && (
-          <View style={styles.patternBox}>
-            <Text style={styles.patternLabel}>PATTERN</Text>
-            <Text style={styles.patternText}>
-              Your most common mood is {MOODS[mostCommonMood].name}. Your average improvement
-              is {formatChange(avgChange)} points.
-            </Text>
+        {/* What I've noticed — on-device pattern engine (findings vs hunches) */}
+        {visiblePatterns.length > 0 && (
+          <View style={styles.noticedSection}>
+            <Text style={styles.noticedLabel}>WHAT I&apos;VE NOTICED</Text>
+            {visiblePatterns.map((p) => (
+              <View
+                key={p.id}
+                style={[styles.noticedCard, p.kind === 'finding' ? styles.noticedFinding : styles.noticedQuestion]}
+                accessible={true}
+                accessibilityLabel={p.kind === 'finding' ? `Pattern: ${p.text}` : `Dr. MoodRx asks: ${p.text}`}
+              >
+                <Text style={p.kind === 'finding' ? styles.noticedFindingTag : styles.noticedQuestionTag}>
+                  {p.kind === 'finding' ? 'PATTERN' : 'DR. MOODRX ASKS'}
+                </Text>
+                <Text style={styles.noticedText}>{p.text}</Text>
+              </View>
+            ))}
+            {!subLoading && !isPremium && lockedPatternCount > 0 && (
+              <PriceChip
+                onPress={() => openSheet('patterns')}
+                label={`+${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'} — own it`}
+                accessibilityLabel={`See ${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'}`}
+              />
+            )}
+          </View>
+        )}
+
+        {visiblePatterns.length === 0 && noticed && (
+          <View style={styles.noticedSection}>
+            <Text style={styles.noticedLabel}>WHAT I&apos;VE NOTICED</Text>
+            <View style={styles.noticedEmptyCard}>
+              {noticed.stage === 'countdown' ? (
+                <Text style={styles.noticedEmptyText}>
+                  Patterns build over your first {NOTICED_COUNTDOWN_THRESHOLD} sessions — the more days and times you log across, the clearer they get.{'\n'}
+                  {sessionCount > 0 ? `${noticed.remaining} more to go.` : 'Start logging below.'}
+                </Text>
+              ) : (
+                <Text style={styles.noticedEmptyText}>
+                  Still listening. Clear patterns appear once your sessions spread across enough days and times to mean something.
+                </Text>
+              )}
+            </View>
           </View>
         )}
 
@@ -396,7 +453,8 @@ export default function InsightsScreen() {
             <Text style={styles.workoutHistLabel}>WORKOUT HISTORY</Text>
             {workoutStats.visible.map((w, i) => {
               const avgStr = w.avgChange >= 0 ? `+${w.avgChange.toFixed(1)}` : w.avgChange.toFixed(1);
-              const avgColor = w.avgChange >= 0 ? '#059669' : '#999999';
+              // Color by mood-aware improvement, not the raw delta sign.
+              const avgColor = w.avgImprovement > 0 ? '#059669' : w.avgImprovement < 0 ? '#E11D48' : '#999999';
               return (
                 <View key={i} style={styles.workoutHistRow}>
                   <View style={styles.workoutHistInfo}>
@@ -411,17 +469,11 @@ export default function InsightsScreen() {
               );
             })}
             {!subLoading && !isPremium && workoutStats.total > 3 && (
-              <TouchableOpacity
-                style={styles.historyUpsellRow}
-                onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`See all ${workoutStats.total - 3} more workouts with Pro`}
-              >
-                <Text style={styles.historyUpsellText}>
-                  +{workoutStats.total - 3} MORE — UNLOCK PRO →
-                </Text>
-              </TouchableOpacity>
+              <PriceChip
+                onPress={() => openSheet('history')}
+                label={`+${workoutStats.total - 3} more — own it`}
+                accessibilityLabel={`See all ${workoutStats.total - 3} more workouts`}
+              />
             )}
           </View>
         )}
@@ -433,7 +485,8 @@ export default function InsightsScreen() {
             {recentSessions.map((session) => {
               const change = session.postScore - session.intensity;
               const changeStr = change >= 0 ? `+${change}` : `${change}`;
-              const changeColor = change >= 0 ? '#059669' : '#999999';
+              const imp = sessionImprovement(session);
+              const changeColor = imp > 0 ? '#059669' : imp < 0 ? '#E11D48' : '#999999';
               const moodColor = MOODS[session.mood]?.color ?? '#999999';
               const date = new Date(session.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()] ?? ''}`;
@@ -464,17 +517,11 @@ export default function InsightsScreen() {
               );
             })}
             {!subLoading && !isPremium && sessionCount > 3 && (
-              <TouchableOpacity
-                style={styles.historyUpsellRow}
-                onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`See all ${sessionCount - 3} more sessions with Pro`}
-              >
-                <Text style={styles.historyUpsellText}>
-                  +{sessionCount - 3} MORE SESSION{sessionCount - 3 === 1 ? '' : 'S'} — UNLOCK PRO →
-                </Text>
-              </TouchableOpacity>
+              <PriceChip
+                onPress={() => openSheet('history')}
+                label={`+${sessionCount - 3} more session${sessionCount - 3 === 1 ? '' : 's'} — own it`}
+                accessibilityLabel={`See all ${sessionCount - 3} more sessions`}
+              />
             )}
           </View>
         )}
@@ -501,17 +548,11 @@ export default function InsightsScreen() {
               );
             })}
             {!subLoading && !isPremium && sessionNotes.total > 3 && (
-              <TouchableOpacity
-                style={styles.historyUpsellRow}
-                onPress={() => setShowPremiumSheet(true)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`See all ${sessionNotes.total - 3} more notes with Pro`}
-              >
-                <Text style={styles.historyUpsellText}>
-                  +{sessionNotes.total - 3} MORE NOTES — UNLOCK PRO →
-                </Text>
-              </TouchableOpacity>
+              <PriceChip
+                onPress={() => openSheet('history')}
+                label={`+${sessionNotes.total - 3} more notes — own it`}
+                accessibilityLabel={`See all ${sessionNotes.total - 3} more notes`}
+              />
             )}
           </View>
         )}
@@ -590,6 +631,7 @@ export default function InsightsScreen() {
       <PremiumSheet
         visible={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
+        context={sheetContext}
       />
 
       {/* Case History backdrop */}
@@ -608,7 +650,8 @@ export default function InsightsScreen() {
           const cs = caseSession;
           const change = cs.postScore - cs.intensity;
           const changeStr = change >= 0 ? `+${change}` : `${change}`;
-          const changeColor = change >= 0 ? '#059669' : '#999999';
+          const imp = sessionImprovement(cs);
+          const changeColor = imp > 0 ? '#059669' : imp < 0 ? '#E11D48' : '#999999';
           const moodColor = MOODS[cs.mood]?.color ?? '#999999';
           const date = new Date(cs.timestamp);
           const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()] ?? ''}`;
@@ -789,7 +832,7 @@ const styles = StyleSheet.create({
   noSessionsSub: {
     ...t.label,
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 16,
     marginTop: 6,
     letterSpacing: 1,
     textAlign: 'center',
@@ -805,7 +848,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#059669',
     letterSpacing: 3,
-    fontSize: 13,
+    fontSize: 16,
   },
   chart: {
     flexDirection: 'row',
@@ -826,7 +869,7 @@ const styles = StyleSheet.create({
   chartDay: {
     ...t.timestamp,
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
     marginTop: 4,
@@ -847,29 +890,68 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 1,
   },
-  patternBox: {
-    borderLeftWidth: 2,
-    borderLeftColor: '#059669',
-    backgroundColor: '#111111',
-    padding: 16,
-    marginTop: 24,
+  noticedSection: {
+    marginTop: 32,
   },
-  patternLabel: {
+  noticedLabel: {
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
+    marginBottom: 12,
   },
-  patternText: {
+  noticedCard: {
+    backgroundColor: '#111111',
+    borderLeftWidth: 2,
+    padding: 16,
+    marginBottom: 10,
+  },
+  noticedEmptyCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 16,
+    marginTop: 4,
+  },
+  noticedEmptyText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 16,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    letterSpacing: 0.5,
+  },
+  noticedFinding: {
+    borderLeftColor: '#059669',
+  },
+  noticedQuestion: {
+    borderLeftColor: '#D97706',
+  },
+  noticedFindingTag: {
+    ...t.label,
+    color: '#059669',
+    letterSpacing: 2,
+    fontSize: 16,
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  noticedQuestionTag: {
+    ...t.label,
+    color: '#D97706',
+    letterSpacing: 2,
+    fontSize: 16,
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  noticedText: {
     ...t.body,
     fontSize: 16,
-    marginTop: 8,
+    lineHeight: 23,
   },
   workoutHistSection: {
     marginTop: 32,
   },
   workoutHistLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -891,13 +973,13 @@ const styles = StyleSheet.create({
   },
   workoutHistName: {
     fontFamily: fonts.primary.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#e8e8e8',
     flex: 1,
   },
   workoutHistCount: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 1,
   },
@@ -908,14 +990,14 @@ const styles = StyleSheet.create({
   },
   workoutHistAvgLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
-    color: '#999',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
   },
   workoutHistAvgVal: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     letterSpacing: 1,
     minWidth: 40,
     textAlign: 'right',
@@ -925,7 +1007,7 @@ const styles = StyleSheet.create({
   },
   notesLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -944,26 +1026,26 @@ const styles = StyleSheet.create({
   },
   noteMood: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 2,
   },
   noteDate: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
-    color: '#999',
+    color: '#f0f0f0',
     letterSpacing: 1,
   },
   noteWorkoutName: {
     fontFamily: fonts.primary.regular,
-    fontSize: 13,
-    color: '#999',
+    fontSize: 16,
+    color: '#cdcdcd',
     marginBottom: 6,
   },
   noteText: {
     fontFamily: fonts.primary.regular,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 22,
   },
@@ -994,12 +1076,12 @@ const styles = StyleSheet.create({
   },
   recentStar: {
     color: '#059669',
-    fontSize: 14,
+    fontSize: 16,
   },
   recentLightBadge: {
     ...t.label,
-    color: '#999999',
-    fontSize: 12,
+    color: '#f0f0f0',
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1.5,
   },
@@ -1017,21 +1099,9 @@ const styles = StyleSheet.create({
   },
   whatWorksItem: {
     ...t.bodySm,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
     marginBottom: 8,
     lineHeight: 20,
-  },
-  historyUpsellRow: {
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
-  },
-  historyUpsellText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    fontSize: 13,
   },
   recentWorkout: {
     ...t.body,
@@ -1062,8 +1132,8 @@ const styles = StyleSheet.create({
   },
   burnButtonText: {
     ...t.label,
-    color: '#999',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
   },
   burnConfirm: {
     borderWidth: 2,
@@ -1113,17 +1183,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     textAlign: 'center',
   },
-  lockedCalendarButton: {
-    borderWidth: 1,
-    borderColor: '#525252',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
-  lockedCalendarButtonText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-  },
   caseBackdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -1156,7 +1215,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 3,
-    fontSize: 13,
+    fontSize: 16,
     marginBottom: 14,
   },
   casePanelMoodRow: {
@@ -1173,7 +1232,7 @@ const styles = StyleSheet.create({
   casePanelMoodText: {
     ...t.label,
     letterSpacing: 2,
-    fontSize: 14,
+    fontSize: 16,
   },
   casePanelDate: {
     ...t.timestamp,
@@ -1195,7 +1254,7 @@ const styles = StyleSheet.create({
     ...t.label,
     color: '#ffffff',
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 16,
   },
   casePanelScoreVal: {
     ...t.dataValue,
@@ -1213,7 +1272,7 @@ const styles = StyleSheet.create({
   casePanelRating: {
     ...t.label,
     letterSpacing: 2,
-    fontSize: 13,
+    fontSize: 16,
     marginBottom: 4,
   },
   caseNoteBox: {
@@ -1225,7 +1284,7 @@ const styles = StyleSheet.create({
   },
   caseNoteLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -1233,8 +1292,8 @@ const styles = StyleSheet.create({
   },
   caseNoteText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    color: '#888',
+    fontSize: 16,
+    color: '#c5c5c5',
     lineHeight: 20,
   },
   casePrescribeBtn: {
@@ -1278,8 +1337,8 @@ const styles = StyleSheet.create({
   },
   healthCardLabel: {
     ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginBottom: 10,
   },
   healthRow: {
@@ -1296,16 +1355,24 @@ const styles = StyleSheet.create({
   },
   healthStatLabel: {
     ...t.label,
-    color: '#999999',
-    fontSize: 12,
+    color: '#f0f0f0',
+    fontSize: 16,
     lineHeight: 17,
     marginTop: 4,
     letterSpacing: 1.5,
   },
   healthHint: {
     ...t.bodySm,
-    color: '#999999',
+    color: '#cdcdcd',
     marginTop: 10,
+  },
+  healthSleepMissing: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 16,
+    color: colors.textSubtle,
+    letterSpacing: 0.5,
+    marginTop: 8,
+    lineHeight: 17,
   },
   supplementBtn: {
     borderWidth: 1,
@@ -1319,6 +1386,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 2,
   },
+  proTag: { color: colors.premium },
   calendarWrap: {
     marginTop: 32,
   },
@@ -1339,8 +1407,5 @@ const styles = StyleSheet.create({
     ...t.label,
     color: colors.textSecondary,
     letterSpacing: 2,
-  },
-  bottomSpacer: {
-    height: 32,
   },
 });

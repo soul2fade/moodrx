@@ -6,16 +6,18 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  ActivityIndicator,
   BackHandler,
   Linking,
   Alert,
 } from 'react-native';
-import { router, type Href } from 'expo-router';
+import { router } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { useSessions } from '@/contexts/SessionsContext';
-import { BASE_UNLOCK_PACKAGE_ID } from '@/lib/revenuecat';
-import { formatSessionDelta } from '@/lib/session-utils';
-import { type as t, fonts } from '@/lib/typography';
+import { selectBasePrice } from '@/lib/offer-copy';
+import { usePurchaseButton } from '@/hooks/usePurchaseButton';
+import { OfferProof } from '@/components/OfferProof';
+import { purchaseButtonLabel } from '@/lib/purchase-ui';
+import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,10 +36,10 @@ export default function PremiumScreen() {
     purchaseBase,
     restorePurchases,
     isPremium,
+    isPlus,
     offerings,
+    isLoading: subLoading,
   } = useSubscription();
-  const { sessionCount, avgChange } = useSessions();
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
 
@@ -56,11 +58,20 @@ export default function PremiumScreen() {
     return () => backHandler.remove();
   }, []);
 
-  const basePkg = offerings?.current?.availablePackages?.find((p) => p.identifier === BASE_UNLOCK_PACKAGE_ID);
-  const basePrice = basePkg?.product?.priceString ?? '$9.99';
+  const basePrice = selectBasePrice(offerings);
 
-  const hasPersonalStats = sessionCount >= 3;
-  const personalDeltaLabel = formatSessionDelta(5, 5 + Math.round(avgChange * 10) / 10);
+  const baseBtn = usePurchaseButton({
+    // Enabled once RevenueCat init has settled (success OR failure) — not gated on
+    // offerings being non-null, so a failed/empty offerings load can't trap the
+    // button in an infinite spinner (and the __DEV__ mock-purchase path stays reachable).
+    offeringsLoaded: !subLoading,
+    owned: isPremium,
+    run: purchaseBase,
+  });
+  const restoreBtn = usePurchaseButton({
+    offeringsLoaded: true, // restore doesn't depend on offerings
+    run: restorePurchases,
+  });
 
   const openURL = (url: string) => {
     void Linking.openURL(url).catch(() =>
@@ -81,42 +92,38 @@ export default function PremiumScreen() {
           <Text style={styles.backButton}>← BACK</Text>
         </TouchableOpacity>
 
-        <Text style={styles.proLabel}>MOODRX PRO</Text>
+        <Text style={styles.proLabel}>OWN MOODRX</Text>
         <Text style={styles.headline}>The full prescription.</Text>
 
         <View style={styles.divider} />
 
         <Text style={styles.subtext}>Your brain deserves the upgrade.</Text>
 
-        {isPremium ? (
+        {isPremium && baseBtn.phase === 'idle' ? (
           <View style={styles.statusBadge}>
-            <Text style={styles.statusBadgeText}>YOU HAVE PRO</Text>
+            <Text style={styles.statusBadgeText}>{isPlus ? 'MOODRX+ ACTIVE' : 'YOU OWN MOODRX'}</Text>
           </View>
         ) : (
           <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={purchaseBase}
+            style={[styles.ctaButton, baseBtn.disabled && styles.ctaButtonDisabled]}
+            onPress={baseBtn.onPress}
+            disabled={baseBtn.disabled}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel={`Unlock MoodRx Pro, ${basePrice} one time`}
+            accessibilityState={{ disabled: baseBtn.disabled, busy: baseBtn.busy }}
+            accessibilityLabel={`Own MoodRx, ${basePrice} one time`}
           >
-            <Text style={styles.ctaText}>UNLOCK MOODRX PRO — {basePrice} →</Text>
+            {baseBtn.busy ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.ctaText}>
+                {purchaseButtonLabel(baseBtn.status, { idle: `OWN MOODRX — ${basePrice} →` })}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
 
-        <View style={styles.socialProofBox}>
-          <Text style={styles.socialProofStat}>
-            {hasPersonalStats ? personalDeltaLabel : '−3'}
-          </Text>
-          <Text style={styles.socialProofLabel}>
-            {hasPersonalStats ? 'YOUR AVG SHIFT PER SESSION' : 'EXAMPLE SHIFT (ONE SESSION)'}
-          </Text>
-          <Text style={styles.socialProofSub}>
-            {hasPersonalStats
-              ? `Based on ${sessionCount} logged sessions in your evidence file.`
-              : 'Log a few sessions to see your own average here.'}
-          </Text>
-        </View>
+        <OfferProof />
 
         <View style={styles.featureList}>
           {FEATURES.map((f) => (
@@ -155,23 +162,21 @@ export default function PremiumScreen() {
         </View>
 
         <TouchableOpacity
-          onPress={restorePurchases}
+          onPress={restoreBtn.onPress}
+          disabled={restoreBtn.disabled}
           activeOpacity={0.7}
           style={styles.restoreButton}
           accessibilityRole="button"
+          accessibilityState={{ disabled: restoreBtn.disabled, busy: restoreBtn.busy }}
           accessibilityLabel="Restore purchases"
         >
-          <Text style={styles.restoreText}>RESTORE PURCHASES</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.push('/packs' as Href)}
-          activeOpacity={0.7}
-          style={styles.restoreButton}
-          accessibilityRole="button"
-          accessibilityLabel="Browse packs"
-        >
-          <Text style={styles.restoreText}>BROWSE PACKS →</Text>
+          {restoreBtn.busy ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.restoreText}>
+              {purchaseButtonLabel(restoreBtn.status, { idle: 'RESTORE PURCHASES', success: 'RESTORED ✓' })}
+            </Text>
+          )}
         </TouchableOpacity>
 
         <View style={{ height: 32 }} />
@@ -197,38 +202,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   statusBadgeText: { ...t.label, color: colors.premium, letterSpacing: 2 },
-  socialProofBox: {
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
-    borderLeftWidth: 3,
-    borderLeftColor: '#059669',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: '#0d0d0d',
-  },
-  socialProofStat: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#059669',
-    fontFamily: fonts.mono.bold,
-  },
-  socialProofLabel: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 2,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  socialProofSub: {
-    ...t.label,
-    color: '#ffffff',
-    fontSize: 12,
-    letterSpacing: 1,
-    marginTop: 6,
-    lineHeight: 16,
-  },
   featureList: { marginTop: 24 },
   featureRow: {
     flexDirection: 'row',
@@ -238,7 +211,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
-  checkmark: { ...t.label, color: colors.premium, fontSize: 14, paddingTop: 1 },
+  checkmark: { ...t.label, color: colors.premium, fontSize: 16, paddingTop: 1 },
   featureText: { ...t.body, flex: 1 },
   ctaButton: {
     borderWidth: 1,
@@ -248,6 +221,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 16,
   },
+  ctaButtonDisabled: { borderColor: '#555555', opacity: 0.6 },
   ctaText: { ...t.button, letterSpacing: 3 },
   legalBlock: { marginTop: 8, marginBottom: 8 },
   legalDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 17 },

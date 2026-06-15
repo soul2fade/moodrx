@@ -17,7 +17,7 @@ import { useAudioPlayer } from 'expo-audio';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { getWorkoutById, getWorkoutsForMood } from '@/lib/workouts';
-import { getPersonalBest, getTrashTalkVolume, getWorkoutFocusMode, getWorkoutVoiceMode, setWorkoutFocusMode, setWorkoutVoiceMode } from '@/lib/storage';
+import { getCoachVoice, getInsultSeverity, getPersonalBest, getTrashTalkVolume, getWorkoutFocusMode, getWorkoutVoiceMode, setInsultSeverity, setWorkoutFocusMode, setWorkoutVoiceMode } from '@/lib/storage';
 import { MoodIcon } from '@/components/MoodIcon';
 import WorkoutCoach from '@/components/WorkoutCoach';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -29,10 +29,15 @@ import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/lib/colors';
 import { stepHasReps } from '@/lib/workout-ui';
+import { pickClip, type InsultTier, type Manifest } from '@/lib/insult-library';
+import { SeveritySheet } from '@/components/SeveritySheet';
+import { ensureClip, fetchManifest, prefetchTier } from '@/lib/insult-cache';
 import {
   pickWorkoutGuideCue,
   pickWorkoutGuideTimerCue,
 } from '@/lib/workout-voice';
+import { effectiveVoice } from '@/lib/voices';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 
 /** Extract a duration in seconds from a workout step description.
  *  Sums any number-of-minutes + number-of-seconds tokens present
@@ -97,8 +102,18 @@ type StepTimerKind = 'rest' | 'active';
 const SOUNDSCAPES: { key: Soundscape; label: string; src: any }[] = [
   { key: 'rain',   label: 'RAIN',    src: require('../assets/audio/rain.mp3') },
   { key: 'forest', label: 'FOREST',  src: require('../assets/audio/forest.mp3') },
-  { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/brownnoise.mp3') },
+  { key: 'focus',  label: 'FOCUS',   src: require('../assets/audio/greennoise.mp3') },
 ];
+
+// Per-track loop volume — starting points, tune on-device. FOCUS is green noise
+// now (gentler/mid-frequency than the old brown), so it can sit a bit higher
+// than brown did without rumbling. The rain/green assets aren't loudness-
+// normalized yet, so these may need a nudge after the build.
+const SOUNDSCAPE_VOLUME: Record<Exclude<Soundscape, null>, number> = {
+  rain: 0.32,
+  forest: 0.35,
+  focus: 0.3,
+};
 
 
 export default function WorkoutScreen() {
@@ -125,6 +140,11 @@ export default function WorkoutScreen() {
   const [activeSoundscape, setActiveSoundscape] = useState<Soundscape>(null);
   const [audioSrc, setAudioSrc] = useState<any>(null);
   const [trashTalkOn, setTrashTalkOn] = useState(false);
+  const [insultSeverity, setSeverity] = useState<InsultTier>('sticks');
+  const { ownedEntitlements } = useSubscription();
+  const [selectedVoice, setSelectedVoice] = useState('rachel');
+  const voice = effectiveVoice(selectedVoice, ownedEntitlements);
+  const [severitySheetOpen, setSeveritySheetOpen] = useState(false);
   const [trashTalkVolume, setTrashTalkVolume] = useState(0.7);
   const [keepAwake, setKeepAwake] = useState(false);
   const [insultAudioSrc, setInsultAudioSrc] = useState<any>(null);
@@ -140,6 +160,7 @@ export default function WorkoutScreen() {
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepTimerRemainingRef = useRef(0);
   const insultIdxRef = useRef(0);
+  const manifestRef = useRef<Manifest | null>(null);
   const trashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNavigating = useRef(false);
   const repScaleAnim = useRef(new Animated.Value(1)).current;
@@ -150,6 +171,7 @@ export default function WorkoutScreen() {
 
   const moodData = MOODS[mood];
   const accentColor = moodData.color;
+  const accentColorDeep = moodData.colorDeep;
   const totalSteps = resolvedWorkout?.steps.length ?? 0;
   const midInsult = useDrMoodRxLine(mood, 'mid');
   const midStep = Math.floor((totalSteps - 1) / 2);
@@ -160,7 +182,7 @@ export default function WorkoutScreen() {
   useEffect(() => {
     if (audioSrc && activeSoundscape) {
       player.loop = true;
-      player.volume = 0.35;
+      player.volume = SOUNDSCAPE_VOLUME[activeSoundscape];
       player.play();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- expo-audio player is a stable ref; effect intentionally only re-runs on src/activeSoundscape changes.
@@ -168,6 +190,14 @@ export default function WorkoutScreen() {
 
   useEffect(() => {
     getTrashTalkVolume().then(setTrashTalkVolume).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getInsultSeverity().then(setSeverity).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getCoachVoice().then(setSelectedVoice).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -360,20 +390,46 @@ export default function WorkoutScreen() {
       try { insultPlayer.pause(); } catch {}
       return;
     }
-    // Start at a random position so every session sounds different
+    let cancelled = false;
+
+    // Load the hosted manifest once and warm the cache for the selected tier.
+    void (async () => {
+      const m = await fetchManifest().catch(() => null);
+      if (cancelled) return;
+      manifestRef.current = m;
+      if (m) prefetchTier(m, voice, insultSeverity);
+    })();
+
+    // Bundled fallback rotation start (random so sessions differ).
     insultIdxRef.current = Math.floor(Math.random() * INSULT_AUDIO.length);
-    const playNext = () => {
-      const idx = insultIdxRef.current % INSULT_AUDIO.length;
-      insultIdxRef.current += 1;
-      setInsultAudioSrc(INSULT_AUDIO[idx]);
+
+    const playNext = async () => {
+      let src: any = null;
+      const m = manifestRef.current;
+      if (m) {
+        const entry = pickClip(m, voice, insultSeverity);
+        if (entry) {
+          const uri = await ensureClip(entry);
+          if (uri) src = { uri };
+        }
+      }
+      if (!src) {
+        const idx = insultIdxRef.current % INSULT_AUDIO.length;
+        insultIdxRef.current += 1;
+        src = INSULT_AUDIO[idx];
+      }
+      if (cancelled) return;
+      setInsultAudioSrc(src);
     };
-    playNext();
-    trashIntervalRef.current = setInterval(playNext, 55000);
+
+    void playNext();
+    trashIntervalRef.current = setInterval(() => { void playNext(); }, 55000);
     return () => {
+      cancelled = true;
       if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- insultPlayer is a stable expo-audio ref; trashTalkOn toggle is the meaningful trigger.
-  }, [trashTalkOn]);
+  }, [trashTalkOn, insultSeverity, voice]);
 
   useEffect(() => {
     if (totalSteps === 0) return;
@@ -443,7 +499,18 @@ export default function WorkoutScreen() {
   };
 
   const handleTrashTalk = () => {
-    setTrashTalkOn((on) => !on);
+    if (trashTalkOn) {
+      setTrashTalkOn(false);
+      return;
+    }
+    setSeveritySheetOpen(true);
+  };
+
+  const handleSeverityConfirm = (tier: InsultTier) => {
+    void setInsultSeverity(tier);
+    setSeverity(tier);
+    setSeveritySheetOpen(false);
+    setTrashTalkOn(true);
   };
 
   const handleKeepAwake = async () => {
@@ -495,7 +562,7 @@ export default function WorkoutScreen() {
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Progress bar */}
       <View style={styles.progressBarBg}>
-        <Animated.View style={{ height: 2, width: progressWidth, backgroundColor: accentColor }} />
+        <Animated.View style={{ height: 2, width: progressWidth, backgroundColor: accentColorDeep }} />
       </View>
 
       {/* Top row */}
@@ -573,13 +640,13 @@ export default function WorkoutScreen() {
         {stepTimerKind === 'rest' ? (
           <View style={styles.restBox}>
             <Text style={styles.restLabel}>REST</Text>
-            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColor }]} maxFontSizeMultiplier={1.3}>
+            <Text style={[styles.restCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColorDeep }]} maxFontSizeMultiplier={1.3}>
               {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
             </Text>
             <View style={styles.restProgressBg}>
               <Animated.View style={[styles.restProgressFill, {
                 width: restProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColor,
+                backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColorDeep,
               }]} />
             </View>
             <Text style={styles.restSubtext}>
@@ -587,12 +654,12 @@ export default function WorkoutScreen() {
             </Text>
             <View style={styles.timerControlsRow}>
               {stepTimerRunning ? (
-                <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Stop timer">
-                  <Text style={[styles.timerControlBtnText, { color: accentColor }]}>STOP</Text>
+                <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColorDeep }]} accessibilityRole="button" accessibilityLabel="Stop timer">
+                  <Text style={[styles.timerControlBtnText, { color: accentColorDeep }]}>STOP</Text>
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Start timer">
-                  <Text style={[styles.timerControlBtnText, { color: accentColor }]}>START</Text>
+                <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColorDeep }]} accessibilityRole="button" accessibilityLabel="Start timer">
+                  <Text style={[styles.timerControlBtnText, { color: accentColorDeep }]}>START</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity onPress={handleTimerReset} activeOpacity={0.7} style={styles.timerControlBtn} accessibilityRole="button" accessibilityLabel="Reset timer">
@@ -607,13 +674,13 @@ export default function WorkoutScreen() {
             </Text>
             {stepTimerKind === 'active' && (
               <View style={styles.activeTimerBox}>
-                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColor }]} maxFontSizeMultiplier={1.3}>
+                <Text style={[styles.activeTimerCountdown, { color: stepTimerRemaining === 0 ? colors.textDimmer : accentColorDeep }]} maxFontSizeMultiplier={1.3}>
                   {Math.floor(stepTimerRemaining / 60)}:{String(stepTimerRemaining % 60).padStart(2, '0')}
                 </Text>
                 <View style={styles.activeProgressBg}>
                   <Animated.View style={[styles.activeProgressFill, {
                     width: activeProgressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                    backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColor,
+                    backgroundColor: stepTimerRemaining === 0 ? colors.textDimmer : accentColorDeep,
                   }]} />
                 </View>
                 {stepTimerRemaining === 0 && (
@@ -624,12 +691,12 @@ export default function WorkoutScreen() {
                 )}
                 <View style={styles.timerControlsRow}>
                   {stepTimerRunning ? (
-                    <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Stop timer">
-                      <Text style={[styles.timerControlBtnText, { color: accentColor }]}>STOP</Text>
+                    <TouchableOpacity onPress={handleTimerStop} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColorDeep }]} accessibilityRole="button" accessibilityLabel="Stop timer">
+                      <Text style={[styles.timerControlBtnText, { color: accentColorDeep }]}>STOP</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColor }]} accessibilityRole="button" accessibilityLabel="Start timer">
-                      <Text style={[styles.timerControlBtnText, { color: accentColor }]}>START</Text>
+                    <TouchableOpacity onPress={handleTimerStart} activeOpacity={0.7} style={[styles.timerControlBtn, { borderColor: accentColorDeep }]} accessibilityRole="button" accessibilityLabel="Start timer">
+                      <Text style={[styles.timerControlBtnText, { color: accentColorDeep }]}>START</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity onPress={handleTimerReset} activeOpacity={0.7} style={styles.timerControlBtn} accessibilityRole="button" accessibilityLabel="Reset timer">
@@ -666,7 +733,7 @@ export default function WorkoutScreen() {
                 <Text
                   style={[
                     styles.miniMapText,
-                    isDone && { color: '#999' },
+                    isDone && { color: '#cdcdcd' },
                     isActive && { color: accentColor },
                   ]}
                 >
@@ -691,11 +758,11 @@ export default function WorkoutScreen() {
               <TouchableOpacity
                 onPress={handleRepTap}
                 activeOpacity={0.75}
-                style={[styles.repCircle, { borderColor: repCount > 0 && previousBest !== null && repCount > previousBest ? accentColor : accentColor }]}
+                style={[styles.repCircle, { borderColor: accentColor }]}
                 accessibilityRole="button"
                 accessibilityLabel={`Rep count ${repCount}, tap to increment`}
               >
-                <Text style={[styles.repNum, { color: previousBest !== null && repCount > previousBest ? accentColor : accentColor }]} maxFontSizeMultiplier={1.3}>{repCount}</Text>
+                <Text style={[styles.repNum, { color: accentColor }]} maxFontSizeMultiplier={1.3}>{repCount}</Text>
                 <Text style={styles.repLabel} maxFontSizeMultiplier={1.3}>TAP</Text>
               </TouchableOpacity>
             </Animated.View>
@@ -728,21 +795,30 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
               );
             })}
-            <TouchableOpacity
-              onPress={handleTrashTalk}
-              activeOpacity={0.7}
-              style={[styles.soundBtn, trashTalkOn && { borderColor: '#E11D48', backgroundColor: '#E11D4818' }]}
-              accessibilityRole="button"
-              accessibilityLabel={`Trash talk mode ${trashTalkOn ? 'on' : 'off'}`}
-            >
-              <Text style={[styles.soundBtnText, trashTalkOn && { color: '#E11D48' }]}>TRASH TALK</Text>
-            </TouchableOpacity>
             {(activeSoundscape || trashTalkOn) && (
               <TouchableOpacity onPress={() => { handleSoundscape(null); if (trashTalkOn) handleTrashTalk(); }} activeOpacity={0.7} style={styles.soundOffBtn}>
                 <Text style={styles.soundOffText}>OFF</Text>
               </TouchableOpacity>
             )}
           </View>
+        </View>
+
+        {/* ── TRASH TALK LAYER ── */}
+        <View style={styles.trashRow}>
+          <View style={styles.trashLabelBlock}>
+            <Text style={styles.trashLabel}>DR. MOODRX TRASH TALK</Text>
+            <Text style={styles.trashHint}>A fresh roast about once a minute — plays over your soundscape.</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleTrashTalk}
+            activeOpacity={0.8}
+            style={[styles.trashToggle, trashTalkOn ? styles.trashToggleOn : styles.trashToggleOff]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: trashTalkOn }}
+            accessibilityLabel="Dr. MoodRx trash talk"
+          >
+            <View style={[styles.trashKnob, trashTalkOn && styles.trashKnobOn]} />
+          </TouchableOpacity>
         </View>
 
         {/* ── KEEP AWAKE ── */}
@@ -784,6 +860,13 @@ export default function WorkoutScreen() {
           </TouchableOpacity>
         </Animated.View>
       </View>
+
+      <SeveritySheet
+        visible={severitySheetOpen}
+        current={insultSeverity}
+        onConfirm={handleSeverityConfirm}
+        onCancel={() => setSeveritySheetOpen(false)}
+      />
     </Animated.View>
   );
 }
@@ -795,11 +878,10 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 48, paddingBottom: 12 },
   topRowRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   focusBtn: { borderWidth: 1, borderColor: '#333333', paddingHorizontal: 10, paddingVertical: 6 },
-  focusBtnText: { ...t.label, color: '#999999', letterSpacing: 1.5, fontSize: 12, lineHeight: 17 },
+  focusBtnText: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 16, lineHeight: 17 },
   quitButton: { paddingVertical: 4 },
   quitText: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
   stepCounter: { ...t.label, color: '#ffffff', letterSpacing: 2, lineHeight: undefined },
-  quitConfirm: { marginHorizontal: 24, borderWidth: 1, borderColor: '#E11D48', padding: 16, marginBottom: 8 },
   quitModalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.75)',
@@ -812,7 +894,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
     padding: 20,
   },
-  quitConfirmText: { ...t.body, fontSize: 15 },
+  quitConfirmText: { ...t.body, fontSize: 16 },
   quitConfirmButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
   keepGoingBtn: { paddingVertical: 8 },
   keepGoingText: { ...t.label, color: '#ffffff' },
@@ -828,26 +910,26 @@ const styles = StyleSheet.create({
   motivational: { ...t.soft, textAlign: 'center', marginTop: 24 },
 
   restBox: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#1a1a1a', paddingVertical: 32, paddingHorizontal: 16, marginTop: 16, alignItems: 'center' },
-  restLabel: { ...t.label, color: '#888', letterSpacing: 4, fontSize: 13, marginBottom: 12 },
+  restLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 16, marginBottom: 12 },
   restCountdown: { fontSize: 68, fontFamily: fonts.mono.regular, lineHeight: 76 },
   restProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 20 },
   restProgressFill: { height: 2 },
-  restSubtext: { ...t.label, color: '#999', letterSpacing: 2, fontSize: 12, lineHeight: 17, marginTop: 12 },
+  restSubtext: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 16, lineHeight: 17, marginTop: 12 },
 
   activeTimerBox: { marginTop: 20, alignItems: 'center', width: '100%' },
   activeTimerCountdown: { fontSize: 52, fontFamily: fonts.mono.regular, lineHeight: 58 },
   activeProgressBg: { width: '100%', height: 2, backgroundColor: '#1a1a1a', marginTop: 12 },
   activeProgressFill: { height: 2 },
-  activeTimerDone: { ...t.label, color: '#ffffff', letterSpacing: 3, fontSize: 12, lineHeight: 17, marginTop: 10 },
-  activeTimerHint: { ...t.label, color: '#999', letterSpacing: 2, fontSize: 12, lineHeight: 17, marginTop: 10 },
+  activeTimerDone: { ...t.label, color: '#ffffff', letterSpacing: 1.5, fontSize: 16, lineHeight: 17, marginTop: 10 },
+  activeTimerHint: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 16, lineHeight: 17, marginTop: 10 },
 
   timerControlsRow: { flexDirection: 'row', gap: 12, marginTop: 20 },
   timerControlBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 10, paddingHorizontal: 20 },
-  timerControlBtnText: { ...t.label, color: '#ffffff', letterSpacing: 2, fontSize: 13 },
+  timerControlBtnText: { ...t.label, color: '#ffffff', letterSpacing: 1.5, fontSize: 16 },
 
   insultLine: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     marginTop: 16,
     lineHeight: 20,
@@ -858,26 +940,36 @@ const styles = StyleSheet.create({
   miniMapText: { ...t.label, fontFamily: fonts.mono.bold, textTransform: 'none', color: '#e8e8e8', fontSize: 17, flex: 1, letterSpacing: 0.2, lineHeight: 26 },
 
   repSection: { marginTop: 28 },
-  sectionLabel: { ...t.label, color: '#888', letterSpacing: 2, fontSize: 13, marginBottom: 14 },
+  sectionLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, fontSize: 16, marginBottom: 14 },
   repHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 13, color: '#999', letterSpacing: 2 },
-  pbAlert: { fontFamily: fonts.mono.regular, fontSize: 13, letterSpacing: 3, textAlign: 'center', marginTop: 10 },
+  pbBadge: { fontFamily: fonts.mono.regular, fontSize: 16, color: '#f0f0f0', letterSpacing: 1.5 },
+  pbAlert: { fontFamily: fonts.mono.regular, fontSize: 16, letterSpacing: 1.5, textAlign: 'center', marginTop: 10 },
   repRow: { flexDirection: 'column', alignItems: 'center', gap: 12 },
   repCircle: { width: 88, height: 88, borderRadius: 44, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   repNum: { fontSize: 35, fontWeight: '600', lineHeight: 39 },
-  repLabel: { ...t.label, color: '#888', fontSize: 12, lineHeight: 17, letterSpacing: 2, marginTop: 2 },
+  repLabel: { ...t.label, color: '#f0f0f0', fontSize: 16, lineHeight: 17, letterSpacing: 1.5, marginTop: 2 },
   repReset: { paddingVertical: 8, paddingHorizontal: 16 },
-  repResetText: { ...t.label, color: '#ffffff', letterSpacing: 2, fontSize: 13 },
+  repResetText: { ...t.label, color: '#ffffff', letterSpacing: 1.5, fontSize: 16 },
 
   soundSection: { marginTop: 28 },
   soundRow: { flexDirection: 'row', flexWrap: 'nowrap', gap: 8 },
   soundBtn: { flex: 1, borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center' },
-  soundBtnText: { ...t.label, color: '#ffffff', fontSize: 12, lineHeight: 17, letterSpacing: 1 },
+  soundBtnText: { ...t.label, color: '#ffffff', fontSize: 16, lineHeight: 17, letterSpacing: 1 },
   soundOffBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 8, paddingHorizontal: 14 },
-  soundOffText: { ...t.label, color: '#ffffff', fontSize: 13, letterSpacing: 2 },
+  soundOffText: { ...t.label, color: '#ffffff', fontSize: 16, letterSpacing: 1.5 },
+
+  trashRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18, paddingVertical: 4 },
+  trashLabelBlock: { flex: 1, paddingRight: 14 },
+  trashLabel: { ...t.label, color: '#e2e2e2', fontSize: 16, letterSpacing: 1.5 },
+  trashHint: { fontFamily: fonts.mono.regular, color: '#cfcfcf', fontSize: 16, lineHeight: 18, letterSpacing: 0.5, marginTop: 4, textTransform: 'none' },
+  trashToggle: { width: 52, height: 30, borderRadius: 15, padding: 3, justifyContent: 'center' },
+  trashToggleOn: { backgroundColor: colors.danger },
+  trashToggleOff: { backgroundColor: '#2a2a2a' },
+  trashKnob: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#f0f0f0' },
+  trashKnobOn: { alignSelf: 'flex-end' },
 
   keepAwakeBtn: { marginTop: 16, borderWidth: 1, borderColor: '#333', paddingVertical: 10, alignItems: 'center' },
-  keepAwakeBtnText: { ...t.label, color: '#999', fontSize: 13, letterSpacing: 2 },
+  keepAwakeBtnText: { ...t.label, color: '#f0f0f0', fontSize: 16, letterSpacing: 1.5 },
 
   bottomNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   backBtn: { borderWidth: 1, borderColor: '#1a1a1a', paddingVertical: 12, paddingHorizontal: 24 },

@@ -34,6 +34,8 @@ import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { BottomNav } from '@/components/BottomNav';
+import { PriceChip } from '@/components/PriceChip';
+import { PremiumSheet } from '@/components/PremiumSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type TabKey = 'TODAY' | 'HISTORY' | 'ALL';
@@ -137,6 +139,7 @@ function SupplementsScreen() {
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState(DEFAULT_SUPPLEMENT_TIME);
   const [reminderPermDenied, setReminderPermDenied] = useState(false);
+  const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const reminderToggleAnim = useRef(new Animated.Value(0)).current;
 
   const today = todayDateString();
@@ -405,7 +408,7 @@ function SupplementsScreen() {
                       <Text
                         style={[
                           styles.reminderTimeChipText,
-                          reminderTime === p.label ? { color: '#ffffff' } : { color: '#999' },
+                          reminderTime === p.label ? { color: '#ffffff' } : { color: '#cdcdcd' },
                         ]}
                       >
                         {p.label}
@@ -418,7 +421,9 @@ function SupplementsScreen() {
           ) : (
             <View style={[styles.reminderCard, styles.reminderCardLocked]}>
               <Text style={styles.reminderLabel}>DAILY REMINDER</Text>
-              <Text style={styles.reminderLockedText}>Upgrade to Pro to set daily supplement reminders.</Text>
+              <Text style={styles.reminderLockedText}>Daily supplement reminders are part of the base unlock.</Text>
+              <View style={styles.reminderLockedSpacer} />
+              <PriceChip onPress={() => setShowPremiumSheet(true)} accessibilityLabel="Unlock daily reminders" />
             </View>
           )}
 
@@ -699,7 +704,7 @@ function SupplementsScreen() {
                     <View style={styles.supplementRight}>
                       <Text style={styles.supplementDose}>{supp.dose}</Text>
                       <Text style={styles.supplementTiming}>{supp.timing.toUpperCase()}</Text>
-                      <Text style={[styles.expandChevron, { color: '#aaaaaa' }]}>
+                      <Text style={[styles.expandChevron, { color: '#d6d6d6' }]}>
                         {isExpanded ? '▲' : '▼'}
                       </Text>
                     </View>
@@ -737,6 +742,11 @@ function SupplementsScreen() {
       )}
 
       <BottomNav />
+      <PremiumSheet
+        visible={showPremiumSheet}
+        onClose={() => setShowPremiumSheet(false)}
+        context="reminders"
+      />
     </Animated.View>
   );
 }
@@ -781,9 +791,9 @@ const styles = StyleSheet.create({
   },
   tabBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
-    color: '#999999',
-    letterSpacing: 2,
+    fontSize: 16,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     lineHeight: 20,
   },
   tabUnderline: {
@@ -803,7 +813,7 @@ const styles = StyleSheet.create({
   },
   sectionNote: {
     ...t.timestamp,
-    color: '#999999',
+    color: '#f0f0f0',
     marginBottom: 16,
   },
   moodFilterBadge: {
@@ -818,9 +828,9 @@ const styles = StyleSheet.create({
   },
   moodFilterLabel: {
     ...t.label,
-    color: '#999999',
-    letterSpacing: 2,
-    fontSize: 13,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
+    fontSize: 16,
     lineHeight: 18,
   },
   moodFilterMood: {
@@ -829,7 +839,7 @@ const styles = StyleSheet.create({
   },
   moodFilterNote: {
     ...t.bodySm,
-    color: '#999999',
+    color: '#cdcdcd',
   },
   adherenceStrip: {
     flexDirection: 'row',
@@ -870,21 +880,21 @@ const styles = StyleSheet.create({
   },
   adherenceDayLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 16,
-    color: '#999999',
+    color: '#f0f0f0',
     letterSpacing: 0,
   },
   adherenceCountText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
     letterSpacing: 1,
   },
   adherenceCountOf: {
-    color: '#999999',
+    color: '#f0f0f0',
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
     letterSpacing: 1,
   },
@@ -913,8 +923,8 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     ...t.label,
-    color: '#999999',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginLeft: 8,
   },
   priorityCard: {
@@ -925,9 +935,9 @@ const styles = StyleSheet.create({
   },
   priorityCardLabel: {
     ...t.label,
-    color: '#999999',
-    letterSpacing: 3,
-    fontSize: 12,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
+    fontSize: 16,
     lineHeight: 17,
   },
   priorityCardHeadline: {
@@ -943,14 +953,14 @@ const styles = StyleSheet.create({
   },
   priorityCardDose: {
     ...t.timestamp,
-    color: '#999999',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginTop: 2,
   },
   priorityCardScience: {
     ...t.soft,
-    color: '#c8c8c8',
-    fontSize: 14,
+    color: '#d8d8d8',
+    fontSize: 16,
     lineHeight: 20,
     marginTop: 10,
   },
@@ -1015,12 +1025,12 @@ const styles = StyleSheet.create({
   },
   supplementName: {
     ...t.headlineSm,
-    fontSize: 15,
+    fontSize: 16,
   },
   supplementBenefit: {
     ...t.bodyMuted,
-    color: '#999999',
-    fontSize: 13,
+    color: '#cdcdcd',
+    fontSize: 16,
     marginTop: 2,
   },
   supplementRight: {
@@ -1028,20 +1038,20 @@ const styles = StyleSheet.create({
   },
   supplementDose: {
     ...t.label,
-    color: '#999999',
-    fontSize: 13,
+    color: '#f0f0f0',
+    fontSize: 16,
     lineHeight: 18,
   },
   supplementTiming: {
     ...t.label,
-    color: '#999999',
-    letterSpacing: 2,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginTop: 2,
-    fontSize: 13,
+    fontSize: 16,
     lineHeight: 18,
   },
   expandChevron: {
-    fontSize: 14,
+    fontSize: 16,
     marginTop: 2,
     lineHeight: 18,
   },
@@ -1054,22 +1064,22 @@ const styles = StyleSheet.create({
   },
   sciencePanelLabel: {
     ...t.label,
-    color: '#999999',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     marginBottom: 8,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
   },
   sciencePanelText: {
     ...t.soft,
-    color: '#c8c8c8',
-    fontSize: 14,
+    color: '#d8d8d8',
+    fontSize: 16,
     lineHeight: 20,
   },
   sourceText: {
     ...t.soft,
-    color: '#aaaaaa',
-    fontSize: 12,
+    color: '#d6d6d6',
+    fontSize: 16,
     lineHeight: 18,
     marginTop: 4,
   },
@@ -1086,7 +1096,7 @@ const styles = StyleSheet.create({
   },
   moodTagText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
   },
@@ -1109,9 +1119,9 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 13,
+    fontSize: 16,
     lineHeight: 18,
-    color: '#999999',
+    color: '#f0f0f0',
     letterSpacing: 1.5,
   },
   weekBlock: {
@@ -1125,14 +1135,14 @@ const styles = StyleSheet.create({
   },
   weekLabel: {
     ...t.label,
-    color: '#999999',
-    letterSpacing: 2,
-    fontSize: 13,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
+    fontSize: 16,
     lineHeight: 18,
   },
   weekMoodBadge: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1.5,
   },
@@ -1151,16 +1161,16 @@ const styles = StyleSheet.create({
   },
   historyDayHeader: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 16,
-    color: '#999999',
+    color: '#f0f0f0',
     letterSpacing: 0,
   },
   historySupName: {
     fontFamily: fonts.primary.regular,
-    fontSize: 13,
+    fontSize: 16,
     lineHeight: 18,
-    color: '#c8c8c8',
+    color: '#d8d8d8',
   },
   historyDot: {
     width: 10,
@@ -1183,9 +1193,9 @@ const styles = StyleSheet.create({
   },
   historyDotNa: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 14,
-    color: '#999999',
+    color: '#f0f0f0',
   },
   reminderCard: {
     borderWidth: 1,
@@ -1204,10 +1214,10 @@ const styles = StyleSheet.create({
   },
   reminderLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
-    color: '#999',
-    letterSpacing: 3,
+    color: '#f0f0f0',
+    letterSpacing: 1.5,
     textTransform: 'uppercase' as const,
   },
   reminderToggle: {
@@ -1226,16 +1236,16 @@ const styles = StyleSheet.create({
   },
   reminderPermDenied: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     color: '#E11D48',
     marginTop: 8,
   },
   reminderLockedText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
-    color: '#999',
+    color: '#f0f0f0',
     marginTop: 8,
   },
   reminderTimeRow: {
@@ -1253,10 +1263,11 @@ const styles = StyleSheet.create({
   reminderTimeChipOff: { borderColor: '#1a1a1a' },
   reminderTimeChipText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     letterSpacing: 1,
   },
+  reminderLockedSpacer: { height: 12 },
 });
 
 export default SupplementsScreen;

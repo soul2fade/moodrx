@@ -26,7 +26,6 @@ module.exports = function (api) {
           },
         },
       ],
-      "@babel/plugin-proposal-export-namespace-from",
       ...buildAdditionalPlugins(api),
       "react-native-worklets/plugin", // Must be last
     ],

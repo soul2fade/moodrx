@@ -6,6 +6,7 @@ export interface MoodData {
   code: string;
   description: string;
   color: string;
+  colorDeep: string;
   drMoodRx: string;
 }
 
@@ -16,6 +17,7 @@ export const MOODS: Record<MoodKey, MoodData> = {
     code: 'ANX',
     description: "Brain won't shut up",
     color: '#E8B84B',
+    colorDeep: '#E8B84B',
     drMoodRx:
       "Your nervous system is a chihuahua that heard a doorbell. We're going to calm it down.",
   },
@@ -25,6 +27,7 @@ export const MOODS: Record<MoodKey, MoodData> = {
     code: 'LOW',
     description: 'Everything is heavy',
     color: '#7B7DF5',
+    colorDeep: '#6366F1',
     drMoodRx: "Your brain's running on power-saving mode. Time to force a reboot.",
   },
   foggy: {
@@ -33,6 +36,7 @@ export const MOODS: Record<MoodKey, MoodData> = {
     code: 'FOG',
     description: 'Who am I and why am I here',
     color: '#5EAAB5',
+    colorDeep: '#5EAAB5',
     drMoodRx: "47 tabs open, no RAM left. We're about to hit Ctrl+Alt+Delete.",
   },
   restless: {
@@ -41,6 +45,7 @@ export const MOODS: Record<MoodKey, MoodData> = {
     code: 'RST',
     description: "If I don't move I'll explode",
     color: '#D97706',
+    colorDeep: '#D97706',
     drMoodRx: "You're a shaken soda can. Let's open you up safely.",
   },
   stressed: {
@@ -48,7 +53,8 @@ export const MOODS: Record<MoodKey, MoodData> = {
     name: 'Stressed',
     code: 'STR',
     description: "One more thing and I'm done",
-    color: '#F2547D',
+    color: '#E11D48',
+    colorDeep: '#E11D48',
     drMoodRx: "Your shoulders are up by your ears like they're trying to escape. We'll fix that.",
   },
   good: {
@@ -57,6 +63,7 @@ export const MOODS: Record<MoodKey, MoodData> = {
     code: 'GD',
     description: "Rare but I'll take it",
     color: '#059669',
+    colorDeep: '#059669',
     drMoodRx: "Well well well. Look who showed up feeling functional. Let's not waste it.",
   },
 };

@@ -1,0 +1,167 @@
+import { describe, it, expect } from 'vitest';
+import { parseVentResponse, ventAction, buildVentSession, joinTranscript, foldInterim, isInterimReset, pickRecognitionMode, nextRecognitionStep } from '@/lib/vent';
+
+describe('parseVentResponse', () => {
+  const ok = { mood: 'stressed', intensity: 7, reply: 'You showed up.', risk: 'none' };
+
+  it('accepts a well-formed response', () => {
+    expect(parseVentResponse(ok)).toEqual(ok);
+  });
+  it('clamps/rounds intensity and trims reply', () => {
+    expect(parseVentResponse({ ...ok, intensity: 7.6, reply: '  hi  ' })).toEqual({
+      mood: 'stressed', intensity: 8, reply: 'hi', risk: 'none',
+    });
+    expect(parseVentResponse({ ...ok, intensity: 0 })?.intensity).toBe(1);
+    expect(parseVentResponse({ ...ok, intensity: 99 })?.intensity).toBe(10);
+  });
+  it('rejects bad mood, non-finite intensity, empty reply, bad risk, non-object', () => {
+    expect(parseVentResponse({ ...ok, mood: 'sad' })).toBeNull();
+    expect(parseVentResponse({ ...ok, intensity: NaN })).toBeNull();
+    expect(parseVentResponse({ ...ok, reply: '   ' })).toBeNull();
+    expect(parseVentResponse({ ...ok, risk: 'panic' })).toBeNull();
+    expect(parseVentResponse(null)).toBeNull();
+    expect(parseVentResponse('nope')).toBeNull();
+  });
+});
+
+describe('ventAction', () => {
+  it('routes only acute to the crisis screen', () => {
+    expect(ventAction('none')).toBe('reply');
+    expect(ventAction('elevated')).toBe('reply-with-resource');
+    expect(ventAction('acute')).toBe('crisis-redirect');
+  });
+});
+
+describe('buildVentSession', () => {
+  it('builds a workout-less check-in tagged source:vent (postScore = intensity)', () => {
+    const s = buildVentSession({ id: 'v1', mood: 'low', intensity: 6, timestamp: 1234 });
+    expect(s).toEqual({
+      id: 'v1',
+      mood: 'low',
+      intensity: 6,
+      postScore: 6,
+      workoutName: 'Vent',
+      duration: 0,
+      timestamp: 1234,
+      lightDay: true,
+      source: 'vent',
+    });
+  });
+  it('spreads captured health fields when provided', () => {
+    const s = buildVentSession({
+      id: 'v2', mood: 'anxious', intensity: 8, timestamp: 9,
+      health: { stepsToday: 5000, sleepHoursLastNight: 7 },
+    });
+    expect(s.stepsToday).toBe(5000);
+    expect(s.sleepHoursLastNight).toBe(7);
+    expect(s.source).toBe('vent');
+  });
+});
+
+describe('joinTranscript', () => {
+  it('joins two non-empty parts with a single space, trimming each', () => {
+    expect(joinTranscript('hello', 'there')).toBe('hello there');
+    expect(joinTranscript('  hello ', '  there  ')).toBe('hello there');
+  });
+  it('returns the other part when one is empty/whitespace', () => {
+    expect(joinTranscript('', 'there')).toBe('there');
+    expect(joinTranscript('hello', '')).toBe('hello');
+    expect(joinTranscript('   ', 'there')).toBe('there');
+    expect(joinTranscript('hello', '   ')).toBe('hello');
+    expect(joinTranscript('', '')).toBe('');
+  });
+});
+
+describe('isInterimReset', () => {
+  it('treats a growing same-phrase interim as a continuation (not a reset)', () => {
+    expect(isInterimReset('I want', 'I want to order pizza')).toBe(false);
+    expect(isInterimReset('I want to order', 'I want to order pizza')).toBe(false);
+  });
+  it('treats a diverging new phrase as a reset (recognizer restarted at a pause)', () => {
+    expect(isInterimReset('I want to order pizza', "I can't take it anymore")).toBe(true);
+  });
+  it('does NOT flag a minor mid-phrase revision as a reset', () => {
+    // shares a long common prefix → still the same phrase being revised
+    expect(isInterimReset('I want to', 'I wanted to')).toBe(false);
+  });
+  it('is not a reset when there is no prior interim or the new one is empty', () => {
+    expect(isInterimReset('', 'anything')).toBe(false);
+    expect(isInterimReset('something', '')).toBe(false);
+  });
+});
+
+describe('foldInterim', () => {
+  // The on-device recognizer (continuous:false) overwrites its interim at a
+  // mid-sentence pause and its FINAL only carries the last phrase, so the old
+  // "commit on isFinal" accumulator silently dropped pre-pause words — a crisis-
+  // safety hazard. foldInterim locks in each phrase the moment a reset is seen.
+  it('tracks the first interim without committing it yet', () => {
+    expect(foldInterim('', '', 'I want to order pizza', false)).toEqual({
+      committed: '', prevInterim: 'I want to order pizza', display: 'I want to order pizza',
+    });
+  });
+  it('keeps growing the same interim without duplicating', () => {
+    expect(foldInterim('', 'I want', 'I want to order pizza', false)).toEqual({
+      committed: '', prevInterim: 'I want to order pizza', display: 'I want to order pizza',
+    });
+  });
+  it('locks in the prior phrase when a new phrase resets the interim', () => {
+    expect(foldInterim('', 'I want to order pizza', "I can't take it anymore", false)).toEqual({
+      committed: 'I want to order pizza',
+      prevInterim: "I can't take it anymore",
+      display: "I want to order pizza I can't take it anymore",
+    });
+  });
+  it('final result supersedes the current interim (same phrase) and commits it', () => {
+    expect(foldInterim('I want to order pizza', "I can't take it anymore", "I can't take it anymore.", true)).toEqual({
+      committed: "I want to order pizza I can't take it anymore.",
+      prevInterim: '',
+      display: "I want to order pizza I can't take it anymore.",
+    });
+  });
+  it('end-to-end: a two-phrase utterance keeps BOTH halves', () => {
+    let s = { committed: '', prevInterim: '', display: '' };
+    s = foldInterim(s.committed, s.prevInterim, 'I want', false);
+    s = foldInterim(s.committed, s.prevInterim, 'I want to order pizza', false);
+    s = foldInterim(s.committed, s.prevInterim, "I can't take", false);          // reset
+    s = foldInterim(s.committed, s.prevInterim, "I can't take it anymore", true); // final
+    expect(s.committed).toBe("I want to order pizza I can't take it anymore");
+  });
+});
+
+describe('pickRecognitionMode', () => {
+  it('uses on-device when supported and the locale is on-device-available', () => {
+    expect(pickRecognitionMode({ supportsOnDevice: true, onDeviceLocales: ['en-US'], locale: 'en-US' }))
+      .toEqual({ requiresOnDeviceRecognition: true, usingCloud: false });
+  });
+  it('falls back to cloud when on-device is unsupported', () => {
+    expect(pickRecognitionMode({ supportsOnDevice: false, onDeviceLocales: [], locale: 'en-US' }))
+      .toEqual({ requiresOnDeviceRecognition: false, usingCloud: true });
+  });
+  it('falls back to cloud when the locale model is not available on-device', () => {
+    expect(pickRecognitionMode({ supportsOnDevice: true, onDeviceLocales: ['fr-FR'], locale: 'en-US' }))
+      .toEqual({ requiresOnDeviceRecognition: false, usingCloud: true });
+  });
+  it('treats locale case/region loosely (en matches en-US)', () => {
+    expect(pickRecognitionMode({ supportsOnDevice: true, onDeviceLocales: ['en'], locale: 'en-US' }).usingCloud).toBe(false);
+  });
+});
+
+describe('nextRecognitionStep', () => {
+  // Called on every `end` event. Venting emulates continuous listening with
+  // single-utterance (continuous:false) recognition — the mode that works on
+  // Android SODA without the mid-stream-close race. While the user hasn't ended,
+  // a natural end (end of an utterance / pause) means "keep listening" → restart.
+  // Once the user ends (DONE / silence auto-finish / hard-stop), finalize:
+  // submit if we captured anything, else fall back to the manual form.
+  it('restarts (keeps listening) when the user has not ended, regardless of transcript', () => {
+    expect(nextRecognitionStep({ userEnded: false, hasTranscript: false })).toBe('restart');
+    expect(nextRecognitionStep({ userEnded: false, hasTranscript: true })).toBe('restart');
+  });
+  it('submits when the user ended and we captured a transcript', () => {
+    expect(nextRecognitionStep({ userEnded: true, hasTranscript: true })).toBe('submit');
+  });
+  it('falls back to the form when the user ended with nothing captured', () => {
+    expect(nextRecognitionStep({ userEnded: true, hasTranscript: false })).toBe('fallback');
+  });
+});

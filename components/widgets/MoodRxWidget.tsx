@@ -13,12 +13,10 @@ const ACCENT_DEFAULT = '#ffffff';
 // this is treated as the "medium" layout that also shows today's Rx.
 const MEDIUM_MIN_WIDTH = 200;
 
-/* eslint-disable local/no-small-fontsize-without-lineheight -- TextWidgetStyle has no lineHeight prop */
-const streakLabelStyle: TextWidgetStyle = { fontSize: 12, fontWeight: 'bold', letterSpacing: 2, color: MUTED, marginTop: 2 };
-const doneTodayStyleBase: TextWidgetStyle = { fontSize: 12, fontWeight: 'bold', letterSpacing: 1, marginTop: 10 };
-const todayLabelStyle: TextWidgetStyle = { fontSize: 12, fontWeight: 'bold', letterSpacing: 2, color: MUTED };
-const todaySmallStyle: TextWidgetStyle = { fontSize: 12, fontWeight: 'bold', letterSpacing: 1, color: MUTED, marginTop: 10 };
-/* eslint-enable local/no-small-fontsize-without-lineheight */
+const streakLabelStyle: TextWidgetStyle = { fontSize: 16, fontWeight: 'bold', letterSpacing: 1.5, color: MUTED, marginTop: 2 };
+const doneTodayStyleBase: TextWidgetStyle = { fontSize: 16, fontWeight: 'bold', letterSpacing: 1, marginTop: 10 };
+const todayLabelStyle: TextWidgetStyle = { fontSize: 16, fontWeight: 'bold', letterSpacing: 1.5, color: MUTED };
+const todaySmallStyle: TextWidgetStyle = { fontSize: 16, fontWeight: 'bold', letterSpacing: 1, color: MUTED, marginTop: 10 };
 
 export function MoodRxWidget({
   snapshot,
@@ -100,13 +98,13 @@ export function MoodRxWidget({
               <TextWidget text="TODAY" style={todayLabelStyle} />
               <TextWidget
                 text={`${snapshot.today.moodName} · ${snapshot.today.durationMin} MIN`}
-                style={{ fontSize: 13, color: FG, marginTop: 2 }}
+                style={{ fontSize: 16, color: FG, marginTop: 2 }}
                 maxLines={1}
                 truncate="END"
               />
               <TextWidget
                 text={snapshot.today.workoutName}
-                style={{ fontSize: 14, fontWeight: 'bold', color: accent, marginTop: 2 }}
+                style={{ fontSize: 16, fontWeight: 'bold', color: accent, marginTop: 2 }}
                 maxLines={1}
                 truncate="END"
               />

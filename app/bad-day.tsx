@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { useAudioPlayer } from 'expo-audio';
 import Slider from '@react-native-community/slider';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
@@ -16,7 +18,7 @@ import {
   MICRO_WORKOUT_DURATION_MIN,
   MICRO_WORKOUT_ID,
   MICRO_WORKOUT_NAME,
-  MICRO_WORKOUT_STEPS,
+  microStepsForMood,
 } from '@/lib/micro-workout';
 import { MoodIcon } from '@/components/MoodIcon';
 import { flattenStyle } from '@/utils/flatten-style';
@@ -25,6 +27,7 @@ import { useSessions } from '@/contexts/SessionsContext';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import { createSessionId, formatSessionDelta } from '@/lib/session-utils';
+import { captureSessionHealth } from '@/lib/health';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -41,14 +44,18 @@ export default function BadDayScreen() {
 
   const { addSession } = useSessions();
   const [mood, setMood] = useState<MoodKey>(initialMood);
+  const microSteps = useMemo(() => microStepsForMood(mood), [mood]);
   const [intensity, setIntensity] = useState(initialIntensity);
   const [postScore, setPostScore] = useState(Math.max(1, initialIntensity - 1));
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { fadeAnim, slideAnim } = useScreenAnimation();
+  const chimePlayer = useAudioPlayer(require('../assets/audio/step-chime.mp3'));
+  const pulseAnim = useRef(new Animated.Value(0)).current;
 
   const accentColor = MOODS[mood].color;
-  const onLastStep = step >= MICRO_WORKOUT_STEPS.length - 1;
+  const accentColorDeep = MOODS[mood].colorDeep;
+  const onLastStep = step >= microSteps.length - 1;
 
   const backHandler = useCallback(() => {
     router.back();
@@ -56,8 +63,17 @@ export default function BadDayScreen() {
   }, []);
   useHardwareBack(backHandler);
 
+  useEffect(() => { setStep(0); }, [mood]);
+
   const handleNext = () => {
     if (!onLastStep) {
+      try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+      try { chimePlayer.seekTo(0); chimePlayer.play(); } catch {}
+      pulseAnim.setValue(0);
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1, duration: 140, useNativeDriver: false }),
+        Animated.timing(pulseAnim, { toValue: 0, duration: 320, useNativeDriver: false }),
+      ]).start();
       setStep((s) => s + 1);
     }
   };
@@ -66,6 +82,7 @@ export default function BadDayScreen() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const health = await captureSessionHealth();
       await addSession({
         id: createSessionId(),
         mood,
@@ -77,6 +94,7 @@ export default function BadDayScreen() {
         timestamp: Date.now(),
         lightDay: true,
         rating: 'somewhat',
+        ...health,
       });
       router.replace('/home');
     } catch {
@@ -87,7 +105,7 @@ export default function BadDayScreen() {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56) }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 8, 56), paddingBottom: Math.max(insets.bottom + 16, 24) }]} showsVerticalScrollIndicator={false}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Text style={styles.backButton}>← HOME</Text>
         </TouchableOpacity>
@@ -128,16 +146,27 @@ export default function BadDayScreen() {
             step={1}
             value={intensity}
             onValueChange={setIntensity}
-            minimumTrackTintColor={accentColor}
+            minimumTrackTintColor={accentColorDeep}
             maximumTrackTintColor="#1a1a1a"
-            thumbTintColor={accentColor}
+            thumbTintColor={accentColorDeep}
           />
         </View>
 
-        <View style={[styles.stepCard, { borderLeftColor: accentColor }]}>
-          <Text style={styles.stepLabel}>STEP {step + 1} / {MICRO_WORKOUT_STEPS.length}</Text>
-          <Text style={styles.stepText}>{MICRO_WORKOUT_STEPS[step]}</Text>
+        <View style={styles.dotsRow}>
+          {microSteps.map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot, i <= step ? { backgroundColor: accentColorDeep } : styles.dotEmpty]}
+            />
+          ))}
         </View>
+
+        <Animated.View style={[styles.stepCard, { borderLeftColor: accentColorDeep, backgroundColor: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: ['#111111', accentColorDeep + '26'] }) }]}>
+          <Text style={styles.stepLabel}>STEP {step + 1} / {microSteps.length}</Text>
+          <Text style={styles.stepText}>{microSteps[step]}</Text>
+        </Animated.View>
+
+        <View style={{ flex: 1, minHeight: 16 }} />
 
         {!onLastStep ? (
           <TouchableOpacity
@@ -145,13 +174,13 @@ export default function BadDayScreen() {
             onPress={handleNext}
             activeOpacity={0.8}
           >
-            <Text style={[styles.primaryBtnText, { color: accentColor }]}>NEXT →</Text>
+            <Text style={[styles.primaryBtnText, { color: accentColor }]} numberOfLines={1} maxFontSizeMultiplier={1.3}>NEXT →</Text>
           </TouchableOpacity>
         ) : (
           <>
             <View style={styles.afterSection}>
               <Text style={styles.sectionLabel}>HOW DO YOU FEEL NOW?</Text>
-              <Text style={[styles.postScore, { color: accentColor }]}>{postScore}/10</Text>
+              <Text style={[styles.postScore, { color: accentColorDeep }]}>{postScore}/10</Text>
               <Text style={styles.deltaHint}>
                 Shift: {formatSessionDelta(intensity, postScore)}
               </Text>
@@ -162,9 +191,9 @@ export default function BadDayScreen() {
                 step={1}
                 value={postScore}
                 onValueChange={setPostScore}
-                minimumTrackTintColor={accentColor}
+                minimumTrackTintColor={accentColorDeep}
                 maximumTrackTintColor="#1a1a1a"
-                thumbTintColor={accentColor}
+                thumbTintColor={accentColorDeep}
               />
             </View>
             <TouchableOpacity
@@ -184,13 +213,13 @@ export default function BadDayScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
-  content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 48 },
-  backButton: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  content: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 48, flexGrow: 1 },
+  backButton: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5 },
   label: { ...t.label, color: colors.accent, letterSpacing: 3, marginTop: 24 },
   headline: { ...t.headline, fontSize: 26, marginTop: 8 },
   subtext: { ...t.bodyMuted, marginTop: 12, lineHeight: 22 },
   moodSection: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#1a1a1a', paddingTop: 20 },
-  sectionLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2, marginBottom: 12 },
+  sectionLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5, marginBottom: 12 },
   moodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   moodChip: {
     borderWidth: 1,
@@ -198,16 +227,18 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   intensityRow: { marginTop: 16 },
-  intensityLabel: { ...t.label, color: '#c8c8c8' },
+  intensityLabel: { ...t.label, color: '#f0f0f0' },
   slider: { width: '100%', height: 36, marginTop: 4 },
+  dotsRow: { flexDirection: 'row', gap: 8, marginBottom: 12, marginTop: 24 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  dotEmpty: { backgroundColor: '#2a2a2a' },
   stepCard: {
-    marginTop: 24,
     borderLeftWidth: 3,
     backgroundColor: '#111111',
     paddingVertical: 16,
     paddingHorizontal: 16,
   },
-  stepLabel: { ...t.label, color: '#c8c8c8', letterSpacing: 2 },
+  stepLabel: { ...t.label, color: '#f0f0f0', letterSpacing: 1.5 },
   stepText: { ...t.body, marginTop: 10, lineHeight: 24 },
   primaryBtn: {
     marginTop: 24,
@@ -218,7 +249,7 @@ const styles = StyleSheet.create({
   primaryBtnText: { ...t.button, letterSpacing: 2 },
   afterSection: { marginTop: 28, alignItems: 'center' },
   postScore: { ...t.dataValue, fontSize: 40, marginTop: 8 },
-  deltaHint: { ...t.bodySm, color: '#c8c8c8', marginTop: 4, marginBottom: 8 },
+  deltaHint: { ...t.bodySm, color: '#d8d8d8', marginTop: 4, marginBottom: 8 },
   logBtn: {
     marginTop: 24,
     backgroundColor: '#059669',

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   View,
@@ -61,11 +61,22 @@ export default function CrisisScreen() {
   // the clipboard write rejects, callers must still be able to surface the
   // number to the user (this is the crisis screen; a silent failure here is
   // the worst-case outcome).
+  // Timer that clears the "copied" confirmation. Held in a ref + cleared on
+  // unmount so it never calls setState after the screen is gone.
+  const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+    },
+    [],
+  );
+
   const copyNumber = useCallback(async (number: string): Promise<boolean> => {
     try {
       await Clipboard.setStringAsync(number);
       setCopiedNumber(number);
-      setTimeout(() => setCopiedNumber(null), 2000);
+      if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+      copyResetTimer.current = setTimeout(() => setCopiedNumber(null), 2000);
       return true;
     } catch {
       return false;
@@ -219,7 +230,7 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -249,7 +260,7 @@ const styles = StyleSheet.create({
   },
   emergencyText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 22,
     marginBottom: 28,
@@ -268,7 +279,7 @@ const styles = StyleSheet.create({
   },
   cardDetail: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     letterSpacing: 1,
     marginBottom: 18,
@@ -280,7 +291,7 @@ const styles = StyleSheet.create({
   },
   actionBtnText: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     // eslint-disable-next-line local/no-dark-text-color
     color: '#000000',
     letterSpacing: 3,
@@ -291,7 +302,7 @@ const styles = StyleSheet.create({
   },
   groundingLabel: {
     fontFamily: fonts.mono.regular,
-    fontSize: 12,
+    fontSize: 16,
     lineHeight: 17,
     color: '#ffffff',
     letterSpacing: 3,
@@ -306,13 +317,13 @@ const styles = StyleSheet.create({
   },
   groundingTitle: {
     fontFamily: fonts.primary.bold,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
     marginBottom: 12,
   },
   groundingBody: {
     fontFamily: fonts.mono.regular,
-    fontSize: 14,
+    fontSize: 16,
     color: '#ffffff',
     lineHeight: 22,
   },

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useAudioPlayer } from 'expo-audio';
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import { SEVERITIES } from '@/lib/insult-severity';
 import { pickClip } from '@/lib/insult-library';
@@ -22,22 +22,16 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
   const [tier, setTier] = useState<InsultTier>(DEFAULT_TIER);
   const [line, setLine] = useState<string | null>(null);
   const [clipUri, setClipUri] = useState<string | null>(null);
-  const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
   const manifestRef = useRef<Manifest | null>(null);
   const rollToken = useRef(0);
   const unmountedRef = useRef(false);
-  const player = useAudioPlayer(previewSrc);
+  const { play } = usePreviewPlayer();
 
   useEffect(() => {
     getCoachVoice().then(setVoice).catch(() => {});
     fetchManifest().then((m) => { manifestRef.current = m; }).catch(() => {});
     return () => { unmountedRef.current = true; };
   }, []);
-
-  useEffect(() => {
-    if (previewSrc) { try { player.seekTo(0); player.play(); } catch {} }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- player is a stable expo-audio ref; src drives playback
-  }, [previewSrc]);
 
   // Online: the displayed line IS a clip (text + audio match) and ▶ appears once
   // the audio resolves. Offline / no manifest / clip not downloadable: fall back
@@ -68,8 +62,8 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
   const onTier = useCallback((t: InsultTier) => { setTier(t); if (mood) roll(mood, t); }, [mood, roll]);
 
   const hearIt = useCallback(() => {
-    if (clipUri) setPreviewSrc({ uri: clipUri });
-  }, [clipUri]);
+    if (clipUri) play(clipUri);
+  }, [clipUri, play]);
 
   const bringItOn = useCallback(async () => {
     await setInsultSeverity(tier).catch(() => {});

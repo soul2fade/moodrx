@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import {
+  pickClip,
   validateManifest,
   remoteUrl,
   localUri,
@@ -90,6 +91,18 @@ export async function ensureClip(entry: ClipEntry): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/** Resolve a playable clip URI for a voice+tier: pick a clip from the manifest,
+ *  then ensure it's cached/downloaded. null if no manifest/clip or download
+ *  fails. Shared by the voice + severity preview pickers. */
+export async function resolvePreviewClip(
+  manifest: Manifest | null, voice: string, tier: InsultTier,
+): Promise<string | null> {
+  if (!manifest) return null;
+  const entry = pickClip(manifest, voice, tier);
+  if (!entry) return null;
+  return ensureClip(entry).catch(() => null);
 }
 
 /** Best-effort background prefetch of a voice+tier, capped to avoid pulling a

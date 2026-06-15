@@ -4,7 +4,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import { SEVERITIES } from '@/lib/insult-severity';
 import { pickClip } from '@/lib/insult-library';
-import type { ClipEntry, InsultTier, Manifest } from '@/lib/insult-library';
+import type { InsultTier, Manifest } from '@/lib/insult-library';
 import { fetchManifest, ensureClip } from '@/lib/insult-cache';
 import { getCoachVoice, setInsultSeverity } from '@/lib/storage';
 import { fonts } from '@/lib/typography';
@@ -21,9 +21,10 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
   const [mood, setMood] = useState<string | null>(null);
   const [tier, setTier] = useState<InsultTier>(DEFAULT_TIER);
   const [line, setLine] = useState<string | null>(null);
-  const [clip, setClip] = useState<ClipEntry | null>(null);
+  const [clipUri, setClipUri] = useState<string | null>(null);
   const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
   const manifestRef = useRef<Manifest | null>(null);
+  const rollToken = useRef(0);
   const player = useAudioPlayer(previewSrc);
 
   useEffect(() => {
@@ -36,29 +37,46 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- player is a stable expo-audio ref; src drives playback
   }, [previewSrc]);
 
-  // Online: the displayed line IS a clip (text + audio match). Offline / no
-  // manifest: fall back to the bundled, mood-specific drMoodRx line with no audio.
+  // Online: the displayed line IS a clip (text + audio match) and ▶ appears once
+  // the audio resolves. Offline / no manifest / clip not downloadable: fall back
+  // to the bundled, mood-specific drMoodRx line with NO ▶. A cached manifest can
+  // outlive connectivity, so a manifest entry existing does NOT prove a playable
+  // clip — gate ▶ on a resolved URI (that was the offline broken-▶ bug).
   const roll = useCallback((m: string, t: InsultTier) => {
     const manifest = manifestRef.current;
     const picked = manifest ? pickClip(manifest, voice, t) : null;
-    if (picked) { setClip(picked); setLine(picked.text); return; }
-    setClip(null);
-    setLine(MOODS[m as keyof typeof MOODS]?.drMoodRx ?? null);
+    const token = ++rollToken.current;
+    const bundled = MOODS[m as keyof typeof MOODS]?.drMoodRx ?? null;
+    if (!picked) { setLine(bundled); setClipUri(null); return; }
+    // Show the clip text immediately; reveal ▶ only if the audio actually resolves.
+    setLine(picked.text);
+    setClipUri(null);
+    void ensureClip(picked)
+      .then((uri) => {
+        if (rollToken.current !== token) return;
+        if (uri) setClipUri(uri);
+        else setLine(bundled); // offline + not cached → bundled text, no ▶
+      })
+      .catch(() => {
+        if (rollToken.current === token) setLine(bundled);
+      });
   }, [voice]);
 
   const onMood = useCallback((m: string) => { setMood(m); roll(m, tier); }, [roll, tier]);
   const onTier = useCallback((t: InsultTier) => { setTier(t); if (mood) roll(mood, t); }, [mood, roll]);
 
-  const hearIt = useCallback(async () => {
-    if (!clip) return;
-    const uri = await ensureClip(clip).catch(() => null);
-    if (uri) setPreviewSrc({ uri });
-  }, [clip]);
+  const hearIt = useCallback(() => {
+    if (clipUri) setPreviewSrc({ uri: clipUri });
+  }, [clipUri]);
 
   const bringItOn = useCallback(async () => {
     await setInsultSeverity(tier).catch(() => {});
     onContinue();
   }, [tier, onContinue]);
+
+  // Once a mood is picked, the roast tile + the selected burn level adopt that
+  // mood's color (matching the selected chip); before any pick, fall back to red.
+  const moodColor = mood ? (MOODS[mood as keyof typeof MOODS]?.color ?? '#E11D48') : '#E11D48';
 
   return (
     <View style={styles.wrap}>
@@ -84,10 +102,10 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
       </View>
 
       {line ? (
-        <View style={styles.roastBox}>
-          <Text style={styles.roastWho}>DR. MOODRX</Text>
+        <View style={[styles.roastBox, { borderLeftColor: moodColor, backgroundColor: moodColor + '22' }]}>
+          <Text style={[styles.roastWho, { color: moodColor }]}>DR. MOODRX</Text>
           <Text style={styles.roastLine}>&ldquo;{line}&rdquo;</Text>
-          {clip ? (
+          {clipUri ? (
             <Pressable onPress={hearIt} accessibilityRole="button" accessibilityLabel="Hear it" style={styles.hearBtn}>
               <Text style={styles.hearText}>▶ Hear it</Text>
             </Pressable>
@@ -106,9 +124,9 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
             onPress={() => onTier(s.key)}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            style={[styles.tierRow, selected && styles.tierRowSelected]}
+            style={[styles.tierRow, selected && styles.tierRowSelected, selected && { borderColor: moodColor, backgroundColor: moodColor + '18' }]}
           >
-            <Text style={[styles.tierName, selected && styles.tierNameSelected]}>{s.label}</Text>
+            <Text style={[styles.tierName, selected && styles.tierNameSelected, selected && { color: moodColor }]}>{s.label}</Text>
             <Text style={styles.tierBlurb}>{s.blurb}</Text>
             {s.warning ? <Text style={styles.tierWarning}>{s.warning}</Text> : null}
           </Pressable>

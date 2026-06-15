@@ -204,9 +204,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const hasEntitlement =
         customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
       if (hasEntitlement) {
-        Alert.alert('Restored', 'Your MoodRx Pro purchase has been restored.');
+        Alert.alert('Restored', 'Your MoodRx purchase has been restored.');
       } else {
-        Alert.alert('No purchases found', 'No previous MoodRx Pro purchase was found.');
+        Alert.alert('No purchases found', 'No previous MoodRx purchase was found.');
       }
       return hasEntitlement;
     } catch (err: unknown) {

@@ -186,7 +186,7 @@ export default function HomeScreen() {
   const accentColor = selectedMood ? MOODS[selectedMood].color : '#ffffff';
   const showStillFeeling = !isLoading && !selectedMood && lastSession != null && (Date.now() - lastSession.timestamp < 18 * 60 * 60 * 1000);
   const showSameAsYesterday = !isLoading && !checkedInToday && !selectedMood && lastSession != null && isYesterdayTimestamp(lastSession.timestamp);
-  const { isPremium, isLoading: subLoading } = useSubscription();
+  const { isPremium, isPlus, isLoading: subLoading } = useSubscription();
 
   const handleDismissNavHint = useCallback(async () => {
     setShowNavHint(false);
@@ -288,7 +288,7 @@ export default function HomeScreen() {
         {/* Top row */}
         <View style={styles.topRow}>
           {/* Render neither badge while subscription state is still loading,
-              to avoid flashing "TRY PRO" at users who actually have Pro. */}
+              to avoid flashing "OWN IT" at users who already have access. */}
           {subLoading ? (
             <View style={styles.tryProBadge} />
           ) : !isPremium ? (
@@ -297,13 +297,13 @@ export default function HomeScreen() {
               activeOpacity={0.7}
               style={styles.tryProBadge}
               accessibilityRole="button"
-              accessibilityLabel="Try Pro"
+              accessibilityLabel="Own MoodRx"
             >
-              <Text style={styles.tryProBadgeText}>TRY PRO →</Text>
+              <Text style={styles.tryProBadgeText}>OWN IT →</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.proMemberBadge}>
-              <Text style={styles.proMemberBadgeText}>PRO</Text>
+              <Text style={styles.proMemberBadgeText}>{isPlus ? 'MOODRX+' : 'OWNED'}</Text>
             </View>
           )}
           {streak > 0 && (

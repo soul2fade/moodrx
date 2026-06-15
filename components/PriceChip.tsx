@@ -4,9 +4,9 @@ import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
 
 /**
- * The one locked-state affordance (spec §6): a small gold "PRO" chip that opens
+ * The one locked-state affordance (spec §6): a small gold lock chip that opens
  * the offer sheet (the price lives in the sheet, not on the lock). `label`
- * overrides the default "Unlock Pro" for context (e.g. "+3 more patterns — Pro").
+ * overrides the default "Own it" for context (e.g. "+3 more patterns — own it").
  * Pass `center` for hero locks (e.g. the calendar overlay) where the chip should
  * sit centered rather than left-aligned.
  */
@@ -24,7 +24,7 @@ export function PriceChip({
   /** Override the gold default — e.g. the mood accent on the prescription screen. */
   tint?: string;
 }) {
-  const text = label ?? 'Unlock Pro';
+  const text = label ?? 'Own it';
   return (
     <Pressable
       onPress={onPress}

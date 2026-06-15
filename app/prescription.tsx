@@ -239,7 +239,7 @@ export default function PrescriptionScreen() {
                         onPress={() => openSheet('workouts')}
                         activeOpacity={0.7}
                         accessibilityRole="button"
-                        accessibilityLabel={`Unlock ${workout.name} with Pro`}
+                        accessibilityLabel={`Own MoodRx to unlock ${workout.name}`}
                       >
                         <View style={styles.workoutCardTop}>
                           <Text style={styles.workoutNumber}>{String(index + 1).padStart(2, '0')}</Text>
@@ -425,10 +425,10 @@ export default function PrescriptionScreen() {
                     openSheet('supplements');
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel="Unlock Pro to access full stack"
+                  accessibilityLabel="Own MoodRx to access full stack"
                 >
                   <Text style={[styles.suppModalUnlockText, { color: accentColor }]}>
-                    UNLOCK FULL STACK WITH PRO →
+                    UNLOCK FULL STACK — OWN IT →
                   </Text>
                 </TouchableOpacity>
               )}

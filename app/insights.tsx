@@ -277,12 +277,12 @@ export default function InsightsScreen() {
           onPress={() => router.push('/supplements')}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker with Pro'}
+          accessibilityLabel={isPremium ? 'Open supplement tracker' : 'Unlock supplement tracker — own MoodRx'}
         >
           {isPremium ? (
             <Text style={styles.supplementBtnText}>SUPPLEMENT TRACKER →</Text>
           ) : (
-            <Text style={styles.supplementBtnText}>SUPPLEMENT TRACKER <Text style={styles.proTag}>[PRO]</Text> →</Text>
+            <Text style={styles.supplementBtnText}>SUPPLEMENT TRACKER <Text style={styles.proTag}>[OWN IT]</Text> →</Text>
           )}
         </TouchableOpacity>
 
@@ -292,12 +292,12 @@ export default function InsightsScreen() {
           onPress={() => (isPremium ? router.push('/programs') : openSheet('programs'))}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={isPremium ? 'Open programs' : 'Unlock programs with Pro'}
+          accessibilityLabel={isPremium ? 'Open programs' : 'Unlock programs — own MoodRx'}
         >
           {isPremium ? (
             <Text style={styles.supplementBtnText}>PROGRAMS →</Text>
           ) : (
-            <Text style={styles.supplementBtnText}>PROGRAMS <Text style={styles.proTag}>[PRO]</Text> →</Text>
+            <Text style={styles.supplementBtnText}>PROGRAMS <Text style={styles.proTag}>[OWN IT]</Text> →</Text>
           )}
         </TouchableOpacity>
 
@@ -410,7 +410,7 @@ export default function InsightsScreen() {
             {!subLoading && !isPremium && lockedPatternCount > 0 && (
               <PriceChip
                 onPress={() => openSheet('patterns')}
-                label={`+${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'} — Pro`}
+                label={`+${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'} — own it`}
                 accessibilityLabel={`See ${lockedPatternCount} more ${lockedPatternCount === 1 ? 'pattern' : 'patterns'}`}
               />
             )}
@@ -471,7 +471,7 @@ export default function InsightsScreen() {
             {!subLoading && !isPremium && workoutStats.total > 3 && (
               <PriceChip
                 onPress={() => openSheet('history')}
-                label={`+${workoutStats.total - 3} more — Pro`}
+                label={`+${workoutStats.total - 3} more — own it`}
                 accessibilityLabel={`See all ${workoutStats.total - 3} more workouts`}
               />
             )}
@@ -519,7 +519,7 @@ export default function InsightsScreen() {
             {!subLoading && !isPremium && sessionCount > 3 && (
               <PriceChip
                 onPress={() => openSheet('history')}
-                label={`+${sessionCount - 3} more session${sessionCount - 3 === 1 ? '' : 's'} — Pro`}
+                label={`+${sessionCount - 3} more session${sessionCount - 3 === 1 ? '' : 's'} — own it`}
                 accessibilityLabel={`See all ${sessionCount - 3} more sessions`}
               />
             )}
@@ -550,7 +550,7 @@ export default function InsightsScreen() {
             {!subLoading && !isPremium && sessionNotes.total > 3 && (
               <PriceChip
                 onPress={() => openSheet('history')}
-                label={`+${sessionNotes.total - 3} more notes — Pro`}
+                label={`+${sessionNotes.total - 3} more notes — own it`}
                 accessibilityLabel={`See all ${sessionNotes.total - 3} more notes`}
               />
             )}

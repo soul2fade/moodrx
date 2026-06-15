@@ -73,7 +73,7 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityState={{ disabled: buyBtn.disabled, busy: buyBtn.busy }}
-          accessibilityLabel={`Unlock MoodRx Pro, ${basePrice} one time`}
+          accessibilityLabel={`Own MoodRx, ${basePrice} one time`}
         >
           {buyBtn.busy ? (
             <ActivityIndicator size="small" color={colors.premium} />
@@ -81,7 +81,7 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
             <Text style={styles.planPrice}>You&apos;re in ✓</Text>
           ) : (
             <>
-              <Text style={styles.planPrice}>UNLOCK MOODRX PRO — {basePrice}</Text>
+              <Text style={styles.planPrice}>OWN MOODRX — {basePrice}</Text>
               <Text style={styles.planSub}>One-time purchase. Yours forever.</Text>
             </>
           )}

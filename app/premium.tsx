@@ -36,6 +36,7 @@ export default function PremiumScreen() {
     purchaseBase,
     restorePurchases,
     isPremium,
+    isPlus,
     offerings,
     isLoading: subLoading,
   } = useSubscription();
@@ -91,7 +92,7 @@ export default function PremiumScreen() {
           <Text style={styles.backButton}>← BACK</Text>
         </TouchableOpacity>
 
-        <Text style={styles.proLabel}>MOODRX PRO</Text>
+        <Text style={styles.proLabel}>OWN MOODRX</Text>
         <Text style={styles.headline}>The full prescription.</Text>
 
         <View style={styles.divider} />
@@ -100,7 +101,7 @@ export default function PremiumScreen() {
 
         {isPremium && baseBtn.phase === 'idle' ? (
           <View style={styles.statusBadge}>
-            <Text style={styles.statusBadgeText}>YOU HAVE PRO</Text>
+            <Text style={styles.statusBadgeText}>{isPlus ? 'MOODRX+ ACTIVE' : 'YOU OWN MOODRX'}</Text>
           </View>
         ) : (
           <TouchableOpacity
@@ -110,13 +111,13 @@ export default function PremiumScreen() {
             activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityState={{ disabled: baseBtn.disabled, busy: baseBtn.busy }}
-            accessibilityLabel={`Unlock MoodRx Pro, ${basePrice} one time`}
+            accessibilityLabel={`Own MoodRx, ${basePrice} one time`}
           >
             {baseBtn.busy ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <Text style={styles.ctaText}>
-                {purchaseButtonLabel(baseBtn.status, { idle: `UNLOCK MOODRX PRO — ${basePrice} →` })}
+                {purchaseButtonLabel(baseBtn.status, { idle: `OWN MOODRX — ${basePrice} →` })}
               </Text>
             )}
           </TouchableOpacity>

@@ -8,7 +8,7 @@ import type { InsultTier, Manifest } from '@/lib/insult-library';
 import { fetchManifest, ensureClip } from '@/lib/insult-cache';
 import { getCoachVoice, setInsultSeverity } from '@/lib/storage';
 import { fonts } from '@/lib/typography';
-import { colors } from '@/lib/colors';
+import { colors, tintFill } from '@/lib/colors';
 
 const DEFAULT_TIER: InsultTier = 'sticks';
 
@@ -78,7 +78,7 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
 
   // Once a mood is picked, the roast tile + the selected burn level adopt that
   // mood's color (matching the selected chip); before any pick, fall back to red.
-  const moodColor = mood ? (MOODS[mood as keyof typeof MOODS]?.color ?? '#E11D48') : '#E11D48';
+  const moodColor = mood ? (MOODS[mood as keyof typeof MOODS]?.color ?? colors.danger) : colors.danger;
 
   return (
     <View style={styles.wrap}>
@@ -95,7 +95,7 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
               onPress={() => onMood(k)}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              style={[styles.chip, selected && { borderColor: m.color, backgroundColor: m.color + '22' }]}
+              style={[styles.chip, selected && tintFill(m.color)]}
             >
               <Text style={[styles.chipText, selected && { color: m.color }]}>{m.name}</Text>
             </Pressable>
@@ -126,7 +126,7 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
             onPress={() => onTier(s.key)}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            style={[styles.tierRow, selected && styles.tierRowSelected, selected && { borderColor: moodColor, backgroundColor: moodColor + '18' }]}
+            style={[styles.tierRow, selected && styles.tierRowSelected, selected && tintFill(moodColor, '18')]}
           >
             <Text style={[styles.tierName, selected && styles.tierNameSelected, selected && { color: moodColor }]}>{s.label}</Text>
             <Text style={styles.tierBlurb}>{s.blurb}</Text>
@@ -152,21 +152,21 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
 const styles = StyleSheet.create({
   wrap: { paddingBottom: 8 },
   kicker: { fontFamily: fonts.mono.regular, fontSize: 16, color: colors.premium, letterSpacing: 3, lineHeight: 18 },
-  headline: { fontFamily: fonts.primary.bold, fontSize: 28, color: '#ffffff', lineHeight: 34, marginTop: 8, marginBottom: 18 },
+  headline: { fontFamily: fonts.primary.bold, fontSize: 28, color: colors.text, lineHeight: 34, marginTop: 8, marginBottom: 18 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
-  chip: { borderWidth: 1, borderColor: '#333333', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
+  chip: { borderWidth: 1, borderColor: colors.borderMedium, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
   chipText: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle },
   prompt: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, lineHeight: 22, marginBottom: 20 },
-  roastBox: { borderLeftWidth: 3, borderLeftColor: '#E11D48', backgroundColor: '#120c0e', borderRadius: 8, padding: 14, marginBottom: 20 },
+  roastBox: { borderLeftWidth: 3, borderLeftColor: colors.danger, backgroundColor: '#120c0e', borderRadius: 8, padding: 14, marginBottom: 20 },
   roastWho: { fontFamily: fonts.mono.regular, fontSize: 16, color: colors.premium, letterSpacing: 2, lineHeight: 18 },
   roastLine: { fontFamily: fonts.primary.regular, fontSize: 17, color: '#ededea', lineHeight: 24, marginTop: 8 },
-  hearBtn: { marginTop: 12, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#3a3a3a', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14 },
-  hearText: { fontFamily: fonts.primary.bold, fontSize: 16, color: '#ffffff' },
+  hearBtn: { marginTop: 12, alignSelf: 'flex-start', borderWidth: 1, borderColor: colors.textDark, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14 },
+  hearText: { fontFamily: fonts.primary.bold, fontSize: 16, color: colors.text },
   burnLabel: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, marginBottom: 10 },
-  tierRow: { borderWidth: 1, borderColor: '#333333', borderRadius: 12, paddingVertical: 13, paddingHorizontal: 16, marginBottom: 10 },
-  tierRowSelected: { borderColor: '#E11D48', backgroundColor: '#E11D4818' },
+  tierRow: { borderWidth: 1, borderColor: colors.borderMedium, borderRadius: 12, paddingVertical: 13, paddingHorizontal: 16, marginBottom: 10 },
+  tierRowSelected: tintFill(colors.danger, '18'),
   tierName: { fontFamily: fonts.primary.bold, fontSize: 17, color: '#f0f0f0' },
-  tierNameSelected: { color: '#ffffff' },
+  tierNameSelected: { color: colors.text },
   tierBlurb: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, marginTop: 3 },
   tierWarning: { fontFamily: fonts.mono.regular, fontSize: 16, color: colors.premium, marginTop: 4, letterSpacing: 0.5 },
   optional: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, lineHeight: 22, marginTop: 8, marginBottom: 20 },

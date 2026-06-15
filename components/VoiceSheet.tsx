@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { VOICES, type VoiceOption } from '@/lib/voices';
+import { colors, tintFill } from '@/lib/colors';
 
 interface Props {
   visible: boolean;
@@ -13,8 +14,6 @@ interface Props {
   onClose: () => void;
   onPlus: () => void;
 }
-
-const ACCENT = '#E11D48';
 
 function VoiceRow({
   voice, isSelected, owned, previewAvailable, onSelect, onPreview,
@@ -87,7 +86,7 @@ const styles = StyleSheet.create({
   header: { color: '#f5f5f5', fontSize: 20, fontWeight: '800', letterSpacing: 1, textAlign: 'center' },
   sub: { color: '#cfcfcf', fontSize: 16, textAlign: 'center', marginTop: 6, marginBottom: 16 },
   row: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#333333', borderRadius: 12, marginTop: 10, paddingRight: 10 },
-  rowSelected: { borderColor: ACCENT, backgroundColor: '#E11D4818' },
+  rowSelected: tintFill(colors.danger, '18'),
   rowMain: { flex: 1, paddingVertical: 13, paddingLeft: 16 },
   rowLabel: { color: '#f0f0f0', fontSize: 17, fontWeight: '700' },
   rowLabelSelected: { color: '#ffffff' },

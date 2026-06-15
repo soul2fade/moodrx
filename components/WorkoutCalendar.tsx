@@ -5,6 +5,7 @@ import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 import { sessionImprovement } from '@/lib/patterns';
 import { type as t } from '../lib/typography';
+import { colors } from '@/lib/colors';
 
 interface WorkoutCalendarProps {
   sessions: Session[];
@@ -185,7 +186,7 @@ export function WorkoutCalendar({ sessions }: WorkoutCalendarProps) {
                           <Text style={styles.sessionTime}>{formatTime(s.timestamp)}</Text>
                         </View>
                         <Text style={styles.sessionWorkout}>{s.workoutName}</Text>
-                        <Text style={[styles.sessionChange, { color: improved ? '#059669' : '#E11D48' }]}>
+                        <Text style={[styles.sessionChange, { color: improved ? colors.success : colors.danger }]}>
                           {s.intensity} → {s.postScore} ({change})
                         </Text>
                       </View>

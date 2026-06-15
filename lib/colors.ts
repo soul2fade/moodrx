@@ -41,3 +41,10 @@ export const colors = {
   // Overlay
   backdrop: 'rgba(0,0,0,0.6)',
 } as const;
+
+/** Selected/active fill: a solid border + a tinted (alpha-suffixed) background in
+ *  one color. Replaces the repeated `{ borderColor: c, backgroundColor: c + '22' }`
+ *  idiom across the chips/rows. `alpha` is a 2-char hex byte (default ~13%). */
+export function tintFill(color: string, alpha = '22') {
+  return { borderColor: color, backgroundColor: color + alpha };
+}

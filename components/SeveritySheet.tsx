@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { SEVERITIES } from '@/lib/insult-severity';
 import type { InsultTier } from '@/lib/insult-library';
 import { fonts } from '@/lib/typography';
-import { colors } from '@/lib/colors';
+import { colors, tintFill } from '@/lib/colors';
 
 interface Props {
   visible: boolean;
@@ -11,8 +11,6 @@ interface Props {
   onConfirm: (tier: InsultTier) => void;
   onCancel: () => void;
 }
-
-const ACCENT = '#E11D48';
 
 export function SeveritySheet({ visible, current, onConfirm, onCancel }: Props) {
   return (
@@ -82,10 +80,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 10,
   },
-  rowSelected: {
-    borderColor: ACCENT,
-    backgroundColor: '#E11D4818',
-  },
+  rowSelected: tintFill(colors.danger, '18'),
   rowLabel: {
     color: '#f0f0f0',
     fontSize: 17,

@@ -25,11 +25,9 @@ import {
   REVENUECAT_ENTITLEMENT_IDENTIFIER,
   ALL_ACCESS_ENTITLEMENT_IDENTIFIER,
   BASE_UNLOCK_PACKAGE_ID,
-  PACKS_OFFERING_ID,
   PLUS_OFFERING_ID,
-  packEntitlementId,
 } from '@/lib/revenuecat';
-import { ownsVoice as resolveOwnsVoice, voiceEntitlementId } from '@/lib/voices';
+import { ownsVoice as resolveOwnsVoice } from '@/lib/voices';
 import { colors } from '@/lib/colors';
 
 interface RCPurchaseError {
@@ -46,8 +44,6 @@ interface SubscriptionContextValue {
   isPremium: boolean;
   /** True when MoodRx+ (all_access) is active — gates the live AI coach. */
   isPlus: boolean;
-  /** True when the user owns the given pack (or has all-access). */
-  ownsPack: (packId: string) => boolean;
   /** True when the user can use the given coach voice (owns it, the bundle, or all-access). */
   ownsVoice: (name: string) => boolean;
   /** All currently-held entitlement identifiers (consumed by effectiveVoice). */
@@ -56,10 +52,6 @@ interface SubscriptionContextValue {
   offerings: PurchasesOfferings | null;
   /** Resolves true when the base unlock was actually granted. */
   purchaseBase: () => Promise<boolean>;
-  /** Resolves true when the given pack was actually granted. */
-  purchasePack: (packId: string) => Promise<boolean>;
-  /** Resolves true when the given voice was actually granted. */
-  purchaseVoice: (name: string) => Promise<boolean>;
   /** Resolves true when MoodRx+ (all_access) was actually granted. */
   purchasePlus: (period: 'monthly' | 'annual') => Promise<boolean>;
   /** Resolves true when a previous purchase was found and restored. */
@@ -99,13 +91,6 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     setIsPaidPremium(active[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined);
     setOwnedEntitlements(new Set(Object.keys(active)));
   }, []);
-
-  const ownsPack = useCallback(
-    (packId: string): boolean =>
-      ownedEntitlements.has(packEntitlementId(packId)) ||
-      ownedEntitlements.has(ALL_ACCESS_ENTITLEMENT_IDENTIFIER),
-    [ownedEntitlements],
-  );
 
   const ownsVoice = useCallback(
     (name: string): boolean => resolveOwnsVoice(name, ownedEntitlements),
@@ -189,21 +174,6 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     return triggerPurchase(pkg, REVENUECAT_ENTITLEMENT_IDENTIFIER);
   }, [offerings, triggerPurchase]);
 
-  const purchasePack = useCallback((packId: string): Promise<boolean> => {
-    const pkg = offerings?.all?.[PACKS_OFFERING_ID]?.availablePackages?.find(
-      (p) => p.identifier === packId,
-    );
-    return triggerPurchase(pkg, packEntitlementId(packId));
-  }, [offerings, triggerPurchase]);
-
-  const purchaseVoice = useCallback((name: string): Promise<boolean> => {
-    const productId = voiceEntitlementId(name); // 'voice_<name>' — product id === entitlement id
-    const pkg = offerings?.all?.[PACKS_OFFERING_ID]?.availablePackages?.find(
-      (p) => p.identifier === productId,
-    );
-    return triggerPurchase(pkg, productId);
-  }, [offerings, triggerPurchase]);
-
   const purchasePlus = useCallback((period: 'monthly' | 'annual'): Promise<boolean> => {
     const pkgId = period === 'annual' ? '$rc_annual' : '$rc_monthly';
     const pkg = offerings?.all?.[PLUS_OFFERING_ID]?.availablePackages?.find(
@@ -279,14 +249,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     () => ({
       isPremium,
       isPlus,
-      ownsPack,
       ownsVoice,
       ownedEntitlements,
       isLoading,
       offerings,
       purchaseBase,
-      purchasePack,
-      purchaseVoice,
       purchasePlus,
       restorePurchases,
       devTogglePremium,
@@ -295,14 +262,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     [
       isPremium,
       isPlus,
-      ownsPack,
       ownsVoice,
       ownedEntitlements,
       isLoading,
       offerings,
       purchaseBase,
-      purchasePack,
-      purchaseVoice,
       purchasePlus,
       restorePurchases,
       devTogglePremium,

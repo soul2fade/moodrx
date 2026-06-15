@@ -22,7 +22,8 @@
       "bundleIdentifier": "com.moodrx.app",
       "appleTeamId": "ST6C3ZM5C3",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "MoodRx accesses your photo library only when you choose to save or share a progress card."
       },
       "entitlements": {
         "com.apple.security.application-groups": [

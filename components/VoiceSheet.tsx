@@ -1,7 +1,8 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { VOICES, type VoiceOption } from '@/lib/voices';
 import { colors, tintFill } from '@/lib/colors';
+import { CenteredModalCard } from '@/components/CenteredModalCard';
 
 interface Props {
   visible: boolean;
@@ -55,36 +56,26 @@ export function VoiceSheet({
   visible, selected, previewAvailable, isOwned, onSelect, onPreview, onClose, onPlus,
 }: Props) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.card} onPress={() => {}}>
-          <Text style={styles.header}>YOUR COACH</Text>
-          <Text style={styles.sub}>Choose who coaches you through a workout.</Text>
-          {VOICES.map((v) => (
-            <VoiceRow
-              key={v.name}
-              voice={v}
-              isSelected={v.name === selected}
-              owned={isOwned(v.name)}
-              previewAvailable={previewAvailable}
-              onSelect={onSelect}
-              onPreview={onPreview}
-            />
-          ))}
-          <Pressable onPress={onPlus} accessibilityRole="button" accessibilityLabel="Unlock every coach with MoodRx Plus" style={styles.plusLink}>
-            <Text style={styles.plusLinkText}>Every coach is included with MoodRx+ →</Text>
-          </Pressable>
-        </Pressable>
+    <CenteredModalCard visible={visible} onClose={onClose} header="YOUR COACH" sub="Choose who coaches you through a workout.">
+      {VOICES.map((v) => (
+        <VoiceRow
+          key={v.name}
+          voice={v}
+          isSelected={v.name === selected}
+          owned={isOwned(v.name)}
+          previewAvailable={previewAvailable}
+          onSelect={onSelect}
+          onPreview={onPreview}
+        />
+      ))}
+      <Pressable onPress={onPlus} accessibilityRole="button" accessibilityLabel="Unlock every coach with MoodRx Plus" style={styles.plusLink}>
+        <Text style={styles.plusLinkText}>Every coach is included with MoodRx+ →</Text>
       </Pressable>
-    </Modal>
+    </CenteredModalCard>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.78)', justifyContent: 'center', paddingHorizontal: 24 },
-  card: { backgroundColor: '#141414', borderRadius: 16, borderWidth: 1, borderColor: '#2a2a2a', paddingVertical: 22, paddingHorizontal: 18 },
-  header: { color: '#f5f5f5', fontSize: 20, fontWeight: '800', letterSpacing: 1, textAlign: 'center' },
-  sub: { color: '#cfcfcf', fontSize: 16, textAlign: 'center', marginTop: 6, marginBottom: 16 },
   row: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#333333', borderRadius: 12, marginTop: 10, paddingRight: 10 },
   rowSelected: tintFill(colors.danger, '18'),
   rowMain: { flex: 1, paddingVertical: 13, paddingLeft: 16 },

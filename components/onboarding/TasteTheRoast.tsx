@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import { SEVERITIES } from '@/lib/insult-severity';
+import { SeverityTierRow } from '@/components/SeverityTierRow';
 import { pickClip } from '@/lib/insult-library';
 import type { InsultTier, Manifest } from '@/lib/insult-library';
 import { fetchManifest, ensureClip } from '@/lib/insult-cache';
@@ -112,22 +113,17 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
       )}
 
       <Text style={styles.burnLabel}>Too soft? Too mean? Set the burn level.</Text>
-      {SEVERITIES.map((s) => {
-        const selected = s.key === tier;
-        return (
-          <Pressable
-            key={s.key}
-            onPress={() => onTier(s.key)}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            style={[styles.tierRow, selected && styles.tierRowSelected, selected && tintFill(moodColor, '18')]}
-          >
-            <Text style={[styles.tierName, selected && styles.tierNameSelected, selected && { color: moodColor }]}>{s.label}</Text>
-            <Text style={styles.tierBlurb}>{s.blurb}</Text>
-            {s.warning ? <Text style={styles.tierWarning}>{s.warning}</Text> : null}
-          </Pressable>
-        );
-      })}
+      {SEVERITIES.map((s) => (
+        <SeverityTierRow
+          key={s.key}
+          label={s.label}
+          blurb={s.blurb}
+          warning={s.warning}
+          selected={s.key === tier}
+          onPress={() => onTier(s.key)}
+          accent={moodColor}
+        />
+      ))}
 
       <Text style={styles.optional}>
         Optional — Dr. MoodRx only chimes in when you turn trash talk on for a workout. Change or mute it anytime in Settings.
@@ -157,12 +153,6 @@ const styles = StyleSheet.create({
   hearBtn: { marginTop: 12, alignSelf: 'flex-start', borderWidth: 1, borderColor: colors.textDark, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14 },
   hearText: { fontFamily: fonts.primary.bold, fontSize: 16, color: colors.text },
   burnLabel: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, marginBottom: 10 },
-  tierRow: { borderWidth: 1, borderColor: colors.borderMedium, borderRadius: 12, paddingVertical: 13, paddingHorizontal: 16, marginBottom: 10 },
-  tierRowSelected: tintFill(colors.danger, '18'),
-  tierName: { fontFamily: fonts.primary.bold, fontSize: 17, color: '#f0f0f0' },
-  tierNameSelected: { color: colors.text },
-  tierBlurb: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, marginTop: 3 },
-  tierWarning: { fontFamily: fonts.mono.regular, fontSize: 16, color: colors.premium, marginTop: 4, letterSpacing: 0.5 },
   optional: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, lineHeight: 22, marginTop: 8, marginBottom: 20 },
   primaryCta: { borderWidth: 1, borderColor: colors.premium, borderRadius: 4, paddingVertical: 14, alignItems: 'center' },
   primaryCtaText: { fontFamily: fonts.primary.bold, fontSize: 16, color: colors.premium, letterSpacing: 1 },

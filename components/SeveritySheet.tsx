@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { SEVERITIES } from '@/lib/insult-severity';
 import type { InsultTier } from '@/lib/insult-library';
 import { fonts } from '@/lib/typography';
+import { colors } from '@/lib/colors';
 
 interface Props {
   visible: boolean;
@@ -33,6 +34,7 @@ export function SeveritySheet({ visible, current, onConfirm, onCancel }: Props) 
               >
                 <Text style={[styles.rowLabel, selected && styles.rowLabelSelected]}>{s.label}</Text>
                 <Text style={styles.rowBlurb}>{s.blurb}</Text>
+                {s.warning ? <Text style={styles.rowWarning}>{s.warning}</Text> : null}
               </Pressable>
             );
           })}
@@ -97,4 +99,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 3,
   },
+  rowWarning: { color: colors.premium, fontSize: 16, marginTop: 4, fontFamily: fonts.mono.regular, letterSpacing: 0.5 },
 });

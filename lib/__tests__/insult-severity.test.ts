@@ -29,8 +29,6 @@ describe('normalizeSeverity', () => {
   });
 });
 
-import { SEVERITIES } from '@/lib/insult-severity';
-
 describe('severity warnings', () => {
   it('only Roasted carries a strong-language warning', () => {
     const roast = SEVERITIES.find((s) => s.key === 'roast');

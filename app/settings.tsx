@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
-import { getAiCoachEnabled, getTrashTalkVolume, getUserProfile, getVentEnabled, getVoiceEnabled, resetLiveCoachTasteUsed, setAiCoachEnabled, setTrashTalkVolume, setUserProfile, setVentEnabled, setVoiceEnabled, UserProfile } from '@/lib/storage';
+import { getAiCoachEnabled, getInsultSeverity, getTrashTalkVolume, getUserProfile, getVentEnabled, getVoiceEnabled, resetLiveCoachTasteUsed, setAiCoachEnabled, setInsultSeverity, setTrashTalkVolume, setUserProfile, setVentEnabled, setVoiceEnabled, UserProfile } from '@/lib/storage';
 import { exportSessionsJson } from '@/lib/export-sessions';
 import { resetAllAppData } from '@/lib/reset-app';
 import { useSessions } from '@/contexts/SessionsContext';
@@ -47,6 +47,9 @@ import {
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PlusSheet } from '@/components/PlusSheet';
+import { SeveritySheet } from '@/components/SeveritySheet';
+import { SEVERITIES } from '@/lib/insult-severity';
+import type { InsultTier } from '@/lib/insult-library';
 
 const NOTIFICATIONS_KEY = NOTIFICATIONS_ENABLED_KEY;
 
@@ -65,6 +68,8 @@ export default function SettingsScreen() {
   const [preferredTime, setPreferredTimeState] = useState<UserProfile['preferredTime']>(undefined);
   const [primaryGoal, setPrimaryGoalState] = useState<UserProfile['primaryGoal']>(undefined);
   const [trashTalkVolume, setTrashTalkVolumeState] = useState(0.7);
+  const [severity, setSeverity] = useState<InsultTier>('sticks');
+  const [severitySheetOpen, setSeveritySheetOpen] = useState(false);
   const [voiceEnabled, setVoiceEnabledState] = useState(true);
   // Voice toggle state can't be read synchronously from AsyncStorage —
   // if we render the toggle from useState(true) and storage actually
@@ -103,7 +108,8 @@ export default function SettingsScreen() {
       getUserProfile(),
       getTrashTalkVolume(),
       getVoiceEnabled(),
-    ]).then(([notifVal, schedule, profile, volume, voiceOn]) => {
+      getInsultSeverity(),
+    ]).then(([notifVal, schedule, profile, volume, voiceOn, savedSeverity]) => {
       const enabled = notifVal === 'true';
       setNotificationsEnabled(enabled);
       toggleAnim.setValue(enabled ? 1 : 0);
@@ -111,6 +117,7 @@ export default function SettingsScreen() {
       if (profile.preferredTime) setPreferredTimeState(profile.preferredTime);
       if (profile.primaryGoal) setPrimaryGoalState(profile.primaryGoal);
       setTrashTalkVolumeState(volume);
+      setSeverity(savedSeverity);
       setVoiceEnabledState(voiceOn);
       voiceToggleAnim.setValue(voiceOn ? 1 : 0);
       setVoiceLoaded(true);
@@ -145,6 +152,14 @@ export default function SettingsScreen() {
     setTrashTalkVolumeState(value);
     await setTrashTalkVolume(value);
   };
+
+  const handleSeverityConfirm = (tier: InsultTier) => {
+    setSeverity(tier);
+    void setInsultSeverity(tier);
+    setSeveritySheetOpen(false);
+  };
+
+  const severityOption = SEVERITIES.find((s) => s.key === severity) ?? SEVERITIES[1];
 
   const handleVoiceToggle = async () => {
     const next = !voiceEnabled;
@@ -398,14 +413,14 @@ export default function SettingsScreen() {
         <Text style={styles.settingsLabel}>SETTINGS</Text>
         <Text style={styles.headline}>Preferences.</Text>
 
-        {/* Pro section */}
-        <Text style={styles.sectionHeader}>MOODRX PRO</Text>
+        {/* Plan / access section */}
+        <Text style={styles.sectionHeader}>YOUR PLAN</Text>
 
         {isPremium && (
           <View style={styles.subStatusRow}>
             <Text style={styles.subStatusLabel}>STATUS</Text>
             <View style={[styles.subStatusBadge, styles.proBadge]}>
-              <Text style={styles.proBadgeText}>PRO</Text>
+              <Text style={styles.proBadgeText}>{isPlus ? 'MOODRX+' : 'OWNED'}</Text>
             </View>
           </View>
         )}
@@ -418,9 +433,9 @@ export default function SettingsScreen() {
               activeOpacity={0.7}
               style={styles.upgradeBtn}
               accessibilityRole="button"
-              accessibilityLabel="Unlock MoodRx Pro"
+              accessibilityLabel="Own MoodRx"
             >
-              <Text style={styles.upgradeBtnText}>UNLOCK PRO — $9.99 →</Text>
+              <Text style={styles.upgradeBtnText}>OWN IT — $9.99 →</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -532,12 +547,28 @@ export default function SettingsScreen() {
           />
         </View>
 
+        <Text style={styles.prefLabel}>ROAST LEVEL</Text>
+        <Text style={styles.prefHint}>How hard Dr. MoodRx goes when you turn on trash talk during a workout.</Text>
+        <TouchableOpacity
+          style={styles.roastRow}
+          onPress={() => setSeveritySheetOpen(true)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Roast level: ${severityOption.label}. Tap to change.`}
+        >
+          <View style={styles.roastTextBlock}>
+            <Text style={styles.roastValue}>{severityOption.label}</Text>
+            {severityOption.warning ? <Text style={styles.roastWarning}>{severityOption.warning}</Text> : null}
+          </View>
+          <Text style={styles.roastChange}>CHANGE</Text>
+        </TouchableOpacity>
+
         <CoachVoicePicker />
 
         <View style={styles.toggleRow}>
           <View style={styles.toggleLabelBlock}>
             <Text style={styles.toggleLabel}>AI coach (live)</Text>
-            <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default; Pro feature.</Text>
+            <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default; MoodRx+ feature.</Text>
           </View>
           <TouchableOpacity
             onPress={handleAiCoachToggle}
@@ -769,7 +800,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
         {isPremium && (
           <View style={[styles.subStatusBadge, styles.proBadge, styles.versionProBadge]}>
-            <Text style={styles.proBadgeText}>PRO MEMBER</Text>
+            <Text style={styles.proBadgeText}>{isPlus ? 'MOODRX+' : 'OWNED'}</Text>
           </View>
         )}
 
@@ -860,6 +891,13 @@ export default function SettingsScreen() {
       </ScrollView>
       <BottomNav />
       <PlusSheet visible={plusVisible} onClose={() => setPlusVisible(false)} />
+
+      <SeveritySheet
+        visible={severitySheetOpen}
+        current={severity}
+        onConfirm={handleSeverityConfirm}
+        onCancel={() => setSeveritySheetOpen(false)}
+      />
     </Animated.View>
   );
 }
@@ -966,6 +1004,20 @@ const styles = StyleSheet.create({
     color: '#cdcdcd',
     marginBottom: 8,
   },
+  roastRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 4,
+  },
+  roastTextBlock: { flex: 1, paddingRight: 12 },
+  roastValue: { fontFamily: fonts.mono.regular, fontSize: 16, lineHeight: 20, letterSpacing: 1, textTransform: 'uppercase' as const, color: '#ffffff' },
+  roastWarning: { fontFamily: fonts.mono.regular, fontSize: 16, lineHeight: 20, letterSpacing: 0.5, color: colors.premium, marginTop: 4 },
+  roastChange: { fontFamily: fonts.mono.regular, fontSize: 16, lineHeight: 20, letterSpacing: 1, textTransform: 'uppercase' as const, color: colors.accent },
   volumeRow: {
     flexDirection: 'row',
     alignItems: 'center',

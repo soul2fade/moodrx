@@ -3,19 +3,17 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   StyleSheet,
-  Pressable,
   ActivityIndicator,
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { usePurchaseButton } from '@/hooks/usePurchaseButton';
 import { offerHeadline, selectBasePrice, CANONICAL_REASSURANCE, type OfferContext } from '@/lib/offer-copy';
 import { OfferProof } from '@/components/OfferProof';
-import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
 import { LegalLinksRow } from '@/components/LegalLinksRow';
+import { PurchaseSheetShell } from '@/components/PurchaseSheetShell';
 
 interface PremiumSheetProps {
   visible: boolean;
@@ -46,15 +44,7 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
 
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        style={styles.overlay}
-        onPress={onClose}
-        accessibilityLabel="Dismiss"
-        accessibilityRole="button"
-      />
-      <View style={styles.sheet}>
-        <View style={styles.handle} />
+    <PurchaseSheetShell visible={visible} onClose={onClose} restoreBtn={restoreBtn}>
         <Text style={styles.headline}>{offerHeadline(context)}</Text>
         <Text style={styles.description}>{CANONICAL_REASSURANCE}</Text>
         <OfferProof />
@@ -82,60 +72,11 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
         </TouchableOpacity>
 
         <LegalLinksRow />
-
-        <View style={styles.footerRow}>
-          <TouchableOpacity
-            onPress={restoreBtn.onPress}
-            disabled={restoreBtn.disabled}
-            activeOpacity={0.7}
-            style={styles.footerBtn}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: restoreBtn.disabled, busy: restoreBtn.busy }}
-            accessibilityLabel="Restore purchase"
-          >
-            {restoreBtn.busy ? (
-              <ActivityIndicator size="small" color={colors.text} />
-            ) : (
-              <Text style={styles.closeText}>
-                {purchaseButtonLabel(restoreBtn.status, { idle: 'RESTORE PURCHASE', success: 'RESTORED ✓' })}
-              </Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={onClose}
-            activeOpacity={0.7}
-            style={styles.footerBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Maybe later"
-          >
-            <Text style={styles.closeText}>MAYBE LATER</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
+    </PurchaseSheetShell>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  sheet: {
-    backgroundColor: '#0a0a0a',
-    borderTopWidth: 1,
-    borderTopColor: '#333333',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 48,
-  },
-  handle: {
-    width: 32,
-    height: 2,
-    backgroundColor: '#333333',
-    alignSelf: 'center',
-    marginBottom: 24,
-  },
   headline: {
     ...t.headlineMd,
     fontSize: 24,
@@ -165,11 +106,4 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginTop: 2,
   },
-  closeText: {
-    ...t.label,
-    color: '#ffffff',
-    letterSpacing: 3,
-  },
-  footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  footerBtn: { flex: 1, alignItems: 'center', paddingVertical: 8 },
 });

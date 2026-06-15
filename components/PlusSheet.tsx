@@ -30,6 +30,16 @@ export function PlusSheet({ visible, onClose }: { visible: boolean; onClose: () 
   const monthlyPrice = priceOf(MONTHLY_PKG, '$3.99');
   const annualPrice = priceOf(ANNUAL_PKG, '$24.99');
 
+  // Annual vs paying monthly for a year — show the real discount as a number
+  // ("SAVE 48%"), computed from live prices so it tracks any price change.
+  // Falls back to the known $24.99-vs-$3.99×12 figure before offerings load.
+  const monthlyNum = pkgs.find((p) => p.identifier === MONTHLY_PKG)?.product?.price ?? 3.99;
+  const annualNum = pkgs.find((p) => p.identifier === ANNUAL_PKG)?.product?.price ?? 24.99;
+  const yearlyIfMonthly = monthlyNum * 12;
+  const annualSavingsPct =
+    yearlyIfMonthly > 0 ? Math.round((1 - annualNum / yearlyIfMonthly) * 100) : 0;
+  const annualSavingsTag = annualSavingsPct > 0 ? `SAVE ${annualSavingsPct}%` : undefined;
+
   const trialBtn = usePurchaseButton({
     offeringsLoaded: !subLoading,
     run: () => purchasePlus(period),
@@ -80,7 +90,7 @@ export function PlusSheet({ visible, onClose }: { visible: boolean; onClose: () 
         <Text style={styles.description}>Live Dr. MoodRx + every voice + new content packs.</Text>
         <Text style={styles.trialLine}>7 days free, then your plan.</Text>
 
-        <PlanRow id="annual" label="Annual" price={annualPrice} suffix="/yr" tag="SAVE ~HALF" />
+        <PlanRow id="annual" label="Annual" price={annualPrice} suffix="/yr" tag={annualSavingsTag} />
         <PlanRow id="monthly" label="Monthly" price={monthlyPrice} suffix="/mo" />
 
         <TouchableOpacity

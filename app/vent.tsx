@@ -294,7 +294,14 @@ export default function VentScreen() {
   // ─── Tap to start recording ───────────────────────────────────────────────
   const handleStartRecording = async () => {
     if (isRecordingRef.current) return; // re-entry guard: ignore double-taps
-    const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    let perm;
+    try {
+      perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    } catch {
+      // Native permission probe threw (not just denied) — degrade to the form.
+      fallbackToForm("MoodRx needs the mic to hear you — tap it in instead");
+      return;
+    }
     if (!perm.granted) {
       fallbackToForm("MoodRx needs the mic to hear you — tap it in instead");
       return;

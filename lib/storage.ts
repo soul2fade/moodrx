@@ -477,9 +477,21 @@ export async function getStreakState(): Promise<StreakState> {
   if (streakStateCache) return streakStateCache;
   try {
     const raw = await AsyncStorage.getItem(STREAK_STATE_KEY);
-    const parsed = raw
-      ? (JSON.parse(raw) as StreakState)
-      : { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0, seenMilestones: [] };
+    // Validate the stored shape — a corrupt/legacy blob where seenMilestones
+    // isn't an array would crash `.includes()` downstream (home.tsx).
+    const fallback: StreakState = { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0, seenMilestones: [] };
+    let parsed: StreakState = fallback;
+    if (raw) {
+      const obj = JSON.parse(raw) as Partial<StreakState>;
+      parsed = {
+        hwm: Number.isFinite(obj?.hwm) ? (obj.hwm as number) : 0,
+        lastBrokenDate: typeof obj?.lastBrokenDate === 'string' ? obj.lastBrokenDate : null,
+        lastBrokenHwm: Number.isFinite(obj?.lastBrokenHwm) ? (obj.lastBrokenHwm as number) : 0,
+        seenMilestones: Array.isArray(obj?.seenMilestones)
+          ? obj.seenMilestones.filter((m): m is number => Number.isFinite(m))
+          : [],
+      };
+    }
     streakStateCache = parsed;
     return parsed;
   } catch (e) {
@@ -868,9 +880,11 @@ export async function getReviewState(): Promise<ReviewState> {
   if (reviewStateCache) return reviewStateCache;
   try {
     const raw = await AsyncStorage.getItem(REVIEW_STATE_KEY);
-    const parsed: ReviewState = raw
-      ? (JSON.parse(raw) as ReviewState)
-      : { lastRequestedAt: null };
+    let parsed: ReviewState = { lastRequestedAt: null };
+    if (raw) {
+      const obj = JSON.parse(raw) as Partial<ReviewState>;
+      parsed = { lastRequestedAt: typeof obj?.lastRequestedAt === 'number' ? obj.lastRequestedAt : null };
+    }
     reviewStateCache = parsed;
     return parsed;
   } catch (e) {

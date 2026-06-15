@@ -25,11 +25,13 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
   const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
   const manifestRef = useRef<Manifest | null>(null);
   const rollToken = useRef(0);
+  const unmountedRef = useRef(false);
   const player = useAudioPlayer(previewSrc);
 
   useEffect(() => {
     getCoachVoice().then(setVoice).catch(() => {});
     fetchManifest().then((m) => { manifestRef.current = m; }).catch(() => {});
+    return () => { unmountedRef.current = true; };
   }, []);
 
   useEffect(() => {
@@ -53,12 +55,12 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
     setClipUri(null);
     void ensureClip(picked)
       .then((uri) => {
-        if (rollToken.current !== token) return;
+        if (unmountedRef.current || rollToken.current !== token) return;
         if (uri) setClipUri(uri);
         else setLine(bundled); // offline + not cached → bundled text, no ▶
       })
       .catch(() => {
-        if (rollToken.current === token) setLine(bundled);
+        if (!unmountedRef.current && rollToken.current === token) setLine(bundled);
       });
   }, [voice]);
 

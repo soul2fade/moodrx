@@ -12,16 +12,23 @@ const WIDGET_NAME = 'MoodRxWidget';
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<void> {
   if (props.widgetInfo.widgetName !== WIDGET_NAME) return;
 
-  switch (props.widgetAction) {
-    case 'WIDGET_ADDED':
-    case 'WIDGET_UPDATE':
-    case 'WIDGET_RESIZED': {
-      const sessions = await getSessions();
-      const snapshot = buildWidgetSnapshot(sessions);
-      props.renderWidget(<MoodRxWidget snapshot={snapshot} width={props.widgetInfo.width} />);
-      break;
+  // Headless background task — runs outside the React tree (no ErrorBoundary).
+  // An unguarded throw here would surface as an Android background crash / ANR,
+  // so degrade to "widget doesn't update" instead.
+  try {
+    switch (props.widgetAction) {
+      case 'WIDGET_ADDED':
+      case 'WIDGET_UPDATE':
+      case 'WIDGET_RESIZED': {
+        const sessions = await getSessions();
+        const snapshot = buildWidgetSnapshot(sessions);
+        props.renderWidget(<MoodRxWidget snapshot={snapshot} width={props.widgetInfo.width} />);
+        break;
+      }
+      default:
+        break;
     }
-    default:
-      break;
+  } catch (e) {
+    console.warn('[MoodRx] widgetTaskHandler failed:', e);
   }
 }

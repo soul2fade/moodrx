@@ -17,10 +17,12 @@ export function CoachVoicePicker() {
   const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
   const [previewAvailable, setPreviewAvailable] = useState(false);
   const manifestRef = useRef<Manifest | null>(null);
+  const unmountedRef = useRef(false);
   const previewPlayer = useAudioPlayer(previewSrc);
 
   useEffect(() => {
     getCoachVoice().then(setSelected).catch(() => {});
+    return () => { unmountedRef.current = true; };
   }, []);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function CoachVoicePicker() {
     const entry = pickClip(m, name, severity);
     if (!entry) return;
     const uri = await ensureClip(entry).catch(() => null);
-    if (uri) setPreviewSrc({ uri });
+    if (uri && !unmountedRef.current) setPreviewSrc({ uri });
   }, []);
 
   return (

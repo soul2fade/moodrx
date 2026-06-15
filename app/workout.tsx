@@ -332,7 +332,9 @@ export default function WorkoutScreen() {
           clearStepTimerInterval();
           setStepTimerRunning(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, stepTimerKind === 'rest'));
+          if (!isNavigating.current) {
+            setTransitionAudioSrc(pickWorkoutGuideTimerCue(currentStep, stepTimerKind === 'rest'));
+          }
           return 0;
         }
         return prev - 1;
@@ -418,7 +420,7 @@ export default function WorkoutScreen() {
         insultIdxRef.current += 1;
         src = INSULT_AUDIO[idx];
       }
-      if (cancelled) return;
+      if (cancelled || isNavigating.current) return;
       setInsultAudioSrc(src);
     };
 
@@ -468,10 +470,15 @@ export default function WorkoutScreen() {
     // or re-render (effect that calls player.play()) could touch — an
     // expo-audio use-after-remove, which is a hard native crash that
     // bypasses the JS ErrorBoundary. The unmount effect owns remove().
+    // Also flag navigation + stop the step timer so queued timer ticks / in-flight
+    // playNext() downloads don't re-drive audio (setInsultAudioSrc /
+    // setTransitionAudioSrc) after the user has left this screen.
+    isNavigating.current = true;
     try { player.pause(); } catch {}
     try { insultPlayer.pause(); } catch {}
     try { transitionPlayer.pause(); } catch {}
     if (trashIntervalRef.current) clearInterval(trashIntervalRef.current);
+    clearStepTimerInterval();
   };
 
   const handleNext = () => {
@@ -518,8 +525,10 @@ export default function WorkoutScreen() {
       deactivateKeepAwake();
       setKeepAwake(false);
     } else {
-      await activateKeepAwakeAsync();
-      setKeepAwake(true);
+      try {
+        await activateKeepAwakeAsync();
+        setKeepAwake(true);
+      } catch { /* keep-awake unavailable — leave the flag off */ }
     }
   };
 

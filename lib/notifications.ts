@@ -343,19 +343,6 @@ export async function scheduleCheckinReminders(
   }
 }
 
-export async function scheduleSmartReminder(hour: number, minute: number, streak = 0): Promise<void> {
-  const label =
-    PRESET_TIMES.find((p) => p.hour === hour && p.minute === minute)?.label ??
-    DEFAULT_REMINDER_SCHEDULE.weekdayLabel;
-  const schedule: ReminderSchedule = {
-    weekdayLabel: label,
-    weekendLabel: label,
-    splitWeekends: false,
-  };
-  await saveReminderSchedule(schedule);
-  await scheduleCheckinReminders(schedule, getStreakMessage(streak));
-}
-
 export async function rescheduleAfterSession(sessions: Session[]): Promise<void> {
   if (Platform.OS === 'web') return;
   try {

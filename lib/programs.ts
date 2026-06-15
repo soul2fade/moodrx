@@ -23,10 +23,6 @@ export const PROGRAMS: Program[] = [
   },
 ];
 
-export function getProgramById(id: string): Program | undefined {
-  return PROGRAMS.find((p) => p.id === id);
-}
-
 export function getProgramWorkouts(program: Program): Workout[] {
   return program.workoutIds
     .map((id) => getWorkoutById(id))

@@ -296,27 +296,6 @@ export async function getSupplementLogs(): Promise<SupplementLog[]> {
   }
 }
 
-export async function saveSupplementLog(log: SupplementLog): Promise<void> {
-  supplementWriteChain = supplementWriteChain.then(async () => {
-    try {
-      invalidateSupplementsCache();
-      const existing = await getSupplementLogs();
-      const idx = existing.findIndex(
-        (l) => l.date === log.date && l.supplementName === log.supplementName
-      );
-      const updated = idx !== -1
-        ? existing.map((l, i) => (i === idx ? log : l))
-        : [...existing, log];
-      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, writeVersioned(updated));
-      supplementsCache = updated;
-      supplementsCacheTime = Date.now();
-    } catch (e) {
-      console.warn('[MoodRx] saveSupplementLog failed:', e);
-    }
-  });
-  return supplementWriteChain;
-}
-
 export async function toggleSupplementLog(supplementName: string, date: string): Promise<void> {
   supplementWriteChain = supplementWriteChain.then(async () => {
     try {
@@ -339,13 +318,6 @@ export async function toggleSupplementLog(supplementName: string, date: string):
 export function hasSessionToday(sessions: Session[]): boolean {
   const today = todayDateString();
   return sessions.some((s) => sessionDateString(s) === today);
-}
-
-export function getStreakEncouragement(streak: number): string | null {
-  if (streak === 1) return 'Day 1 in the books. Come back tomorrow.';
-  if (streak === 2) return "Two days straight. That's momentum.";
-  if (streak >= 3) return "You're on a roll. Don't blow it.";
-  return null;
 }
 
 export function getStreak(sessions: Session[]): number {

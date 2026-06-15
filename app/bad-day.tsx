@@ -65,6 +65,12 @@ export default function BadDayScreen() {
 
   useEffect(() => { setStep(0); }, [mood]);
 
+  // Release the native audio player on unmount — a leaked expo-audio player is a
+  // hard native crash risk (see workout.tsx cleanup).
+  useEffect(() => {
+    return () => { try { chimePlayer.remove(); } catch {} };
+  }, [chimePlayer]);
+
   const handleNext = () => {
     if (!onLastStep) {
       try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}

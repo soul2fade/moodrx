@@ -11,7 +11,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { router, type Href } from 'expo-router';
+import { router } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { selectBasePrice } from '@/lib/offer-copy';
 import { usePurchaseButton } from '@/hooks/usePurchaseButton';
@@ -176,16 +176,6 @@ export default function PremiumScreen() {
               {purchaseButtonLabel(restoreBtn.status, { idle: 'RESTORE PURCHASES', success: 'RESTORED ✓' })}
             </Text>
           )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.push('/packs' as Href)}
-          activeOpacity={0.7}
-          style={styles.restoreButton}
-          accessibilityRole="button"
-          accessibilityLabel="Browse packs"
-        >
-          <Text style={styles.restoreText}>BROWSE PACKS →</Text>
         </TouchableOpacity>
 
         <View style={{ height: 32 }} />

@@ -28,3 +28,15 @@ describe('normalizeSeverity', () => {
     expect(normalizeSeverity(undefined)).toBe('sticks');
   });
 });
+
+import { SEVERITIES } from '@/lib/insult-severity';
+
+describe('severity warnings', () => {
+  it('only Roasted carries a strong-language warning', () => {
+    const roast = SEVERITIES.find((s) => s.key === 'roast');
+    expect(roast?.warning).toBe('Contains strong language');
+    for (const s of SEVERITIES.filter((x) => x.key !== 'roast')) {
+      expect(s.warning).toBeUndefined();
+    }
+  });
+});

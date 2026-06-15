@@ -23,6 +23,7 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { colors } from '@/lib/colors';
 import { PricingComparison } from '@/components/PricingComparison';
 import { PlusSheet } from '@/components/PlusSheet';
+import { TasteTheRoast } from '@/components/onboarding/TasteTheRoast';
 
 const SCREEN_W = Dimensions.get('window').width;
 
@@ -87,7 +88,7 @@ export default function OnboardingScreen() {
     const p = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
     if (p !== page) setPage(p);
   };
-  const goToPricing = () => scrollRef.current?.scrollTo({ x: SCREEN_W, animated: true });
+  const goToPage = (i: number) => scrollRef.current?.scrollTo({ x: i * SCREEN_W, animated: true });
   const finishToGuided = useCallback(async () => {
     await setFirstLaunchDone();
     router.replace('/guided');
@@ -167,16 +168,22 @@ export default function OnboardingScreen() {
             MoodRx is a wellness tool, not a substitute for professional mental health care.
           </Text>
 
-          <TouchableOpacity style={styles.swipeCta} onPress={goToPricing} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="See pricing">
-            <Text style={styles.swipeCtaText}>See what it costs →</Text>
+          <TouchableOpacity style={styles.swipeCta} onPress={() => goToPage(1)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Meet your coach">
+            <Text style={styles.swipeCtaText}>Meet your coach →</Text>
           </TouchableOpacity>
         </ScrollView>
 
-        {/* PAGE 2 — pricing */}
+        {/* PAGE 2 — taste the roast */}
+        <ScrollView style={[styles.scroll, { width: SCREEN_W }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <TasteTheRoast onContinue={() => goToPage(2)} />
+        </ScrollView>
+
+        {/* PAGE 3 — pricing */}
         <ScrollView style={[styles.scroll, { width: SCREEN_W }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Text style={styles.headline}>What it costs.</Text>
           <View style={styles.divider} />
           <Text style={styles.subtext}>Simple. No surprises. Only MoodRx+ ever renews.</Text>
+          <Text style={styles.bridgeLine}>That one was from a script. MoodRx+ writes fresh ones off your actual patterns — the live coach.</Text>
 
           <View style={{ marginTop: 18 }}>
             <PricingComparison prices={{ own: basePrice, plus: monthlyPrice }} />
@@ -238,7 +245,7 @@ export default function OnboardingScreen() {
 
       {/* Pager dots */}
       <View style={styles.dotsRow} importantForAccessibility="no">
-        {[0, 1].map((i) => (
+        {[0, 1, 2].map((i) => (
           <View key={i} style={[styles.dot, page === i && styles.dotActive]} />
         ))}
       </View>
@@ -451,6 +458,7 @@ const styles = StyleSheet.create({
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, paddingVertical: 14 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#3a3a34' },
   dotActive: { backgroundColor: colors.premium, width: 18 },
+  bridgeLine: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, lineHeight: 22, marginTop: 10 },
   disclaimer: {
     ...t.label,
     fontFamily: fonts.mono.regular,

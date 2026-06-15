@@ -566,22 +566,27 @@ export default function SettingsScreen() {
 
         <CoachVoicePicker />
 
-        <View style={styles.toggleRow}>
-          <View style={styles.toggleLabelBlock}>
-            <Text style={styles.toggleLabel}>AI coach (live)</Text>
-            <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default; MoodRx+ feature.</Text>
+        {/* Live coach is gated server-side on the `premium` entitlement (base
+            unlock or MoodRx+), so only show the toggle to those who can use it —
+            a free user toggling it on just 403s into the static fallback. */}
+        {isPremium && (
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleLabelBlock}>
+              <Text style={styles.toggleLabel}>AI coach (live)</Text>
+              <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default — unlimited on MoodRx+, or 3 free with the one-time unlock.</Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleAiCoachToggle}
+              activeOpacity={0.8}
+              style={[styles.toggle, aiCoachEnabled ? styles.toggleOn : styles.toggleOff]}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: aiCoachEnabled }}
+              accessibilityLabel="AI coach"
+            >
+              <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: aiCoachTranslateX }] }]} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={handleAiCoachToggle}
-            activeOpacity={0.8}
-            style={[styles.toggle, aiCoachEnabled ? styles.toggleOn : styles.toggleOff]}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: aiCoachEnabled }}
-            accessibilityLabel="AI coach"
-          >
-            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: aiCoachTranslateX }] }]} />
-          </TouchableOpacity>
-        </View>
+        )}
 
         <View style={styles.toggleRow}>
           <View style={styles.toggleLabelBlock}>

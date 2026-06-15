@@ -47,6 +47,7 @@ import {
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PlusSheet } from '@/components/PlusSheet';
+import { TERMS_URL, PRIVACY_URL, openExternal } from '@/lib/links';
 import { SeveritySheet } from '@/components/SeveritySheet';
 import { SEVERITIES } from '@/lib/insult-severity';
 import type { InsultTier } from '@/lib/insult-library';
@@ -869,7 +870,7 @@ export default function SettingsScreen() {
           MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
         </Text>
         <TouchableOpacity
-          onPress={() => { void Linking.openURL('https://soul2fade.github.io/moodrx/privacy-policy.html').catch(() => Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')); }}
+          onPress={() => openExternal(PRIVACY_URL)}
           activeOpacity={0.7}
           style={styles.legalLink}
           accessibilityRole="link"
@@ -878,7 +879,7 @@ export default function SettingsScreen() {
           <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => { void Linking.openURL('https://soul2fade.github.io/moodrx/terms.html').catch(() => Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')); }}
+          onPress={() => openExternal(TERMS_URL)}
           activeOpacity={0.7}
           style={styles.legalLink}
           accessibilityRole="link"

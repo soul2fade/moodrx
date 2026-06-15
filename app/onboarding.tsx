@@ -7,8 +7,6 @@ import {
   StyleSheet,
   Animated,
   ActivityIndicator,
-  Linking,
-  Alert,
   Dimensions,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
@@ -23,6 +21,7 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { colors } from '@/lib/colors';
 import { PricingComparison } from '@/components/PricingComparison';
 import { PlusSheet } from '@/components/PlusSheet';
+import { LegalLinksRow } from '@/components/LegalLinksRow';
 import { TasteTheRoast } from '@/components/onboarding/TasteTheRoast';
 
 const SCREEN_W = Dimensions.get('window').width;
@@ -94,11 +93,6 @@ export default function OnboardingScreen() {
     router.replace('/guided');
   }, []);
 
-  const openURL = (url: string) => {
-    void Linking.openURL(url).catch(() =>
-      Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')
-    );
-  };
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -217,25 +211,7 @@ export default function OnboardingScreen() {
             <Text style={styles.freeButtonText}>Start free →</Text>
           </TouchableOpacity>
 
-          <View style={styles.legalLinksRow}>
-            <TouchableOpacity
-              onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
-              activeOpacity={0.7}
-              accessibilityRole="link"
-              accessibilityLabel="Terms of Use"
-            >
-              <Text style={styles.legalLinkText}>TERMS OF USE</Text>
-            </TouchableOpacity>
-            <Text style={styles.legalDot}>·</Text>
-            <TouchableOpacity
-              onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
-              activeOpacity={0.7}
-              accessibilityRole="link"
-              accessibilityLabel="Privacy Policy"
-            >
-              <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
-            </TouchableOpacity>
-          </View>
+          <LegalLinksRow style={{ marginTop: 12, marginBottom: 0 }} />
 
           <Text style={styles.disclaimer}>
             MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
@@ -442,15 +418,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
   },
-  legalLinksRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 12,
-  },
-  legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
-  legalDot: { ...t.softMuted },
   plusButton: { marginTop: 12, borderWidth: 1, borderColor: colors.premium, borderRadius: 4, paddingVertical: 14, alignItems: 'center' },
   plusButtonText: { fontFamily: fonts.primary.bold, fontSize: 16, color: colors.premium, letterSpacing: 1 },
   swipeCta: { marginTop: 20, alignItems: 'center', paddingVertical: 8 },

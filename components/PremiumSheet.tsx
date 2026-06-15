@@ -7,8 +7,6 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
-  Linking,
-  Alert,
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { usePurchaseButton } from '@/hooks/usePurchaseButton';
@@ -17,6 +15,7 @@ import { OfferProof } from '@/components/OfferProof';
 import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
+import { LegalLinksRow } from '@/components/LegalLinksRow';
 
 interface PremiumSheetProps {
   visible: boolean;
@@ -45,11 +44,6 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
     onSuccess: onClose,
   });
 
-  const openURL = (url: string) => {
-    void Linking.openURL(url).catch(() =>
-      Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')
-    );
-  };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -87,25 +81,7 @@ export function PremiumSheet({ visible, onClose, context = 'default' }: PremiumS
           )}
         </TouchableOpacity>
 
-        <View style={styles.legalLinksRow}>
-          <TouchableOpacity
-            onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
-            activeOpacity={0.7}
-            accessibilityRole="link"
-            accessibilityLabel="Terms of Use"
-          >
-            <Text style={styles.legalLinkText}>TERMS OF USE</Text>
-          </TouchableOpacity>
-          <Text style={styles.legalDot}>·</Text>
-          <TouchableOpacity
-            onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
-            activeOpacity={0.7}
-            accessibilityRole="link"
-            accessibilityLabel="Privacy Policy"
-          >
-            <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
-          </TouchableOpacity>
-        </View>
+        <LegalLinksRow />
 
         <View style={styles.footerRow}>
           <TouchableOpacity
@@ -194,15 +170,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 3,
   },
-  legalLinksRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
-  legalDot: { ...t.softMuted },
   footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
   footerBtn: { flex: 1, alignItems: 'center', paddingVertical: 8 },
 });

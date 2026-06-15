@@ -7,8 +7,6 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
-  Linking,
-  Alert,
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PLUS_OFFERING_ID } from '@/lib/revenuecat';
@@ -16,6 +14,7 @@ import { usePurchaseButton } from '@/hooks/usePurchaseButton';
 import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
+import { LegalLinksRow } from '@/components/LegalLinksRow';
 
 const MONTHLY_PKG = '$rc_monthly';
 const ANNUAL_PKG = '$rc_annual';
@@ -55,12 +54,6 @@ export function PlusSheet({ visible, onClose, onPurchased }: { visible: boolean;
     run: restorePurchases,
     onSuccess: onClose,
   });
-
-  const openURL = (url: string) => {
-    void Linking.openURL(url).catch(() =>
-      Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.'),
-    );
-  };
 
   const PlanRow = ({ id, label, price, suffix, tag }: { id: 'monthly' | 'annual'; label: string; price: string; suffix: string; tag?: string }) => {
     const selected = period === id;
@@ -127,15 +120,7 @@ export function PlusSheet({ visible, onClose, onPurchased }: { visible: boolean;
           )}
         </TouchableOpacity>
 
-        <View style={styles.legalLinksRow}>
-          <TouchableOpacity onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')} activeOpacity={0.7} accessibilityRole="link" accessibilityLabel="Terms of Use">
-            <Text style={styles.legalLinkText}>TERMS OF USE</Text>
-          </TouchableOpacity>
-          <Text style={styles.legalDot}>·</Text>
-          <TouchableOpacity onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')} activeOpacity={0.7} accessibilityRole="link" accessibilityLabel="Privacy Policy">
-            <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
-          </TouchableOpacity>
-        </View>
+        <LegalLinksRow />
 
         <View style={styles.footerRow}>
           <TouchableOpacity
@@ -179,9 +164,6 @@ const styles = StyleSheet.create({
   ctaText: { ...t.button, color: colors.premium, letterSpacing: 2 },
   softLanding: { alignItems: 'center', paddingVertical: 10, marginBottom: 6 },
   softLandingText: { ...t.body, color: '#ffffff' },
-  legalLinksRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginBottom: 12 },
-  legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
-  legalDot: { ...t.softMuted },
   footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
   footerBtn: { flex: 1, alignItems: 'center', paddingVertical: 8 },
   closeText: { ...t.label, color: '#ffffff', letterSpacing: 3 },

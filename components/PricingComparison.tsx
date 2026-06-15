@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '@/lib/colors';
 import { PRICING_TIERS, PRICING_FEATURES, tierValue, type TierKey } from '@/lib/pricing-tiers';
 import { fonts } from '@/lib/typography';
 
@@ -74,8 +75,10 @@ const styles = StyleSheet.create({
   },
   featureCol: { flex: 1 },
   tierCol: { width: COL_W, alignItems: 'center' },
+  // eslint-disable-next-line local/no-tiny-fontsize -- compact table header glyph column, not body text
   tierName: { fontFamily: fonts.primary.bold, fontSize: 13, lineHeight: 16 },
-  tierPrice: { fontFamily: fonts.mono.regular, fontSize: 11, color: '#94938b', lineHeight: 14, marginTop: 2 },
+  // eslint-disable-next-line local/no-tiny-fontsize, local/no-fontSize-below-12 -- sub-label price tag in table header, intentionally small
+  tierPrice: { fontFamily: fonts.mono.regular, fontSize: 11, color: colors.textSubtle, lineHeight: 14, marginTop: 2 },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -83,8 +86,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1c1c19',
   },
+  // eslint-disable-next-line local/no-tiny-fontsize -- compact table row label, not standalone body text
   featureLabel: { flex: 1, fontFamily: fonts.primary.regular, fontSize: 13, color: '#d8d8d2', lineHeight: 17, paddingRight: 6 },
+  // eslint-disable-next-line local/no-tiny-fontsize -- ✓/– glyph cell in comparison table, intentionally compact
   cell: { fontSize: 15, lineHeight: 18, textAlign: 'center' },
   termsRow: { borderBottomWidth: 0, paddingTop: 11, paddingBottom: 0 },
+  // eslint-disable-next-line local/no-tiny-fontsize, local/no-fontSize-below-12 -- footer terms micro-label, not body text
   terms: { fontFamily: fonts.mono.regular, fontSize: 9.5, lineHeight: 12, textAlign: 'center' },
 });

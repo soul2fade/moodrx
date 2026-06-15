@@ -731,120 +731,68 @@ export async function setCoachVoice(name: string): Promise<void> {
   }
 }
 
+/** Build get/set accessors for a boolean flag stored as the string 'true'/'false'.
+ *  `defaultValue` is returned when the key is absent or a read throws. Collapses
+ *  the identical toggle accessors below into one definition each. */
+function makeBoolFlag(key: string, defaultValue: boolean) {
+  return {
+    get: async (): Promise<boolean> => {
+      try {
+        const raw = await AsyncStorage.getItem(key);
+        return raw === null ? defaultValue : raw === 'true';
+      } catch {
+        return defaultValue;
+      }
+    },
+    set: async (value: boolean): Promise<void> => {
+      try {
+        await AsyncStorage.setItem(key, value ? 'true' : 'false');
+      } catch {
+        // non-critical
+      }
+    },
+  };
+}
+
 const AI_COACH_KEY = '@moodrx_ai_coach_enabled';
 
 /** Opt-in for the dynamic AI coach. Default false — sending mood facts
  *  off-device is a separate consent from the trash-talk toggle. */
-export async function getAiCoachEnabled(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(AI_COACH_KEY)) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-export async function setAiCoachEnabled(value: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(AI_COACH_KEY, value ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const aiCoachFlag = makeBoolFlag(AI_COACH_KEY, false);
+export const getAiCoachEnabled = aiCoachFlag.get;
+export const setAiCoachEnabled = aiCoachFlag.set;
 
 const VENT_CONSENT_KEY = '@moodrx_vent_consent';
 const VENT_ENABLED_KEY = '@moodrx_vent_enabled';
 
 /** One-time first-run consent for voice venting (sending the transcript to the
  *  AI). Gates the first tap on "Need to vent?". */
-export async function getVentConsent(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(VENT_CONSENT_KEY)) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-export async function setVentConsent(value: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(VENT_CONSENT_KEY, value ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const ventConsentFlag = makeBoolFlag(VENT_CONSENT_KEY, false);
+export const getVentConsent = ventConsentFlag.get;
+export const setVentConsent = ventConsentFlag.set;
 
 /** Settings toggle to disable voice venting after consent (defaults ON once
  *  consent is given — absence of the key is treated as enabled). */
-export async function getVentEnabled(): Promise<boolean> {
-  try {
-    const raw = await AsyncStorage.getItem(VENT_ENABLED_KEY);
-    return raw === null ? true : raw === 'true';
-  } catch {
-    return true;
-  }
-}
-
-export async function setVentEnabled(value: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(VENT_ENABLED_KEY, value ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const ventEnabledFlag = makeBoolFlag(VENT_ENABLED_KEY, true);
+export const getVentEnabled = ventEnabledFlag.get;
+export const setVentEnabled = ventEnabledFlag.set;
 
 const VOICE_ENABLED_KEY = '@moodrx_voice_enabled';
 
-export async function getVoiceEnabled(): Promise<boolean> {
-  try {
-    const raw = await AsyncStorage.getItem(VOICE_ENABLED_KEY);
-    if (raw === null) return true;
-    return raw === 'true';
-  } catch {
-    return true;
-  }
-}
-
-export async function setVoiceEnabled(enabled: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(VOICE_ENABLED_KEY, enabled ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const voiceEnabledFlag = makeBoolFlag(VOICE_ENABLED_KEY, true);
+export const getVoiceEnabled = voiceEnabledFlag.get;
+export const setVoiceEnabled = voiceEnabledFlag.set;
 
 const WORKOUT_FOCUS_MODE_KEY = '@moodrx_workout_focus_mode';
 const WORKOUT_VOICE_MODE_KEY = '@moodrx_workout_voice_mode';
 
-export async function getWorkoutFocusMode(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(WORKOUT_FOCUS_MODE_KEY)) === 'true';
-  } catch {
-    return false;
-  }
-}
+const workoutFocusModeFlag = makeBoolFlag(WORKOUT_FOCUS_MODE_KEY, false);
+export const getWorkoutFocusMode = workoutFocusModeFlag.get;
+export const setWorkoutFocusMode = workoutFocusModeFlag.set;
 
-export async function setWorkoutFocusMode(enabled: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(WORKOUT_FOCUS_MODE_KEY, enabled ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
-
-export async function getWorkoutVoiceMode(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(WORKOUT_VOICE_MODE_KEY)) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-export async function setWorkoutVoiceMode(enabled: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(WORKOUT_VOICE_MODE_KEY, enabled ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const workoutVoiceModeFlag = makeBoolFlag(WORKOUT_VOICE_MODE_KEY, false);
+export const getWorkoutVoiceMode = workoutVoiceModeFlag.get;
+export const setWorkoutVoiceMode = workoutVoiceModeFlag.set;
 
 export async function consumeNavHintPending(): Promise<boolean> {
   try {

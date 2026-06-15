@@ -296,27 +296,6 @@ export async function getSupplementLogs(): Promise<SupplementLog[]> {
   }
 }
 
-export async function saveSupplementLog(log: SupplementLog): Promise<void> {
-  supplementWriteChain = supplementWriteChain.then(async () => {
-    try {
-      invalidateSupplementsCache();
-      const existing = await getSupplementLogs();
-      const idx = existing.findIndex(
-        (l) => l.date === log.date && l.supplementName === log.supplementName
-      );
-      const updated = idx !== -1
-        ? existing.map((l, i) => (i === idx ? log : l))
-        : [...existing, log];
-      await AsyncStorage.setItem(SUPPLEMENT_LOGS_KEY, writeVersioned(updated));
-      supplementsCache = updated;
-      supplementsCacheTime = Date.now();
-    } catch (e) {
-      console.warn('[MoodRx] saveSupplementLog failed:', e);
-    }
-  });
-  return supplementWriteChain;
-}
-
 export async function toggleSupplementLog(supplementName: string, date: string): Promise<void> {
   supplementWriteChain = supplementWriteChain.then(async () => {
     try {
@@ -339,13 +318,6 @@ export async function toggleSupplementLog(supplementName: string, date: string):
 export function hasSessionToday(sessions: Session[]): boolean {
   const today = todayDateString();
   return sessions.some((s) => sessionDateString(s) === today);
-}
-
-export function getStreakEncouragement(streak: number): string | null {
-  if (streak === 1) return 'Day 1 in the books. Come back tomorrow.';
-  if (streak === 2) return "Two days straight. That's momentum.";
-  if (streak >= 3) return "You're on a roll. Don't blow it.";
-  return null;
 }
 
 export function getStreak(sessions: Session[]): number {
@@ -505,9 +477,21 @@ export async function getStreakState(): Promise<StreakState> {
   if (streakStateCache) return streakStateCache;
   try {
     const raw = await AsyncStorage.getItem(STREAK_STATE_KEY);
-    const parsed = raw
-      ? (JSON.parse(raw) as StreakState)
-      : { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0, seenMilestones: [] };
+    // Validate the stored shape — a corrupt/legacy blob where seenMilestones
+    // isn't an array would crash `.includes()` downstream (home.tsx).
+    const fallback: StreakState = { hwm: 0, lastBrokenDate: null, lastBrokenHwm: 0, seenMilestones: [] };
+    let parsed: StreakState = fallback;
+    if (raw) {
+      const obj = JSON.parse(raw) as Partial<StreakState>;
+      parsed = {
+        hwm: Number.isFinite(obj?.hwm) ? (obj.hwm as number) : 0,
+        lastBrokenDate: typeof obj?.lastBrokenDate === 'string' ? obj.lastBrokenDate : null,
+        lastBrokenHwm: Number.isFinite(obj?.lastBrokenHwm) ? (obj.lastBrokenHwm as number) : 0,
+        seenMilestones: Array.isArray(obj?.seenMilestones)
+          ? obj.seenMilestones.filter((m): m is number => Number.isFinite(m))
+          : [],
+      };
+    }
     streakStateCache = parsed;
     return parsed;
   } catch (e) {
@@ -747,120 +731,68 @@ export async function setCoachVoice(name: string): Promise<void> {
   }
 }
 
+/** Build get/set accessors for a boolean flag stored as the string 'true'/'false'.
+ *  `defaultValue` is returned when the key is absent or a read throws. Collapses
+ *  the identical toggle accessors below into one definition each. */
+function makeBoolFlag(key: string, defaultValue: boolean) {
+  return {
+    get: async (): Promise<boolean> => {
+      try {
+        const raw = await AsyncStorage.getItem(key);
+        return raw === null ? defaultValue : raw === 'true';
+      } catch {
+        return defaultValue;
+      }
+    },
+    set: async (value: boolean): Promise<void> => {
+      try {
+        await AsyncStorage.setItem(key, value ? 'true' : 'false');
+      } catch {
+        // non-critical
+      }
+    },
+  };
+}
+
 const AI_COACH_KEY = '@moodrx_ai_coach_enabled';
 
 /** Opt-in for the dynamic AI coach. Default false — sending mood facts
  *  off-device is a separate consent from the trash-talk toggle. */
-export async function getAiCoachEnabled(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(AI_COACH_KEY)) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-export async function setAiCoachEnabled(value: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(AI_COACH_KEY, value ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const aiCoachFlag = makeBoolFlag(AI_COACH_KEY, false);
+export const getAiCoachEnabled = aiCoachFlag.get;
+export const setAiCoachEnabled = aiCoachFlag.set;
 
 const VENT_CONSENT_KEY = '@moodrx_vent_consent';
 const VENT_ENABLED_KEY = '@moodrx_vent_enabled';
 
 /** One-time first-run consent for voice venting (sending the transcript to the
  *  AI). Gates the first tap on "Need to vent?". */
-export async function getVentConsent(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(VENT_CONSENT_KEY)) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-export async function setVentConsent(value: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(VENT_CONSENT_KEY, value ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const ventConsentFlag = makeBoolFlag(VENT_CONSENT_KEY, false);
+export const getVentConsent = ventConsentFlag.get;
+export const setVentConsent = ventConsentFlag.set;
 
 /** Settings toggle to disable voice venting after consent (defaults ON once
  *  consent is given — absence of the key is treated as enabled). */
-export async function getVentEnabled(): Promise<boolean> {
-  try {
-    const raw = await AsyncStorage.getItem(VENT_ENABLED_KEY);
-    return raw === null ? true : raw === 'true';
-  } catch {
-    return true;
-  }
-}
-
-export async function setVentEnabled(value: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(VENT_ENABLED_KEY, value ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const ventEnabledFlag = makeBoolFlag(VENT_ENABLED_KEY, true);
+export const getVentEnabled = ventEnabledFlag.get;
+export const setVentEnabled = ventEnabledFlag.set;
 
 const VOICE_ENABLED_KEY = '@moodrx_voice_enabled';
 
-export async function getVoiceEnabled(): Promise<boolean> {
-  try {
-    const raw = await AsyncStorage.getItem(VOICE_ENABLED_KEY);
-    if (raw === null) return true;
-    return raw === 'true';
-  } catch {
-    return true;
-  }
-}
-
-export async function setVoiceEnabled(enabled: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(VOICE_ENABLED_KEY, enabled ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const voiceEnabledFlag = makeBoolFlag(VOICE_ENABLED_KEY, true);
+export const getVoiceEnabled = voiceEnabledFlag.get;
+export const setVoiceEnabled = voiceEnabledFlag.set;
 
 const WORKOUT_FOCUS_MODE_KEY = '@moodrx_workout_focus_mode';
 const WORKOUT_VOICE_MODE_KEY = '@moodrx_workout_voice_mode';
 
-export async function getWorkoutFocusMode(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(WORKOUT_FOCUS_MODE_KEY)) === 'true';
-  } catch {
-    return false;
-  }
-}
+const workoutFocusModeFlag = makeBoolFlag(WORKOUT_FOCUS_MODE_KEY, false);
+export const getWorkoutFocusMode = workoutFocusModeFlag.get;
+export const setWorkoutFocusMode = workoutFocusModeFlag.set;
 
-export async function setWorkoutFocusMode(enabled: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(WORKOUT_FOCUS_MODE_KEY, enabled ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
-
-export async function getWorkoutVoiceMode(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(WORKOUT_VOICE_MODE_KEY)) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-export async function setWorkoutVoiceMode(enabled: boolean): Promise<void> {
-  try {
-    await AsyncStorage.setItem(WORKOUT_VOICE_MODE_KEY, enabled ? 'true' : 'false');
-  } catch {
-    // non-critical
-  }
-}
+const workoutVoiceModeFlag = makeBoolFlag(WORKOUT_VOICE_MODE_KEY, false);
+export const getWorkoutVoiceMode = workoutVoiceModeFlag.get;
+export const setWorkoutVoiceMode = workoutVoiceModeFlag.set;
 
 export async function consumeNavHintPending(): Promise<boolean> {
   try {
@@ -896,9 +828,11 @@ export async function getReviewState(): Promise<ReviewState> {
   if (reviewStateCache) return reviewStateCache;
   try {
     const raw = await AsyncStorage.getItem(REVIEW_STATE_KEY);
-    const parsed: ReviewState = raw
-      ? (JSON.parse(raw) as ReviewState)
-      : { lastRequestedAt: null };
+    let parsed: ReviewState = { lastRequestedAt: null };
+    if (raw) {
+      const obj = JSON.parse(raw) as Partial<ReviewState>;
+      parsed = { lastRequestedAt: typeof obj?.lastRequestedAt === 'number' ? obj.lastRequestedAt : null };
+    }
     reviewStateCache = parsed;
     return parsed;
   } catch (e) {

@@ -11,6 +11,7 @@ import {
 } from "@expo-google-fonts/barlow-condensed";
 import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
+import { setAudioModeAsync } from "expo-audio";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
@@ -43,7 +44,7 @@ Notifications.setNotificationHandler({
 });
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -73,6 +74,14 @@ export default function RootLayout() {
     }
     void registerNotificationChannels();
     void registerNotificationCategories();
+    // Play soundscapes/coach audio through the iOS silent switch. Foreground only
+    // (shouldPlayInBackground: false) — true background audio needs the iOS
+    // background-audio capability, which has separate App Store review scope.
+    void setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: false,
+      interruptionMode: 'doNotMix',
+    }).catch(() => {});
   }, []);
 
   // Route to the screen carried in a notification's `data.route` when the user

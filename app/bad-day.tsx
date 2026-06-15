@@ -65,6 +65,27 @@ export default function BadDayScreen() {
 
   useEffect(() => { setStep(0); }, [mood]);
 
+  useEffect(() => {
+    // Warm the chime so the FIRST step-advance actually beeps. expo-audio loads
+    // the asset asynchronously (in dev it's fetched from Metro on first use), so
+    // an early play() before isLoaded is silently dropped — which left the first
+    // step-advances with haptic but no sound. Prime it muted on mount so it's
+    // decoded by the time the user taps "next", then restore volume.
+    try {
+      chimePlayer.volume = 0;
+      chimePlayer.play();
+    } catch {}
+    const warmTimer = setTimeout(() => {
+      try { chimePlayer.pause(); void chimePlayer.seekTo(0); chimePlayer.volume = 1; } catch {}
+    }, 250);
+    // Release the native player on unmount — a leaked expo-audio player is a hard
+    // native crash risk (see workout.tsx cleanup).
+    return () => {
+      clearTimeout(warmTimer);
+      try { chimePlayer.remove(); } catch {}
+    };
+  }, [chimePlayer]);
+
   const handleNext = () => {
     if (!onLastStep) {
       try { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}

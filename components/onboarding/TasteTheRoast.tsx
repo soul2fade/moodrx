@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useAudioPlayer } from 'expo-audio';
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
 import { SEVERITIES } from '@/lib/insult-severity';
+import { SeverityTierRow } from '@/components/SeverityTierRow';
 import { pickClip } from '@/lib/insult-library';
 import type { InsultTier, Manifest } from '@/lib/insult-library';
 import { fetchManifest, ensureClip } from '@/lib/insult-cache';
 import { getCoachVoice, setInsultSeverity } from '@/lib/storage';
 import { fonts } from '@/lib/typography';
-import { colors } from '@/lib/colors';
+import { colors, tintFill } from '@/lib/colors';
 
 const DEFAULT_TIER: InsultTier = 'sticks';
 
@@ -22,20 +23,16 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
   const [tier, setTier] = useState<InsultTier>(DEFAULT_TIER);
   const [line, setLine] = useState<string | null>(null);
   const [clipUri, setClipUri] = useState<string | null>(null);
-  const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
   const manifestRef = useRef<Manifest | null>(null);
   const rollToken = useRef(0);
-  const player = useAudioPlayer(previewSrc);
+  const unmountedRef = useRef(false);
+  const { play } = usePreviewPlayer();
 
   useEffect(() => {
     getCoachVoice().then(setVoice).catch(() => {});
     fetchManifest().then((m) => { manifestRef.current = m; }).catch(() => {});
+    return () => { unmountedRef.current = true; };
   }, []);
-
-  useEffect(() => {
-    if (previewSrc) { try { player.seekTo(0); player.play(); } catch {} }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- player is a stable expo-audio ref; src drives playback
-  }, [previewSrc]);
 
   // Online: the displayed line IS a clip (text + audio match) and ▶ appears once
   // the audio resolves. Offline / no manifest / clip not downloadable: fall back
@@ -53,12 +50,12 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
     setClipUri(null);
     void ensureClip(picked)
       .then((uri) => {
-        if (rollToken.current !== token) return;
+        if (unmountedRef.current || rollToken.current !== token) return;
         if (uri) setClipUri(uri);
         else setLine(bundled); // offline + not cached → bundled text, no ▶
       })
       .catch(() => {
-        if (rollToken.current === token) setLine(bundled);
+        if (!unmountedRef.current && rollToken.current === token) setLine(bundled);
       });
   }, [voice]);
 
@@ -66,8 +63,8 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
   const onTier = useCallback((t: InsultTier) => { setTier(t); if (mood) roll(mood, t); }, [mood, roll]);
 
   const hearIt = useCallback(() => {
-    if (clipUri) setPreviewSrc({ uri: clipUri });
-  }, [clipUri]);
+    if (clipUri) play(clipUri);
+  }, [clipUri, play]);
 
   const bringItOn = useCallback(async () => {
     await setInsultSeverity(tier).catch(() => {});
@@ -76,7 +73,7 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
 
   // Once a mood is picked, the roast tile + the selected burn level adopt that
   // mood's color (matching the selected chip); before any pick, fall back to red.
-  const moodColor = mood ? (MOODS[mood as keyof typeof MOODS]?.color ?? '#E11D48') : '#E11D48';
+  const moodColor = mood ? (MOODS[mood as keyof typeof MOODS]?.color ?? colors.danger) : colors.danger;
 
   return (
     <View style={styles.wrap}>
@@ -93,7 +90,7 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
               onPress={() => onMood(k)}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              style={[styles.chip, selected && { borderColor: m.color, backgroundColor: m.color + '22' }]}
+              style={[styles.chip, selected && tintFill(m.color)]}
             >
               <Text style={[styles.chipText, selected && { color: m.color }]}>{m.name}</Text>
             </Pressable>
@@ -116,22 +113,17 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
       )}
 
       <Text style={styles.burnLabel}>Too soft? Too mean? Set the burn level.</Text>
-      {SEVERITIES.map((s) => {
-        const selected = s.key === tier;
-        return (
-          <Pressable
-            key={s.key}
-            onPress={() => onTier(s.key)}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            style={[styles.tierRow, selected && styles.tierRowSelected, selected && { borderColor: moodColor, backgroundColor: moodColor + '18' }]}
-          >
-            <Text style={[styles.tierName, selected && styles.tierNameSelected, selected && { color: moodColor }]}>{s.label}</Text>
-            <Text style={styles.tierBlurb}>{s.blurb}</Text>
-            {s.warning ? <Text style={styles.tierWarning}>{s.warning}</Text> : null}
-          </Pressable>
-        );
-      })}
+      {SEVERITIES.map((s) => (
+        <SeverityTierRow
+          key={s.key}
+          label={s.label}
+          blurb={s.blurb}
+          warning={s.warning}
+          selected={s.key === tier}
+          onPress={() => onTier(s.key)}
+          accent={moodColor}
+        />
+      ))}
 
       <Text style={styles.optional}>
         Optional — Dr. MoodRx only chimes in when you turn trash talk on for a workout. Change or mute it anytime in Settings.
@@ -150,23 +142,17 @@ export function TasteTheRoast({ onContinue }: { onContinue: () => void }) {
 const styles = StyleSheet.create({
   wrap: { paddingBottom: 8 },
   kicker: { fontFamily: fonts.mono.regular, fontSize: 16, color: colors.premium, letterSpacing: 3, lineHeight: 18 },
-  headline: { fontFamily: fonts.primary.bold, fontSize: 28, color: '#ffffff', lineHeight: 34, marginTop: 8, marginBottom: 18 },
+  headline: { fontFamily: fonts.primary.bold, fontSize: 28, color: colors.text, lineHeight: 34, marginTop: 8, marginBottom: 18 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
-  chip: { borderWidth: 1, borderColor: '#333333', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
+  chip: { borderWidth: 1, borderColor: colors.borderMedium, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
   chipText: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle },
   prompt: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, lineHeight: 22, marginBottom: 20 },
-  roastBox: { borderLeftWidth: 3, borderLeftColor: '#E11D48', backgroundColor: '#120c0e', borderRadius: 8, padding: 14, marginBottom: 20 },
+  roastBox: { borderLeftWidth: 3, borderLeftColor: colors.danger, backgroundColor: '#120c0e', borderRadius: 8, padding: 14, marginBottom: 20 },
   roastWho: { fontFamily: fonts.mono.regular, fontSize: 16, color: colors.premium, letterSpacing: 2, lineHeight: 18 },
   roastLine: { fontFamily: fonts.primary.regular, fontSize: 17, color: '#ededea', lineHeight: 24, marginTop: 8 },
-  hearBtn: { marginTop: 12, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#3a3a3a', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14 },
-  hearText: { fontFamily: fonts.primary.bold, fontSize: 16, color: '#ffffff' },
+  hearBtn: { marginTop: 12, alignSelf: 'flex-start', borderWidth: 1, borderColor: colors.textDark, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14 },
+  hearText: { fontFamily: fonts.primary.bold, fontSize: 16, color: colors.text },
   burnLabel: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, marginBottom: 10 },
-  tierRow: { borderWidth: 1, borderColor: '#333333', borderRadius: 12, paddingVertical: 13, paddingHorizontal: 16, marginBottom: 10 },
-  tierRowSelected: { borderColor: '#E11D48', backgroundColor: '#E11D4818' },
-  tierName: { fontFamily: fonts.primary.bold, fontSize: 17, color: '#f0f0f0' },
-  tierNameSelected: { color: '#ffffff' },
-  tierBlurb: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, marginTop: 3 },
-  tierWarning: { fontFamily: fonts.mono.regular, fontSize: 16, color: colors.premium, marginTop: 4, letterSpacing: 0.5 },
   optional: { fontFamily: fonts.primary.regular, fontSize: 16, color: colors.textSubtle, lineHeight: 22, marginTop: 8, marginBottom: 20 },
   primaryCta: { borderWidth: 1, borderColor: colors.premium, borderRadius: 4, paddingVertical: 14, alignItems: 'center' },
   primaryCtaText: { fontFamily: fonts.primary.bold, fontSize: 16, color: colors.premium, letterSpacing: 1 },

@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useAudioPlayer } from 'expo-audio';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { VOICES } from '@/lib/voices';
 import { getCoachVoice, setCoachVoice, getInsultSeverity } from '@/lib/storage';
-import { fetchManifest, ensureClip } from '@/lib/insult-cache';
-import { pickClip, type Manifest } from '@/lib/insult-library';
+import { fetchManifest, resolvePreviewClip } from '@/lib/insult-cache';
+import { type Manifest } from '@/lib/insult-library';
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { VoiceSheet } from '@/components/VoiceSheet';
 import { PlusSheet } from '@/components/PlusSheet';
 
@@ -14,21 +14,15 @@ export function CoachVoicePicker() {
   const [open, setOpen] = useState(false);
   const [plusVisible, setPlusVisible] = useState(false);
   const [selected, setSelected] = useState('rachel');
-  const [previewSrc, setPreviewSrc] = useState<{ uri: string } | null>(null);
   const [previewAvailable, setPreviewAvailable] = useState(false);
   const manifestRef = useRef<Manifest | null>(null);
-  const previewPlayer = useAudioPlayer(previewSrc);
+  const unmountedRef = useRef(false);
+  const { play, player: previewPlayer } = usePreviewPlayer();
 
   useEffect(() => {
     getCoachVoice().then(setSelected).catch(() => {});
+    return () => { unmountedRef.current = true; };
   }, []);
-
-  useEffect(() => {
-    if (previewSrc) {
-      try { previewPlayer.seekTo(0); previewPlayer.play(); } catch {}
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- previewPlayer is a stable expo-audio ref; src change drives playback.
-  }, [previewSrc]);
 
   const currentLabel = VOICES.find((v) => v.name === selected)?.label ?? 'Rachel';
 
@@ -49,14 +43,10 @@ export function CoachVoicePicker() {
   }, []);
 
   const handlePreview = useCallback(async (name: string) => {
-    const m = manifestRef.current;
-    if (!m) return;
     const severity = await getInsultSeverity();
-    const entry = pickClip(m, name, severity);
-    if (!entry) return;
-    const uri = await ensureClip(entry).catch(() => null);
-    if (uri) setPreviewSrc({ uri });
-  }, []);
+    const uri = await resolvePreviewClip(manifestRef.current, name, severity);
+    if (uri && !unmountedRef.current) play(uri);
+  }, [play]);
 
   return (
     <>

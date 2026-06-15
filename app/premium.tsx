@@ -8,11 +8,10 @@ import {
   Animated,
   ActivityIndicator,
   BackHandler,
-  Linking,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { LegalLinksRow } from '@/components/LegalLinksRow';
 import { selectBasePrice } from '@/lib/offer-copy';
 import { usePurchaseButton } from '@/hooks/usePurchaseButton';
 import { OfferProof } from '@/components/OfferProof';
@@ -73,11 +72,6 @@ export default function PremiumScreen() {
     run: restorePurchases,
   });
 
-  const openURL = (url: string) => {
-    void Linking.openURL(url).catch(() =>
-      Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')
-    );
-  };
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: '#0a0a0a', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -140,25 +134,7 @@ export default function PremiumScreen() {
           <Text style={styles.legalDisclosure}>
             One-time purchase of {basePrice}. No subscription, no auto-renew. Payment is charged to your App Store or Google Play account at confirmation.
           </Text>
-          <View style={styles.legalLinksRow}>
-            <TouchableOpacity
-              onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')}
-              activeOpacity={0.7}
-              accessibilityRole="link"
-              accessibilityLabel="Terms of Use"
-            >
-              <Text style={styles.legalLinkText}>TERMS OF USE</Text>
-            </TouchableOpacity>
-            <Text style={styles.legalDot}>·</Text>
-            <TouchableOpacity
-              onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')}
-              activeOpacity={0.7}
-              accessibilityRole="link"
-              accessibilityLabel="Privacy Policy"
-            >
-              <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
-            </TouchableOpacity>
-          </View>
+          <LegalLinksRow style={{ marginTop: 14, marginBottom: 0 }} />
         </View>
 
         <TouchableOpacity
@@ -225,15 +201,6 @@ const styles = StyleSheet.create({
   ctaText: { ...t.button, letterSpacing: 3 },
   legalBlock: { marginTop: 8, marginBottom: 8 },
   legalDisclosure: { ...t.softMuted, textAlign: 'center', lineHeight: 17 },
-  legalLinksRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 14,
-  },
-  legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
-  legalDot: { ...t.softMuted },
   restoreButton: { alignItems: 'center', paddingVertical: 8 },
   restoreText: { ...t.label, color: '#ffffff', letterSpacing: 2 },
 });

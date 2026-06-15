@@ -47,6 +47,7 @@ import {
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PlusSheet } from '@/components/PlusSheet';
+import { TERMS_URL, PRIVACY_URL, openExternal } from '@/lib/links';
 import { SeveritySheet } from '@/components/SeveritySheet';
 import { SEVERITIES } from '@/lib/insult-severity';
 import type { InsultTier } from '@/lib/insult-library';
@@ -565,22 +566,27 @@ export default function SettingsScreen() {
 
         <CoachVoicePicker />
 
-        <View style={styles.toggleRow}>
-          <View style={styles.toggleLabelBlock}>
-            <Text style={styles.toggleLabel}>AI coach (live)</Text>
-            <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default; MoodRx+ feature.</Text>
+        {/* Live coach is gated server-side on the `premium` entitlement (base
+            unlock or MoodRx+), so only show the toggle to those who can use it —
+            a free user toggling it on just 403s into the static fallback. */}
+        {isPremium && (
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleLabelBlock}>
+              <Text style={styles.toggleLabel}>AI coach (live)</Text>
+              <Text style={styles.prefHint}>Writes a fresh post-workout line from your patterns instead of a stock one. Sends your mood, intensity, and workout to MoodRx&apos;s server and Anthropic to generate it. Off by default — unlimited on MoodRx+, or 3 free with the one-time unlock.</Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleAiCoachToggle}
+              activeOpacity={0.8}
+              style={[styles.toggle, aiCoachEnabled ? styles.toggleOn : styles.toggleOff]}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: aiCoachEnabled }}
+              accessibilityLabel="AI coach"
+            >
+              <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: aiCoachTranslateX }] }]} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={handleAiCoachToggle}
-            activeOpacity={0.8}
-            style={[styles.toggle, aiCoachEnabled ? styles.toggleOn : styles.toggleOff]}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: aiCoachEnabled }}
-            accessibilityLabel="AI coach"
-          >
-            <Animated.View style={[styles.toggleCircle, { transform: [{ translateX: aiCoachTranslateX }] }]} />
-          </TouchableOpacity>
-        </View>
+        )}
 
         <View style={styles.toggleRow}>
           <View style={styles.toggleLabelBlock}>
@@ -869,7 +875,7 @@ export default function SettingsScreen() {
           MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
         </Text>
         <TouchableOpacity
-          onPress={() => { void Linking.openURL('https://soul2fade.github.io/moodrx/privacy-policy.html').catch(() => Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')); }}
+          onPress={() => openExternal(PRIVACY_URL)}
           activeOpacity={0.7}
           style={styles.legalLink}
           accessibilityRole="link"
@@ -878,7 +884,7 @@ export default function SettingsScreen() {
           <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => { void Linking.openURL('https://soul2fade.github.io/moodrx/terms.html').catch(() => Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.')); }}
+          onPress={() => openExternal(TERMS_URL)}
           activeOpacity={0.7}
           style={styles.legalLink}
           accessibilityRole="link"

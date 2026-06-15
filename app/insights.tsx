@@ -129,6 +129,14 @@ export default function InsightsScreen() {
     return { visible: isPremium ? withNotes : withNotes.slice(0, 3), total: withNotes.length };
   }, [sessions, isPremium]);
 
+  // Premium history can grow to hundreds of sessions; render it incrementally
+  // (initial page + "show more") so entering Insights doesn't mount every row.
+  const PAGE_SIZE = 30;
+  const [historyShown, setHistoryShown] = useState(PAGE_SIZE);
+  const [notesShown, setNotesShown] = useState(PAGE_SIZE);
+  const visibleHistory = isPremium ? recentSessions.slice(0, historyShown) : recentSessions;
+  const visibleNotes = isPremium ? sessionNotes.visible.slice(0, notesShown) : sessionNotes.visible;
+
   const openSheet = (ctx: OfferContext) => { setSheetContext(ctx); setShowPremiumSheet(true); };
 
   const handleBurn = async () => {
@@ -482,7 +490,7 @@ export default function InsightsScreen() {
         {recentSessions.length > 0 && (
           <View style={styles.recentSection}>
             <Text style={styles.recentLabel}>CASE HISTORY</Text>
-            {recentSessions.map((session) => {
+            {visibleHistory.map((session) => {
               const change = session.postScore - session.intensity;
               const changeStr = change >= 0 ? `+${change}` : `${change}`;
               const imp = sessionImprovement(session);
@@ -516,6 +524,17 @@ export default function InsightsScreen() {
                 </TouchableOpacity>
               );
             })}
+            {isPremium && recentSessions.length > historyShown && (
+              <TouchableOpacity
+                onPress={() => setHistoryShown((n) => n + PAGE_SIZE)}
+                activeOpacity={0.7}
+                style={styles.showMoreBtn}
+                accessibilityRole="button"
+                accessibilityLabel={`Show more sessions, ${recentSessions.length - historyShown} remaining`}
+              >
+                <Text style={styles.showMoreText}>SHOW MORE ({recentSessions.length - historyShown})</Text>
+              </TouchableOpacity>
+            )}
             {!subLoading && !isPremium && sessionCount > 3 && (
               <PriceChip
                 onPress={() => openSheet('history')}
@@ -530,7 +549,7 @@ export default function InsightsScreen() {
         {sessionNotes.total > 0 && (
           <View style={styles.notesSection}>
             <Text style={styles.notesLabel}>FIELD NOTES</Text>
-            {sessionNotes.visible.map((s) => {
+            {visibleNotes.map((s) => {
               const date = new Date(s.timestamp);
               const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${DAY_ABBREVS[date.getDay()] ?? ''}`;
               const moodColor = MOODS[s.mood]?.color ?? '#999999';
@@ -547,6 +566,17 @@ export default function InsightsScreen() {
                 </View>
               );
             })}
+            {isPremium && sessionNotes.visible.length > notesShown && (
+              <TouchableOpacity
+                onPress={() => setNotesShown((n) => n + PAGE_SIZE)}
+                activeOpacity={0.7}
+                style={styles.showMoreBtn}
+                accessibilityRole="button"
+                accessibilityLabel={`Show more notes, ${sessionNotes.visible.length - notesShown} remaining`}
+              >
+                <Text style={styles.showMoreText}>SHOW MORE ({sessionNotes.visible.length - notesShown})</Text>
+              </TouchableOpacity>
+            )}
             {!subLoading && !isPremium && sessionNotes.total > 3 && (
               <PriceChip
                 onPress={() => openSheet('history')}
@@ -1051,6 +1081,19 @@ const styles = StyleSheet.create({
   },
   recentSection: {
     marginTop: 32,
+  },
+  showMoreBtn: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 8,
+  },
+  showMoreText: {
+    fontFamily: fonts.mono.regular,
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors.textSubtle,
+    letterSpacing: 1.5,
   },
   recentLabel: {
     ...t.label,

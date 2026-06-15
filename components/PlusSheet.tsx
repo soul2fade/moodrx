@@ -3,12 +3,9 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   StyleSheet,
   Pressable,
   ActivityIndicator,
-  Linking,
-  Alert,
 } from 'react-native';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PLUS_OFFERING_ID } from '@/lib/revenuecat';
@@ -16,6 +13,8 @@ import { usePurchaseButton } from '@/hooks/usePurchaseButton';
 import { purchaseButtonLabel } from '@/lib/purchase-ui';
 import { type as t } from '@/lib/typography';
 import { colors } from '@/lib/colors';
+import { LegalLinksRow } from '@/components/LegalLinksRow';
+import { PurchaseSheetShell } from '@/components/PurchaseSheetShell';
 
 const MONTHLY_PKG = '$rc_monthly';
 const ANNUAL_PKG = '$rc_annual';
@@ -56,12 +55,6 @@ export function PlusSheet({ visible, onClose, onPurchased }: { visible: boolean;
     onSuccess: onClose,
   });
 
-  const openURL = (url: string) => {
-    void Linking.openURL(url).catch(() =>
-      Alert.alert('Could not open link', 'Visit soul2fade.github.io/moodrx in your browser.'),
-    );
-  };
-
   const PlanRow = ({ id, label, price, suffix, tag }: { id: 'monthly' | 'annual'; label: string; price: string; suffix: string; tag?: string }) => {
     const selected = period === id;
     return (
@@ -82,10 +75,7 @@ export function PlusSheet({ visible, onClose, onPurchased }: { visible: boolean;
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose} accessibilityLabel="Dismiss" accessibilityRole="button" />
-      <View style={styles.sheet}>
-        <View style={styles.handle} />
+    <PurchaseSheetShell visible={visible} onClose={onClose} restoreBtn={restoreBtn}>
         <Text style={styles.headline}>Keep the live coach.</Text>
         <Text style={styles.description}>Live Dr. MoodRx + every coach personality + new content packs.</Text>
         <Text style={styles.trialLine}>7 days free, then your plan.</Text>
@@ -127,45 +117,12 @@ export function PlusSheet({ visible, onClose, onPurchased }: { visible: boolean;
           )}
         </TouchableOpacity>
 
-        <View style={styles.legalLinksRow}>
-          <TouchableOpacity onPress={() => openURL('https://soul2fade.github.io/moodrx/terms.html')} activeOpacity={0.7} accessibilityRole="link" accessibilityLabel="Terms of Use">
-            <Text style={styles.legalLinkText}>TERMS OF USE</Text>
-          </TouchableOpacity>
-          <Text style={styles.legalDot}>·</Text>
-          <TouchableOpacity onPress={() => openURL('https://soul2fade.github.io/moodrx/privacy-policy.html')} activeOpacity={0.7} accessibilityRole="link" accessibilityLabel="Privacy Policy">
-            <Text style={styles.legalLinkText}>PRIVACY POLICY</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footerRow}>
-          <TouchableOpacity
-            onPress={restoreBtn.onPress}
-            disabled={restoreBtn.disabled}
-            activeOpacity={0.7}
-            style={styles.footerBtn}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: restoreBtn.disabled, busy: restoreBtn.busy }}
-            accessibilityLabel="Restore purchase"
-          >
-            {restoreBtn.busy ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <Text style={styles.closeText}>{purchaseButtonLabel(restoreBtn.status, { idle: 'RESTORE PURCHASE', success: 'RESTORED ✓' })}</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={styles.footerBtn} accessibilityRole="button" accessibilityLabel="Maybe later">
-            <Text style={styles.closeText}>MAYBE LATER</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
+        <LegalLinksRow />
+    </PurchaseSheetShell>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' },
-  sheet: { backgroundColor: '#0a0a0a', borderTopWidth: 1, borderTopColor: '#333333', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48 },
-  handle: { width: 32, height: 2, backgroundColor: '#333333', alignSelf: 'center', marginBottom: 24 },
   headline: { ...t.headlineMd, fontSize: 24 },
   description: { ...t.bodyMuted, color: '#ffffff', marginTop: 10 },
   trialLine: { ...t.body, color: colors.premium, fontWeight: '700', marginTop: 14, marginBottom: 12 },
@@ -179,10 +136,4 @@ const styles = StyleSheet.create({
   ctaText: { ...t.button, color: colors.premium, letterSpacing: 2 },
   softLanding: { alignItems: 'center', paddingVertical: 10, marginBottom: 6 },
   softLandingText: { ...t.body, color: '#ffffff' },
-  legalLinksRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginBottom: 12 },
-  legalLinkText: { ...t.label, color: '#ffffff', letterSpacing: 1.5 },
-  legalDot: { ...t.softMuted },
-  footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  footerBtn: { flex: 1, alignItems: 'center', paddingVertical: 8 },
-  closeText: { ...t.label, color: '#ffffff', letterSpacing: 3 },
 });

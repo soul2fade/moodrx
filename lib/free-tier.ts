@@ -47,9 +47,9 @@ export function getFreeTierSummary(workouts: Workout[], isPremium: boolean): str
   const bonusIndex = getWeeklyBonusWorkoutIndex(workouts.length);
   const primary = workouts[0]?.name ?? "Today's pick";
   if (bonusIndex !== null && workouts[bonusIndex]) {
-    return `Free: ${primary} + weekly bonus ${workouts[bonusIndex].name}. Pro unlocks all ${workouts.length}.`;
+    return `Free: ${primary} + weekly bonus ${workouts[bonusIndex].name}. Own it unlocks all ${workouts.length}.`;
   }
-  return `Free: ${primary}. Pro unlocks all ${workouts.length} prescriptions for this mood.`;
+  return `Free: ${primary}. Own it unlocks all ${workouts.length} prescriptions for this mood.`;
 }
 
 export function isSupplementUnlocked(isPremium: boolean, index: number): boolean {

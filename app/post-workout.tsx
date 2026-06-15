@@ -325,7 +325,12 @@ export default function PostWorkoutScreen() {
       try { ExpoSpeechRecognitionModule.stop(); } catch { /* guard */ }
       return;
     }
-    const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    let perm;
+    try {
+      perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    } catch {
+      return; // probe threw — keyboard still works; stay silent
+    }
     if (!perm.granted) return; // no mic — keyboard still works; stay silent
     // Freeze the note text at dictation start; each interim result rebuilds from
     // this fixed base (continuous:false → results[0] is the full running utterance,

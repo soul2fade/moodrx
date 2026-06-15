@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import {
+  pickClip,
   validateManifest,
   remoteUrl,
   localUri,
@@ -10,16 +11,40 @@ import {
 
 /** Static CDN base URL (Netlify assets site). Empty → bundled-fallback only. */
 const BASE = process.env.EXPO_PUBLIC_INSULTS_BASE_URL ?? '';
-/** Persisted document directory; always ends in a slash. */
-const ROOT = FileSystem.documentDirectory ?? '';
+/** Cache directory (OS-evictable, not iCloud-backed) for downloaded clips +
+ *  manifest — they're reproducible from the CDN, so they shouldn't consume
+ *  persistent/backed-up storage. Falls back to documentDirectory if absent.
+ *  Always ends in a slash. */
+const ROOT = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? '';
 
 function dirOf(fileUri: string): string {
   return fileUri.slice(0, fileUri.lastIndexOf('/') + 1);
 }
 
+// Session-level manifest memo so independent callers (TasteTheRoast,
+// CoachVoicePicker, workout) share ONE network fetch instead of each re-fetching.
+let cachedManifest: Manifest | null = null;
+let manifestInflight: Promise<Manifest | null> | null = null;
+
+/** Fetch + cache the manifest, deduped across callers for the app session.
+ *  A successful result is memoized; a null (nothing available) is NOT cached, so
+ *  a later call can retry once connectivity returns. */
+export async function fetchManifest(): Promise<Manifest | null> {
+  if (cachedManifest) return cachedManifest;
+  if (manifestInflight) return manifestInflight;
+  manifestInflight = loadManifest();
+  try {
+    const result = await manifestInflight;
+    if (result) cachedManifest = result;
+    return result;
+  } finally {
+    manifestInflight = null;
+  }
+}
+
 /** Fetch + cache the manifest. Falls back to a cached copy when offline.
  *  Returns null when no base URL is configured or nothing is available. */
-export async function fetchManifest(): Promise<Manifest | null> {
+async function loadManifest(): Promise<Manifest | null> {
   const cacheUri = localUri(ROOT, 'insult-library.json');
   if (BASE) {
     try {
@@ -68,9 +93,23 @@ export async function ensureClip(entry: ClipEntry): Promise<string | null> {
   }
 }
 
-/** Best-effort background prefetch of a whole voice+tier. Failures ignored. */
-export function prefetchTier(manifest: Manifest, voice: string, tier: InsultTier): void {
-  const clips = manifest.voices[voice]?.tiers?.[tier] ?? [];
+/** Resolve a playable clip URI for a voice+tier: pick a clip from the manifest,
+ *  then ensure it's cached/downloaded. null if no manifest/clip or download
+ *  fails. Shared by the voice + severity preview pickers. */
+export async function resolvePreviewClip(
+  manifest: Manifest | null, voice: string, tier: InsultTier,
+): Promise<string | null> {
+  if (!manifest) return null;
+  const entry = pickClip(manifest, voice, tier);
+  if (!entry) return null;
+  return ensureClip(entry).catch(() => null);
+}
+
+/** Best-effort background prefetch of a voice+tier, capped to avoid pulling a
+ *  whole tier on workout start (clips are picked at random, ~1/min, so warming
+ *  a handful is enough; the rest download lazily on demand). Failures ignored. */
+export function prefetchTier(manifest: Manifest, voice: string, tier: InsultTier, maxClips = 6): void {
+  const clips = (manifest.voices[voice]?.tiers?.[tier] ?? []).slice(0, maxClips);
   void (async () => {
     for (const entry of clips) {
       await ensureClip(entry).catch(() => null);

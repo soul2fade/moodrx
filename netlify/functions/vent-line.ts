@@ -13,9 +13,21 @@ import {
 const ANTHROPIC_KEY = process.env.MOODRX_COACH_KEY;
 
 const PER_DEVICE_DAILY_CAP = 20;
+const PER_IP_DAILY_CAP = 40; // IPs can be shared (NAT/Wi-Fi), so a bit higher.
 const GLOBAL_DAILY_CAP = 2000; // ~$4-6/day hard ceiling; tune via redeploy.
 
 const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY });
+
+/** Best-effort client IP for a coarse second rate-limit dimension — the
+ *  per-device id is client-supplied and trivially spoofable. Netlify sets
+ *  x-nf-client-connection-ip; fall back to the first x-forwarded-for hop. */
+function clientIp(headers: Record<string, string | undefined>): string {
+  return (
+    headers['x-nf-client-connection-ip'] ||
+    (headers['x-forwarded-for'] ?? '').split(',')[0]?.trim() ||
+    'unknown'
+  );
+}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST' || !event.body) return { statusCode: 400, body: '' };
@@ -34,26 +46,34 @@ export const handler: Handler = async (event) => {
   // beyond any real 20–30s spoken vent. A direct caller can't burn input tokens.
   if (transcript.length > 2000) return { statusCode: 400, body: '' };
 
-  // Rate + global budget caps (approximate; see coach-line note on non-atomic
-  // get-then-set under concurrency — acceptable for a runaway-abuse ceiling).
-  // Best-effort: the counter store (Netlify Blobs) is defensive infrastructure,
-  // so if it's unavailable we degrade to "skip the cap" rather than failing the
-  // whole request — a counter outage must never take venting down. Caps resume
-  // automatically once Blobs is reachable again.
+  // Rate + global budget caps (approximate; non-atomic get-then-set under
+  // concurrency is acceptable for a runaway-abuse ceiling). Two per-caller
+  // dimensions (client-supplied deviceId + coarse IP) plus a global daily cap.
+  // The global cap is this UNGATED endpoint's only real cost ceiling, so a
+  // counter-store (Netlify Blobs) outage fails CLOSED rather than skipping it.
   const today = new Date().toISOString().slice(0, 10);
   const deviceKey = `device:${deviceId}:${today}`;
+  const ipKey = `ip:${clientIp(event.headers ?? {})}:${today}`;
   const globalKey = `global:${today}`;
-  let store: ReturnType<typeof getStore> | undefined;
+  let store: ReturnType<typeof getStore>;
   let deviceCount = 0;
+  let ipCount = 0;
   let globalCount = 0;
   try {
     store = getStore('vent-usage');
-    deviceCount = Number((await store.get(deviceKey)) ?? 0);
-    globalCount = Number((await store.get(globalKey)) ?? 0);
+    [deviceCount, ipCount, globalCount] = (
+      await Promise.all([store.get(deviceKey), store.get(ipKey), store.get(globalKey)])
+    ).map((v) => Number(v ?? 0));
   } catch {
-    store = undefined; // Blobs unavailable → skip caps for this request
+    // Can't read the budget counter → can't enforce the only cost ceiling on
+    // this ungated endpoint. Fail CLOSED; the client degrades to the mood form.
+    return { statusCode: 503, body: '' };
   }
-  if (store && (deviceCount >= PER_DEVICE_DAILY_CAP || globalCount >= GLOBAL_DAILY_CAP)) {
+  if (
+    deviceCount >= PER_DEVICE_DAILY_CAP ||
+    ipCount >= PER_IP_DAILY_CAP ||
+    globalCount >= GLOBAL_DAILY_CAP
+  ) {
     return { statusCode: 429, body: '' }; // client falls back to the mood form
   }
 
@@ -75,13 +95,14 @@ export const handler: Handler = async (event) => {
 
     // Best-effort counter increment; a Blobs write failure must not 502 a reply
     // we already generated.
-    if (store) {
-      try {
-        await store.set(deviceKey, String(deviceCount + 1));
-        await store.set(globalKey, String(globalCount + 1));
-      } catch {
-        /* counter write failed — ignore, the reply still stands */
-      }
+    try {
+      await Promise.all([
+        store.set(deviceKey, String(deviceCount + 1)),
+        store.set(ipKey, String(ipCount + 1)),
+        store.set(globalKey, String(globalCount + 1)),
+      ]);
+    } catch {
+      /* counter write failed — ignore, the reply still stands */
     }
 
     return {

@@ -1,4 +1,4 @@
-import type { Handler } from '@netlify/functions';
+import type { Context } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import Anthropic from '@anthropic-ai/sdk';
 import { coachSystemPrompt } from './lib/coach-prompt';
@@ -41,23 +41,23 @@ async function isEntitled(appUserId: string): Promise<boolean> {
   }
 }
 
-export const handler: Handler = async (event) => {
-  if (event.httpMethod !== 'POST' || !event.body) return { statusCode: 400, body: '' };
-  if (!ANTHROPIC_KEY || !REVENUECAT_SECRET) return { statusCode: 500, body: '' };
+export default async (req: Request, _context: Context): Promise<Response> => {
+  if (req.method !== 'POST') return new Response('', { status: 400 });
+  if (!ANTHROPIC_KEY || !REVENUECAT_SECRET) return new Response('', { status: 500 });
 
   let payload: { context?: any; tone?: string; appUserId?: string };
   try {
-    payload = JSON.parse(event.body);
+    payload = await req.json();
   } catch {
-    return { statusCode: 400, body: '' };
+    return new Response('', { status: 400 }); // missing/invalid JSON body
   }
   const { context, tone, appUserId } = payload;
   if (!context || !appUserId || typeof tone !== 'string' || !tone.trim()) {
-    return { statusCode: 400, body: '' };
+    return new Response('', { status: 400 });
   }
 
   // 1. Entitlement — only paying (base-unlock) users trigger spend.
-  if (!(await isEntitled(appUserId))) return { statusCode: 403, body: '' };
+  if (!(await isEntitled(appUserId))) return new Response('', { status: 403 });
 
   // 2. Rate + budget caps (Netlify Blobs as counter store). The get-then-set
   //    is non-atomic, so under concurrency the counts can drift slightly — this
@@ -82,7 +82,7 @@ export const handler: Handler = async (event) => {
     store = undefined; // Blobs unavailable → skip caps for this request
   }
   if (store && (userCount >= PER_USER_DAILY_CAP || globalCount >= GLOBAL_MONTHLY_CAP)) {
-    return { statusCode: 429, body: '' };
+    return new Response('', { status: 429 });
   }
 
   // 3. Generate the line.
@@ -96,7 +96,7 @@ export const handler: Handler = async (event) => {
     });
     const block = msg.content.find((b) => b.type === 'text');
     const line = block && block.type === 'text' ? block.text.trim() : '';
-    if (!line) return { statusCode: 502, body: '' };
+    if (!line) return new Response('', { status: 502 });
 
     // 4. Count only successful, billed calls (best-effort; a counter write
     //    failure must not 502 a line we already generated).
@@ -109,12 +109,11 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    return {
-      statusCode: 200,
+    return new Response(JSON.stringify({ line }), {
+      status: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ line }),
-    };
+    });
   } catch {
-    return { statusCode: 502, body: '' };
+    return new Response('', { status: 502 });
   }
 };

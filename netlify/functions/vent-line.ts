@@ -1,4 +1,4 @@
-import type { Handler } from '@netlify/functions';
+import type { Context } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import Anthropic from '@anthropic-ai/sdk';
 import {
@@ -21,30 +21,30 @@ const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY });
 /** Best-effort client IP for a coarse second rate-limit dimension — the
  *  per-device id is client-supplied and trivially spoofable. Netlify sets
  *  x-nf-client-connection-ip; fall back to the first x-forwarded-for hop. */
-function clientIp(headers: Record<string, string | undefined>): string {
+function clientIp(headers: Headers): string {
   return (
-    headers['x-nf-client-connection-ip'] ||
-    (headers['x-forwarded-for'] ?? '').split(',')[0]?.trim() ||
+    headers.get('x-nf-client-connection-ip') ||
+    (headers.get('x-forwarded-for') ?? '').split(',')[0]?.trim() ||
     'unknown'
   );
 }
 
-export const handler: Handler = async (event) => {
-  if (event.httpMethod !== 'POST' || !event.body) return { statusCode: 400, body: '' };
-  if (!ANTHROPIC_KEY) return { statusCode: 500, body: '' };
+export default async (req: Request, _context: Context): Promise<Response> => {
+  if (req.method !== 'POST') return new Response('', { status: 400 });
+  if (!ANTHROPIC_KEY) return new Response('', { status: 500 });
 
   let payload: { transcript?: string; deviceId?: string; episodes?: Record<string, unknown> | null };
   try {
-    payload = JSON.parse(event.body);
+    payload = await req.json();
   } catch {
-    return { statusCode: 400, body: '' };
+    return new Response('', { status: 400 }); // missing/invalid JSON body
   }
   const transcript = typeof payload.transcript === 'string' ? payload.transcript.trim() : '';
   const deviceId = typeof payload.deviceId === 'string' && payload.deviceId ? payload.deviceId : 'anon';
-  if (!transcript) return { statusCode: 400, body: '' };
+  if (!transcript) return new Response('', { status: 400 });
   // Bound input cost on this ungated endpoint: ~2000 chars is ~400 words, far
   // beyond any real 20–30s spoken vent. A direct caller can't burn input tokens.
-  if (transcript.length > 2000) return { statusCode: 400, body: '' };
+  if (transcript.length > 2000) return new Response('', { status: 400 });
 
   // Rate + global budget caps (approximate; non-atomic get-then-set under
   // concurrency is acceptable for a runaway-abuse ceiling). Two per-caller
@@ -53,7 +53,7 @@ export const handler: Handler = async (event) => {
   // counter-store (Netlify Blobs) outage fails CLOSED rather than skipping it.
   const today = new Date().toISOString().slice(0, 10);
   const deviceKey = `device:${deviceId}:${today}`;
-  const ipKey = `ip:${clientIp(event.headers ?? {})}:${today}`;
+  const ipKey = `ip:${clientIp(req.headers)}:${today}`;
   const globalKey = `global:${today}`;
   let store: ReturnType<typeof getStore>;
   let deviceCount = 0;
@@ -67,14 +67,14 @@ export const handler: Handler = async (event) => {
   } catch {
     // Can't read the budget counter → can't enforce the only cost ceiling on
     // this ungated endpoint. Fail CLOSED; the client degrades to the mood form.
-    return { statusCode: 503, body: '' };
+    return new Response('', { status: 503 });
   }
   if (
     deviceCount >= PER_DEVICE_DAILY_CAP ||
     ipCount >= PER_IP_DAILY_CAP ||
     globalCount >= GLOBAL_DAILY_CAP
   ) {
-    return { statusCode: 429, body: '' }; // client falls back to the mood form
+    return new Response('', { status: 429 }); // client falls back to the mood form
   }
 
   try {
@@ -89,7 +89,7 @@ export const handler: Handler = async (event) => {
     });
     const block = msg.content.find((b) => b.type === 'tool_use');
     const assessment = validateAssessment(block && block.type === 'tool_use' ? block.input : null);
-    if (!assessment) return { statusCode: 502, body: '' };
+    if (!assessment) return new Response('', { status: 502 });
 
     const risk = resolveRisk(assessment.risk, classifyKeywordFloor(transcript));
 
@@ -105,12 +105,11 @@ export const handler: Handler = async (event) => {
       /* counter write failed — ignore, the reply still stands */
     }
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mood: assessment.mood, intensity: assessment.intensity, reply: assessment.reply, risk }),
-    };
+    return new Response(
+      JSON.stringify({ mood: assessment.mood, intensity: assessment.intensity, reply: assessment.reply, risk }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
   } catch {
-    return { statusCode: 502, body: '' };
+    return new Response('', { status: 502 });
   }
 };

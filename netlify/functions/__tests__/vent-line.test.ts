@@ -27,13 +27,15 @@ const TOOL_OK = (over: Record<string, unknown> = {}) => ({
   ],
 });
 
-async function call(body: unknown) {
-  const { handler } = await import('../vent-line');
-  return handler(
-    { httpMethod: 'POST', body: body == null ? null : JSON.stringify(body) } as any,
-    {} as any,
-    () => {},
-  ) as Promise<{ statusCode: number; body: string }>;
+async function call(body: unknown): Promise<{ statusCode: number; body: string }> {
+  const fn = (await import('../vent-line')).default;
+  const req = new Request('https://moodrx-api.netlify.app/.netlify/functions/vent-line', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body == null ? null : JSON.stringify(body),
+  });
+  const res = await fn(req, {} as any);
+  return { statusCode: res.status, body: await res.text() };
 }
 
 beforeEach(() => {

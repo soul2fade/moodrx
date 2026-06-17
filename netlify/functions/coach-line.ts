@@ -12,7 +12,10 @@ const REVENUECAT_SECRET = process.env.moodrx_coach_function;
 const PER_USER_DAILY_CAP = 25;
 const GLOBAL_MONTHLY_CAP = 5000; // hard ceiling on total calls/month
 
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY });
+// Pin baseURL to the real Anthropic API. Netlify's AI Gateway extension injects
+// ANTHROPIC_BASE_URL into the function env, which the SDK would otherwise pick up
+// and route our key through the gateway proxy (→ 401). Pinning bypasses that.
+const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY, baseURL: 'https://api.anthropic.com' });
 
 /** Verify the caller holds the base-unlock `premium` entitlement via the
  *  RevenueCat v1 REST API. 🔎 Re-verify response shape against current docs. */

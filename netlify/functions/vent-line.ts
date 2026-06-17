@@ -16,7 +16,10 @@ const PER_DEVICE_DAILY_CAP = 20;
 const PER_IP_DAILY_CAP = 40; // IPs can be shared (NAT/Wi-Fi), so a bit higher.
 const GLOBAL_DAILY_CAP = 2000; // ~$4-6/day hard ceiling; tune via redeploy.
 
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY });
+// Pin baseURL to the real Anthropic API. Netlify's AI Gateway extension injects
+// ANTHROPIC_BASE_URL into the function env, which the SDK would otherwise pick up
+// and route our key through the gateway proxy (→ 401). Pinning bypasses that.
+const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY, baseURL: 'https://api.anthropic.com' });
 
 /** Best-effort client IP for a coarse second rate-limit dimension — the
  *  per-device id is client-supplied and trivially spoofable. Netlify sets

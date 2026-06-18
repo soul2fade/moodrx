@@ -28,14 +28,13 @@ import type { MoodKey, Session, UserProfile } from '@/lib/storage';
 import { getCarouselHintSeen, setCarouselHintSeen } from '@/lib/storage';
 import { getBestPatternCallout } from '@/lib/workout-insights';
 import { getLastNDays } from '@/lib/analytics';
+import { MONTH_ABBREVS as MONTHS, DAY_ABBREVS as DAYS } from '@/lib/dateUtils';
 
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 24;
 const CARD_W = SCREEN_W - H_PADDING * 2;
 
 const PAGE_LABELS = ['YOUR PATTERN', 'QUICK ACTIONS'];
-const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
 interface MoodIdentity {
   dominantMood: MoodKey;

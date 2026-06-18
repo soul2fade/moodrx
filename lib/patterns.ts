@@ -31,7 +31,9 @@ const REST_THRESHOLD_HOURS = 7; // sleep at/above this counts as a "rested" nigh
 
 /** Sign-adjusted so a larger number always means a better outcome: for every
  *  mood except 'good' a LOWER post-score is better, so flip the sign there. */
-export function sessionImprovement(s: Session): number {
+export function sessionImprovement(
+  s: { mood: Session['mood']; intensity: number; postScore: number },
+): number {
   return s.mood === 'good' ? s.postScore - s.intensity : s.intensity - s.postScore;
 }
 

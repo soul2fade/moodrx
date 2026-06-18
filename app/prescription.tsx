@@ -74,6 +74,12 @@ export default function PrescriptionScreen() {
     () => getPrescriptionWorkouts(getWorkoutsForMood(mood), sessions),
     [mood, sessions],
   );
+  // Precompute each workout's badge once — getWorkoutBadge filters all sessions,
+  // and the JSX reads it twice per card (guard + text).
+  const workoutBadges = useMemo(
+    () => new Map(workouts.map((w) => [w.id, getWorkoutBadge(sessions, w)])),
+    [workouts, sessions],
+  );
   const supplements = getSupplementsForMood(mood);
   const freeTierSummary = useMemo(
     () => getFreeTierSummary(workouts, isPremium),
@@ -198,8 +204,8 @@ export default function PrescriptionScreen() {
                 <Text style={flattenStyle([styles.workoutName, { flex: 1, fontSize: 20 }])} numberOfLines={2}>{workouts[0].name}</Text>
                 <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
               </View>
-              {getWorkoutBadge(sessions, workouts[0]) && (
-                <Text style={styles.workoutBadge}>{getWorkoutBadge(sessions, workouts[0])}</Text>
+              {workoutBadges.get(workouts[0].id) && (
+                <Text style={styles.workoutBadge}>{workoutBadges.get(workouts[0].id)}</Text>
               )}
               <Text style={styles.workoutVibe}>{workouts[0].vibe}</Text>
               <View style={styles.scienceInline}>
@@ -285,8 +291,8 @@ export default function PrescriptionScreen() {
                         <Text style={flattenStyle([styles.workoutName, { flex: 1 }])} numberOfLines={2}>{workout.name}</Text>
                         <Text style={flattenStyle([styles.workoutArrow, { color: accentColor }])}>→</Text>
                       </View>
-                      {getWorkoutBadge(sessions, workout) && (
-                        <Text style={styles.workoutBadgeMuted}>{getWorkoutBadge(sessions, workout)}</Text>
+                      {workoutBadges.get(workout.id) && (
+                        <Text style={styles.workoutBadgeMuted}>{workoutBadges.get(workout.id)}</Text>
                       )}
                       <Text style={styles.workoutVibe}>{workout.vibe}</Text>
                     </TouchableOpacity>

@@ -61,8 +61,8 @@ RevenueCat is fully integrated for real in-app purchases.
 **Key files:**
 - `lib/revenuecat.tsx` — initialization logic (`initializeRevenueCat`)
 - `contexts/SubscriptionContext.tsx` — RC purchases, store trial via annual package
-- `scripts/revenueCatClient.ts` — server-side RC API client (uses Replit connectors)
-- `scripts/seedRevenueCat.ts` — seed script (run once to set up RC entities)
+- `scripts/rcSecretClient.ts` — server-side RC Secret API client (sk_ key; no Replit connector)
+- `scripts/seedRevenueCatTestCatalog.ts` / `scripts/seedRevenueCatProductionSubs.ts` — seed scripts (test + production catalogs)
 
 **Key flows:**
 - `initializeRevenueCat()` called top-level in `app/_layout.tsx`
@@ -72,7 +72,7 @@ RevenueCat is fully integrated for real in-app purchases.
 - In `__DEV__` mode, purchases show a confirmation modal before executing
 - `app/premium.tsx` reads prices from RC offerings (no hardcoded strings)
 
-**To re-seed RevenueCat:** `npx tsx scripts/seedRevenueCat.ts`
+**To re-seed RevenueCat:** `npx tsx scripts/seedRevenueCatTestCatalog.ts` (test) or `scripts/seedRevenueCatProductionSubs.ts` (production)
 
 ## Environment Variables
 

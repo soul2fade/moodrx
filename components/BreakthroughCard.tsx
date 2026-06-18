@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
+import { MONTH_ABBREVS } from '@/lib/dateUtils';
 import { fonts } from '../lib/typography';
 
 interface BreakthroughCardProps {
@@ -15,8 +16,7 @@ interface BreakthroughCardProps {
 
 function formatDate(): string {
   const d = new Date();
-  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  return `${months[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`;
+  return `${MONTH_ABBREVS[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`;
 }
 
 function getDeltaLabel(displayed: number): string {

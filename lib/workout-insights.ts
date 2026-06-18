@@ -1,5 +1,6 @@
 import type { MoodKey, Session } from '@/lib/storage';
 import type { Workout } from '@/lib/workouts';
+import { MOODS } from '@/lib/moods';
 
 export interface WorkoutEffectiveness {
   workoutId: string;
@@ -27,15 +28,6 @@ export interface EffectiveCombo {
 }
 
 const NO_DEMOTE_THRESHOLD = 2;
-
-const MOODS_LABEL: Record<MoodKey, string> = {
-  anxious: 'Anxious',
-  low: 'Low',
-  foggy: 'Foggy',
-  restless: 'Restless',
-  stressed: 'Stressed',
-  good: 'Good',
-};
 
 function sessionsForWorkout(sessions: Session[], workout: Workout): Session[] {
   return sessions.filter(
@@ -167,7 +159,7 @@ export function getTopEffectiveCombinations(
     .slice(0, limit)
     .map((combo) => ({
       ...combo,
-      label: `${MOODS_LABEL[combo.mood]} + ${combo.workoutName} — helped ${combo.yesCount}/${combo.ratedCount} times`,
+      label: `${MOODS[combo.mood].name} + ${combo.workoutName} — helped ${combo.yesCount}/${combo.ratedCount} times`,
     }));
 }
 
@@ -179,6 +171,6 @@ export function getBestPatternCallout(
   return {
     mood: top.mood,
     workoutName: top.workoutName,
-    text: `${MOODS_LABEL[top.mood]} lifts most after ${top.workoutName} — helped ${top.yesCount}/${top.ratedCount} times.`,
+    text: `${MOODS[top.mood].name} lifts most after ${top.workoutName} — helped ${top.yesCount}/${top.ratedCount} times.`,
   };
 }

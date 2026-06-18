@@ -29,7 +29,7 @@ import {
   DEFAULT_SUPPLEMENT_TIME,
 } from '@/lib/notifications';
 import { MOODS, MOOD_ORDER } from '@/lib/moods';
-import { todayDateString, formatTodayLabel, toDateString } from '@/lib/dateUtils';
+import { todayDateString, formatTodayLabel, toDateString, MONTH_ABBREVS } from '@/lib/dateUtils';
 import { type as t, fonts } from '../lib/typography';
 import { useScreenAnimation } from '@/hooks/useScreenAnimation';
 import { useSubscription } from '@/contexts/SubscriptionContext';
@@ -67,9 +67,8 @@ function getWeekDates(weekStart: Date): string[] {
 function formatWeekLabel(weekStart: Date): string {
   const end = new Date(weekStart);
   end.setDate(end.getDate() + 6);
-  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  const s = `${String(weekStart.getDate()).padStart(2,'0')} ${months[weekStart.getMonth()]}`;
-  const e = `${String(end.getDate()).padStart(2,'0')} ${months[end.getMonth()]}`;
+  const s = `${String(weekStart.getDate()).padStart(2,'0')} ${MONTH_ABBREVS[weekStart.getMonth()]}`;
+  const e = `${String(end.getDate()).padStart(2,'0')} ${MONTH_ABBREVS[end.getMonth()]}`;
   return `${s} – ${e}`;
 }
 

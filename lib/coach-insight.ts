@@ -3,6 +3,7 @@ import type { Workout } from '@/lib/workouts';
 import { getWorkoutEffectiveness } from '@/lib/workout-insights';
 import { getLastNDays } from '@/lib/analytics';
 import { MOOD_ORDER } from '@/lib/moods';
+import { sessionImprovement } from '@/lib/patterns';
 
 export type CoachTone = 'glass-house' | 'sticks' | 'roast';
 
@@ -35,11 +36,9 @@ function isCrisisSignal(mood: MoodKey, intensity: number, sessions: Session[]): 
 function trend(sessions: Session[]): CoachContext['recentTrend'] {
   const days = getLastNDays(sessions, 5);
   if (days.length < 2) return 'new';
-  // Improvement = effective delta rising. For every mood except 'good', a
-  // LOWER post-score is better, so flip the per-day sign before comparing.
-  const effective = days.map((d) =>
-    d.mood === 'good' ? d.postScore - d.intensity : d.intensity - d.postScore,
-  );
+  // Improvement = effective delta rising. sessionImprovement applies the same
+  // per-mood sign flip (lower post-score is better, except 'good').
+  const effective = days.map(sessionImprovement);
   const first = effective[0];
   const last = effective[effective.length - 1];
   if (last - first > 0.5) return 'improving';

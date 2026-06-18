@@ -1,9 +1,10 @@
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import type { Session, MoodKey } from './storage';
+import type { Session } from './storage';
 import { getSessions, getStreak, getSupplementReminderPrefs } from './storage';
 import { getSupplementsForMood } from './supplements';
+import { MOODS } from './moods';
 
 export const NOTIFICATIONS_ENABLED_KEY = 'notifications_enabled';
 export const REMINDER_TIME_KEY = 'reminder_time';
@@ -102,15 +103,6 @@ export const SUPPLEMENT_PRESET_TIMES = [
 
 export const DEFAULT_SUPPLEMENT_TIME = '9:00 AM';
 
-const MOOD_NAMES: Record<MoodKey, string> = {
-  anxious:  'ANXIOUS',
-  low:      'LOW',
-  foggy:    'FOGGY',
-  restless: 'RESTLESS',
-  stressed: 'STRESSED',
-  good:     'GOOD',
-};
-
 const ZERO_STREAK_MESSAGES = [
   "How bad is it today? Check in.",
   "Your brain's making excuses. Don't listen.",
@@ -144,21 +136,12 @@ const SUPPLEMENT_REMINDER_MESSAGES = [
   "Consistency is the dose. Take your stack.",
 ];
 
-const MOOD_DISPLAY_NAMES: Record<MoodKey, string> = {
-  anxious:  'Anxious',
-  low:      'Low',
-  foggy:    'Foggy',
-  restless: 'Restless',
-  stressed: 'Stressed',
-  good:     'Good',
-};
-
 function buildSupplementMessage(sessions: Session[]): string {
   if (sessions.length === 0) {
     return SUPPLEMENT_REMINDER_MESSAGES[Math.floor(Math.random() * SUPPLEMENT_REMINDER_MESSAGES.length)];
   }
   const last = sessions[sessions.length - 1];
-  const moodName = MOOD_DISPLAY_NAMES[last.mood] ?? last.mood;
+  const moodName = MOODS[last.mood]?.name ?? last.mood;
   const supplements = getSupplementsForMood(last.mood);
   if (supplements.length > 0) {
     return `Time for your ${moodName} stack — ${supplements[0].name} is up first.`;
@@ -175,7 +158,7 @@ function buildContextualMessage(sessions: Session[]): string {
   const last = sessions[sessions.length - 1];
   const hoursAgo = (Date.now() - last.timestamp) / (1000 * 60 * 60);
   const change = last.postScore - last.intensity;
-  const moodName = MOOD_NAMES[last.mood] ?? last.mood.toUpperCase();
+  const moodName = (MOODS[last.mood]?.name ?? last.mood).toUpperCase();
   const changeStr = change >= 0 ? `+${change}` : `${change}`;
 
   if (hoursAgo >= 18 && hoursAgo < 54) {

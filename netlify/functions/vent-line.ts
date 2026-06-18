@@ -1,6 +1,5 @@
 import type { Context } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
-import Anthropic from '@anthropic-ai/sdk';
 import {
   ASSESS_TOOL,
   buildVentSystem,
@@ -8,6 +7,7 @@ import {
   resolveRisk,
   validateAssessment,
 } from './lib/vent-grading';
+import { makeAnthropic } from './lib/anthropic';
 
 // Reuse the Anthropic key already configured for the coach function.
 const ANTHROPIC_KEY = process.env.MOODRX_COACH_KEY;
@@ -16,10 +16,7 @@ const PER_DEVICE_DAILY_CAP = 20;
 const PER_IP_DAILY_CAP = 40; // IPs can be shared (NAT/Wi-Fi), so a bit higher.
 const GLOBAL_DAILY_CAP = 2000; // ~$4-6/day hard ceiling; tune via redeploy.
 
-// Pin baseURL to the real Anthropic API. Netlify's AI Gateway extension injects
-// ANTHROPIC_BASE_URL into the function env, which the SDK would otherwise pick up
-// and route our key through the gateway proxy (→ 401). Pinning bypasses that.
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY, baseURL: 'https://api.anthropic.com' });
+const anthropic = makeAnthropic(ANTHROPIC_KEY);
 
 /** Best-effort client IP for a coarse second rate-limit dimension — the
  *  per-device id is client-supplied and trivially spoofable. Netlify sets

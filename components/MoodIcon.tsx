@@ -4,15 +4,6 @@ import Svg, { Line, Path, Polyline } from 'react-native-svg';
 import { MoodKey } from '@/lib/storage';
 import { MOODS } from '@/lib/moods';
 
-const MOOD_A11Y_LABELS: Record<MoodKey, string> = {
-  anxious: 'Anxious mood',
-  low: 'Low mood',
-  foggy: 'Foggy mood',
-  restless: 'Restless mood',
-  stressed: 'Stressed mood',
-  good: 'Good mood',
-};
-
 interface MoodIconProps {
   mood: MoodKey;
   size?: number;
@@ -196,7 +187,7 @@ function MoodIconImpl({ mood, size = 32, opacity = 1, color }: MoodIconProps) {
   };
 
   return (
-    <View style={{ opacity }} accessible accessibilityLabel={MOOD_A11Y_LABELS[mood]} accessibilityRole="image">
+    <View style={{ opacity }} accessible accessibilityLabel={`${MOODS[mood].name} mood`} accessibilityRole="image">
       {renderIcon()}
     </View>
   );

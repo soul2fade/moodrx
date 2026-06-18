@@ -1,7 +1,7 @@
 import type { Context } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
-import Anthropic from '@anthropic-ai/sdk';
 import { coachSystemPrompt } from './lib/coach-prompt';
+import { makeAnthropic } from './lib/anthropic';
 
 // Env var names map to the user's existing Netlify secrets:
 //   MOODRX_COACH_KEY      → Anthropic API key
@@ -12,10 +12,7 @@ const REVENUECAT_SECRET = process.env.moodrx_coach_function;
 const PER_USER_DAILY_CAP = 25;
 const GLOBAL_MONTHLY_CAP = 5000; // hard ceiling on total calls/month
 
-// Pin baseURL to the real Anthropic API. Netlify's AI Gateway extension injects
-// ANTHROPIC_BASE_URL into the function env, which the SDK would otherwise pick up
-// and route our key through the gateway proxy (→ 401). Pinning bypasses that.
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY, baseURL: 'https://api.anthropic.com' });
+const anthropic = makeAnthropic(ANTHROPIC_KEY);
 
 /** Verify the caller holds the base-unlock `premium` entitlement via the
  *  RevenueCat v1 REST API. 🔎 Re-verify response shape against current docs. */
@@ -79,8 +76,9 @@ export default async (req: Request, _context: Context): Promise<Response> => {
   let globalCount = 0;
   try {
     store = getStore('coach-usage');
-    userCount = Number((await store.get(userKey)) ?? 0);
-    globalCount = Number((await store.get(globalKey)) ?? 0);
+    [userCount, globalCount] = (
+      await Promise.all([store.get(userKey), store.get(globalKey)])
+    ).map((v) => Number(v ?? 0));
   } catch {
     store = undefined; // Blobs unavailable → skip caps for this request
   }
@@ -105,8 +103,10 @@ export default async (req: Request, _context: Context): Promise<Response> => {
     //    failure must not 502 a line we already generated).
     if (store) {
       try {
-        await store.set(userKey, String(userCount + 1));
-        await store.set(globalKey, String(globalCount + 1));
+        await Promise.all([
+          store.set(userKey, String(userCount + 1)),
+          store.set(globalKey, String(globalCount + 1)),
+        ]);
       } catch {
         /* counter write failed — ignore, the line still stands */
       }

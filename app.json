@@ -18,7 +18,7 @@
       }
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.moodrx.app",
       "appleTeamId": "ST6C3ZM5C3",
       "infoPlist": {

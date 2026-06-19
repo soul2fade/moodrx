@@ -6,8 +6,12 @@ review screenshot must be captured from the running app on a device. So the iOS 
 **manual**. Every field value you need is below — follow it top to bottom.
 
 **State at handoff (2026-06-19):**
+- ⚠️ **Submit BUILD 44, not 43.** Build 43 (iPad-enabled) had an overflowing iPad portrait paywall.
+  Commit `d34b67a` set `supportsTablet:false` → rebuild as **build 44** (iPhone-only, auto-incremented).
+  Every "build 43" reference below means **build 44**. Build cmd: `rm -rf android ios && eas build
+  --platform ios --profile production`, then `eas submit --platform ios`.
 - Build **43** (EAS id `b502d217`, includes the `NSPhotoLibraryUsageDescription` fix) was uploaded
-  to ASC via `eas submit`.
+  to ASC via `eas submit` — now superseded by 44.
 - ASC config already DONE (do **not** redo): Paid Apps Agreement active; IAP `moodrx_pro_lifetime`
   ($9.99 non-consumable) + 2 MoodRx+ subscriptions created with metadata + availability (EU-27
   excluded); App Privacy already declares Health / Fitness / Purchases; Age rating 13+; app priced
@@ -21,15 +25,15 @@ review screenshot must be captured from the running app on a device. So the iOS 
 
 ### A. Store-listing screenshots (REQUIRED before you can submit)
 
-The binary declares **`supportsTablet: true`** (`app.json`), so Apple requires **two** screenshot
-sets on the 1.0.0 version (App Store Connect → MoodRx → 1.0.0 → **App Screenshots**):
-- **iPhone 6.9"** — 1290×2796 px (Apple auto-scales these to smaller iPhones). 1–10 images.
-- **iPad 13"** — 2048×2732 px. **Required because the app supports iPad** — this is the easily-missed
-  one. 1–10 images.
+**As of build 44 the app is iPhone-only** (`supportsTablet: false`, commit `d34b67a`) — the iPad
+portrait layout overflowed, so we dropped iPad support rather than fix/ship a broken iPad UI. So you
+need **one** set only (App Store Connect → MoodRx → 1.0 → App Screenshots → **iPhone** tab):
+- **iPhone 6.5"** — 1242×2688 px (portrait); 1284×2778 also accepted. Apple auto-scales to smaller
+  iPhones. 1–10 images. (This is the slot ASC shows.)
+- **No iPad set** — iPhone-only.
 
-Capture from build 43 on the iPad + an iPhone (or the iOS Simulator at those device sizes). These are
-DIFFERENT from the IAP review screenshot below. (To avoid the iPad set you'd have to rebuild with
-`supportsTablet:false` — not worth a new build; just take the iPad screenshots on the iPad.)
+Capture from **build 44** on an iPhone or the iOS Simulator. These are DIFFERENT from the IAP review
+screenshot below.
 
 ### B. Capture the IAP review screenshot
 

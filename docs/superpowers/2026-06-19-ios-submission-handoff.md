@@ -17,10 +17,24 @@ review screenshot must be captured from the running app on a device. So the iOS 
 
 ---
 
-## Prerequisite (do this first — it gates everything)
+## Prerequisites (do these first — they gate submission)
 
-**Capture the IAP review screenshot.** Apple requires, for each in-app purchase being submitted for
-the first time, a screenshot showing the purchase in the app.
+### A. Store-listing screenshots (REQUIRED before you can submit)
+
+The binary declares **`supportsTablet: true`** (`app.json`), so Apple requires **two** screenshot
+sets on the 1.0.0 version (App Store Connect → MoodRx → 1.0.0 → **App Screenshots**):
+- **iPhone 6.9"** — 1290×2796 px (Apple auto-scales these to smaller iPhones). 1–10 images.
+- **iPad 13"** — 2048×2732 px. **Required because the app supports iPad** — this is the easily-missed
+  one. 1–10 images.
+
+Capture from build 43 on the iPad + an iPhone (or the iOS Simulator at those device sizes). These are
+DIFFERENT from the IAP review screenshot below. (To avoid the iPad set you'd have to rebuild with
+`supportsTablet:false` — not worth a new build; just take the iPad screenshots on the iPad.)
+
+### B. Capture the IAP review screenshot
+
+Apple requires, for each in-app purchase being submitted for the first time, a screenshot showing the
+purchase in the app.
 
 1. Install build 43 on the iPad via **TestFlight** (preview/ad-hoc builds won't install — see memory
    `ios-testing-workflow`).

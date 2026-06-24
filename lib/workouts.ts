@@ -11,6 +11,7 @@ export interface Workout {
   intensity: WorkoutIntensity;
   steps: string[];
   why: string;
+  sources: string[];
 }
 
 export const WORKOUTS: Workout[] = [
@@ -30,7 +31,11 @@ export const WORKOUTS: Workout[] = [
       '3 min gradual slowdown.',
       '2 min standing. 4-7-8 breathing: in 4, hold 7, out 8.',
     ],
-    why: "Rhythmic bilateral movement (left-right-left-right) reduces amygdala hyperactivity and suppresses the ruminative default mode network. Translation: your alarm system gets a break. The counting gives your prefrontal cortex something to do besides catastrophize. Studies consistently show significant reductions in cortisol after 20 minutes of steady-state rhythmic exercise. The 4-7-8 breathing at the end activates your vagus nerve — your body's own chill-out switch.",
+    why: `Walking pulls you out of your head. A steady, rhythmic walk — especially outdoors — quiets the brain's rumination circuitry and gives the spiral somewhere else to go. The counting keeps your mind busy with something other than catastrophizing. The 4-7-8 breathing at the end is the real lever: slow breathing with a long exhale measurably boosts vagal tone — your body's brake pedal. Make it a habit and it compounds: regular rhythmic movement helps dial down baseline stress over time.`,
+    sources: [
+      'Bratman et al. (2015). Nature experience reduces rumination and subgenual prefrontal cortex activation. PNAS, 112(28), 8567–8572.',
+      'Laborde et al. (2022). Effects of voluntary slow breathing on heart rate and heart rate variability: a systematic review and meta-analysis. Neuroscience & Biobehavioral Reviews, 138, 104711.',
+    ],
   },
   {
     id: 'anxious-2',
@@ -48,7 +53,11 @@ export const WORKOUTS: Workout[] = [
       "Legs up the wall — 5 min. Looks lazy. It's science.",
       "Savasana — 4 min. Lie there. You're welcome.",
     ],
-    why: "Yoga's combination of controlled breathing and physical postures directly regulates the autonomic nervous system. Inversions like legs-up-the-wall increase parasympathetic tone — basically telling your fight-or-flight system to take five. Pigeon pose targets the hip flexors, which store tension during chronic stress. Multiple studies consistently show significant reductions in state anxiety after a single yoga session.",
+    why: `Yoga's mix of controlled breathing and movement nudges your nervous system out of fight-or-flight and toward "rest and digest." A single session reliably takes the edge off anxiety. Restorative postures like legs-up-the-wall let your body downshift; hip openers like pigeon stretch the areas that clench when you're tense. The point is the slow stretch and the breath that comes with it.`,
+    sources: [
+      'Yin et al. (2021). The effects of a single session of mindful exercise on anxiety: a systematic review and meta-analysis. Mental Health and Physical Activity, 21, 100403.',
+      'Streeter et al. (2010). Effects of yoga versus walking on mood, anxiety, and brain GABA levels: a randomized controlled MRS study. Journal of Alternative and Complementary Medicine, 16(11), 1145–1152.',
+    ],
   },
   {
     id: 'anxious-3',
@@ -65,7 +74,11 @@ export const WORKOUTS: Workout[] = [
       '5 min gradual cool-down.',
       '2 min box breathing: in 4, hold 4, out 4, hold 4.',
     ],
-    why: 'Sustained moderate cardio for 20+ minutes floods your brain with endorphins and increases GABA production — the neurotransmitter that literally tells anxious neurons to quiet down. The rhythm is the therapy: monotonous movement pulls your brain out of threat-detection mode and into present-moment processing. Multiple meta-analyses confirm aerobic exercise is as effective as medication for generalized anxiety disorder.',
+    why: `Sustained moderate cardio raises your brain's GABA — the neurotransmitter that tells anxious neurons to quiet down — and floods you with feel-good endorphins. The rhythm is the therapy: steady, repetitive movement gives your churning mind something simple to lock onto, and the rumination loosens its grip. Multiple meta-analyses confirm aerobic exercise is a genuinely effective treatment for anxiety — not a consolation prize.`,
+    sources: [
+      'Streeter et al. (2010). Effects of yoga versus walking on mood, anxiety, and brain GABA levels: a randomized controlled MRS study. Journal of Alternative and Complementary Medicine, 16(11), 1145–1152.',
+      'Aylett et al. (2018). Exercise in the treatment of clinical anxiety in general practice: a systematic review and meta-analysis. BMC Health Services Research, 18(1), 559.',
+    ],
   },
 
   // LOW
@@ -84,7 +97,10 @@ export const WORKOUTS: Workout[] = [
       '10 jumping jacks between sets.',
       "3 min cool-down. You did something your brain said you couldn't.",
     ],
-    why: "Resistance training triggers BDNF (Brain-Derived Neurotrophic Factor) — literally called 'Miracle-Gro for the brain.' Depression physically shrinks the hippocampus. Strength training grows it back. Every rep is a small dopamine hit. The compound movements (squats, lunges) activate multiple muscle groups simultaneously, creating a larger neurochemical response. A 2018 meta-analysis in JAMA Psychiatry across 33 randomized controlled trials found resistance exercise produced a clinically meaningful effect size of 0.66 on depressive symptoms — comparable to antidepressant medications.",
+    why: `Resistance training triggers BDNF (Brain-Derived Neurotrophic Factor) — basically Miracle-Gro for the brain. Depression physically shrinks the hippocampus; strength training helps grow it back. Every rep is a small dopamine hit, and compound movements like squats and lunges recruit multiple muscle groups for a bigger neurochemical response. A 2018 meta-analysis in JAMA Psychiatry across 33 randomized controlled trials found resistance exercise produced a clinically meaningful reduction in depressive symptoms (effect size 0.66).`,
+    sources: [
+      'Gordon et al. (2018). Association of efficacy of resistance exercise training with depressive symptoms: meta-analysis and meta-regression analysis of randomized clinical trials. JAMA Psychiatry, 75(6), 566–576.',
+    ],
   },
   {
     id: 'low-2',
@@ -101,7 +117,11 @@ export const WORKOUTS: Workout[] = [
       'Last song: slow down. Deep breaths.',
       'Stand still 30 sec. Notice the difference. You did that.',
     ],
-    why: "Music and movement together create a neurochemical cocktail your brain can't resist. Dancing increases dopamine, serotonin, and norepinephrine simultaneously — hitting all three systems that depression depletes. The self-directed, rule-free nature activates intrinsic motivation circuits. A 2019 randomized trial found dance movement therapy significantly more effective than standard care for depression, with effects lasting 3 months post-intervention.",
+    why: `Music and movement together are a combination your brain can't resist. Movement nudges up the same feel-good chemistry — dopamine and norepinephrine — that tends to run low in depression, and music's pull on your brain's dopamine reward system rides along for free. A 2020 randomized trial found that adding dance movement therapy to standard care beat standard care alone for depression — and the edge held at a 3-month follow-up.`,
+    sources: [
+      'Hyvönen et al. (2020). The effects of dance movement therapy in the treatment of depression: a multicenter, randomized controlled trial in Finland. Frontiers in Psychology, 11, 1687.',
+      'Basso & Suzuki (2016). The effects of acute exercise on mood, cognition, neurophysiology, and neurochemical pathways: a review. Brain Plasticity, 2(2), 127–152.',
+    ],
   },
   {
     id: 'low-3',
@@ -118,7 +138,11 @@ export const WORKOUTS: Workout[] = [
       "Name 5 things you're grateful for. Coffee counts.",
       "5 min back. You went outside when your brain said don't.",
     ],
-    why: 'Exposure to natural environments reduces rumination by decreasing activity in the subgenual prefrontal cortex — the brain region overactive in depression. A 2015 Stanford study published in PNAS measured this directly: participants who walked 90 minutes in nature showed significantly lower sgPFC activity and self-reported rumination compared to those who walked in an urban setting. The gratitude component activates the medial prefrontal cortex and releases dopamine. Getting outside when you don\'t want to is itself a behavioral activation technique — the cornerstone of evidence-based depression treatment.',
+    why: `Exposure to natural environments reduces rumination by decreasing activity in the subgenual prefrontal cortex — the brain region overactive in depression. A 2015 Stanford study published in PNAS measured this directly: participants who walked 90 minutes in nature showed significantly lower sgPFC activity and self-reported rumination compared to those who walked in an urban setting. The gratitude step lights up the medial prefrontal cortex — the region tied to perspective and reward. Getting outside when you don't want to is itself a behavioral activation technique — a cornerstone of evidence-based depression treatment.`,
+    sources: [
+      'Bratman et al. (2015). Nature experience reduces rumination and subgenual prefrontal cortex activation. PNAS, 112(28), 8567–8572.',
+      'Fox et al. (2015). Neural correlates of gratitude. Frontiers in Psychology, 6, 1491.',
+    ],
   },
 
   // FOGGY
@@ -139,7 +163,11 @@ export const WORKOUTS: Workout[] = [
       'Repeat 4x. Fog: gone.',
       '2 min cool-down. Welcome back.',
     ],
-    why: "Brain fog is often caused by poor cerebral blood flow and low norepinephrine. High-intensity intervals solve both problems violently. Within 10 minutes, cerebral blood flow increases by up to 30%. Norepinephrine — your brain's alertness chemical — spikes during intense exercise and stays elevated for hours. The bursts also trigger immediate BDNF release. Research shows a single HIIT session improves working memory and processing speed for up to 4 hours post-workout.",
+    why: `Brain fog tracks with sluggish blood flow and low alertness chemistry. Hard intervals push back on both. Going all-out pumps more oxygen-rich blood toward your brain than sitting still ever will, and norepinephrine — your brain's alertness chemical — surges when you push. A single hard session also bumps BDNF, and research shows it sharpens working memory and processing speed for up to about half an hour afterward.`,
+    sources: [
+      'Mou et al. (2022). The immediate and sustained effects of moderate-intensity continuous exercise and high-intensity interval exercise on working memory. Frontiers in Psychology, 13, 766679.',
+      'Szuhany et al. (2015). A meta-analytic review of the effects of exercise on brain-derived neurotrophic factor. Journal of Psychiatric Research, 60, 56–64.',
+    ],
   },
   {
     id: 'foggy-2',
@@ -157,7 +185,10 @@ export const WORKOUTS: Workout[] = [
       '1 min cool-down.',
       '2 min breathing. Brain fog: knocked out.',
     ],
-    why: "Shadowboxing requires simultaneous motor planning, spatial awareness, and rhythmic execution — forcing your prefrontal cortex to wake the hell up. The combination of aerobic intensity and complex movement patterns creates a stronger cognitive response than simple cardio alone. Boxing-style training has been shown to improve executive function and attention in multiple clinical populations. The aggression outlet also processes emotional arousal that contributes to foggy disconnection.",
+    why: `Throwing combinations forces your brain to plan and your body to execute at the same time — more for your head to chew on than plodding cardio. Coordination-heavy, complex movement is exactly the kind exercise research links to sharper executive function and attention. And swinging it out just feels good when your head's a fog.`,
+    sources: [
+      'Contreras-Osorio et al. (2022). Effects of sport-based exercise interventions on executive function in older adults: a systematic review and meta-analysis. International Journal of Environmental Research and Public Health, 19(19), 12573.',
+    ],
   },
   {
     id: 'foggy-3',
@@ -175,7 +206,10 @@ export const WORKOUTS: Workout[] = [
       '10 jumping jacks.',
       '5 rounds box breathing. Clear? Good.',
     ],
-    why: "Cold water on the face triggers the mammalian dive reflex, immediately activating the vagus nerve and producing a measurable norepinephrine release that increases alertness. The temperature contrast followed by movement reinforces that adrenaline response. The brief bodyweight circuit locks in the alertness state. This is the biochemical equivalent of rebooting a frozen computer.",
+    why: `Cold water on the face flips the dive reflex — your vagus nerve kicks in and your system resets. It's a hard pattern-interrupt for a foggy, frazzled head. Then you move, and the contrast snaps you into the moment. Think of it as rebooting a frozen computer.`,
+    sources: [
+      'Richer et al. (2022). Vagus activation by Cold Face Test reduces acute psychosocial stress responses. Scientific Reports, 12(1), 19270.',
+    ],
   },
 
   // RESTLESS
@@ -195,7 +229,10 @@ export const WORKOUTS: Workout[] = [
       'Repeat 4 rounds.',
       '3 min stretching. The calm is earned.',
     ],
-    why: "Restlessness is excess energy with nowhere to go — your sympathetic nervous system revved with no outlet. Explosive compound movements are the fastest way to metabolize stress hormones. Jump squats and burpees recruit large muscle groups and rapidly deplete excess adrenaline and cortisol. After 20 minutes of this, your parasympathetic system will assert dominance whether you want it to or not. High-intensity exercise is consistently shown to produce the most rapid and complete discharge of sympathetic overactivation.",
+    why: `Restlessness is energy with nowhere to go — your nervous system revved, no outlet. Explosive moves like jump squats and burpees give it somewhere to land. You won't "burn off" stress hormones on command — intense exercise actually spikes them first — but hard effort followed by recovery reliably takes the edge off: even a single bout of exercise produces a small, real drop in anxiety. Go hard, then let the comedown do its work.`,
+    sources: [
+      'Connor et al. (2023). The effect of acute exercise on state anxiety: a systematic review. Sports, 11(8), 145.',
+    ],
   },
   {
     id: 'restless-2',
@@ -213,7 +250,11 @@ export const WORKOUTS: Workout[] = [
       'Round 3 (3 min): Freestyle. Everything.',
       '2 min cool-down. Energy? Gone.',
     ],
-    why: "Striking exercises are uniquely effective for restlessness because they combine physical exertion with psychological release. The impact feedback creates a proprioceptive loop that satisfies the body's demand for physical expression. Repetitive striking drains excess sympathetic activation more efficiently than non-contact exercise. The round structure also provides clear start/stop signals that help regulate an overstimulated nervous system.",
+    why: `Hitting something hard feels good, and the exercise behind it is what helps: studies on boxing-style training report meaningful drops in anxiety and depression symptoms — mostly from the workout, not the "venting." Worth knowing: research on anger finds that wailing on something to vent tends to stoke anger, not drain it. So don't ruminate — just move. Throw combos, breathe with the rounds, and let the effort settle your system.`,
+    sources: [
+      'Bozdarov et al. (2022). Boxing as an intervention in mental health: a scoping review. American Journal of Lifestyle Medicine, 17(4), 589–600.',
+      'Bushman (2002). Does venting anger feed or extinguish the flame? Catharsis, rumination, distraction, anger, and aggressive responding. Personality and Social Psychology Bulletin, 28(6), 724–731.',
+    ],
   },
   {
     id: 'restless-3',
@@ -231,7 +272,10 @@ export const WORKOUTS: Workout[] = [
       'Repeat 6x total.',
       '5 min easy cool-down. Notice the quiet.',
     ],
-    why: "Sprint intervals are the fastest known method to metabolize excess cortisol and adrenaline — the hormones making you feel like you're going to crawl out of your skin. Maximum-effort sprints trigger a complete sympathetic discharge, followed by parasympathetic rebound during recovery. Six sprint intervals produce a calming effect that lasts 2-4 hours. Athletes describe the post-sprint state as 'enforced calm' — your body simply has no more gas left to be restless with.",
+    why: `When you feel like you'll crawl out of your skin, max-effort sprints give that energy a job. You won't "metabolize" stress hormones on the spot — intense exercise actually spikes them first — but the recovery after each sprint is where your body downshifts, and a single hard session reliably nudges anxiety down. Empty the tank, then walk it off and feel the comedown.`,
+    sources: [
+      'Connor et al. (2023). The effect of acute exercise on state anxiety: a systematic review. Sports, 11(8), 145.',
+    ],
   },
 
   // STRESSED
@@ -252,7 +296,11 @@ export const WORKOUTS: Workout[] = [
       '3 min tense-and-release head to toe.',
       '2 min 4-7-8 breathing. Melted.',
     ],
-    why: "This sequence combines acute stress response (the circuit) with progressive parasympathetic activation (the stretching and breathing). The initial movement metabolizes stress hormones; the stretching phase then activates the relaxation response while the exercise endorphins are still circulating. The progressive muscle relaxation at the end is a clinical technique proven to reduce physiological arousal by 30-40%. The 4-7-8 breathing extends the exhale, which directly stimulates vagal tone.",
+    why: `This sequence pairs hard effort (the circuit) with a deliberate wind-down (the stretching and breathing). The circuit burns off nervous energy; the stretch-and-breathe phase flips you into recovery mode. Progressive muscle relaxation is a clinical technique shown to dial down physical tension and arousal. And the 4-7-8 breathing is the lever — slow breathing with a long exhale measurably boosts vagal tone, your body's brake pedal.`,
+    sources: [
+      'Toussaint et al. (2021). Effectiveness of progressive muscle relaxation, deep breathing, and guided imagery in promoting psychological and physiological states of relaxation. Evidence-Based Complementary and Alternative Medicine, 2021, 5924040.',
+      'Laborde et al. (2022). Effects of voluntary slow breathing on heart rate and heart rate variability: a systematic review and meta-analysis. Neuroscience & Biobehavioral Reviews, 138, 104711.',
+    ],
   },
   {
     id: 'stressed-2',
@@ -270,7 +318,10 @@ export const WORKOUTS: Workout[] = [
       'Legs up wall — 4 min.',
       'Savasana — 3 min. Enough today.',
     ],
-    why: "Yin yoga targets connective tissue and activates the parasympathetic nervous system through long-hold passive stretches. Stress physically tightens fascia and compresses joints — yin yoga reverses this at the tissue level. The long holds (3-5 minutes) are uncomfortable by design: learning to stay present with mild discomfort builds distress tolerance, the same psychological skill taught in DBT therapy. The hip openers specifically release stored tension patterns from the psoas — the muscle that contracts during the stress response.",
+    why: `Yin yoga's long, passive holds give tight areas time to release and let your nervous system settle — a five-week randomized trial found the approach significantly reduced stress and worry. The long holds (3–5 minutes) are uncomfortable by design: staying with mild discomfort is a kind of practice in tolerating it — the same muscle mindfulness training builds. The hip openers target where a lot of us hold tension.`,
+    sources: [
+      'Hylander et al. (2017). Yin yoga and mindfulness: a five week randomized controlled study evaluating the effects of the YOMI program on stress and worry. Anxiety, Stress, & Coping, 30(4), 365–378.',
+    ],
   },
   {
     id: 'stressed-3',
@@ -287,7 +338,10 @@ export const WORKOUTS: Workout[] = [
       '3 min cool-down.',
       '10 breaths, eyes closed. Processed.',
     ],
-    why: "Repetitive rhythmic movement is one of the oldest and most reliable stress regulators known to neuroscience. Rowing, cycling, swimming, even brisk walking — the bilateral, rhythmic nature synchronizes brainwave activity and reduces cortisol. The counting task creates a narrow attentional focus that interrupts the stress thought loops. Research consistently shows 20 minutes of moderate rhythmic exercise reduces perceived stress by 20-30% and its effects persist for 4-6 hours.",
+    why: `Repetitive rhythmic movement — rowing, cycling, swimming, brisk walking — is one of the oldest, most reliable ways to settle a stressed system. The counting task narrows your focus and interrupts the stress thought-loops. Twenty minutes of steady rhythmic cardio reliably takes the edge off: acute exercise measurably lowers anxiety. Make it regular and the stress-hormone benefits build over time.`,
+    sources: [
+      'Ensari et al. (2015). Meta-analysis of acute exercise effects on state anxiety: an update of randomized controlled trials over the past 25 years. Depression and Anxiety, 32(8), 624–634.',
+    ],
   },
 
   // GOOD
@@ -307,7 +361,10 @@ export const WORKOUTS: Workout[] = [
       'Log your numbers. New baseline.',
       '5 min cool-down. Champion behavior.',
     ],
-    why: "When you feel good, your prefrontal cortex is online and your neurotransmitters are balanced — prime conditions for physical improvement. Exercise during positive mood states produces stronger neuroplastic effects: BDNF levels are already elevated, making the brain more receptive to adaptation. Pushing for personal bests sets new neuromuscular baselines that persist when you feel less optimal. You're essentially building a biological buffer for harder days ahead.",
+    why: `When you feel good, training feels easier — so use it. A single hard session reliably bumps BDNF, the growth factor your brain uses to adapt. Chase a personal best while the tank's full. The gains you bank today are still there on the days you'd rather stay in bed.`,
+    sources: [
+      'Szuhany et al. (2015). A meta-analytic review of the effects of exercise on brain-derived neurotrophic factor. Journal of Psychiatric Research, 60, 56–64.',
+    ],
   },
   {
     id: 'good-2',
@@ -324,7 +381,8 @@ export const WORKOUTS: Workout[] = [
       '5 min reflect: what surprised you?',
       "Save it for a bad day. You built a weapon.",
     ],
-    why: "Novel motor learning during positive emotional states is extraordinarily efficient — emotional arousal amplifies hippocampal memory consolidation. Learning new movement patterns creates fresh neural pathways and stimulates neurogenesis at rates higher than repetitive exercise. The discomfort of being a beginner in a positive mood teaches your nervous system that novelty is safe. Research on skill acquisition shows emotional state during learning is one of the strongest predictors of retention.",
+    why: `Learning a new movement while you're in a good mood is a smart play. Novelty challenges your brain in ways repeating the same routine can't, and a positive state makes the awkward beginner phase easier to sit with. New skills build new coordination. Lean into being bad at something today — then save it for a bad day.`,
+    sources: [],
   },
   {
     id: 'good-3',
@@ -341,7 +399,11 @@ export const WORKOUTS: Workout[] = [
       '5 min: set one intention.',
       'Stop. Lock this feeling. Bookmark it.',
     ],
-    why: "Combining movement with gratitude practice creates a neurochemical amplification effect. Gratitude activates the medial prefrontal cortex and releases dopamine and serotonin — the same chemicals exercise produces. Doing both simultaneously creates a stronger and longer-lasting mood elevation than either alone. The structured walking meditation format anchors cognitive reappraisal to physical experience, making the positive emotional state more memorable and accessible during future low periods.",
+    why: `Pair an easy walk with a little gratitude. Both have real, independent track records: walking lifts mood, and gratitude practice gives a small but reliable boost to how you feel. Gratitude also lights up the brain's medial prefrontal cortex — the region tied to perspective and reward. Stack them and the walk becomes something you can come back to on harder days.`,
+    sources: [
+      'Fox et al. (2015). Neural correlates of gratitude. Frontiers in Psychology, 6, 1491.',
+      'Cregg & Cheavens (2021). Gratitude interventions: effective self-help? A meta-analysis of the impact on symptoms of depression and anxiety. Journal of Happiness Studies, 22(1), 413–445.',
+    ],
   },
 ];
 

@@ -132,6 +132,7 @@ function SupplementsScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lastMood, setLastMood] = useState<MoodKey | null>(null);
   const [expandedSupp, setExpandedSupp] = useState<string | null>(null);
+  const [prioritySourcesOpen, setPrioritySourcesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('TODAY');
   const [allFilterMood, setAllFilterMood] = useState<MoodKey | null>(null);
 
@@ -437,6 +438,33 @@ function SupplementsScreen() {
                 <Text style={styles.priorityCardName}>{priority.name}</Text>
                 <Text style={styles.priorityCardDose}>{priority.dose} · {priority.timing.toUpperCase()}</Text>
                 <Text style={styles.priorityCardScience}>{priority.science}</Text>
+                {(priority.sources?.length ?? 0) > 0 && (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => setPrioritySourcesOpen((o) => !o)}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={styles.prioritySourcesToggle}
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: prioritySourcesOpen }}
+                      accessibilityLabel={`Sources, ${priority.sources.length} citations. ${prioritySourcesOpen ? 'Collapse' : 'Expand'}.`}
+                    >
+                      <Text style={styles.prioritySourcesToggleText}>
+                        SOURCES ({priority.sources.length}) {prioritySourcesOpen ? '▴' : '▾'}
+                      </Text>
+                    </TouchableOpacity>
+                    {prioritySourcesOpen &&
+                      priority.sources.map((src, i) => (
+                        <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
+                      ))}
+                  </>
+                )}
+                {priority.safety && (
+                  <>
+                    <Text style={styles.prioritySafetyLabel}>SAFETY</Text>
+                    <Text style={styles.priorityCardScience}>{priority.safety}</Text>
+                  </>
+                )}
                 <TouchableOpacity
                   onPress={() => handleToggle(priority.name)}
                   activeOpacity={0.7}
@@ -514,6 +542,12 @@ function SupplementsScreen() {
                           {supp.sources.map((src, i) => (
                             <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
                           ))}
+                        </>
+                      )}
+                      {supp.safety && (
+                        <>
+                          <Text style={[styles.sciencePanelLabel, styles.safetyLabel, { marginTop: 14 }]}>SAFETY</Text>
+                          <Text style={styles.sciencePanelText}>{supp.safety}</Text>
                         </>
                       )}
                     </View>
@@ -727,6 +761,12 @@ function SupplementsScreen() {
                           {supp.sources.map((src, i) => (
                             <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
                           ))}
+                        </>
+                      )}
+                      {supp.safety && (
+                        <>
+                          <Text style={[styles.sciencePanelLabel, styles.safetyLabel, { marginTop: 14 }]}>SAFETY</Text>
+                          <Text style={styles.sciencePanelText}>{supp.safety}</Text>
                         </>
                       )}
                     </View>
@@ -963,6 +1003,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 10,
   },
+  prioritySourcesToggle: {
+    marginTop: 12,
+    paddingVertical: 4,
+  },
+  prioritySourcesToggleText: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 1.5,
+    fontSize: 16,
+  },
   priorityCheckBtn: {
     borderWidth: 1,
     borderColor: '#333333',
@@ -1068,6 +1118,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 16,
     lineHeight: 17,
+  },
+  safetyLabel: {
+    color: '#e0b341',
+  },
+  prioritySafetyLabel: {
+    ...t.label,
+    color: '#e0b341',
+    letterSpacing: 1.5,
+    fontSize: 16,
+    marginTop: 14,
+    marginBottom: 4,
   },
   sciencePanelText: {
     ...t.soft,

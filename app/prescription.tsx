@@ -211,6 +211,14 @@ export default function PrescriptionScreen() {
               <View style={styles.scienceInline}>
                 <Text style={flattenStyle([styles.scienceInlineLabel, { color: accentColor }])}>THE SCIENCE</Text>
                 <Text style={styles.scienceInlineText}>{workouts[0].why}</Text>
+                {workouts[0].sources.length > 0 && (
+                  <>
+                    <Text style={styles.scienceSourcesLabel}>SOURCES</Text>
+                    {workouts[0].sources.map((src, i) => (
+                      <Text key={i} style={styles.scienceSourceText}>{i + 1}. {src}</Text>
+                    ))}
+                  </>
+                )}
               </View>
               <View style={[styles.startButton, { borderColor: accentColor }]}>
                 <Text style={[styles.startButtonText, { color: accentColor }]}>START THIS WORKOUT →</Text>
@@ -418,6 +426,14 @@ export default function PrescriptionScreen() {
                   {selectedSupp.sources.map((src, i) => (
                     <Text key={i} style={styles.suppModalSource}>{i + 1}. {src}</Text>
                   ))}
+                </>
+              )}
+
+              {/* Safety */}
+              {selectedSupp.safety && (
+                <>
+                  <Text style={[styles.suppModalSectionLabel, styles.suppModalSafetyLabel, { marginTop: 20 }]}>SAFETY</Text>
+                  <Text style={styles.suppModalScience}>{selectedSupp.safety}</Text>
                 </>
               )}
 
@@ -726,6 +742,20 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 24,
   },
+  scienceSourcesLabel: {
+    ...t.label,
+    color: '#c8c8c8',
+    letterSpacing: 1.5,
+    fontSize: 16,
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  scienceSourceText: {
+    ...t.bodyMuted,
+    fontSize: 16,
+    lineHeight: 22,
+    marginTop: 4,
+  },
   stackTitle: {
     ...t.headlineSm,
     lineHeight: undefined,
@@ -857,6 +887,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: undefined,
     marginBottom: 10,
+  },
+  suppModalSafetyLabel: {
+    color: '#e0b341',
   },
   suppModalMoodRow: {
     flexDirection: 'row',

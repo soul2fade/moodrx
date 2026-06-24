@@ -117,6 +117,10 @@ export function PlusSheet({ visible, onClose, onPurchased }: { visible: boolean;
           )}
         </TouchableOpacity>
 
+        <Text style={styles.renewDisclosure}>
+          Free for 7 days, then your selected plan. Subscriptions auto-renew unless cancelled at least 24 hours before the end of the period. Manage or cancel anytime in your App Store settings.
+        </Text>
+
         <LegalLinksRow />
     </PurchaseSheetShell>
   );
@@ -126,6 +130,7 @@ const styles = StyleSheet.create({
   headline: { ...t.headlineMd, fontSize: 24 },
   description: { ...t.bodyMuted, color: '#ffffff', marginTop: 10 },
   trialLine: { ...t.body, color: colors.premium, fontWeight: '700', marginTop: 14, marginBottom: 12 },
+  renewDisclosure: { ...t.bodyMuted, marginTop: 16, lineHeight: 20 },
   planRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#333333', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 10 },
   planRowSelected: { borderColor: colors.premium, backgroundColor: '#1a1407' },
   planLabel: { ...t.body, color: '#ffffff', fontWeight: '700' },

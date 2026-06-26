@@ -64,3 +64,8 @@ expo-env.d.ts
 # Insult-library pipeline: build artifacts (large audio + regenerable manifest) and real voice IDs
 scripts/insult-library/output/
 scripts/insult-library/voices.config.json
+
+# Content/marketing assets (character bible, episode scripts) + Word temp files — not part of the app build
+docs/characters/
+docs/content/
+~$*

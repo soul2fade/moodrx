@@ -30,6 +30,9 @@ import { useDrMoodRxLine } from '@/hooks/useDrMoodRxLine';
 import { getDrMoodRxLine } from '@/utils/dr-moodrx';
 import { colors } from '@/lib/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { citationUrl } from '@/lib/citations';
+import { openExternal } from '@/lib/links';
+import { SourcesLink } from '@/components/SourcesLink';
 
 type Tab = 'workouts' | 'stack';
 
@@ -215,8 +218,17 @@ export default function PrescriptionScreen() {
                   <>
                     <Text style={styles.scienceSourcesLabel}>SOURCES</Text>
                     {workouts[0].sources.map((src, i) => (
-                      <Text key={i} style={styles.scienceSourceText}>{i + 1}. {src}</Text>
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => openExternal(citationUrl(src))}
+                        activeOpacity={0.7}
+                        accessibilityRole="link"
+                        accessibilityLabel={`Open source: ${src}`}
+                      >
+                        <Text style={styles.scienceSourceLinkText}>{i + 1}. {src} ↗</Text>
+                      </TouchableOpacity>
                     ))}
+                    <SourcesLink style={{ marginTop: 10 }} label="ALL SOURCES & SCIENCE →" />
                   </>
                 )}
               </View>
@@ -424,8 +436,17 @@ export default function PrescriptionScreen() {
                 <>
                   <Text style={[styles.suppModalSectionLabel, { marginTop: 20 }]}>SOURCES</Text>
                   {selectedSupp.sources.map((src, i) => (
-                    <Text key={i} style={styles.suppModalSource}>{i + 1}. {src}</Text>
+                    <TouchableOpacity
+                      key={i}
+                      onPress={() => openExternal(citationUrl(src))}
+                      activeOpacity={0.7}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Open source: ${src}`}
+                    >
+                      <Text style={styles.suppModalSourceLink}>{i + 1}. {src} ↗</Text>
+                    </TouchableOpacity>
                   ))}
+                  <SourcesLink style={{ marginTop: 10 }} label="ALL SOURCES & SCIENCE →" />
                 </>
               )}
 
@@ -756,6 +777,13 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginTop: 4,
   },
+  scienceSourceLinkText: {
+    ...t.bodyMuted,
+    color: '#cfe6da',
+    fontSize: 16,
+    lineHeight: 22,
+    marginTop: 4,
+  },
   stackTitle: {
     ...t.headlineSm,
     lineHeight: undefined,
@@ -916,6 +944,13 @@ const styles = StyleSheet.create({
   suppModalSource: {
     ...t.body,
     color: '#c5c5c5',
+    fontSize: 16,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  suppModalSourceLink: {
+    ...t.body,
+    color: '#cfe6da',
     fontSize: 16,
     lineHeight: 20,
     marginTop: 6,

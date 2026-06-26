@@ -11,6 +11,9 @@ import {
 import { useFocusEffect } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { SUPPLEMENTS } from '@/lib/supplements';
+import { citationUrl } from '@/lib/citations';
+import { openExternal } from '@/lib/links';
+import { SourcesLink } from '@/components/SourcesLink';
 import {
   getSupplementLogs,
   toggleSupplementLog,
@@ -132,7 +135,6 @@ function SupplementsScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lastMood, setLastMood] = useState<MoodKey | null>(null);
   const [expandedSupp, setExpandedSupp] = useState<string | null>(null);
-  const [prioritySourcesOpen, setPrioritySourcesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('TODAY');
   const [allFilterMood, setAllFilterMood] = useState<MoodKey | null>(null);
 
@@ -440,23 +442,19 @@ function SupplementsScreen() {
                 <Text style={styles.priorityCardScience}>{priority.science}</Text>
                 {(priority.sources?.length ?? 0) > 0 && (
                   <>
-                    <TouchableOpacity
-                      onPress={() => setPrioritySourcesOpen((o) => !o)}
-                      activeOpacity={0.7}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      style={styles.prioritySourcesToggle}
-                      accessibilityRole="button"
-                      accessibilityState={{ expanded: prioritySourcesOpen }}
-                      accessibilityLabel={`Sources, ${priority.sources.length} citations. ${prioritySourcesOpen ? 'Collapse' : 'Expand'}.`}
-                    >
-                      <Text style={styles.prioritySourcesToggleText}>
-                        SOURCES ({priority.sources.length}) {prioritySourcesOpen ? '▴' : '▾'}
-                      </Text>
-                    </TouchableOpacity>
-                    {prioritySourcesOpen &&
-                      priority.sources.map((src, i) => (
-                        <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
-                      ))}
+                    <Text style={styles.prioritySourcesLabel}>SOURCES</Text>
+                    {priority.sources.map((src, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => openExternal(citationUrl(src))}
+                        activeOpacity={0.7}
+                        accessibilityRole="link"
+                        accessibilityLabel={`Open source: ${src}`}
+                      >
+                        <Text style={styles.sourceLinkText}>{i + 1}. {src} ↗</Text>
+                      </TouchableOpacity>
+                    ))}
+                    <SourcesLink style={{ marginTop: 12 }} />
                   </>
                 )}
                 {priority.safety && (
@@ -540,8 +538,17 @@ function SupplementsScreen() {
                         <>
                           <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>SOURCES</Text>
                           {supp.sources.map((src, i) => (
-                            <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
+                            <TouchableOpacity
+                              key={i}
+                              onPress={() => openExternal(citationUrl(src))}
+                              activeOpacity={0.7}
+                              accessibilityRole="link"
+                              accessibilityLabel={`Open source: ${src}`}
+                            >
+                              <Text style={styles.sourceLinkText}>{i + 1}. {src} ↗</Text>
+                            </TouchableOpacity>
                           ))}
+                          <SourcesLink style={{ marginTop: 10 }} label="ALL SOURCES & SCIENCE →" />
                         </>
                       )}
                       {supp.safety && (
@@ -759,8 +766,17 @@ function SupplementsScreen() {
                         <>
                           <Text style={[styles.sciencePanelLabel, { marginTop: 14 }]}>SOURCES</Text>
                           {supp.sources.map((src, i) => (
-                            <Text key={i} style={styles.sourceText}>{i + 1}. {src}</Text>
+                            <TouchableOpacity
+                              key={i}
+                              onPress={() => openExternal(citationUrl(src))}
+                              activeOpacity={0.7}
+                              accessibilityRole="link"
+                              accessibilityLabel={`Open source: ${src}`}
+                            >
+                              <Text style={styles.sourceLinkText}>{i + 1}. {src} ↗</Text>
+                            </TouchableOpacity>
                           ))}
+                          <SourcesLink style={{ marginTop: 10 }} label="ALL SOURCES & SCIENCE →" />
                         </>
                       )}
                       {supp.safety && (
@@ -1003,16 +1019,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 10,
   },
-  prioritySourcesToggle: {
-    marginTop: 12,
-    paddingVertical: 4,
-  },
-  prioritySourcesToggleText: {
-    ...t.label,
-    color: '#c8c8c8',
-    letterSpacing: 1.5,
-    fontSize: 16,
-  },
   priorityCheckBtn: {
     borderWidth: 1,
     borderColor: '#333333',
@@ -1129,6 +1135,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 14,
     marginBottom: 4,
+  },
+  prioritySourcesLabel: {
+    ...t.label,
+    color: '#8fd6b4',
+    letterSpacing: 1.5,
+    fontSize: 16,
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  sourceLinkText: {
+    ...t.soft,
+    color: '#cfe6da',
+    fontSize: 16,
+    lineHeight: 22,
+    marginTop: 4,
   },
   sciencePanelText: {
     ...t.soft,

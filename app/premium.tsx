@@ -12,6 +12,7 @@ import {
 import { router } from 'expo-router';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { LegalLinksRow } from '@/components/LegalLinksRow';
+import { SourcesLink } from '@/components/SourcesLink';
 import { selectBasePrice } from '@/lib/offer-copy';
 import { usePurchaseButton } from '@/hooks/usePurchaseButton';
 import { OfferProof } from '@/components/OfferProof';
@@ -129,6 +130,8 @@ export default function PremiumScreen() {
         </View>
 
         <View style={styles.divider} />
+
+        <SourcesLink style={{ alignSelf: 'center', marginBottom: 20 }} label="THE NEUROSCIENCE — SOURCES →" />
 
         <View style={styles.legalBlock}>
           <Text style={styles.legalDisclosure}>

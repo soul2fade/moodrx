@@ -22,6 +22,7 @@ import { colors } from '@/lib/colors';
 import { PricingComparison } from '@/components/PricingComparison';
 import { PlusSheet } from '@/components/PlusSheet';
 import { LegalLinksRow } from '@/components/LegalLinksRow';
+import { SourcesLink } from '@/components/SourcesLink';
 import { TasteTheRoast } from '@/components/onboarding/TasteTheRoast';
 
 const SCREEN_W = Dimensions.get('window').width;
@@ -119,6 +120,8 @@ export default function OnboardingScreen() {
             MoodRx matches workouts to how you actually feel — backed by
             neuroscience, delivered with zero fluff.
           </Text>
+
+          <SourcesLink style={{ marginTop: 14, marginBottom: 4 }} />
 
           <View style={styles.stepsContainer}>
             {STEPS.map((step) => (

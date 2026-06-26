@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { type as t, fonts } from '../lib/typography';
@@ -871,6 +871,15 @@ export default function SettingsScreen() {
 
         {/* Legal section */}
         <Text style={styles.sectionHeader}>LEGAL</Text>
+        <TouchableOpacity
+          onPress={() => router.push('/sources' as Href)}
+          activeOpacity={0.7}
+          style={styles.legalLink}
+          accessibilityRole="link"
+          accessibilityLabel="The science and sources"
+        >
+          <Text style={styles.legalLinkText}>THE SCIENCE — SOURCES & CITATIONS →</Text>
+        </TouchableOpacity>
         <Text style={styles.disclaimer}>
           MoodRx is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with questions about a medical condition. If you are experiencing a mental health crisis, contact the 988 Suicide & Crisis Lifeline (call or text 988) or go to your nearest emergency room.
         </Text>

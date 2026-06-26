@@ -185,7 +185,7 @@ export const WORKOUTS: Workout[] = [
       '1 min cool-down.',
       '2 min breathing. Brain fog: knocked out.',
     ],
-    why: `Throwing combinations forces your brain to plan and your body to execute at the same time — more for your head to chew on than plodding cardio. Coordination-heavy, complex movement is exactly the kind exercise research links to sharper executive function and attention. And swinging it out just feels good when your head's a fog.`,
+    why: `Throwing combinations forces your brain to plan and your body to execute at the same time — more for your head to chew on than plodding cardio. Coordination-heavy, complex movement is exactly the kind exercise research links to sharper executive function. And swinging it out just feels good when your head's a fog.`,
     sources: [
       'Contreras-Osorio et al. (2022). Effects of sport-based exercise interventions on executive function in older adults: a systematic review and meta-analysis. International Journal of Environmental Research and Public Health, 19(19), 12573.',
     ],
@@ -229,7 +229,7 @@ export const WORKOUTS: Workout[] = [
       'Repeat 4 rounds.',
       '3 min stretching. The calm is earned.',
     ],
-    why: `Restlessness is energy with nowhere to go — your nervous system revved, no outlet. Explosive moves like jump squats and burpees give it somewhere to land. You won't "burn off" stress hormones on command — intense exercise actually spikes them first — but hard effort followed by recovery reliably takes the edge off: even a single bout of exercise produces a small, real drop in anxiety. Go hard, then let the comedown do its work.`,
+    why: `Restlessness is energy with nowhere to go — your nervous system revved, no outlet. Explosive moves like jump squats and burpees give it somewhere to land. You won't "burn off" stress hormones on command — intense exercise actually spikes them first — but hard effort followed by recovery tends to take the edge off: even a single bout of exercise can produce a small, real drop in anxiety. Go hard, then let the comedown do its work.`,
     sources: [
       'Connor et al. (2023). The effect of acute exercise on state anxiety: a systematic review. Sports, 11(8), 145.',
     ],
@@ -252,7 +252,7 @@ export const WORKOUTS: Workout[] = [
     ],
     why: `Hitting something hard feels good, and the exercise behind it is what helps: studies on boxing-style training report meaningful drops in anxiety and depression symptoms — mostly from the workout, not the "venting." Worth knowing: research on anger finds that wailing on something to vent tends to stoke anger, not drain it. So don't ruminate — just move. Throw combos, breathe with the rounds, and let the effort settle your system.`,
     sources: [
-      'Bozdarov et al. (2022). Boxing as an intervention in mental health: a scoping review. American Journal of Lifestyle Medicine, 17(4), 589–600.',
+      'Bozdarov et al. (2023). Boxing as an intervention in mental health: a scoping review. American Journal of Lifestyle Medicine, 17(4), 589–600.',
       'Bushman (2002). Does venting anger feed or extinguish the flame? Catharsis, rumination, distraction, anger, and aggressive responding. Personality and Social Psychology Bulletin, 28(6), 724–731.',
     ],
   },
@@ -272,7 +272,7 @@ export const WORKOUTS: Workout[] = [
       'Repeat 6x total.',
       '5 min easy cool-down. Notice the quiet.',
     ],
-    why: `When you feel like you'll crawl out of your skin, max-effort sprints give that energy a job. You won't "metabolize" stress hormones on the spot — intense exercise actually spikes them first — but the recovery after each sprint is where your body downshifts, and a single hard session reliably nudges anxiety down. Empty the tank, then walk it off and feel the comedown.`,
+    why: `When you feel like you'll crawl out of your skin, max-effort sprints give that energy a job. You won't "metabolize" stress hormones on the spot — intense exercise actually spikes them first — but the recovery after each sprint is where your body downshifts, and a single hard session tends to nudge anxiety down. Empty the tank, then walk it off and feel the comedown.`,
     sources: [
       'Connor et al. (2023). The effect of acute exercise on state anxiety: a systematic review. Sports, 11(8), 145.',
     ],

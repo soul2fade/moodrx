@@ -19,11 +19,11 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Night',
     dose: '200-400mg',
     moods: ['anxious', 'stressed'],
-    science: "Magnesium helps run your GABA system — the brain's main “calm down” signal. And most people run low: NHANES data shows roughly 48% of Americans don't even hit the estimated average requirement, usually without realizing it. The glycinate form absorbs far better than cheap magnesium oxide, which mostly just sends you to the bathroom.",
+    science: "Magnesium helps run your GABA system — the brain's main “calm down” signal. And most people run low: NHANES data shows roughly 48% of Americans don't even hit the estimated average requirement, usually without realizing it. The glycinate form absorbs far better than cheap magnesium oxide, which mostly just sends you to the bathroom. Taken at night it can also help you wind down — a placebo-controlled trial in older adults improved insomnia measures.",
     sources: [
       'Boyle et al. (2017). The effects of magnesium supplementation on subjective anxiety and stress: a systematic review. Nutrients, 9(5), 429.',
       'Rosanoff et al. (2012). Suboptimal magnesium status in the United States: are the health consequences underestimated? Nutrition Reviews, 70(3), 153–164.',
-      'Abbasi et al. (2012). The effect of magnesium supplementation on primary insomnia in the elderly: a double-blind placebo-controlled clinical trial. Journal of Research in Medical Sciences.',
+      'Abbasi et al. (2012). The effect of magnesium supplementation on primary insomnia in the elderly: a double-blind placebo-controlled clinical trial. Journal of Research in Medical Sciences, 17(12), 1161–1169.',
     ],
     safety: 'Magnesium can add to the effect of sedatives and may cause loose stools at higher doses. Check with your doctor if you take other medications or have kidney issues.',
   },
@@ -36,7 +36,6 @@ export const SUPPLEMENTS: Supplement[] = [
     science: "EPA and DHA build your brain's cell membranes. Lower omega-3 levels are linked to weaker serotonin signaling. Across meta-analyses it's EPA — not DHA — that carries the antidepressant effect, likely by calming inflammation in neural tissue. Go for a supplement where EPA is the dominant fraction (aim for 60%+ EPA).",
     sources: [
       'Sublette et al. (2011). Meta-analysis of the effects of eicosapentaenoic acid (EPA) in clinical trials in depression. Journal of Clinical Psychiatry, 72(12), 1577–1584.',
-      'Su et al. (2008). Omega-3 fatty acids for major depressive disorder during pregnancy: results from a randomized, double-blind, placebo-controlled trial. Journal of Clinical Psychiatry, 69(4), 644–651.',
       'Grosso et al. (2014). Role of omega-3 fatty acids in the treatment of depressive disorders: a comprehensive meta-analysis of randomized clinical trials. PLoS One, 9(5), e96905.',
     ],
     safety: 'High-dose fish oil (above ~3g/day) can thin the blood — talk to your doctor if you take anticoagulants or have surgery coming up.',
@@ -65,7 +64,6 @@ export const SUPPLEMENTS: Supplement[] = [
     sources: [
       'Chandrasekhar et al. (2012). A prospective, randomized double-blind, placebo-controlled study of safety and efficacy of a high-concentration full-spectrum extract of ashwagandha root in reducing stress and anxiety in adults. Indian Journal of Psychological Medicine, 34(3), 255–262.',
       'Pratte et al. (2014). An alternative treatment for anxiety: a systematic review of human trial results reported for the Ayurvedic herb ashwagandha (Withania somnifera). Journal of Alternative and Complementary Medicine, 20(12), 901–908.',
-      'Choudhary et al. (2017). Efficacy and safety of ashwagandha (Withania somnifera) root extract in improving memory and cognitive functions. Journal of Dietary Supplements, 14(6), 599–612.',
     ],
     safety: 'Not recommended in pregnancy. Can interact with thyroid, sedative, and immunosuppressant medications; rare reports of liver injury. Check with your doctor if you take other medications.',
   },
@@ -89,7 +87,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Evening',
     dose: '250-500mg',
     moods: ['restless'],
-    science: "GABA is your brain's primary inhibitory neurotransmitter — it slows neural activity down. When GABA signaling is low, your brain won't stop firing, which is what restlessness feels like. Oral GABA doesn't cross the blood-brain barrier well, so the evidence is mixed — but some small studies suggest it may lower stress markers and ease sleep onset. Take it 30-60 minutes before you wind down.",
+    science: "GABA is your brain's primary inhibitory neurotransmitter — it slows neural activity down. When GABA signaling is low, your brain won't stop firing, which is what restlessness feels like. Oral GABA doesn't cross the blood-brain barrier well, so the evidence is mixed — but some small studies suggest it may promote relaxation and ease sleep onset. Take it 30-60 minutes before you wind down.",
     sources: [
       'Abdou et al. (2006). Relaxation and immunity enhancement effects of gamma-aminobutyric acid (GABA) administration in humans. BioFactors, 26(3), 201–208.',
       'Byun et al. (2018). Safety and efficacy of gamma-aminobutyric acid from fermented rice germ in patients with insomnia symptoms: a randomized, double-blind trial. Journal of Clinical Neurology, 14(3), 291–295.',
@@ -115,7 +113,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Morning',
     dose: '2-5K IU',
     moods: ['low', 'foggy'],
-    science: "Vitamin D receptors sit throughout your brain, including regions tied to mood. Roughly 40% of Americans run low, and low vitamin D is consistently linked to depression — though supplement trials are mixed, with the clearest benefit in people who are actually deficient. The K2 is there for teamwork: D3 ramps up calcium absorption, and K2 helps steer that calcium toward your bones.",
+    science: "Vitamin D receptors sit throughout your brain, including regions tied to mood. Roughly 40% of Americans run low, and low vitamin D is consistently linked to depression — though supplement trials are mixed, with the clearest benefit in people who are clinically depressed. The K2 is there for teamwork: D3 ramps up calcium absorption, and K2 helps steer that calcium toward your bones.",
     sources: [
       'Anglin et al. (2013). Vitamin D deficiency and depression in adults: systematic review and meta-analysis. British Journal of Psychiatry, 202(2), 100–107.',
       'Shaffer et al. (2014). Vitamin D supplementation for depressive symptoms: a systematic review and meta-analysis of randomized controlled trials. Psychosomatic Medicine, 76(3), 190–196.',
@@ -143,7 +141,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'With breakfast',
     dose: '100-300mg',
     moods: ['foggy', 'stressed'],
-    science: "Phosphatidylserine is a structural phospholipid in your brain-cell membranes. It supports membrane signaling and acetylcholine activity, and small trials show it can blunt cortisol spikes under acute stress. The FDA allows a “qualified” health claim for cognitive function in older adults — “qualified” meaning the evidence is still preliminary, but promising enough to be recognized.",
+    science: "Phosphatidylserine is a structural phospholipid in your brain-cell membranes. It supports membrane signaling and acetylcholine activity, and a small trial found it improved mood during an acute mental stressor. The FDA allows a “qualified” health claim for cognitive function in older adults — “qualified” meaning the evidence is still preliminary, but promising enough to be recognized.",
     sources: [
       'Glade & Smith (2015). Phosphatidylserine and the human brain. Nutrition, 31(6), 781–786.',
       'Kidd (1996). Phosphatidylserine; membrane nutrient for memory. Alternative Medicine Review, 1(2), 70–84.',
@@ -159,8 +157,8 @@ export const SUPPLEMENTS: Supplement[] = [
     moods: ['stressed', 'foggy'],
     science: "Rhodiola is an adaptogen that targets mental fatigue. In a placebo-controlled trial (Olsson et al., 2009), about four weeks of use produced meaningful drops in burnout and better attention. It works on the HPA stress axis, like ashwagandha but through a different route — so people often pair them.",
     sources: [
-      'Olsson et al. (2009). A randomised, double-blind, placebo-controlled, parallel-group study of the standardised extract SHR-5 of the roots of Rhodiola rosea in subjects with stress-related fatigue. Planta Medica, 75(2), 105–112.',
-      'Darbinyan et al. (2000). Rhodiola rosea in stress induced fatigue — a double blind cross-over study of a standardized extract SHR-5. Phytomedicine, 7(5), 365–371.',
+      'Olsson et al. (2009). A randomised, double-blind, placebo-controlled, parallel-group study of the standardised extract SHR-5 of the roots of Rhodiola rosea in the treatment of subjects with stress-related fatigue. Planta Medica, 75(2), 105–112.',
+      'Darbinyan et al. (2000). Rhodiola rosea in stress induced fatigue — a double blind cross-over study of a standardized extract SHR-5 with a repeated low-dose regimen on the mental performance of healthy physicians during night duty. Phytomedicine, 7(5), 365–371.',
       'Panossian & Wikman (2010). Effects of adaptogens on the central nervous system and the molecular mechanisms associated with their stress-protective activity. Pharmaceuticals, 3(1), 188–224.',
     ],
     safety: 'Can feel activating or cause jitteriness — take it earlier in the day. Use caution if you have bipolar disorder or take stimulants.',
@@ -349,7 +347,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'As needed',
     dose: '150-300mg kavalactones',
     moods: ['anxious', 'restless'],
-    science: "Kava's active compounds — kavalactones — modulate GABA-A receptors, and several RCTs show a modest reduction in anxiety on standardized scales (the Cochrane review calls the effect small). It's one of the few botanicals with real anxiolytic trial data.",
+    science: "Kava's active compounds — kavalactones — modulate GABA-A receptors, and several RCTs show a reduction in anxiety on standardized scales (the Cochrane review found a significant but modest effect). It's one of the few botanicals with real anxiolytic trial data.",
     sources: [
       'Pittler & Ernst (2003). Kava extract versus placebo for treating anxiety. Cochrane Database of Systematic Reviews, (1), CD003383.',
       'Lakhan & Vieira (2010). Nutritional and herbal supplements for anxiety and anxiety-related disorders: systematic review. Nutrition Journal, 9, 42.',
@@ -375,7 +373,7 @@ export const SUPPLEMENTS: Supplement[] = [
     timing: 'Evening',
     dose: '220-1100mg',
     moods: ['anxious', 'stressed'],
-    science: "Chamomile's apigenin appears to act on GABA-A receptors at the benzodiazepine site, though with weak affinity. Its strength is the long game: an 8-week RCT showed modest anxiety reduction, and a 26-week continuation trial found fewer generalized-anxiety relapses versus placebo. Better for chronic background worry than acute panic.",
+    science: "Chamomile's apigenin appears to act on GABA-A receptors at the benzodiazepine site, though with weak affinity. Its strength is the long game: an 8-week RCT showed modest anxiety reduction, and a 26-week continuation trial saw numerically fewer generalized-anxiety relapses than placebo, though the difference wasn't statistically significant. Better for chronic background worry than acute panic.",
     sources: [
       'Amsterdam et al. (2009). A randomized, double-blind, placebo-controlled trial of oral Matricaria recutita (chamomile) extract therapy for generalized anxiety disorder. Journal of Clinical Psychopharmacology, 29(4), 378–382.',
       'Mao et al. (2016). Long-term chamomile (Matricaria chamomilla L.) treatment for generalized anxiety disorder: a randomized clinical trial. Phytomedicine, 23(14), 1735–1742.',

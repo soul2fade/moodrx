@@ -3,7 +3,7 @@
     "owner": "notgood18",
     "slug": "moodrx",
     "name": "MoodRx",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "moodrx",
@@ -87,8 +87,9 @@
         {
           "android": {
             "minSdkVersion": 26,
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0"
           }
         }
       ],
@@ -123,7 +124,8 @@
           "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
         }
       ],
-      "./plugins/withStripUnusedAudioPermissions"
+      "./plugins/withStripUnusedAudioPermissions",
+      "./plugins/withRestrictedResizability"
     ],
     "experiments": {
       "typedRoutes": true

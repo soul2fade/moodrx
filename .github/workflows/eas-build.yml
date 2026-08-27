@@ -20,6 +20,11 @@ on:
           - android
           - ios
           - all
+      wait:
+        description: 'Wait for the EAS build to finish (surfaces build failures in this job)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -49,7 +54,10 @@ jobs:
       - name: Lint (text-clipping check)
         run: npm run lint:ci
 
-      - name: Build (preview — fire and forget)
+      # Defaults to --no-wait (the long-standing fast loop: the job goes green in
+      # ~60s and you check the Expo dashboard). Dispatch with wait=true when you
+      # need the real build result — and the Gradle logs — surfaced in this job.
+      - name: Build (preview)
         if: github.event.inputs.profile == 'preview'
         run: |
           eas build \
@@ -57,7 +65,7 @@ jobs:
             --profile preview \
             --non-interactive \
             --clear-cache \
-            --no-wait
+            ${{ github.event.inputs.wait == 'true' && '--wait' || '--no-wait' }}
 
       - name: Build (production — wait for completion)
         if: github.event.inputs.profile == 'production'
